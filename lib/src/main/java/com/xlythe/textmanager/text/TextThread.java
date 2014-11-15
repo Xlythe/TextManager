@@ -86,4 +86,10 @@ public class TextThread implements MessageThread {
     public void delete(MessageCallback<Void> callback) {
 
     }
+
+    @Override
+    public String toString() {
+        Message mostRecent = getMessages(1).get(0);
+        return mostRecent.getSender() + ": " + mostRecent.getText();
+    }
 }

@@ -166,4 +166,9 @@ public class Text implements Message {
     public void send(MessageCallback<Void> callback) {
 
     }
+
+    @Override
+    public String toString() {
+        return getText();
+    }
 }
