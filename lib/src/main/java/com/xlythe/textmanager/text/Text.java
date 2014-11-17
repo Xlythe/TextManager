@@ -17,7 +17,7 @@ public class Text implements Message {
     private Type mType;
 
     public enum Type {
-        SMS, MMS
+        SMS, MMS;
     }
 
     /**
