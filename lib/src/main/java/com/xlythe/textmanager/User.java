@@ -7,5 +7,5 @@ public interface User {
     /**
      * Return the user's name
      * */
-    public void getName();
+    public String getName();
 }
