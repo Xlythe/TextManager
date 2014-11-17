@@ -6,6 +6,7 @@ import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageThread;
 import com.xlythe.textmanager.User;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class TextManager implements MessageManager {
      * Return all message threads
      * */
     public List<MessageThread> getThreads() {
-        return null;
+        return new ArrayList<MessageThread>();
     }
 
     /**
@@ -36,7 +37,7 @@ public class TextManager implements MessageManager {
      * Get all messages involving that user.
      * */
     public List<Message> getMessages(User user) {
-        return null;
+        return new ArrayList<Message>();
     }
 
     /**
