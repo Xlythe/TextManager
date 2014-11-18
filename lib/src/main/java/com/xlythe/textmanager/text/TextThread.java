@@ -8,6 +8,7 @@ import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,7 +40,10 @@ public class TextThread implements MessageThread {
      * Get the {limit} most recent messages.
      * */
     public List<Message> getMessages(int limit) {
-        return null;
+        Text text = new Text(); //Text message has been created
+        List<Message> messages = new ArrayList<Message>();
+        messages.add(text);
+        return messages; //returning that text message to the list/thread
     }
 
     /**

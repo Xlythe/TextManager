@@ -1,5 +1,7 @@
 package com.xlythe.textmanager.text;
 
+import android.content.Context;
+
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
@@ -14,11 +16,26 @@ import java.util.List;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager {
+    /*
+    * created local mContext from TextThread.java
+    */
+    public Context mContext;
+
+    public TextManager(Context context){
+        mContext = context;
+    }
+
     /**
      * Return all message threads
      * */
     public List<MessageThread> getThreads() {
-        return new ArrayList<MessageThread>();
+        //created a list called "list" and copied ArrayList<MessageThread>() into it
+        List<MessageThread> list = new ArrayList<MessageThread>();
+
+        //added mContext from TextThread into list
+        list.add(new TextThread(mContext));
+        
+        return list;
     }
 
     /**
@@ -70,4 +87,5 @@ public class TextManager implements MessageManager {
     public void search(String text, MessageCallback<List<Message>> callback) {
 
     }
+
 }

@@ -1,5 +1,6 @@
 package com.xlythe.demo.text;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.View;
@@ -9,8 +10,10 @@ import android.widget.ArrayAdapter;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageThread;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.TextThread;
 
 public class ThreadListFragment extends ListFragment {
+
     // An adapter links a list of items to the ui to show
     private ArrayAdapter<MessageThread> mAdapter;
 
@@ -35,7 +38,8 @@ public class ThreadListFragment extends ListFragment {
         });
 
         // We create a TextManager (this could be anything - even Facebook)
-        mManager = new TextManager();
+
+        mManager = new TextManager(getActivity()); //used to create TextThread.java
 
         // And then we update the ui with all the threads
         mAdapter.addAll(mManager.getThreads());
