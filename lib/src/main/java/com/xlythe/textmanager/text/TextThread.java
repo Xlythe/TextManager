@@ -33,7 +33,11 @@ public class TextThread implements MessageThread {
      * Get the messages sorted by date
      * */
     public List<Message> getMessages() {
-        return null;
+        Text text = new Text(); //Text message has been created
+        List<Message> messages = new ArrayList<Message>();
+        messages.add(text);
+        return messages; //returning that text message to the list/thread
+        // ADDED FOR NULL ERROR FIX: TextListFragment.java:34
     }
 
     /**
