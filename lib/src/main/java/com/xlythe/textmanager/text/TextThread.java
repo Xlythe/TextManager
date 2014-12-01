@@ -36,6 +36,7 @@ public class TextThread implements MessageThread {
         Text text = new Text(); //Text message has been created
         List<Message> messages = new ArrayList<Message>();
         messages.add(text);
+        text.setText("hey!");
         return messages; //returning that text message to the list/thread
         // ADDED FOR NULL ERROR FIX: TextListFragment.java:34
     }
@@ -44,9 +45,10 @@ public class TextThread implements MessageThread {
      * Get the {limit} most recent messages.
      * */
     public List<Message> getMessages(int limit) {
-        Text text = new Text(); //Text message has been created
+        Text thread = new Text(); //Text thread has been created
         List<Message> messages = new ArrayList<Message>();
-        messages.add(text);
+        messages.add(thread);
+        thread.setText("Kirito");
         return messages; //returning that text message to the list/thread
     }
 
