@@ -1,7 +1,0 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:support="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/add"
-        android:icon="@drawable/content_new"
-        android:title="@string/menu_add"
-        support:showAsAction="ifRoom" />
-</menu>

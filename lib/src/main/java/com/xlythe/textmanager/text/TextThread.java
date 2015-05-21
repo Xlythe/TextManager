@@ -1,62 +1,165 @@
 package com.xlythe.textmanager.text;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.Telephony;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * An SMS conversation
  */
-public class TextThread implements MessageThread {
-    private Context mContext;
-    private long mThreadId;
+public class TextThread implements MessageThread, Serializable {
+    private List<Message> mTexts;
 
-    public TextThread(Context context) {
-        mContext = context;
+    private String mId;
+    private String mAddress;
+    private String mBody;
+    private String mDate;
+    private String mDateSent;
+    private String mErrorCode;
+    private String mLocked;
+    private String mPerson;
+    private String mRead;
+    private String mReplyPathPresent;
+    private String mServiceCenter;
+    private String mStatus;
+    private String mSubject;
+    private String mThreadId;
+    private String mType;
+
+    protected TextThread(Cursor c) {
+        mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+        mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
+        mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
+        mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
+        mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
+        mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
+        mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
+        mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
+        mRead =c.getString(c.getColumnIndex(Telephony.Sms.READ));
+        mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
+        mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
+        mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
+        mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
+        mThreadId = c.getString(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+        mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    /**
-     * A unique id that differentiates this thread from all others.
-     * */
-    public String getId() {
-        return Long.toString(mThreadId);
+    public List<Message> getMessages(Context context){
+        populateTexts(context);
+        return mTexts;
     }
 
-    /**
-     * Get the messages sorted by date
-     * */
-    public List<Message> getMessages() {
-        Text text = new Text(); //Text message has been created
-        List<Message> messages = new ArrayList<Message>();
-        messages.add(text);
-        text.setText("hey!");
-        return messages; //returning that text message to the list/thread
-        // ADDED FOR NULL ERROR FIX: TextListFragment.java:34
+    private void populateTexts(Context context){
+        mTexts = new ArrayList<>();
+        ContentResolver contentResolver = context.getContentResolver();
+        //final String[] projection = new String[]{"_id", "body", "address","date","person","thread_id" };
+        final String[] projection = new String[]{
+                Telephony.Sms._ID,
+                Telephony.Sms.ADDRESS,
+                Telephony.Sms.BODY,
+                Telephony.Sms.CREATOR,
+                Telephony.Sms.DATE,
+                Telephony.Sms.DATE_SENT,
+                Telephony.Sms.ERROR_CODE,
+                Telephony.Sms.LOCKED,
+                Telephony.Sms.PERSON,
+                Telephony.Sms.READ,
+                Telephony.Sms.REPLY_PATH_PRESENT,
+                Telephony.Sms.SERVICE_CENTER,
+                Telephony.Sms.SEEN,
+                Telephony.Sms.STATUS,
+                Telephony.Sms.SUBJECT,
+                Telephony.Sms.THREAD_ID,
+                Telephony.Sms.TYPE,
+        };
+        final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        //Uri uri = Uri.parse("content://mms-sms/conversations/");
+        Uri uri = Uri.parse("content://mms-sms/conversations/"+mThreadId);
+        Cursor c = contentResolver.query(uri, projection, null, null, order);
+        if (c.moveToFirst()) {
+            do {
+                mTexts.add(new Text(c));
+            } while (c.moveToNext());
+        }
+        c.close();
+    }
+
+    public String getId(){
+        return mId;
+    }
+
+    public String getAddress(){
+        return mAddress;
+    }
+
+    public String getBody(){
+        return mBody;
+    }
+
+    public String getDate(){
+        return mDate;
+    }
+
+    public String getDateSent(){
+        return mDateSent;
+    }
+
+    public String getErrorCode(){
+        return mErrorCode;
+    }
+
+    public String getLocked(){
+        return mLocked;
+    }
+
+    public String getPerson(){
+        return mPerson;
+    }
+
+    public String getRead(){
+        return mRead;
+    }
+
+    public String getReplyPathPresent(){
+        return mReplyPathPresent;
+    }
+
+    public String getServiceCenter(){
+        return mServiceCenter;
+    }
+
+    public String getStatus(){
+        return mStatus;
+    }
+
+    public String getSubject(){
+        return mSubject;
+    }
+
+    public String getThreadId(){
+        return mThreadId;
+    }
+
+    public String getType(){
+        return mType;
     }
 
     /**
      * Get the {limit} most recent messages.
      * */
     public List<Message> getMessages(int limit) {
-        Text thread = new Text(); //Text thread has been created
-        List<Message> messages = new ArrayList<Message>();
-        messages.add(thread);
-        thread.setText("Kirito");
-        return messages; //returning that text message to the list/thread
-    }
-
-    /**
-     * Return the number of messages in this thread.
-     * */
-    public int getCount() {
-        return 0;
+        return null;
     }
 
     /**
@@ -70,10 +173,10 @@ public class TextThread implements MessageThread {
      * Mark all messages in this thread as read.
      * */
     public void markRead() {
-        ContentValues values = new ContentValues();
-        values.put("read", true);
-        mContext.getContentResolver().update(Uri.parse("content://sms/inbox"), values,
-                "thread_id=" + mThreadId + " AND read=0", null);
+//        ContentValues values = new ContentValues();
+//        values.put("read", true);
+//        mContext.getContentResolver().update(Uri.parse("content://sms/inbox"), values,
+//                "thread_id=" + mThreadId + " AND read=0", null);
     }
 
     /**
@@ -96,10 +199,9 @@ public class TextThread implements MessageThread {
     public void delete(MessageCallback<Void> callback) {
 
     }
-
     @Override
     public String toString() {
-        Message mostRecent = getMessages(1).get(0);
-        return mostRecent.getSender() + ": " + mostRecent.getText();
+        //Message mostRecent = getMessages(1).get(0);
+        return "fix this shit";//mostRecent.getSender() + ": " + mostRecent.getText();
     }
 }

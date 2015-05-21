@@ -6,39 +6,23 @@ import java.util.List;
  * Represents a message. May contain data like images, voice, or just raw bytes.
  */
 public interface Message {
-    /**
-     * Return the thread id that the message belongs to.
-     * */
+    public String getId();
+    public String getAddress();
+    public String getBody();
+    public String getCreator();
+    public String getDate();
+    public String getDateSent();
+    public String getErrorCode();
+    public String getLocked();
+    public String getPerson();
+    public String getRead();
+    public String getReplyPathPresent();
+    public String getServiceCenter();
+    public String getSeen();
+    public String getStatus();
+    public String getSubject();
     public String getThreadId();
-
-    /**
-     * Return the message text.
-     *
-     * May be null if the message is nothing but data.
-     * */
-    public String getText();
-
-    /**
-     * Any data (voice, images, etc) is returned.
-     *
-     * This will likely be null in most cases.
-     * */
-    public byte[] getData();
-
-    /**
-     * Return the timestamp of the message in milliseconds
-     * */
-    public long getTimestamp();
-
-    /**
-     * Return the person who sent the message.
-     * */
-    public User getSender();
-
-    /**
-     * Return the people who received the message.
-     * */
-    public List<User> getRecipients();
+    public String getType();
 
     /**
      * Return true if the user has already seen this message.

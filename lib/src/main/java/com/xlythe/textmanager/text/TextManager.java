@@ -1,6 +1,10 @@
 package com.xlythe.textmanager.text;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.Telephony;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
@@ -16,26 +20,50 @@ import java.util.List;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager {
-    /*
-    * created local mContext from TextThread.java
-    */
-    public Context mContext;
+    private List<MessageThread> mt;
 
-    public TextManager(Context context){
-        mContext = context;
+    public TextManager(Context context) {
+        populateThreads(context);
     }
 
     /**
      * Return all message threads
      * */
     public List<MessageThread> getThreads() {
-        //created a list called "list" and copied ArrayList<MessageThread>() into it
-        List<MessageThread> list = new ArrayList<MessageThread>();
+        return mt;
+    }
 
-        //added mContext from TextThread into list
-        list.add(new TextThread(mContext));
-        
-        return list;
+    private void populateThreads(Context context){
+        mt = new ArrayList<>();
+        ContentResolver contentResolver = context.getContentResolver();
+        //final String[] projection = new String[]{"_id", "body", "address","date","person","thread_id" };
+        final String[] projection = new String[]{
+                Telephony.Sms._ID,
+                Telephony.Sms.ADDRESS,
+                Telephony.Sms.BODY,
+                Telephony.Sms.DATE,
+                Telephony.Sms.DATE_SENT,
+                Telephony.Sms.ERROR_CODE,
+                Telephony.Sms.LOCKED,
+                Telephony.Sms.PERSON,
+                Telephony.Sms.READ,
+                Telephony.Sms.REPLY_PATH_PRESENT,
+                Telephony.Sms.SERVICE_CENTER,
+                Telephony.Sms.STATUS,
+                Telephony.Sms.SUBJECT,
+                Telephony.Sms.THREAD_ID,
+                Telephony.Sms.TYPE,
+        };
+        final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        //Uri uri = Uri.parse("content://mms-sms/conversations/");
+        Uri uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+        Cursor c = contentResolver.query(uri, projection, null, null, order);
+        if (c.moveToFirst()) {
+            do {
+                mt.add(new TextThread(c));
+            } while (c.moveToNext());
+        }
+        c.close();
     }
 
     /**
@@ -54,7 +82,7 @@ public class TextManager implements MessageManager {
      * Get all messages involving that user.
      * */
     public List<Message> getMessages(User user) {
-        return new ArrayList<Message>();
+        return null;
     }
 
     /**
@@ -69,15 +97,6 @@ public class TextManager implements MessageManager {
      * */
     public List<Message> search(String text) {
         LinkedList<Message> messages = new LinkedList<Message>();
-        for(MessageThread t : getThreads()) {
-            for(Message m : t.getMessages()) {
-                if(m.getText() != null) {
-                    if(m.getText().contains(text)) {
-                        messages.add(m);
-                    }
-                }
-            }
-        }
         return messages;
     }
 
@@ -87,5 +106,4 @@ public class TextManager implements MessageManager {
     public void search(String text, MessageCallback<List<Message>> callback) {
 
     }
-
 }

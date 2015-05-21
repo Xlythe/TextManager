@@ -1,5 +1,8 @@
 package com.xlythe.textmanager.text;
 
+import android.database.Cursor;
+import android.provider.Telephony;
+
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.User;
@@ -10,94 +13,114 @@ import java.util.List;
  * Either a sms or a mms
  */
 public class Text implements Message {
-    private String mText;
-    private long mId;
-    private long mThreadId;
-    private long mTimestamp;
-    private Type mType;
 
-    public enum Type {
-        SMS, MMS
-    }
+    private String mId;
+    private String mAddress;
+    private String mBody;
+    private String mCreator;
+    private String mDate;
+    private String mDateSent;
+    private String mErrorCode;
+    private String mLocked;
+    private String mPerson;
+    private String mRead;
+    private String mReplyPathPresent;
+    private String mServiceCenter;
+    private String mSeen;
+    private String mStatus;
+    private String mSubject;
+    private String mThreadId;
+    private String mType;
 
     /**
      * We don't want anyone to create a text without using the builder
      * */
-    Text() {
-        mType = Type.SMS;
+    protected Text(Cursor c) {
+        mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+        mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
+        mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
+        mCreator = c.getString(c.getColumnIndex(Telephony.Sms.CREATOR));
+        mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
+        mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
+        mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
+        mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
+        mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
+        mRead =c.getString(c.getColumnIndex(Telephony.Sms.READ));
+        mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
+        mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
+        mSeen = c.getString(c.getColumnIndex(Telephony.Sms.SEEN));
+        mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
+        mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
+        mThreadId = c.getString(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+        mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    public long getId() {
+    public String getId(){
         return mId;
     }
 
-    protected void setId(long id) {
-        mId = id;
+    public String getAddress(){
+        return mAddress;
     }
 
-    /**
-     * Return the thread id that the message belongs to.
-     * */
-    public String getThreadId() {
-        return Long.toString(mThreadId);
+    public String getBody(){
+        return mBody;
     }
 
-    protected void setThreadId(long threadId) {
-        mThreadId = threadId;
+    public String getCreator(){
+        return mCreator;
     }
 
-    /**
-     * Return the message text.
-     *
-     * May be null if the message is nothing but data.
-     * */
-    public String getText() {
-        return mText;
+    public String getDate(){
+        return mDate;
     }
 
-    protected void setText(String text) {
-        mText = text;
+    public String getDateSent(){
+        return mDateSent;
     }
 
-    /**
-     * Any data (voice, images, etc) is returned.
-     *
-     * This will likely be null in most cases.
-     * */
-    public byte[] getData() {
-        switch(mType) {
-            case SMS:
-                // SMS is always null
-                return null;
-            case MMS:
-                return null;
-        }
-        return null;
+    public String getErrorCode(){
+        return mErrorCode;
     }
 
-    /**
-     * Return the timestamp of the message in milliseconds
-     * */
-    public long getTimestamp() {
-        return mTimestamp;
+    public String getLocked(){
+        return mLocked;
     }
 
-    protected void setTimestamp(long timestamp) {
-        mTimestamp = timestamp;
+    public String getPerson(){
+        return mPerson;
     }
 
-    /**
-     * Return the person who sent the message.
-     * */
-    public User getSender() {
-        return null;
+    public String getRead(){
+        return mRead;
     }
 
-    /**
-     * Return the people who received the message.
-     * */
-    public List<User> getRecipients() {
-        return null;
+    public String getReplyPathPresent(){
+        return mReplyPathPresent;
+    }
+
+    public String getServiceCenter(){
+        return mServiceCenter;
+    }
+
+    public String getSeen(){
+        return mSeen;
+    }
+
+    public String getStatus(){
+        return mStatus;
+    }
+
+    public String getSubject(){
+        return mSubject;
+    }
+
+    public String getThreadId(){
+        return mThreadId;
+    }
+
+    public String getType(){
+        return mType;
     }
 
     /**
@@ -169,6 +192,6 @@ public class Text implements Message {
 
     @Override
     public String toString() {
-        return getText();
+        return "fix this shit";
     }
 }

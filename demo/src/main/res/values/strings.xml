@@ -1,8 +1,0 @@
-<resources>
-
-    <string name="app_name">TextManaer Demo</string>
-    <string name="title_activity_main">TextManager Demo</string>
-
-    <string name="menu_add">Add</string>
-
-</resources>

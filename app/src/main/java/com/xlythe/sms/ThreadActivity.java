@@ -1,0 +1,59 @@
+package com.xlythe.sms;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+
+import com.xlythe.textmanager.text.TextThread;
+
+
+public class ThreadActivity extends Activity {
+    private ThreadAdapter mArrayAdapter;
+    private ListView mListView;
+    private Button mSend;
+    private EditText mMessage;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_conversation);
+
+        mListView = (ListView) findViewById(R.id.messages);
+        mSend = (Button) findViewById(R.id.send);
+        mMessage = (EditText) findViewById(R.id.message);
+
+        final TextThread mThread = (TextThread) getIntent().getSerializableExtra("EXTRA_THREAD");
+
+        mArrayAdapter = new ThreadAdapter(getBaseContext(), mThread.getMessages(getBaseContext()));
+        mListView.setAdapter(mArrayAdapter);
+
+        mSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Send.sendSMS(getBaseContext(), mThread.getAddress(), mMessage.getText().toString());
+                mMessage.setText("");
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_conversation, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
