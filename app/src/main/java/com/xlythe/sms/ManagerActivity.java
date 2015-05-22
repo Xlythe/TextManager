@@ -19,7 +19,7 @@ public class ManagerActivity extends Activity {
     private ThreadAdapter mArrayAdapter;
     private Button mCompose;
     private ListView mListView;
-    private MessageManager mManager;
+    private TextManager mManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +46,7 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra("EXTRA_THREAD", (Serializable) mManager.getThreads().get(position));
+                i.putExtra(ThreadActivity.EXTRA_THREAD, mManager.getThreads().get(position));
                 startActivity(i);
             }
         });
