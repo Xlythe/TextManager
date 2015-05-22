@@ -8,6 +8,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.TextUser;
+
 
 public class ComposeActivity extends Activity {
 
@@ -26,7 +30,12 @@ public class ComposeActivity extends Activity {
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Send.sendSMS(getBaseContext(), mNumber.getText().toString(), mMessage.getText().toString());
+                TextManager manager = TextManager.getInstance(getBaseContext());
+                manager.send(new Text.Builder(getBaseContext())
+                                .message(mMessage.getText().toString())
+                                .recipient(TextUser.get(mNumber.getText().toString()))
+                                .build()
+                );
                 mMessage.setText("");
             }
         });

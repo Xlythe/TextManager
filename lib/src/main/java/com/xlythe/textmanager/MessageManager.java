@@ -5,39 +5,41 @@ import java.util.List;
 /**
  * A generic interface for managing messages
  */
-public interface MessageManager {
+public interface MessageManager<M extends Message, T extends MessageThread, U extends User> {
     /**
      * Return all message threads
      * */
-    public List<MessageThread> getThreads();
+    List<T> getThreads();
 
     /**
      * Return all message threads
      * */
-    public void getThreads(MessageCallback<List<MessageThread>> callback);
+    void getThreads(MessageCallback<List<T>> callback);
 
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.
      * */
-    public void registerObserver();
+    void registerObserver();
 
     /**
      * Get all messages involving that user.
      * */
-    public List<Message> getMessages(User user);
+    List<M> getMessages(User user);
 
     /**
      * Get all messages involving that user.
      * */
-    public void getMessages(User user, MessageCallback<List<Message>> callback);
+    void getMessages(User user, MessageCallback<List<M>> callback);
 
     /**
      * Return all messages containing the text.
      * */
-    public List<Message> search(String text);
+    List<M> search(String text);
 
     /**
      * Return all messages containing the text.
      * */
-    public void search(String text, MessageCallback<List<Message>> callback);
+    void search(String text, MessageCallback<List<M>> callback);
+
+    void send(M message);
 }

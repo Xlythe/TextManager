@@ -1,7 +1,6 @@
 package com.xlythe.textmanager.text;
 
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -18,8 +17,11 @@ import java.util.List;
 /**
  * An SMS conversation
  */
-public class TextThread implements MessageThread, Serializable {
-    private List<Message> mTexts;
+public class TextThread implements MessageThread<Text>, Serializable {
+
+    public static TextThread parse(Cursor cursor) {
+        return new TextThread(cursor);
+    }
 
     private String mId;
     private String mAddress;
@@ -55,15 +57,8 @@ public class TextThread implements MessageThread, Serializable {
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    public List<Message> getMessages(Context context){
-        populateTexts(context);
-        return mTexts;
-    }
-
-    private void populateTexts(Context context){
-        mTexts = new ArrayList<>();
+    public Cursor getTextCursor(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
-        //final String[] projection = new String[]{"_id", "body", "address","date","person","thread_id" };
         final String[] projection = new String[]{
                 Telephony.Sms._ID,
                 Telephony.Sms.ADDRESS,
@@ -84,15 +79,22 @@ public class TextThread implements MessageThread, Serializable {
                 Telephony.Sms.TYPE,
         };
         final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
-        //Uri uri = Uri.parse("content://mms-sms/conversations/");
-        Uri uri = Uri.parse("content://mms-sms/conversations/"+mThreadId);
-        Cursor c = contentResolver.query(uri, projection, null, null, order);
+
+        Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
+
+        return contentResolver.query(uri, projection, null, null, order);
+    }
+
+    public List<Text> getMessages(Context context){
+        List<Text> list = new ArrayList<>();
+        Cursor c = getTextCursor(context);
         if (c.moveToFirst()) {
             do {
-                mTexts.add(new Text(c));
+                list.add(new Text(c));
             } while (c.moveToNext());
         }
         c.close();
+        return list;
     }
 
     public String getId(){
@@ -158,7 +160,7 @@ public class TextThread implements MessageThread, Serializable {
     /**
      * Get the {limit} most recent messages.
      * */
-    public List<Message> getMessages(int limit) {
+    public List<Text> getMessages(int limit) {
         return null;
     }
 

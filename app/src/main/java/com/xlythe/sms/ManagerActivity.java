@@ -16,7 +16,7 @@ import com.xlythe.textmanager.text.TextManager;
 import java.io.Serializable;
 
 public class ManagerActivity extends Activity {
-    private ManagerAdapter mArrayAdapter;
+    private ThreadAdapter mArrayAdapter;
     private Button mCompose;
     private ListView mListView;
     private MessageManager mManager;
@@ -26,7 +26,7 @@ public class ManagerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mManager = new TextManager(getBaseContext());
+        mManager = TextManager.getInstance(getBaseContext());
         mCompose = (Button) findViewById(R.id.compose);
         mListView = (ListView) findViewById(R.id.listView);
 
@@ -40,7 +40,7 @@ public class ManagerActivity extends Activity {
         });
 
         // Fill adapter
-        mArrayAdapter = new ManagerAdapter(getBaseContext(), mManager.getThreads());
+        mArrayAdapter = new ThreadAdapter(getBaseContext(), mManager.getThreads());
         mListView.setAdapter(mArrayAdapter);
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

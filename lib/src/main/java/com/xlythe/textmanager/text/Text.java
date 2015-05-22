@@ -1,18 +1,21 @@
 package com.xlythe.textmanager.text;
 
+import android.content.Context;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.provider.Telephony;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
-import com.xlythe.textmanager.User;
-
-import java.util.List;
 
 /**
  * Either a sms or a mms
  */
 public class Text implements Message {
+
+    public static Text parse(Cursor cursor) {
+        return new Text(cursor);
+    }
 
     private String mId;
     private String mAddress;
@@ -23,14 +26,21 @@ public class Text implements Message {
     private String mErrorCode;
     private String mLocked;
     private String mPerson;
-    private String mRead;
+    private boolean mRead;
     private String mReplyPathPresent;
     private String mServiceCenter;
-    private String mSeen;
-    private String mStatus;
+    private boolean mSeen;
+    private int mStatus;
     private String mSubject;
-    private String mThreadId;
+    private long mThreadId;
     private String mType;
+
+    /**
+     * We don't want anyone to create a text without using the builder
+     * */
+    private Text() {
+
+    }
 
     /**
      * We don't want anyone to create a text without using the builder
@@ -45,13 +55,13 @@ public class Text implements Message {
         mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
         mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
         mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
-        mRead =c.getString(c.getColumnIndex(Telephony.Sms.READ));
+        mRead = c.getInt(c.getColumnIndex(Telephony.Sms.READ)) == 1;
         mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
         mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
-        mSeen = c.getString(c.getColumnIndex(Telephony.Sms.SEEN));
-        mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
+        mSeen = c.getInt(c.getColumnIndex(Telephony.Sms.SEEN)) == 1;
+        mStatus = c.getInt(c.getColumnIndex(Telephony.Sms.STATUS));
         mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
-        mThreadId = c.getString(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+        mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
@@ -83,39 +93,15 @@ public class Text implements Message {
         return mErrorCode;
     }
 
-    public String getLocked(){
-        return mLocked;
-    }
-
     public String getPerson(){
         return mPerson;
-    }
-
-    public String getRead(){
-        return mRead;
-    }
-
-    public String getReplyPathPresent(){
-        return mReplyPathPresent;
-    }
-
-    public String getServiceCenter(){
-        return mServiceCenter;
-    }
-
-    public String getSeen(){
-        return mSeen;
-    }
-
-    public String getStatus(){
-        return mStatus;
     }
 
     public String getSubject(){
         return mSubject;
     }
 
-    public String getThreadId(){
+    public long getThreadId(){
         return mThreadId;
     }
 
@@ -123,25 +109,27 @@ public class Text implements Message {
         return mType;
     }
 
-    /**
-     * Return true if the user has already seen this message.
-     * */
-    public boolean isRead() {
-        return true;
-    }
+    public Status getStatus() {
+        switch(mStatus) {
+            case Telephony.Sms.STATUS_PENDING:
+                return Status.SENDING;
+            case Telephony.Sms.STATUS_FAILED:
+                return Status.FAILED;
+            case Telephony.Sms.STATUS_COMPLETE:
+                if (mSeen) {
+                    return Status.SEEN;
+                } else {
+                    return Status.SENT;
+                }
+            case Telephony.Sms.STATUS_NONE:
+                if (mRead) {
+                    return Status.READ;
+                } else {
+                    return Status.UNREAD;
+                }
+        }
 
-    /**
-     * Return true if this message is currently being sent.
-     * */
-    public boolean isSending() {
-        return false;
-    }
-
-    /**
-     * Return true if this message failed to send.
-     * */
-    public boolean notSent() {
-        return false;
+        throw new IllegalStateException("Could not determine Message state");
     }
 
     /**
@@ -172,26 +160,40 @@ public class Text implements Message {
 
     }
 
-    /**
-     * Send this message to the recipient.
-     *
-     * You may throw an error if the message shouldn't be sent.
-     * */
-    public void send() {
-
-    }
-
-    /**
-     * Send this message to the recipient.
-     *
-     * You may throw an error if the message shouldn't be sent.
-     * */
-    public void send(MessageCallback<Void> callback) {
-
-    }
-
     @Override
     public String toString() {
-        return "fix this shit";
+        return mBody;
+    }
+
+    public static class Builder {
+        private final Context mContext;
+        private String mMessage;
+        private TextUser mRecipient;
+
+        public Builder(Context context) {
+            mContext = context;
+        }
+
+        public Builder drawable(Drawable drawable) {
+            // TODO support mms
+            return this;
+        }
+
+        public Builder recipient(TextUser recipient) {
+            mRecipient = recipient;
+            return this;
+        }
+
+        public Builder message(String message) {
+            mMessage = message;
+            return this;
+        }
+
+        public Text build() {
+            Text text = new Text();
+            text.mBody = mMessage;
+            text.mAddress = mRecipient.getPhoneNumber();
+            return text;
+        }
     }
 }

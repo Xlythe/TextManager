@@ -16,7 +16,7 @@ public class TextUser implements User {
     /**
      * Get a User for a phone number
      * */
-    public static TextUser getUser(String phoneNumber) {
+    public static TextUser get(String phoneNumber) {
         if(!USERS.containsKey(phoneNumber)) {
             USERS.put(phoneNumber, new TextUser(phoneNumber));
         }
@@ -28,7 +28,7 @@ public class TextUser implements User {
 
     /**
      * This method is the constructor. It it called when we call "new TextUser()".
-     * We make it private because we want to force coders to use "TextUser.getUser(number)".
+     * We make it private because we want to force coders to use "TextUser.get(number)".
      * */
     private TextUser(String phoneNumber) {
         this.phoneNumber = phoneNumber;

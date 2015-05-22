@@ -1,15 +1,15 @@
 package com.xlythe.textmanager.text;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
+import android.telephony.SmsManager;
 
-import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
-import com.xlythe.textmanager.MessageThread;
 import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
@@ -19,24 +19,24 @@ import java.util.List;
 /**
  * Manages sms and mms messages
  */
-public class TextManager implements MessageManager {
-    private List<MessageThread> mt;
+public class TextManager implements MessageManager<Text, TextThread, TextUser> {
+    private static TextManager sTextManager;
 
-    public TextManager(Context context) {
-        populateThreads(context);
+    public static TextManager getInstance(Context context) {
+        if (sTextManager == null) {
+            sTextManager = new TextManager(context);
+        }
+        return sTextManager;
     }
 
-    /**
-     * Return all message threads
-     * */
-    public List<MessageThread> getThreads() {
-        return mt;
+    private Context mContext;
+
+    private TextManager(Context context) {
+        mContext = context;
     }
 
-    private void populateThreads(Context context){
-        mt = new ArrayList<>();
-        ContentResolver contentResolver = context.getContentResolver();
-        //final String[] projection = new String[]{"_id", "body", "address","date","person","thread_id" };
+    public Cursor getThreadCursor() {
+        ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection = new String[]{
                 Telephony.Sms._ID,
                 Telephony.Sms.ADDRESS,
@@ -55,25 +55,45 @@ public class TextManager implements MessageManager {
                 Telephony.Sms.TYPE,
         };
         final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
-        //Uri uri = Uri.parse("content://mms-sms/conversations/");
-        Uri uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-        Cursor c = contentResolver.query(uri, projection, null, null, order);
+
+        Uri uri;
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+        } else {
+            uri = Uri.parse("content://mms-sms/conversations/");
+        }
+
+        return contentResolver.query(uri, projection, null, null, order);
+    }
+
+    /**
+     * Return all message threads
+     * */
+    @Override
+    public List<TextThread> getThreads() {
+        List<TextThread> mt = new ArrayList<>();
+        Cursor c = getThreadCursor();
         if (c.moveToFirst()) {
             do {
                 mt.add(new TextThread(c));
             } while (c.moveToNext());
         }
         c.close();
+        return mt;
     }
 
     /**
      * Return all message threads
      * */
-    public void getThreads(MessageCallback<List<MessageThread>> callback) {}
+    @Override
+    public void getThreads(MessageCallback<List<TextThread>> callback) {
+        callback.onSuccess(getThreads());
+    }
 
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.
      * */
+    @Override
     public void registerObserver() {
 
     }
@@ -81,29 +101,47 @@ public class TextManager implements MessageManager {
     /**
      * Get all messages involving that user.
      * */
-    public List<Message> getMessages(User user) {
+    @Override
+    public List<Text> getMessages(User user) {
         return null;
     }
 
     /**
      * Get all messages involving that user.
      * */
-    public void getMessages(User user, MessageCallback<List<Message>> callback) {
-
+    @Override
+    public void getMessages(User user, MessageCallback<List<Text>> callback) {
+        callback.onSuccess(getMessages(user));
     }
 
     /**
      * Return all messages containing the text.
      * */
-    public List<Message> search(String text) {
-        LinkedList<Message> messages = new LinkedList<Message>();
+    @Override
+    public List<Text> search(String text) {
+        LinkedList<Text> messages = new LinkedList<>();
         return messages;
     }
 
     /**
      * Return all messages containing the text.
      * */
-    public void search(String text, MessageCallback<List<Message>> callback) {
+    @Override
+    public void search(String text, MessageCallback<List<Text>> callback) {
+        callback.onSuccess(search(text));
+    }
 
+    protected Context getContext() {
+        return mContext;
+    }
+
+    @Override
+    public void send(Text text) {
+        SmsManager sms = SmsManager.getDefault();
+        sms.sendTextMessage(text.getAddress(), null, text.getBody(), null, null);
+        ContentValues values = new ContentValues();
+        values.put("address", text.getAddress());
+        values.put("body", text.getBody());
+        getContext().getContentResolver().insert(Uri.parse("content://sms/sent"), values);
     }
 }
