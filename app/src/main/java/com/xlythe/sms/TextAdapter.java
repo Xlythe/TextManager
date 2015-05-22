@@ -17,14 +17,14 @@ import java.util.List;
  */
 public class TextAdapter extends ArrayAdapter<Text> {
     public TextAdapter(Context context, List<Text> values) {
-        super(context, R.layout.list_item_conversations, values);
+        super(context, R.layout.list_item_conversation, values);
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.list_item_conversations, parent, false);
+            convertView = inflater.inflate(R.layout.list_item_conversation, parent, false);
         }
 
         Text msg = getItem(position);

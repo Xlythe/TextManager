@@ -2,12 +2,14 @@ package com.xlythe.sms;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.xlythe.textmanager.MessageManager;
@@ -17,7 +19,7 @@ import java.io.Serializable;
 
 public class ManagerActivity extends Activity {
     private ThreadAdapter mArrayAdapter;
-    private Button mCompose;
+    private ImageButton mCompose;
     private ListView mListView;
     private TextManager mManager;
 
@@ -27,7 +29,7 @@ public class ManagerActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         mManager = TextManager.getInstance(getBaseContext());
-        mCompose = (Button) findViewById(R.id.compose);
+        mCompose = (ImageButton) findViewById(R.id.compose);
         mListView = (ListView) findViewById(R.id.listView);
 
         // Start Compose activity.
