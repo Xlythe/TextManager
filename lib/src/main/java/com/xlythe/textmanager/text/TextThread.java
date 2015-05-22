@@ -203,7 +203,6 @@ public class TextThread implements MessageThread<Text>, Serializable {
     }
     @Override
     public String toString() {
-        //Message mostRecent = getMessages(1).get(0);
-        return "fix this shit";//mostRecent.getSender() + ": " + mostRecent.getText();
+        return "fix this shit";
     }
 }
