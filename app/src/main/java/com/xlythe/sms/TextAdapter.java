@@ -32,16 +32,8 @@ public class TextAdapter extends ArrayAdapter<Text> {
 
         Text msg = getItem(position);
 
-        if(msg.getPerson()==null) {
-            convertView.setBackgroundResource(R.drawable.you);
-        }
-        else {
-            convertView.setBackgroundResource(R.drawable.other);
-            convertView.getBackground().setColorFilter(0xffff5722, PorterDuff.Mode.SRC_IN);
-        }
-
-        TextView number = (TextView) convertView.findViewById(R.id.number);
-        number.setText(msg.getAddress());
+//        TextView number = (TextView) convertView.findViewById(R.id.number);
+//        number.setText(msg.getAddress());
 
         TextView message = (TextView) convertView.findViewById(R.id.message);
         message.setText(msg.getBody());
@@ -49,6 +41,19 @@ public class TextAdapter extends ArrayAdapter<Text> {
         TextView date = (TextView) convertView.findViewById(R.id.date);
         String formatDate = msg.getDate();
         date.setText((new Date(Long.parseLong(formatDate))).toString());
+
+        if(msg.getPerson()==null) {
+            convertView.setBackgroundResource(R.drawable.you);
+            message.setTextColor(0xff323232);
+            date.setTextColor(0xa2000000);
+
+        }
+        else {
+            convertView.setBackgroundResource(R.drawable.other);
+            convertView.getBackground().setColorFilter(0xffff5722, PorterDuff.Mode.SRC_IN);
+            message.setTextColor(0xffffffff);
+            date.setTextColor(0xa2ffffff);
+        }
 
         return convertView;
     }
