@@ -57,7 +57,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    public Cursor getTextCursor(Context context) {
+    public CustomCursor getTextCursor(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
         final String[] projection = new String[]{
                 Telephony.Sms._ID,
@@ -82,7 +82,9 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
         Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
 
-        return contentResolver.query(uri, projection, null, null, order);
+        CustomCursor cursor = new CustomCursor(contentResolver.query(uri, projection, null, null, order));
+
+        return cursor;
     }
 
     public List<Text> getMessages(Context context){

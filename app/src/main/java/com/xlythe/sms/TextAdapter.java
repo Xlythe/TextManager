@@ -32,9 +32,6 @@ public class TextAdapter extends ArrayAdapter<Text> {
 
         Text msg = getItem(position);
 
-//        TextView number = (TextView) convertView.findViewById(R.id.number);
-//        number.setText(msg.getAddress());
-
         TextView message = (TextView) convertView.findViewById(R.id.message);
         message.setText(msg.getBody());
 

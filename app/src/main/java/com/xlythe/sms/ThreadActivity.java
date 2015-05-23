@@ -2,6 +2,7 @@ package com.xlythe.sms;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,10 +16,12 @@ import com.xlythe.textmanager.text.TextThread;
 import com.xlythe.textmanager.text.TextUser;
 
 
+
 public class ThreadActivity extends Activity {
     public static String EXTRA_THREAD = "thread";
 
-    private TextAdapter mArrayAdapter;
+    private CursorTextAdapter mTextAdapter;
+//    private TextAdapter mArrayAdapter;
     private ListView mListView;
     private Button mSend;
     private EditText mMessage;
@@ -34,8 +37,16 @@ public class ThreadActivity extends Activity {
 
         final TextThread mThread = (TextThread) getIntent().getSerializableExtra(EXTRA_THREAD);
 
-        mArrayAdapter = new TextAdapter(getBaseContext(), mThread.getMessages(getBaseContext()));
-        mListView.setAdapter(mArrayAdapter);
+//        mArrayAdapter = new TextAdapter(getBaseContext(), mThread.getMessages(getBaseContext()));
+//        mListView.setAdapter(mArrayAdapter);
+
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                mTextAdapter = new CursorTextAdapter(getBaseContext(), mThread.getTextCursor(getBaseContext()));
+                mListView.setAdapter(mTextAdapter);
+            }
+        });
 
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
