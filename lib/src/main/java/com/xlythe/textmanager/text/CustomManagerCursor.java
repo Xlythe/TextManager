@@ -7,7 +7,7 @@ import android.provider.Telephony;
 /**
  * Created by Niko on 5/23/15.
  */
-public class CustomCursor extends CursorWrapper {
+public class CustomManagerCursor extends CursorWrapper {
 
     private String mId;
     private String mAddress;
@@ -21,7 +21,7 @@ public class CustomCursor extends CursorWrapper {
     private long mThreadId;
     private String mType;
 
-    public CustomCursor(Cursor c) {
+    public CustomManagerCursor(Cursor c) {
         super(c);
     }
 

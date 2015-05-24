@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 
-import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
@@ -57,7 +56,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    public CustomCursor getTextCursor(Context context) {
+    public CustomThreadCursor getTextCursor(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
         final String[] projection = new String[]{
                 Telephony.Sms._ID,
@@ -82,9 +81,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
         Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
 
-        CustomCursor cursor = new CustomCursor(contentResolver.query(uri, projection, null, null, order));
-
-        return cursor;
+        return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
     public List<Text> getMessages(Context context){

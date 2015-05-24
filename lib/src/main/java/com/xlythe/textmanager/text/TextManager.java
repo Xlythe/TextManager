@@ -35,7 +35,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         mContext = context;
     }
 
-    public Cursor getThreadCursor() {
+    public CustomManagerCursor getThreadCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection = new String[]{
                 Telephony.Sms._ID,
@@ -63,7 +63,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
             uri = Uri.parse("content://mms-sms/conversations/");
         }
 
-        return contentResolver.query(uri, projection, null, null, order);
+        return new CustomManagerCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
     /**

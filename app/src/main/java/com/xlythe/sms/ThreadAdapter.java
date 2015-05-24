@@ -1,9 +1,7 @@
 package com.xlythe.sms;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,14 +20,14 @@ import java.util.List;
 public class ThreadAdapter extends ArrayAdapter<TextThread> {
 
     public ThreadAdapter(Context context, List<TextThread> values) {
-        super(context, R.layout.list_item_conversations, values);
+        super(context, R.layout.list_item_threads, values);
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.list_item_conversations, parent, false);
+            convertView = inflater.inflate(R.layout.list_item_threads, parent, false);
         }
 
         TextThread mt = getItem(position);

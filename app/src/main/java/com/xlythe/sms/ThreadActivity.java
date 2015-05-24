@@ -21,7 +21,6 @@ public class ThreadActivity extends Activity {
     public static String EXTRA_THREAD = "thread";
 
     private CursorTextAdapter mTextAdapter;
-//    private TextAdapter mArrayAdapter;
     private ListView mListView;
     private Button mSend;
     private EditText mMessage;
@@ -29,16 +28,13 @@ public class ThreadActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_conversation);
+        setContentView(R.layout.activity_thread);
 
         mListView = (ListView) findViewById(R.id.messages);
         mSend = (Button) findViewById(R.id.send);
         mMessage = (EditText) findViewById(R.id.message);
 
         final TextThread mThread = (TextThread) getIntent().getSerializableExtra(EXTRA_THREAD);
-
-//        mArrayAdapter = new TextAdapter(getBaseContext(), mThread.getMessages(getBaseContext()));
-//        mListView.setAdapter(mArrayAdapter);
 
         new Handler().post(new Runnable() {
             @Override
