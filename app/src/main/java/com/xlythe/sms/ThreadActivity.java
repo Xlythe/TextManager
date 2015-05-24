@@ -1,11 +1,15 @@
 package com.xlythe.sms;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -34,8 +38,15 @@ public class ThreadActivity extends Activity {
         mSend = (Button) findViewById(R.id.send);
         mMessage = (EditText) findViewById(R.id.message);
 
+        // Get thread that was clicked.
         final TextThread mThread = (TextThread) getIntent().getSerializableExtra(EXTRA_THREAD);
 
+        // Color bars to match thread color.
+        Window window = getWindow();
+        window.setStatusBarColor(mThread.getTextCursor(getBaseContext()).getColor());
+        getActionBar().setBackgroundDrawable(new ColorDrawable(mThread.getTextCursor(getBaseContext()).getColor()));
+
+        // Populate Adapter with list of texts.
         new Handler().post(new Runnable() {
             @Override
             public void run() {
@@ -44,6 +55,7 @@ public class ThreadActivity extends Activity {
             }
         });
 
+        // Send message.
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

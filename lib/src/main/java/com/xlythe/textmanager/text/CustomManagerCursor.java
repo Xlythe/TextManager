@@ -12,13 +12,17 @@ public class CustomManagerCursor extends CursorWrapper {
     private String mId;
     private String mAddress;
     private String mBody;
-    private String mCreator;
     private String mDate;
     private String mDateSent;
     private String mErrorCode;
+    private String mLocked;
     private String mPerson;
+    private String mRead;
+    private String mReplyPathPresent;
+    private String mServiceCenter;
+    private String mStatus;
     private String mSubject;
-    private long mThreadId;
+    private String mThreadId;
     private String mType;
 
     public CustomManagerCursor(Cursor c) {
@@ -38,11 +42,6 @@ public class CustomManagerCursor extends CursorWrapper {
     public String getBody(){
         mBody = this.getString(this.getColumnIndex(Telephony.Sms.BODY));
         return mBody;
-    }
-
-    public String getCreator(){
-        mCreator = this.getString(this.getColumnIndex(Telephony.Sms.CREATOR));
-        return mCreator;
     }
 
     public String getDate(){
@@ -70,13 +69,45 @@ public class CustomManagerCursor extends CursorWrapper {
         return mSubject;
     }
 
-    public long getThreadId(){
-        mThreadId = this.getLong(this.getColumnIndex(Telephony.Sms.THREAD_ID));
+    public String getThreadId(){
+        mThreadId = this.getString(this.getColumnIndex(Telephony.Sms.THREAD_ID));
         return mThreadId;
     }
 
     public String getType(){
         mType = this.getString(this.getColumnIndex(Telephony.Sms.TYPE));
         return mType;
+    }
+
+    public int getColor() {
+        int num = Integer.parseInt(getThreadId()) % 12;
+        switch (num) {
+            case 0:
+                return 0xffdb4437;
+            case 1:
+                return 0xffe91e63;
+            case 2:
+                return 0xff9c27b0;
+            case 3:
+                return 0xff3f51b5;
+            case 4:
+                return 0xff039be5;
+            case 5:
+                return 0xff4285f4;
+            case 6:
+                return 0xff0097a7;
+            case 7:
+                return 0xff009688;
+            case 8:
+                return 0xff0f9d58;
+            case 9:
+                return 0xff689f38;
+            case 10:
+                return 0xffef6c00;
+            case 11:
+                return 0xffff5722;
+            default:
+                return 0xff757575;
+        }
     }
 }

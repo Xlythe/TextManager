@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.xlythe.textmanager.text.CustomThreadCursor;
@@ -34,6 +35,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
+
         TextView message = (TextView) view.findViewById(R.id.message);
         message.setText(mCursor.getBody());
 
@@ -45,11 +47,10 @@ public class CursorTextAdapter extends CursorAdapter{
             view.setBackgroundResource(R.drawable.you);
             message.setTextColor(0xff323232);
             date.setTextColor(0xa2000000);
-
         }
         else {
             view.setBackgroundResource(R.drawable.other);
-            view.getBackground().setColorFilter(0xffff5722, PorterDuff.Mode.SRC_IN);
+            view.getBackground().setColorFilter(mCursor.getColor(), PorterDuff.Mode.SRC_IN);
             message.setTextColor(0xffffffff);
             date.setTextColor(0xa2ffffff);
         }

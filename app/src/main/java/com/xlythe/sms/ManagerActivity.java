@@ -28,6 +28,7 @@ public class ManagerActivity extends Activity {
         mCompose = (ImageButton) findViewById(R.id.compose);
         mListView = (ListView) findViewById(R.id.listView);
 
+        // Start a new Message.
         mCompose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -36,6 +37,7 @@ public class ManagerActivity extends Activity {
             }
         });
 
+        // Populate Adapter with list of threads.
         new Handler().post(new Runnable() {
             @Override
             public void run() {
@@ -44,6 +46,7 @@ public class ManagerActivity extends Activity {
             }
         });
 
+        // Start Thread Activity.
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {

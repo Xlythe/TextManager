@@ -23,6 +23,7 @@ public class ComposeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compose);
+
         mSend = (Button) findViewById(R.id.send);
         mNumber = (EditText) findViewById(R.id.number);
         mMessage = (EditText) findViewById(R.id.message);

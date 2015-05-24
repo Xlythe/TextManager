@@ -81,7 +81,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
         Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
 
-        return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order));
+        return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order), mThreadId);
     }
 
     public List<Text> getMessages(Context context){
@@ -154,38 +154,6 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
     public String getType(){
         return mType;
-    }
-
-    public int getColor() {
-        int num = Integer.parseInt(mThreadId) % 12;
-        switch (num) {
-            case 0:
-                return 0xffdb4437;
-            case 1:
-                return 0xffe91e63;
-            case 2:
-                return 0xff9c27b0;
-            case 3:
-                return 0xff3f51b5;
-            case 4:
-                return 0xff039be5;
-            case 5:
-                return 0xff4285f4;
-            case 6:
-                return 0xff0097a7;
-            case 7:
-                return 0xff009688;
-            case 8:
-                return 0xff0f9d58;
-            case 9:
-                return 0xff689f38;
-            case 10:
-                return 0xffef6c00;
-            case 11:
-                return 0xffff5722;
-            default:
-                return 0xff757575;
-        }
     }
 
     /**

@@ -2,7 +2,6 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,8 +34,7 @@ public class CursorThreadAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ImageView user = (ImageView) view.findViewById(R.id.user);
-
-        //user.getDrawable().setColorFilter(mCursor.getColor(), PorterDuff.Mode.SRC_IN);
+        user.setColorFilter(mCursor.getColor());
 
         TextView number = (TextView) view.findViewById(R.id.number);
         number.setText(mCursor.getAddress());
