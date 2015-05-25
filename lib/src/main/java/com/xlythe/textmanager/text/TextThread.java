@@ -77,7 +77,8 @@ public class TextThread implements MessageThread<Text>, Serializable {
                 Telephony.Sms.THREAD_ID,
                 Telephony.Sms.TYPE,
         };
-        final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        //final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        final String order = "date ASC";
 
         Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
 
