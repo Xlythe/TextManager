@@ -19,19 +19,33 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp" />
     <LinearLayout
+        android:layout_marginTop="16dp"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-    <EditText
-        android:id="@+id/message"
-        android:hint="Message"
-        android:layout_weight="1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    <Button
-        android:id="@+id/send"
-        android:text="Send"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <ImageButton
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:id="@+id/attach"
+            android:background="@drawable/attach"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <EditText
+            android:textColor="#323232"
+            android:id="@+id/message"
+            android:paddingLeft="8dp"
+            android:paddingRight="16dp"
+            android:hint="Send message"
+            android:background="@drawable/you"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <ImageButton
+            android:id="@+id/send"
+            android:layout_marginRight="12dp"
+            android:background="@drawable/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 </LinearLayout>

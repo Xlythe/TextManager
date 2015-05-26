@@ -46,7 +46,7 @@ public class ColorUtils {
             case 1:
                 return 0xffc2185b;
             case 2:
-                return 0xff7b1fa2;
+                return 0xff7c1f8c;
             case 3:
                 return 0xff512da8;
             case 4:

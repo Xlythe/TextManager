@@ -12,6 +12,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.xlythe.textmanager.text.Text;
@@ -26,7 +27,7 @@ public class ThreadActivity extends Activity {
 
     private CursorTextAdapter mTextAdapter;
     private ListView mListView;
-    private Button mSend;
+    private ImageButton mSend;
     private EditText mMessage;
 
     @Override
@@ -35,7 +36,7 @@ public class ThreadActivity extends Activity {
         setContentView(R.layout.activity_thread);
 
         mListView = (ListView) findViewById(R.id.messages);
-        mSend = (Button) findViewById(R.id.send);
+        mSend = (ImageButton) findViewById(R.id.send);
         mMessage = (EditText) findViewById(R.id.message);
 
         // Get thread that was clicked.
@@ -45,6 +46,7 @@ public class ThreadActivity extends Activity {
         Window window = getWindow();
         window.setStatusBarColor(ColorUtils.getDarkColor(mThread.getThreadId()));
         getActionBar().setBackgroundDrawable(new ColorDrawable(ColorUtils.getColor(mThread.getThreadId())));
+        getActionBar().setTitle(mThread.getAddress());
 
         // Populate Adapter with list of texts.
         new Handler().post(new Runnable() {
