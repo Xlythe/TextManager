@@ -88,10 +88,7 @@ public class CustomManagerCursor extends CursorWrapper {
     }
 
     private String dateFormatter(String date){
-        Long dateLong = Long.parseLong(date);
-        Long now = System.currentTimeMillis();
-        Long time = now-dateLong;
-        Log.v("time", time + "");
+        Long time = System.currentTimeMillis()-Long.parseLong(date);
         if(time<60000){
             // Just now
             return "Just now";
