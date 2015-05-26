@@ -43,8 +43,8 @@ public class ThreadActivity extends Activity {
 
         // Color bars to match thread color.
         Window window = getWindow();
-        window.setStatusBarColor(mThread.getTextCursor(getBaseContext()).getColor());
-        getActionBar().setBackgroundDrawable(new ColorDrawable(mThread.getTextCursor(getBaseContext()).getColor()));
+        window.setStatusBarColor(ColorUtils.getDarkColor(mThread.getThreadId()));
+        getActionBar().setBackgroundDrawable(new ColorDrawable(ColorUtils.getColor(mThread.getThreadId())));
 
         // Populate Adapter with list of texts.
         new Handler().post(new Runnable() {

@@ -52,9 +52,9 @@ public class CursorTextAdapter extends CursorAdapter{
         else {
             rl2.setVisibility(View.VISIBLE);
             rl.setVisibility(View.GONE);
-            rl2.getChildAt(0).getBackground().setColorFilter(mCursor.getColor(), PorterDuff.Mode.SRC_IN);
+            rl2.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(mCursor.getThreadId()), PorterDuff.Mode.SRC_IN);
             ImageView user = (ImageView) view.findViewById(R.id.user2);
-            user.setColorFilter(mCursor.getColor());
+            user.setColorFilter(ColorUtils.getColor(mCursor.getThreadId()));
             TextView message = (TextView) view.findViewById(R.id.message2);
             message.setText(mCursor.getBody());
             TextView date = (TextView) view.findViewById(R.id.date2);

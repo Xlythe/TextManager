@@ -34,7 +34,7 @@ public class CursorThreadAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ImageView user = (ImageView) view.findViewById(R.id.user);
-        user.setColorFilter(mCursor.getColor());
+        user.setColorFilter(ColorUtils.getColor(mCursor.getThreadId()));
 
         TextView number = (TextView) view.findViewById(R.id.number);
         number.setText(mCursor.getAddress());
