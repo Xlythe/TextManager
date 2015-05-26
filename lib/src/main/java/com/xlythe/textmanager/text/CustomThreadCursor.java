@@ -3,6 +3,10 @@ package com.xlythe.textmanager.text;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.provider.Telephony;
+import android.util.Log;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Niko on 5/23/15.
@@ -49,6 +53,11 @@ public class CustomThreadCursor extends CursorWrapper {
     public String getDate(){
         mDate = this.getString(this.getColumnIndex(Telephony.Sms.DATE));
         return mDate;
+    }
+
+    public String getFormattedDate(){
+        mDate = this.getString(this.getColumnIndex(Telephony.Sms.DATE));
+        return dateFormatter(mDate);
     }
 
     public String getDateSent(){
@@ -104,6 +113,45 @@ public class CustomThreadCursor extends CursorWrapper {
                 return 0xffff5722;
             default:
                 return 0xff757575;
+        }
+    }
+    private String dateFormatter(String date){
+        Long dateLong = Long.parseLong(date);
+        Long now = System.currentTimeMillis();
+        Long time = now-dateLong;
+        Log.v("time", time+"");
+        if(time<60000){
+            // Now
+            return "Now";
+        }
+        else if(time>=60000 && time<3600000){
+            // 1 min, 2 mins
+            if(time/60000==1)
+                return time/60000+" min";
+            else
+                return time/60000+" mins";
+        }
+        else if (time>=3600000 && time<7200000) {
+            // 1 hour
+            if (time / 3600000 == 1)
+                return time / 3600000 + " hour";
+            else
+                return time / 3600000 + " hours";
+        }
+        else if (time>=7200000 && time<86400000) {
+            // 3:09 PM
+            SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
+            return formatter.format(time);
+        }
+        else if (time>=86400000 && time/1000<31560000) {
+            // Apr 15, 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MMM d, h:mma");
+            return formatter.format(time);
+        }
+        else {
+            // 4/15/14 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy h:mma");
+            return formatter.format(time);
         }
     }
 }

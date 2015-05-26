@@ -47,8 +47,7 @@ public class CursorTextAdapter extends CursorAdapter{
             TextView message = (TextView) view.findViewById(R.id.message);
             message.setText(mCursor.getBody());
             TextView date = (TextView) view.findViewById(R.id.date);
-            String formatDate = mCursor.getDate();
-            date.setText((new Date(Long.parseLong(formatDate))).toString());
+            date.setText(mCursor.getFormattedDate());
         }
         else {
             rl2.setVisibility(View.VISIBLE);
@@ -59,8 +58,7 @@ public class CursorTextAdapter extends CursorAdapter{
             TextView message = (TextView) view.findViewById(R.id.message2);
             message.setText(mCursor.getBody());
             TextView date = (TextView) view.findViewById(R.id.date2);
-            String formatDate = mCursor.getDate();
-            date.setText((new Date(Long.parseLong(formatDate))).toString());
+            date.setText(mCursor.getFormattedDate());
         }
     }
 }

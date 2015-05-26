@@ -43,7 +43,6 @@ public class CursorThreadAdapter extends CursorAdapter {
         message.setText(mCursor.getBody());
 
         TextView date = (TextView) view.findViewById(R.id.date);
-        String formatDate = mCursor.getDate();
-        date.setText((new Date(Long.parseLong(formatDate))).toString());
+        date.setText(mCursor.getFormattedDate());
     }
 }
