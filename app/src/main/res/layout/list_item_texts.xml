@@ -1,23 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
+    <RelativeLayout
+        android:visibility="gone"
+        android:id="@+id/you"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginLeft="52dp"
+        android:layout_toLeftOf="@+id/icon"
+        android:background="@drawable/you">
     <TextView
         android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="8dp"
+        android:text="hiiiii hows it going things are well this is a long message to test things out"
         android:id="@+id/message"
+        android:textColor="#323232"
         android:textSize="16sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/date"
+        android:text="now"
+        android:textColor="#a2000000"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    </LinearLayout>
+    <RelativeLayout
+        android:id="@+id/icon"
+        android:layout_alignParentRight="true"
+        android:layout_width="42dp"
+        android:layout_height="42dp">
+        <ImageView
+            android:id="@+id/user"
+            android:src="@drawable/user"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <ImageView
+            android:src="@drawable/user_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+    </RelativeLayout>
+
+    <!-- new message them-->
+
+<RelativeLayout
+    android:visibility="gone"
+    android:id="@+id/them"
+    android:layout_below="@+id/you"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginRight="52dp"
+    android:layout_toRightOf="@+id/icon2"
+    android:background="@drawable/other">
+    <TextView
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="hiiiii hows it going things are well this is a long message to test things out"
+        android:id="@+id/message2"
+        android:textColor="#ffffff"
+        android:textSize="16sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <TextView
+        android:id="@+id/date2"
+        android:text="now"
+        android:textColor="#a2ffffff"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 </LinearLayout>
+<RelativeLayout
+    android:id="@+id/icon2"
+    android:layout_width="42dp"
+    android:layout_height="42dp">
+    <ImageView
+        android:id="@+id/user2"
+        android:src="@drawable/user"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <ImageView
+        android:src="@drawable/user_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</RelativeLayout>
+</RelativeLayout>
+</RelativeLayout>

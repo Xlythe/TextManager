@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -35,24 +36,31 @@ public class CursorTextAdapter extends CursorAdapter{
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-
-        TextView message = (TextView) view.findViewById(R.id.message);
-        message.setText(mCursor.getBody());
-
-        TextView date = (TextView) view.findViewById(R.id.date);
-        String formatDate = mCursor.getDate();
-        date.setText((new Date(Long.parseLong(formatDate))).toString());
+        RelativeLayout rl = (RelativeLayout) view.findViewById(R.id.you);
+        RelativeLayout rl2 = (RelativeLayout) view.findViewById(R.id.them);
 
         if(mCursor.getPerson()==null) {
-            view.setBackgroundResource(R.drawable.you);
-            message.setTextColor(0xff323232);
-            date.setTextColor(0xa2000000);
+            rl.setVisibility(View.VISIBLE);
+            rl2.setVisibility(View.GONE);
+            ImageView user = (ImageView) view.findViewById(R.id.user);
+            user.setColorFilter(0xff757575);
+            TextView message = (TextView) view.findViewById(R.id.message);
+            message.setText(mCursor.getBody());
+            TextView date = (TextView) view.findViewById(R.id.date);
+            String formatDate = mCursor.getDate();
+            date.setText((new Date(Long.parseLong(formatDate))).toString());
         }
         else {
-            view.setBackgroundResource(R.drawable.other);
-            view.getBackground().setColorFilter(mCursor.getColor(), PorterDuff.Mode.SRC_IN);
-            message.setTextColor(0xffffffff);
-            date.setTextColor(0xa2ffffff);
+            rl2.setVisibility(View.VISIBLE);
+            rl.setVisibility(View.GONE);
+            rl2.getChildAt(0).getBackground().setColorFilter(mCursor.getColor(), PorterDuff.Mode.SRC_IN);
+            ImageView user = (ImageView) view.findViewById(R.id.user2);
+            user.setColorFilter(mCursor.getColor());
+            TextView message = (TextView) view.findViewById(R.id.message2);
+            message.setText(mCursor.getBody());
+            TextView date = (TextView) view.findViewById(R.id.date2);
+            String formatDate = mCursor.getDate();
+            date.setText((new Date(Long.parseLong(formatDate))).toString());
         }
     }
 }
