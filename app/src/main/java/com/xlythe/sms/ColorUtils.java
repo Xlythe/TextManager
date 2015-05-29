@@ -4,8 +4,8 @@ package com.xlythe.sms;
  * Created by Niko on 5/26/15.
  */
 public class ColorUtils {
-    public static int getColor(String threadId) {
-        int num = Integer.parseInt(threadId) % 13;
+    public static int getColor(long threadId) {
+        int num = (int) threadId % 13;
         switch (num) {
             case 0:
                 return 0xffdb4437;
@@ -38,8 +38,8 @@ public class ColorUtils {
         }
     }
 
-    public static int getDarkColor(String threadId) {
-        int num = Integer.parseInt(threadId) % 13;
+    public static int getDarkColor(long threadId) {
+        int num = (int) threadId % 13;
         switch (num) {
             case 0:
                 return 0xffaf362c;

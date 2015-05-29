@@ -35,7 +35,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
     private String mServiceCenter;
     private String mStatus;
     private String mSubject;
-    private String mThreadId;
+    private long mThreadId;
     private String mType;
 
     protected TextThread(Cursor c) {
@@ -52,7 +52,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
         mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
         mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
         mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
-        mThreadId = c.getString(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+        mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
@@ -149,7 +149,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
         return mSubject;
     }
 
-    public String getThreadId(){
+    public long getThreadId(){
         return mThreadId;
     }
 

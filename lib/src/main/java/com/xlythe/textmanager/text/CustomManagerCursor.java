@@ -25,7 +25,7 @@ public class CustomManagerCursor extends CursorWrapper {
     private String mServiceCenter;
     private String mStatus;
     private String mSubject;
-    private String mThreadId;
+    private long mThreadId;
     private String mType;
 
     public CustomManagerCursor(Cursor c) {
@@ -77,8 +77,8 @@ public class CustomManagerCursor extends CursorWrapper {
         return mSubject;
     }
 
-    public String getThreadId(){
-        mThreadId = this.getString(this.getColumnIndex(Telephony.Sms.THREAD_ID));
+    public long getThreadId(){
+        mThreadId = this.getLong(this.getColumnIndex(Telephony.Sms.THREAD_ID));
         return mThreadId;
     }
 

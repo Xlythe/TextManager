@@ -5,6 +5,8 @@ import android.database.CursorWrapper;
 import android.provider.Telephony;
 import android.util.Log;
 
+import com.xlythe.textmanager.Message;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -22,10 +24,13 @@ public class CustomThreadCursor extends CursorWrapper {
     private String mErrorCode;
     private String mPerson;
     private String mSubject;
-    private String mThreadId;
-    private String mType;
+    private long mThreadId;
+    private int mType;
+    private int mStatus;
+    private boolean mRead;
+    private boolean mSeen;
 
-    public CustomThreadCursor(Cursor c, String threadId) {
+    public CustomThreadCursor(Cursor c, long threadId) {
         super(c);
         mThreadId = threadId;
     }
@@ -48,6 +53,46 @@ public class CustomThreadCursor extends CursorWrapper {
     public String getCreator(){
         mCreator = this.getString(this.getColumnIndex(Telephony.Sms.CREATOR));
         return mCreator;
+    }
+
+    public Message.Status getStatus() {
+        mStatus = this.getInt(this.getColumnIndex(Telephony.Sms.STATUS));
+        mRead = this.getInt(this.getColumnIndex(Telephony.Sms.READ)) == 1;
+        mSeen = this.getInt(this.getColumnIndex(Telephony.Sms.SEEN)) == 1;
+        switch(mStatus) {
+            case Telephony.Sms.STATUS_PENDING:
+                return Message.Status.SENDING;
+            case Telephony.Sms.STATUS_FAILED:
+                return Message.Status.FAILED;
+            case Telephony.Sms.STATUS_COMPLETE:
+                if (mSeen) {
+                    return Message.Status.SEEN;
+                } else {
+                    return Message.Status.SENT;
+                }
+            case Telephony.Sms.STATUS_NONE:
+                if (mRead) {
+                    return Message.Status.READ;
+                } else {
+                    return Message.Status.UNREAD;
+                }
+        }
+        throw new IllegalStateException("Could not determine Message state");
+    }
+
+    public boolean sentByUser(){
+        mType = getType();
+        switch (mType) {
+            case Telephony.Sms.MESSAGE_TYPE_INBOX:
+                return false;
+            case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
+            case Telephony.Sms.MESSAGE_TYPE_FAILED:
+            case Telephony.Sms.MESSAGE_TYPE_QUEUED:
+            case Telephony.Sms.MESSAGE_TYPE_SENT:
+            case Telephony.Sms.MESSAGE_TYPE_DRAFT:
+                return true;
+        }
+        return false;
     }
 
     public String getDate(){
@@ -80,12 +125,12 @@ public class CustomThreadCursor extends CursorWrapper {
         return mSubject;
     }
 
-    public String getThreadId(){
+    public long getThreadId(){
         return mThreadId;
     }
 
-    public String getType(){
-        mType = this.getString(this.getColumnIndex(Telephony.Sms.TYPE));
+    public int getType(){
+        mType = this.getInt(this.getColumnIndex(Telephony.Sms.TYPE));
         return mType;
     }
 

@@ -39,7 +39,7 @@ public class CursorTextAdapter extends CursorAdapter{
         RelativeLayout rl = (RelativeLayout) view.findViewById(R.id.you);
         RelativeLayout rl2 = (RelativeLayout) view.findViewById(R.id.them);
 
-        if(mCursor.getPerson()==null) {
+        if(mCursor.sentByUser()) {
             rl.setVisibility(View.VISIBLE);
             rl2.setVisibility(View.GONE);
             ImageView user = (ImageView) view.findViewById(R.id.user);
