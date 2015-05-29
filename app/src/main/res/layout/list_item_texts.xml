@@ -15,11 +15,10 @@
         android:layout_toLeftOf="@+id/icon"
         android:background="@drawable/you">
     <TextView
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="hiiiii hows it going things are well this is a long message to test things out"
+        android:layout_marginBottom="4dp"
         android:id="@+id/message"
         android:textColor="#323232"
         android:textSize="16sp"
@@ -27,11 +26,11 @@
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/date"
-        android:text="now"
-        android:textColor="#a2000000"
+        android:textColor="#7a000000"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="12dp"
+        android:textSize="12sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     </LinearLayout>
@@ -68,11 +67,10 @@
     android:layout_toRightOf="@+id/icon2"
     android:background="@drawable/other">
     <TextView
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="hiiiii hows it going things are well this is a long message to test things out"
+        android:layout_marginBottom="4dp"
         android:id="@+id/message2"
         android:textColor="#ffffff"
         android:textSize="16sp"
@@ -80,11 +78,11 @@
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/date2"
-        android:text="now"
         android:textColor="#a2ffffff"
+        android:textSize="12sp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="12dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 </LinearLayout>

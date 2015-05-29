@@ -90,7 +90,10 @@ public class CustomThreadCursor extends CursorWrapper {
     }
 
     private String dateFormatter(String date){
-        Long time = System.currentTimeMillis()-Long.parseLong(date);
+        Long lDate = Long.parseLong(date);
+        Long time = System.currentTimeMillis()-lDate;
+        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
+
         if(time<60000){
             // Now
             return "Now";
@@ -109,20 +112,25 @@ public class CustomThreadCursor extends CursorWrapper {
             else
                 return time / 3600000 + " hours";
         }
-        else if (time>=7200000 && time<86400000) {
+        else if (time>=7200000 && f.format(lDate).equals(f.format(System.currentTimeMillis()))) {
             // 3:09 PM
             SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
-            return formatter.format(time);
+            return formatter.format(lDate);
         }
-        else if (time>=86400000 && time/1000<31560000) {
+        else if (time<604800000) {
+            //Mon 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE h:mma");
+            return formatter.format(lDate);
+        }
+        else if (time>=604800000 && time/1000<31560000) {
             // Apr 15, 3:09PM
             SimpleDateFormat formatter = new SimpleDateFormat("MMM d, h:mma");
-            return formatter.format(time);
+            return formatter.format(lDate);
         }
         else {
             // 4/15/14 3:09PM
             SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy h:mma");
-            return formatter.format(time);
+            return formatter.format(lDate);
         }
     }
 }
