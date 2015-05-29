@@ -53,8 +53,7 @@ public class CustomManagerCursor extends CursorWrapper {
     }
 
     public String getFormattedDate(){
-        mDate = this.getString(this.getColumnIndex(Telephony.Sms.DATE));
-        return dateFormatter(mDate);
+        return dateFormatter(getDate());
     }
 
     public String getDateSent(){
