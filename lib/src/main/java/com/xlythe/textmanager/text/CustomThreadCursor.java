@@ -1,7 +1,11 @@
 package com.xlythe.textmanager.text;
 
+import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
+import android.net.Uri;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.util.Log;
 
@@ -29,6 +33,7 @@ public class CustomThreadCursor extends CursorWrapper {
     private int mStatus;
     private boolean mRead;
     private boolean mSeen;
+    private String mName;
 
     public CustomThreadCursor(Cursor c, long threadId) {
         super(c);
