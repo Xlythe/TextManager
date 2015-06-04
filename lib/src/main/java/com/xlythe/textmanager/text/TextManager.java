@@ -21,7 +21,13 @@ import java.util.List;
  */
 public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     private static TextManager sTextManager;
+    private Context mContext;
 
+    /**
+     *
+     * @param context
+     * @return
+     */
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
             sTextManager = new TextManager(context);
@@ -29,12 +35,18 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         return sTextManager;
     }
 
-    private Context mContext;
-
+    /**
+     *
+     * @param context
+     */
     private TextManager(Context context) {
         mContext = context;
     }
 
+    /**
+     *
+     * @return
+     */
     public CustomManagerCursor getThreadCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection = new String[]{
@@ -67,8 +79,9 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     }
 
     /**
-     * Return all message threads
-     * */
+     *
+     * @return
+     */
     @Override
     public List<TextThread> getThreads() {
         List<TextThread> mt = new ArrayList<>();
@@ -83,8 +96,9 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     }
 
     /**
-     * Return all message threads
-     * */
+     *
+     * @param callback
+     */
     @Override
     public void getThreads(MessageCallback<List<TextThread>> callback) {
         callback.onSuccess(getThreads());
@@ -99,24 +113,30 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     }
 
     /**
-     * Get all messages involving that user.
-     * */
+     *
+     * @param user
+     * @return
+     */
     @Override
     public List<Text> getMessages(User user) {
         return null;
     }
 
     /**
-     * Get all messages involving that user.
-     * */
+     *
+     * @param user
+     * @param callback
+     */
     @Override
     public void getMessages(User user, MessageCallback<List<Text>> callback) {
         callback.onSuccess(getMessages(user));
     }
 
     /**
-     * Return all messages containing the text.
-     * */
+     *
+     * @param text
+     * @return
+     */
     @Override
     public List<Text> search(String text) {
         LinkedList<Text> messages = new LinkedList<>();
@@ -124,17 +144,27 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     }
 
     /**
-     * Return all messages containing the text.
-     * */
+     *
+     * @param text
+     * @param callback
+     */
     @Override
     public void search(String text, MessageCallback<List<Text>> callback) {
         callback.onSuccess(search(text));
     }
 
+    /**
+     *
+     * @return
+     */
     protected Context getContext() {
         return mContext;
     }
 
+    /**
+     *
+     * @param text
+     */
     @Override
     public void send(Text text) {
         SmsManager sms = SmsManager.getDefault();
