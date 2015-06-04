@@ -156,6 +156,10 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         mContext.getContentResolver().update(uri, values, clausole, null);
     }
 
+    public void markRead(MessageCallback<Void> callback){
+
+    }
+
     public List<Text> getMessages(int limit) {
         return null;
     }

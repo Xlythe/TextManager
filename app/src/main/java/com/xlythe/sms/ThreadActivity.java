@@ -63,9 +63,8 @@ public class ThreadActivity extends Activity {
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> av, View v, int position, long id) {
-                //Text text = ((CustomTextCursor)av.getItemAtPosition(position)).getText();
                 Text text = (Text) v.getTag();
-                mManager.delete(text);
+                //mManager.delete(text);
                 return true;
             }
         });
