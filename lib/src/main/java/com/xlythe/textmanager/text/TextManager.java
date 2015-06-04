@@ -36,30 +36,35 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
 
     public CustomThreadCursor getThreadCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection = new String[]{
-                Telephony.Sms._ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.DATE,
-                Telephony.Sms.DATE_SENT,
-                Telephony.Sms.ERROR_CODE,
-                Telephony.Sms.LOCKED,
-                Telephony.Sms.PERSON,
-                Telephony.Sms.READ,
-                Telephony.Sms.REPLY_PATH_PRESENT,
-                Telephony.Sms.SERVICE_CENTER,
-                Telephony.Sms.STATUS,
-                Telephony.Sms.SUBJECT,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.TYPE,
-        };
-        final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        final String[] projection;
+        final Uri uri;
+        final String order;
 
-        Uri uri;
         if (android.os.Build.VERSION.SDK_INT >= 19) {
+            projection = new String[]{
+                    Telephony.Sms._ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.DATE,
+                    Telephony.Sms.DATE_SENT,
+                    Telephony.Sms.ERROR_CODE,
+                    Telephony.Sms.LOCKED,
+                    Telephony.Sms.PERSON,
+                    Telephony.Sms.READ,
+                    Telephony.Sms.REPLY_PATH_PRESENT,
+                    Telephony.Sms.SERVICE_CENTER,
+                    Telephony.Sms.STATUS,
+                    Telephony.Sms.SUBJECT,
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Sms.TYPE,
+            };
             uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-        } else {
+            order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        }
+        else {
+            projection = new String[]{};
             uri = Uri.parse("content://mms-sms/conversations/");
+            order = "date DESC";
         }
 
         return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order));
@@ -85,30 +90,36 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
 
     public CustomTextCursor getTextCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection = new String[]{
-                Telephony.Sms._ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.CREATOR,
-                Telephony.Sms.DATE,
-                Telephony.Sms.DATE_SENT,
-                Telephony.Sms.ERROR_CODE,
-                Telephony.Sms.LOCKED,
-                Telephony.Sms.PERSON,
-                Telephony.Sms.READ,
-                Telephony.Sms.REPLY_PATH_PRESENT,
-                Telephony.Sms.SERVICE_CENTER,
-                Telephony.Sms.SEEN,
-                Telephony.Sms.STATUS,
-                Telephony.Sms.SUBJECT,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.TYPE,
-        };
-        //final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        final String[] projection;
+        final Uri uri;
         final String order = "date ASC";
 
-        Uri uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            projection = new String[]{
+                    Telephony.Sms._ID,
+                    Telephony.Sms.ADDRESS,
+                    Telephony.Sms.BODY,
+                    Telephony.Sms.CREATOR,
+                    Telephony.Sms.DATE,
+                    Telephony.Sms.DATE_SENT,
+                    Telephony.Sms.ERROR_CODE,
+                    Telephony.Sms.LOCKED,
+                    Telephony.Sms.PERSON,
+                    Telephony.Sms.READ,
+                    Telephony.Sms.REPLY_PATH_PRESENT,
+                    Telephony.Sms.SERVICE_CENTER,
+                    Telephony.Sms.SEEN,
+                    Telephony.Sms.STATUS,
+                    Telephony.Sms.SUBJECT,
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Sms.TYPE,
+            };
+            uri = Uri.parse("content://mms-sms/conversations/" + threadId);
+        }
+        else {
+            projection = new String[]{};
+            uri = Uri.parse("content://mms-sms/conversations/" + threadId);
+        }
         return new CustomTextCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
@@ -157,11 +168,9 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         callback.onSuccess(getMessages(user));
     }
 
-
     @Override
     public List<Text> search(String text) {
-        LinkedList<Text> messages = new LinkedList<>();
-        return messages;
+        return new LinkedList<>();
     }
 
     @Override

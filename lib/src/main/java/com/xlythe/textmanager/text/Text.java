@@ -10,16 +10,12 @@ import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
- * Either a sms or a mms
+ * Either an sms or an mms
  */
 public class Text implements Message {
-
-    public static Text parse(Cursor cursor) {
-        return new Text(cursor);
-    }
-
     private String mId;
     private String mAddress;
     private String mBody;
@@ -49,23 +45,25 @@ public class Text implements Message {
      * We don't want anyone to create a text without using the builder
      * */
     protected Text(Cursor c) {
-        mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
-        mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
-        mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
-        mCreator = c.getString(c.getColumnIndex(Telephony.Sms.CREATOR));
-        mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
-        mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
-        mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
-        mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
-        mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
-        mRead = c.getInt(c.getColumnIndex(Telephony.Sms.READ)) == 1;
-        mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
-        mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
-        mSeen = c.getInt(c.getColumnIndex(Telephony.Sms.SEEN)) == 1;
-        mStatus = c.getInt(c.getColumnIndex(Telephony.Sms.STATUS));
-        mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
-        mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
-        mType = c.getInt(c.getColumnIndex(Telephony.Sms.TYPE));
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+            mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
+            mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
+            mCreator = c.getString(c.getColumnIndex(Telephony.Sms.CREATOR));
+            mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
+            mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
+            mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
+            mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
+            mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
+            mRead = c.getInt(c.getColumnIndex(Telephony.Sms.READ)) == 1;
+            mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
+            mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
+            mSeen = c.getInt(c.getColumnIndex(Telephony.Sms.SEEN)) == 1;
+            mStatus = c.getInt(c.getColumnIndex(Telephony.Sms.STATUS));
+            mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
+            mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+            mType = c.getInt(c.getColumnIndex(Telephony.Sms.TYPE));
+        }
     }
 
     public String getId(){

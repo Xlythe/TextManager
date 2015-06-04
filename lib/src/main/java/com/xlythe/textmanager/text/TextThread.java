@@ -18,11 +18,6 @@ import java.util.List;
  * An SMS conversation
  */
 public class TextThread implements MessageThread<Text>, Serializable {
-
-    public static TextThread parse(Cursor cursor) {
-        return new TextThread(cursor);
-    }
-
     private String mId;
     private String mAddress;
     private String mBody;
@@ -40,21 +35,23 @@ public class TextThread implements MessageThread<Text>, Serializable {
     private String mType;
 
     protected TextThread(Cursor c) {
-        mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
-        mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
-        mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
-        mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
-        mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
-        mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
-        mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
-        mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
-        mRead =c.getString(c.getColumnIndex(Telephony.Sms.READ));
-        mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
-        mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
-        mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
-        mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
-        mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
-        mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+            mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
+            mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
+            mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
+            mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
+            mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
+            mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
+            mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
+            mRead =c.getString(c.getColumnIndex(Telephony.Sms.READ));
+            mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
+            mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
+            mStatus = c.getString(c.getColumnIndex(Telephony.Sms.STATUS));
+            mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
+            mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
+            mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
+        }
     }
 
     public String getId(){
