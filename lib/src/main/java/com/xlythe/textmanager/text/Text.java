@@ -14,8 +14,8 @@ import com.xlythe.textmanager.MessageCallback;
  */
 public class Text implements Message {
 
-    public static Text parse(Cursor cursor, Context context) {
-        return new Text(cursor, context);
+    public static Text parse(Cursor cursor) {
+        return new Text(cursor);
     }
 
     private String mId;
@@ -35,7 +35,6 @@ public class Text implements Message {
     private String mSubject;
     private long mThreadId;
     private String mType;
-    private Context mContext;
 
     /**
      * We don't want anyone to create a text without using the builder
@@ -47,7 +46,7 @@ public class Text implements Message {
     /**
      * We don't want anyone to create a text without using the builder
      * */
-    protected Text(Cursor c, Context context) {
+    protected Text(Cursor c) {
         mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
         mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
         mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
@@ -65,7 +64,6 @@ public class Text implements Message {
         mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
         mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
-        mContext = context;
     }
 
     public String getId(){
@@ -146,23 +144,6 @@ public class Text implements Message {
      * Mark this message as having been read.
      * */
     public void markAsRead(MessageCallback<Void> callback) {
-
-    }
-
-    /**
-     * Deletes this message.
-     * */
-    public void delete() {
-        String clausole = "_ID = ";
-        clausole = clausole + getId();
-        Uri uri = Uri.parse("content://mms-sms/conversations/"+getThreadId());
-        mContext.getContentResolver().delete(uri, clausole, null);
-    }
-
-    /**
-     * Deletes this message.
-     * */
-    public void delete(MessageCallback<Void> callback) {
 
     }
 

@@ -24,14 +24,4 @@ public interface Message {
      * Mark this message as having been read.
      * */
     void markAsRead(MessageCallback<Void> callback);
-
-    /**
-     * Deletes this message.
-     * */
-    void delete();
-
-    /**
-     * Deletes this message.
-     * */
-    void delete(MessageCallback<Void> callback);
 }

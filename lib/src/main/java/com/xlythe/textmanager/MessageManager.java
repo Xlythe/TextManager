@@ -1,5 +1,7 @@
 package com.xlythe.textmanager;
 
+import android.content.Context;
+
 import java.util.List;
 
 /**
@@ -15,6 +17,16 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
      * Return all message threads
      * */
     void getThreads(MessageCallback<List<T>> callback);
+
+    /**
+     * Get the messages sorted by date
+     * */
+    List<M> getMessages(long threadId);
+
+    /**
+     * Get the {limit} most recent messages.
+     * */
+    List<M> getMessages(int limit);
 
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.

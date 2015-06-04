@@ -56,47 +56,6 @@ public class TextThread implements MessageThread<Text>, Serializable {
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
-    public CustomThreadCursor getTextCursor(Context context) {
-        ContentResolver contentResolver = context.getContentResolver();
-        final String[] projection = new String[]{
-                Telephony.Sms._ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.CREATOR,
-                Telephony.Sms.DATE,
-                Telephony.Sms.DATE_SENT,
-                Telephony.Sms.ERROR_CODE,
-                Telephony.Sms.LOCKED,
-                Telephony.Sms.PERSON,
-                Telephony.Sms.READ,
-                Telephony.Sms.REPLY_PATH_PRESENT,
-                Telephony.Sms.SERVICE_CENTER,
-                Telephony.Sms.SEEN,
-                Telephony.Sms.STATUS,
-                Telephony.Sms.SUBJECT,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.TYPE,
-        };
-        //final String order = Telephony.Sms.DEFAULT_SORT_ORDER;
-        final String order = "date ASC";
-
-        Uri uri = Uri.parse("content://mms-sms/conversations/" + mThreadId);
-
-        return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order), mThreadId);
-    }
-
-    public List<Text> getMessages(Context context){
-        List<Text> list = new ArrayList<>();
-        Cursor c = getTextCursor(context);
-        if (c.moveToFirst()) {
-            do {
-                list.add(new Text(c, context));
-            } while (c.moveToNext());
-        }
-        c.close();
-        return list;
-    }
-
     public String getId(){
         return mId;
     }
@@ -157,12 +116,6 @@ public class TextThread implements MessageThread<Text>, Serializable {
         return mType;
     }
 
-    /**
-     * Get the {limit} most recent messages.
-     * */
-    public List<Text> getMessages(int limit) {
-        return null;
-    }
 
     /**
      * Return the number of unread messages in this thread.

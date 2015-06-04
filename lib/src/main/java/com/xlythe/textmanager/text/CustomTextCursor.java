@@ -9,32 +9,39 @@ import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.util.Log;
 
+import com.xlythe.textmanager.Message;
+
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Niko on 5/23/15.
  */
-public class CustomManagerCursor extends CursorWrapper {
+public class CustomTextCursor extends CursorWrapper {
 
     private String mId;
     private String mAddress;
     private String mBody;
+    private String mCreator;
     private String mDate;
     private String mDateSent;
     private String mErrorCode;
-    private String mLocked;
     private String mPerson;
-    private String mRead;
-    private String mReplyPathPresent;
-    private String mServiceCenter;
-    private String mStatus;
     private String mSubject;
     private long mThreadId;
-    private String mType;
+    private int mType;
+    private int mStatus;
+    private boolean mRead;
+    private boolean mSeen;
     private String mName;
 
-    public CustomManagerCursor(Cursor c) {
+    public CustomTextCursor(Cursor c, long threadId) {
         super(c);
+        mThreadId = threadId;
+    }
+
+    public Text getText(){
+        return new Text(this);
     }
 
     public String getId(){
@@ -50,6 +57,51 @@ public class CustomManagerCursor extends CursorWrapper {
     public String getBody(){
         mBody = this.getString(this.getColumnIndex(Telephony.Sms.BODY));
         return mBody;
+    }
+
+    public String getCreator(){
+        mCreator = this.getString(this.getColumnIndex(Telephony.Sms.CREATOR));
+        return mCreator;
+    }
+
+    public Message.Status getStatus() {
+        mStatus = this.getInt(this.getColumnIndex(Telephony.Sms.STATUS));
+        mRead = this.getInt(this.getColumnIndex(Telephony.Sms.READ)) == 1;
+        mSeen = this.getInt(this.getColumnIndex(Telephony.Sms.SEEN)) == 1;
+        switch(mStatus) {
+            case Telephony.Sms.STATUS_PENDING:
+                return Message.Status.SENDING;
+            case Telephony.Sms.STATUS_FAILED:
+                return Message.Status.FAILED;
+            case Telephony.Sms.STATUS_COMPLETE:
+                if (mSeen) {
+                    return Message.Status.SEEN;
+                } else {
+                    return Message.Status.SENT;
+                }
+            case Telephony.Sms.STATUS_NONE:
+                if (mRead) {
+                    return Message.Status.READ;
+                } else {
+                    return Message.Status.UNREAD;
+                }
+        }
+        throw new IllegalStateException("Could not determine Message state");
+    }
+
+    public boolean sentByUser(){
+        mType = getType();
+        switch (mType) {
+            case Telephony.Sms.MESSAGE_TYPE_INBOX:
+                return false;
+            case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
+            case Telephony.Sms.MESSAGE_TYPE_FAILED:
+            case Telephony.Sms.MESSAGE_TYPE_QUEUED:
+            case Telephony.Sms.MESSAGE_TYPE_SENT:
+            case Telephony.Sms.MESSAGE_TYPE_DRAFT:
+                return true;
+        }
+        return false;
     }
 
     public String getDate(){
@@ -82,12 +134,11 @@ public class CustomManagerCursor extends CursorWrapper {
     }
 
     public long getThreadId(){
-        mThreadId = this.getLong(this.getColumnIndex(Telephony.Sms.THREAD_ID));
         return mThreadId;
     }
 
-    public String getType(){
-        mType = this.getString(this.getColumnIndex(Telephony.Sms.TYPE));
+    public int getType(){
+        mType = this.getInt(this.getColumnIndex(Telephony.Sms.TYPE));
         return mType;
     }
 
@@ -97,8 +148,8 @@ public class CustomManagerCursor extends CursorWrapper {
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
 
         if(time<60000){
-            // Just now
-            return "Just now";
+            // Now
+            return "Now";
         }
         else if(time>=60000 && time<3600000){
             // 1 min, 2 mins
@@ -120,18 +171,18 @@ public class CustomManagerCursor extends CursorWrapper {
             return formatter.format(lDate);
         }
         else if (time<604800000) {
-            // Mon
-            SimpleDateFormat formatter = new SimpleDateFormat("EEE");
+            //Mon 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE h:mma");
             return formatter.format(lDate);
         }
         else if (time>=604800000 && time/1000<31560000) {
-            // Apr 15
-            SimpleDateFormat formatter = new SimpleDateFormat("MMM d");
+            // Apr 15, 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MMM d, h:mma");
             return formatter.format(lDate);
         }
         else {
-            // 4/15/14
-            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+            // 4/15/14 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy h:mma");
             return formatter.format(lDate);
         }
     }

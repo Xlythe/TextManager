@@ -3,7 +3,6 @@ package com.xlythe.sms;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.xlythe.textmanager.text.CustomThreadCursor;
-
-import java.util.Date;
+import com.xlythe.textmanager.text.CustomTextCursor;
 
 /**
  * Created by Niko on 5/23/15.
@@ -23,9 +20,9 @@ import java.util.Date;
 
 public class CursorTextAdapter extends CursorAdapter{
 
-    private CustomThreadCursor mCursor;
+    private CustomTextCursor mCursor;
 
-    public CursorTextAdapter(Context context, CustomThreadCursor c) {
+    public CursorTextAdapter(Context context, CustomTextCursor c) {
         super(context, c);
         mCursor = c;
     }

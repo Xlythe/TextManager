@@ -10,17 +10,6 @@ import java.util.List;
  * This is a conversation (Like a chain of emails).
  */
 public interface MessageThread<M extends Message> {
-
-    /**
-     * Get the messages sorted by date
-     * */
-    List<M> getMessages(Context context);
-
-    /**
-     * Get the {limit} most recent messages.
-     * */
-    List<M> getMessages(int limit);
-
     /**
      * Return the number of unread messages in this thread.
      * */

@@ -51,7 +51,7 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra(ThreadActivity.EXTRA_THREAD, mManager.getThreads().get(position));
+                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, mManager.getThreads().get(position).getThreadId());
                 startActivity(i);
             }
         });

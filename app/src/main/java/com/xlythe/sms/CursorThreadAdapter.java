@@ -9,18 +9,16 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.xlythe.textmanager.text.CustomManagerCursor;
-
-import java.util.Date;
+import com.xlythe.textmanager.text.CustomThreadCursor;
 
 /**
  * Created by Niko on 5/24/15.
  */
 public class CursorThreadAdapter extends CursorAdapter {
 
-    private CustomManagerCursor mCursor;
+    private CustomThreadCursor mCursor;
 
-    public CursorThreadAdapter(Context context, CustomManagerCursor c) {
+    public CursorThreadAdapter(Context context, CustomThreadCursor c) {
         super(context, c);
         mCursor = c;
     }
