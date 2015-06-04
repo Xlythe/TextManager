@@ -63,13 +63,9 @@ public class ThreadActivity extends Activity {
 
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
-            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-                String clausole = "_ID = ";
-                Text n = mThread.getMessages(getBaseContext()).get(pos);
-                clausole = clausole + n.getId();
-                Uri uri = Uri.parse("content://mms-sms/conversations/" + mThread.getThreadId());
-                Log.v("long clicked", "pos: " + clausole + " URI=" + uri);
-                getContentResolver().delete(uri, clausole, null);
+            public boolean onItemLongClick(AdapterView<?> av, View v, int position, long id) {
+                Text text = mThread.getMessages(getBaseContext()).get(position);
+                text.delete();
                 return true;
             }
         });

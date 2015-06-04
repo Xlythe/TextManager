@@ -90,7 +90,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
         Cursor c = getTextCursor(context);
         if (c.moveToFirst()) {
             do {
-                list.add(new Text(c));
+                list.add(new Text(c, context));
             } while (c.moveToNext());
         }
         c.close();

@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.provider.Telephony;
 
 import com.xlythe.textmanager.Message;
@@ -13,8 +14,8 @@ import com.xlythe.textmanager.MessageCallback;
  */
 public class Text implements Message {
 
-    public static Text parse(Cursor cursor) {
-        return new Text(cursor);
+    public static Text parse(Cursor cursor, Context context) {
+        return new Text(cursor, context);
     }
 
     private String mId;
@@ -34,6 +35,7 @@ public class Text implements Message {
     private String mSubject;
     private long mThreadId;
     private String mType;
+    private Context mContext;
 
     /**
      * We don't want anyone to create a text without using the builder
@@ -45,7 +47,7 @@ public class Text implements Message {
     /**
      * We don't want anyone to create a text without using the builder
      * */
-    protected Text(Cursor c) {
+    protected Text(Cursor c, Context context) {
         mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
         mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
         mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
@@ -63,6 +65,7 @@ public class Text implements Message {
         mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
         mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
         mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
+        mContext = context;
     }
 
     public String getId(){
@@ -150,7 +153,10 @@ public class Text implements Message {
      * Deletes this message.
      * */
     public void delete() {
-
+        String clausole = "_ID = ";
+        clausole = clausole + getId();
+        Uri uri = Uri.parse("content://mms-sms/conversations/"+getThreadId());
+        mContext.getContentResolver().delete(uri, clausole, null);
     }
 
     /**
