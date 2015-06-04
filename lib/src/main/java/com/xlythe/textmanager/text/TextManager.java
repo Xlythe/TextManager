@@ -109,7 +109,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
 
         Uri uri = Uri.parse("content://mms-sms/conversations/" + threadId);
 
-        return new CustomTextCursor(contentResolver.query(uri, projection, null, null, order), threadId);
+        return new CustomTextCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
     public CustomTextCursor getFirstMessage(long threadId) {

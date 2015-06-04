@@ -43,7 +43,7 @@ public class ThreadActivity extends Activity {
         final long mThreadId = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
 
         // Get address.
-        mAddress = mManager.getFirstMessage(mThreadId).getAddress();
+        mAddress = mManager.getFirstMessage(mThreadId).getText().getAddress();
 
         // Color bars to match thread color.
         Window window = getWindow();
@@ -63,7 +63,8 @@ public class ThreadActivity extends Activity {
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> av, View v, int position, long id) {
-                Text text = ((CustomTextCursor)av.getItemAtPosition(position)).getText();
+                //Text text = ((CustomTextCursor)av.getItemAtPosition(position)).getText();
+                Text text = (Text) v.getTag();
                 mManager.delete(text);
                 return true;
             }

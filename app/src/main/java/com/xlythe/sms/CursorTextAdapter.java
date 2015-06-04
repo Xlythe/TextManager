@@ -13,6 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.xlythe.textmanager.text.CustomTextCursor;
+import com.xlythe.textmanager.text.Text;
 
 /**
  * Created by Niko on 5/23/15.
@@ -41,6 +42,10 @@ public class CursorTextAdapter extends CursorAdapter{
         // Recipient: The messages that you received.
         // Recipient Recent: Messages that you received in quick succession (appear close together, date displays once).
 
+        // Get Text from cursor.
+        Text text = mCursor.getText();
+        view.setTag(text);
+
         // Get both base layouts (User and Recipient)
         RelativeLayout userLayout = (RelativeLayout) view.findViewById(R.id.you);
         RelativeLayout recipientLayout = (RelativeLayout) view.findViewById(R.id.them);
@@ -52,14 +57,14 @@ public class CursorTextAdapter extends CursorAdapter{
         // * Next meaning most recently received
 
         // Get the date of the current, previous and next message.
-        long dateCurrent = Long.parseLong(mCursor.getDate());
+        long dateCurrent = Long.parseLong(text.getDate());
         long datePrevious = 0;
         long dateNext = 0;
 
         // Get the sender of the current, previous and next message. (returns true if you)
-        boolean userCurrent = mCursor.sentByUser();
-        boolean userPrevious = mCursor.sentByUser();
-        boolean userNext = !mCursor.sentByUser();
+        boolean userCurrent = text.sentByUser();
+        boolean userPrevious = text.sentByUser();
+        boolean userNext = !text.sentByUser();
 
         // Time gap between the current and previous, and the next and current messages.
         long splitCP;
@@ -68,16 +73,16 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if previous message exists, then get the date and sender.
         if(!mCursor.isFirst()) {
             mCursor.moveToPrevious();
-            datePrevious = Long.parseLong(mCursor.getDate());
-            userPrevious = mCursor.sentByUser();
+            datePrevious = Long.parseLong(mCursor.getText().getDate());
+            userPrevious = mCursor.getText().sentByUser();
             mCursor.moveToNext();
         }
 
         // Check if next message exists, then get the date and sender.
         if(!mCursor.isLast()) {
             mCursor.moveToNext();
-            dateNext = Long.parseLong(mCursor.getDate());
-            userNext = mCursor.sentByUser();
+            dateNext = Long.parseLong(mCursor.getText().getDate());
+            userNext = mCursor.getText().sentByUser();
             mCursor.moveToPrevious();
         }
 
@@ -103,12 +108,12 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message);
-            message.setText(mCursor.getBody());
+            message.setText(text.getBody());
 
             // Set the date and show it because this might be the last message in the cluster.
             TextView date = (TextView) view.findViewById(R.id.date);
             date.setVisibility(View.VISIBLE);
-            date.setText(mCursor.getFormattedDate());
+            date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
             int pixel =  (int)(4 * scale + 0.5f);
@@ -141,7 +146,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Set the message bubble background and color it.
             recipientLayout.getChildAt(0).setBackgroundResource(R.drawable.recent_other);
-            recipientLayout.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(mCursor.getThreadId()), PorterDuff.Mode.SRC_IN);
+            recipientLayout.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(text.getThreadId()), PorterDuff.Mode.SRC_IN);
 
             // Hide the user icon because there is already one showing on your first message in the cluster.
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon2);
@@ -149,12 +154,12 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message2);
-            message.setText(mCursor.getBody());
+            message.setText(text.getBody());
 
             // Set the date and show it because this might be the last message in the cluster.
             TextView date = (TextView) view.findViewById(R.id.date2);
             date.setVisibility(View.VISIBLE);
-            date.setText(mCursor.getFormattedDate());
+            date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
             int pixel =  (int)(4 * scale + 0.5f);
@@ -195,12 +200,12 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message);
-            message.setText(mCursor.getBody());
+            message.setText(text.getBody());
 
             // Set the date.
             TextView date = (TextView) view.findViewById(R.id.date);
             date.setVisibility(View.VISIBLE);
-            date.setText(mCursor.getFormattedDate());
+            date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
             int pixel =  (int)(4 * scale + 0.5f);
@@ -234,20 +239,20 @@ public class CursorTextAdapter extends CursorAdapter{
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon2);
             icon.setVisibility(View.VISIBLE);
             recipientLayout.getChildAt(0).setBackgroundResource(R.drawable.other);
-            recipientLayout.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(mCursor.getThreadId()), PorterDuff.Mode.SRC_IN);
+            recipientLayout.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(text.getThreadId()), PorterDuff.Mode.SRC_IN);
 
             // Display the user icon.
             ImageView user = (ImageView) view.findViewById(R.id.user2);
-            user.setColorFilter(ColorUtils.getColor(mCursor.getThreadId()));
+            user.setColorFilter(ColorUtils.getColor(text.getThreadId()));
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message2);
-            message.setText(mCursor.getBody());
+            message.setText(text.getBody());
 
             // Set the date.
             TextView date = (TextView) view.findViewById(R.id.date2);
             date.setVisibility(View.VISIBLE);
-            date.setText(mCursor.getFormattedDate());
+            date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
             int pixel =  (int)(4 * scale + 0.5f);

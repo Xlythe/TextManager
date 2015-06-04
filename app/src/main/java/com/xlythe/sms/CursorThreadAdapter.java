@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.xlythe.textmanager.text.CustomThreadCursor;
+import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextThread;
 
 /**
  * Created by Niko on 5/24/15.
@@ -31,20 +33,24 @@ public class CursorThreadAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
+        // Get thread from cursor.
+        TextThread thread = mCursor.getThread();
+        view.setTag(thread);
+
         // Color user icons
         ImageView user = (ImageView) view.findViewById(R.id.user);
-        user.setColorFilter(ColorUtils.getColor(mCursor.getThreadId()));
+        user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
 
         // Add numbers to the list.
         TextView number = (TextView) view.findViewById(R.id.number);
-        number.setText(mCursor.getAddress());
+        number.setText(thread.getAddress());
 
         // Add message bodies to the list.
         TextView message = (TextView) view.findViewById(R.id.message);
-        message.setText(mCursor.getBody());
+        message.setText(thread.getBody());
 
         // Add a formatted dates to the list.
         TextView date = (TextView) view.findViewById(R.id.date);
-        date.setText(mCursor.getFormattedDate());
+        date.setText(thread.getFormattedDate());
     }
 }

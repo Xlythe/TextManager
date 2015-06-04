@@ -9,6 +9,8 @@ import android.provider.Telephony;
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 
+import java.text.SimpleDateFormat;
+
 /**
  * Either a sms or a mms
  */
@@ -34,7 +36,7 @@ public class Text implements Message {
     private int mStatus;
     private String mSubject;
     private long mThreadId;
-    private String mType;
+    private int mType;
 
     /**
      * We don't want anyone to create a text without using the builder
@@ -63,7 +65,7 @@ public class Text implements Message {
         mStatus = c.getInt(c.getColumnIndex(Telephony.Sms.STATUS));
         mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
         mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
-        mType = c.getString(c.getColumnIndex(Telephony.Sms.TYPE));
+        mType = c.getInt(c.getColumnIndex(Telephony.Sms.TYPE));
     }
 
     public String getId(){
@@ -86,6 +88,55 @@ public class Text implements Message {
         return mDate;
     }
 
+    public String getFormattedDate(){
+        return dateFormatter(getDate());
+    }
+
+    private String dateFormatter(String date){
+        Long lDate = Long.parseLong(date);
+        Long time = System.currentTimeMillis()-lDate;
+        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
+
+        if(time<60000){
+            // Now
+            return "Now";
+        }
+        else if(time>=60000 && time<3600000){
+            // 1 min, 2 mins
+            if(time/60000==1)
+                return time/60000+" min";
+            else
+                return time/60000+" mins";
+        }
+        else if (time>=3600000 && time<7200000) {
+            // 1 hour
+            if (time / 3600000 == 1)
+                return time / 3600000 + " hour";
+            else
+                return time / 3600000 + " hours";
+        }
+        else if (time>=7200000 && f.format(lDate).equals(f.format(System.currentTimeMillis()))) {
+            // 3:09 PM
+            SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
+            return formatter.format(lDate);
+        }
+        else if (time<604800000) {
+            //Mon 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE h:mma");
+            return formatter.format(lDate);
+        }
+        else if (time>=604800000 && time/1000<31560000) {
+            // Apr 15, 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MMM d, h:mma");
+            return formatter.format(lDate);
+        }
+        else {
+            // 4/15/14 3:09PM
+            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy h:mma");
+            return formatter.format(lDate);
+        }
+    }
+
     public String getDateSent(){
         return mDateSent;
     }
@@ -106,8 +157,23 @@ public class Text implements Message {
         return mThreadId;
     }
 
-    public String getType(){
+    public int getType(){
         return mType;
+    }
+
+    public boolean sentByUser(){
+        mType = getType();
+        switch (mType) {
+            case Telephony.Sms.MESSAGE_TYPE_INBOX:
+                return false;
+            case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
+            case Telephony.Sms.MESSAGE_TYPE_FAILED:
+            case Telephony.Sms.MESSAGE_TYPE_QUEUED:
+            case Telephony.Sms.MESSAGE_TYPE_SENT:
+            case Telephony.Sms.MESSAGE_TYPE_DRAFT:
+                return true;
+        }
+        return false;
     }
 
     public Status getStatus() {

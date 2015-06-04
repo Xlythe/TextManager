@@ -10,6 +10,7 @@ import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +71,56 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
     public String getDate(){
         return mDate;
+    }
+
+    public String getFormattedDate(){
+        return dateFormatter(getDate());
+    }
+
+
+    private String dateFormatter(String date){
+        Long lDate = Long.parseLong(date);
+        Long time = System.currentTimeMillis()-lDate;
+        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
+
+        if(time<60000){
+            // Just now
+            return "Just now";
+        }
+        else if(time>=60000 && time<3600000){
+            // 1 min, 2 mins
+            if(time/60000==1)
+                return time/60000+" min";
+            else
+                return time/60000+" mins";
+        }
+        else if (time>=3600000 && time<7200000) {
+            // 1 hour
+            if (time / 3600000 == 1)
+                return time / 3600000 + " hour";
+            else
+                return time / 3600000 + " hours";
+        }
+        else if (time>=7200000 && f.format(lDate).equals(f.format(System.currentTimeMillis()))) {
+            // 3:09 PM
+            SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
+            return formatter.format(lDate);
+        }
+        else if (time<604800000) {
+            // Mon
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE");
+            return formatter.format(lDate);
+        }
+        else if (time>=604800000 && time/1000<31560000) {
+            // Apr 15
+            SimpleDateFormat formatter = new SimpleDateFormat("MMM d");
+            return formatter.format(lDate);
+        }
+        else {
+            // 4/15/14
+            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+            return formatter.format(lDate);
+        }
     }
 
     public String getDateSent(){

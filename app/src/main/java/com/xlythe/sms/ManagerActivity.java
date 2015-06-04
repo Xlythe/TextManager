@@ -12,6 +12,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.TextThread;
 
 public class ManagerActivity extends Activity {
     private CursorThreadAdapter mThreadAdapter;
@@ -51,7 +52,7 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, mManager.getThreads().get(position).getThreadId());
+                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((TextThread) v.getTag()).getThreadId());
                 startActivity(i);
             }
         });
