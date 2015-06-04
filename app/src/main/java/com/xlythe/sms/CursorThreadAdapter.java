@@ -33,15 +33,19 @@ public class CursorThreadAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
+        // Color user icons
         ImageView user = (ImageView) view.findViewById(R.id.user);
         user.setColorFilter(ColorUtils.getColor(mCursor.getThreadId()));
 
+        // Add numbers to the list.
         TextView number = (TextView) view.findViewById(R.id.number);
         number.setText(mCursor.getAddress());
 
+        // Add message bodies to the list.
         TextView message = (TextView) view.findViewById(R.id.message);
         message.setText(mCursor.getBody());
 
+        // Add a formatted dates to the list.
         TextView date = (TextView) view.findViewById(R.id.date);
         date.setText(mCursor.getFormattedDate());
     }
