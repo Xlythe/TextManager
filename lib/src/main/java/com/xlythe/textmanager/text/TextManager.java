@@ -148,6 +148,14 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         mContext.getContentResolver().delete(uri, clausole, null);
     }
 
+    public void markRead(TextThread thread) {
+        ContentValues values = new ContentValues();
+        values.put("read", true);
+        Uri uri =Uri.parse("content://mms-sms/conversations/");
+        String clausole = "thread_id=" + thread.getThreadId() + " AND read=0";
+        mContext.getContentResolver().update(uri, values, clausole, null);
+    }
+
     public List<Text> getMessages(int limit) {
         return null;
     }

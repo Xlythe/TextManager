@@ -14,14 +14,4 @@ public interface Message {
      * Returns the message status (Sending, Sent, Read)
      * */
     Status getStatus();
-
-    /**
-     * Mark this message as having been read.
-     * */
-    void markAsRead();
-
-    /**
-     * Mark this message as having been read.
-     * */
-    void markAsRead(MessageCallback<Void> callback);
 }

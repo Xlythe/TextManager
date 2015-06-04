@@ -1,9 +1,6 @@
 package com.xlythe.textmanager.text;
 
-import android.content.ContentResolver;
-import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.provider.Telephony;
 
 import com.xlythe.textmanager.MessageCallback;
@@ -11,8 +8,6 @@ import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An SMS conversation
@@ -34,6 +29,10 @@ public class TextThread implements MessageThread<Text>, Serializable {
     private long mThreadId;
     private String mType;
 
+    /**
+     *  Protected constructor for creating Threads.
+     * @param c cursor
+     */
     protected TextThread(Cursor c) {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
@@ -71,12 +70,7 @@ public class TextThread implements MessageThread<Text>, Serializable {
     }
 
     public String getFormattedDate(){
-        return dateFormatter(getDate());
-    }
-
-
-    private String dateFormatter(String date){
-        Long lDate = Long.parseLong(date);
+        Long lDate = Long.parseLong(getDate());
         Long time = System.currentTimeMillis()-lDate;
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
 
@@ -162,48 +156,5 @@ public class TextThread implements MessageThread<Text>, Serializable {
 
     public String getType(){
         return mType;
-    }
-
-
-    /**
-     * Return the number of unread messages in this thread.
-     * */
-    public int getUnreadCount() {
-        return 0;
-    }
-
-    /**
-     * Mark all messages in this thread as read.
-     * */
-    public void markRead() {
-//        ContentValues values = new ContentValues();
-//        values.put("read", true);
-//        mContext.getContentResolver().update(Uri.parse("content://sms/inbox"), values,
-//                "thread_id=" + mThreadId + " AND read=0", null);
-    }
-
-    /**
-     * Mark all messages in this thread as read.
-     * */
-    public void markRead(MessageCallback<Void> callback) {
-
-    }
-
-    /**
-     * Deletes this thread.
-     * */
-    public void delete() {
-
-    }
-
-    /**
-     * Deletes this thread.
-     * */
-    public void delete(MessageCallback<Void> callback) {
-
-    }
-    @Override
-    public String toString() {
-        return "fix this shit";
     }
 }

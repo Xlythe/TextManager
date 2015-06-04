@@ -53,5 +53,30 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
      * */
     void search(String text, MessageCallback<List<M>> callback);
 
+    /**
+     * Return the number of unread messages in this thread.
+     * */
+    int getUnreadCount();
+
+    /**
+     * Mark all messages in this thread as read.
+     * */
+    void markRead();
+
+    /**
+     * Mark all messages in this thread as read.
+     * */
+    void markRead(MessageCallback<Void> callback);
+
+    /**
+     * Deletes this thread.
+     * */
+    void delete();
+
+    /**
+     * Deletes this thread.
+     * */
+    void delete(MessageCallback<Void> callback);
+
     void send(M message);
 }

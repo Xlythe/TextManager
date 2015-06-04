@@ -3,14 +3,12 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.provider.Telephony;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 
 import java.text.SimpleDateFormat;
-import java.util.Locale;
 
 /**
  * Either an sms or an mms
@@ -42,8 +40,9 @@ public class Text implements Message {
     }
 
     /**
-     * We don't want anyone to create a text without using the builder
-     * */
+     *  Protected constructor for creating Threads.
+     * @param c cursor
+     */
     protected Text(Cursor c) {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
@@ -87,11 +86,7 @@ public class Text implements Message {
     }
 
     public String getFormattedDate(){
-        return dateFormatter(getDate());
-    }
-
-    private String dateFormatter(String date){
-        Long lDate = Long.parseLong(date);
+        Long lDate = Long.parseLong(getDate());
         Long time = System.currentTimeMillis()-lDate;
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
 
@@ -143,9 +138,22 @@ public class Text implements Message {
         return mErrorCode;
     }
 
+    public String getLocked(){
+        return mLocked;
+    }
+
     public String getPerson(){
         return mPerson;
     }
+
+    public String getReplyPathPresent(){
+        return mReplyPathPresent;
+    }
+
+    public String getServiceCenter(){
+        return mServiceCenter;
+    }
+
 
     public String getSubject(){
         return mSubject;
@@ -193,22 +201,7 @@ public class Text implements Message {
                     return Status.UNREAD;
                 }
         }
-
         throw new IllegalStateException("Could not determine Message state");
-    }
-
-    /**
-     * Mark this message as having been read.
-     * */
-    public void markAsRead() {
-
-    }
-
-    /**
-     * Mark this message as having been read.
-     * */
-    public void markAsRead(MessageCallback<Void> callback) {
-
     }
 
     @Override
