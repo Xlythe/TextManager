@@ -123,12 +123,6 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         return new CustomTextCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
-    public CustomTextCursor getFirstMessage(long threadId) {
-        CustomTextCursor ctc = getTextCursor(threadId);
-        ctc.moveToFirst();
-        return ctc;
-    }
-
     public List<Text> getMessages(long threadId) {
         List<Text> list = new ArrayList<>();
         Cursor c = getTextCursor(threadId);

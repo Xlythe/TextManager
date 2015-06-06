@@ -21,6 +21,7 @@ import com.xlythe.textmanager.text.TextUser;
 
 public class ThreadActivity extends Activity {
     public static String EXTRA_THREAD_ID = "threadId";
+    public static String EXTRA_ADDRESS = "address";
 
     private CursorTextAdapter mTextAdapter;
     private ListView mListView;
@@ -43,7 +44,7 @@ public class ThreadActivity extends Activity {
         final long mThreadId = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
 
         // Get address.
-        mAddress = mManager.getFirstMessage(mThreadId).getText().getAddress();
+        mAddress = getIntent().getStringExtra(EXTRA_ADDRESS);
 
         // Color bars to match thread color.
         Window window = getWindow();
