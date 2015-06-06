@@ -197,4 +197,34 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         values.put("body", text.getBody());
         getContext().getContentResolver().insert(Uri.parse("content://sms/sent"), values);
     }
+
+    public String getContactName(String number) {
+        Uri uri;
+        String[] projection;
+
+        if (android.os.Build.VERSION.SDK_INT >= 5) {
+            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+            projection = new String[] { "display_name" };
+        }
+        else {
+            uri = Uri.parse("content://contacts/phones/filter");
+            projection = new String[] { "name" };
+        }
+
+        uri = Uri.withAppendedPath(uri, Uri.encode(number));
+        Cursor cursor = getContext().getContentResolver().query(uri, projection, null, null, null);
+
+        String contactName = "";
+
+        if (cursor.moveToFirst()) {
+            contactName = cursor.getString(0);
+        }
+        cursor.close();
+
+        if (contactName.equals("")) {
+            contactName = number;
+        }
+
+        return contactName;
+    }
 }
