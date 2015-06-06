@@ -1,5 +1,10 @@
 package com.xlythe.textmanager.text;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+
 import com.xlythe.textmanager.User;
 
 import java.util.HashMap;
@@ -9,47 +14,68 @@ import java.util.Map;
  * Represents a phone number.
  */
 public class TextUser implements User {
-    // Keeps track of users. We don't want to make a new user very often - that wastes memory!
-    // So we have 1 user for every 1 phone number, and map them together.
-    private static final Map<String, TextUser> USERS = new HashMap<String, TextUser>();
 
-    /**
-     * Get a User for a phone number
-     * */
-    public static TextUser get(String phoneNumber) {
-        if(!USERS.containsKey(phoneNumber)) {
-            USERS.put(phoneNumber, new TextUser(phoneNumber));
-        }
-        return USERS.get(phoneNumber);
+    private String mAddress;
+    private String mName;
+
+    protected TextUser(Text text, Context context) {
+        mAddress = text.getAddress();
+        mName = getName(mAddress, context);
     }
 
-    private final String phoneNumber;
-    private String name;
-
-    /**
-     * This method is the constructor. It it called when we call "new TextUser()".
-     * We make it private because we want to force coders to use "TextUser.get(number)".
-     * */
-    private TextUser(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
+    protected TextUser(TextThread textThread, Context context) {
+        mAddress = textThread.getAddress();
+        mName = getName(mAddress, context);
     }
 
     public String getName() {
-        return name == null ? phoneNumber : name;
+        return hasName() ? mName : mAddress;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns true if a custom name has been set
-     * */
     public boolean hasName() {
-        return name != null;
+        return !mName.equals("");
     }
+
+    public Uri getImageThumbnailUri(){
+        return null;
+    }
+
+    public Uri getImageUri(){
+        return null;
+    }
+
+    public Drawable getImageThumbnailDrawable(){
+        return null;
+    }
+
+    public Drawable getImageDrawable(){
+        return null;
+    }
+
+    private String getName(String number, Context context) {
+        Uri uri;
+        String[] projection;
+
+        if (android.os.Build.VERSION.SDK_INT >= 5) {
+            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+            projection = new String[] { "display_name" };
+        }
+        else {
+            uri = Uri.parse("content://contacts/phones/filter");
+            projection = new String[] { "name" };
+        }
+
+        uri = Uri.withAppendedPath(uri, Uri.encode(number));
+        Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+
+        String contactName = "";
+
+        if (cursor.moveToFirst()) {
+            contactName = cursor.getString(0);
+        }
+        cursor.close();
+
+        return contactName;
+    }
+
 }

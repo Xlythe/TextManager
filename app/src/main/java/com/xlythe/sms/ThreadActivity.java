@@ -74,12 +74,12 @@ public class ThreadActivity extends Activity {
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TextManager manager = TextManager.getInstance(getBaseContext());
-                manager.send(new Text.Builder(getBaseContext())
-                                .message(mMessage.getText().toString())
-                                .recipient(TextUser.get(mAddress))
-                                .build()
-                );
+//                TextManager manager = TextManager.getInstance(getBaseContext());
+//                manager.send(new Text.Builder(getBaseContext())
+//                                .message(mMessage.getText().toString())
+//                                .recipient(TextUser.get(mAddress))
+//                                .build()
+//                );
                 mMessage.setText("");
             }
         });

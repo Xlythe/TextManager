@@ -233,11 +233,11 @@ public class Text implements Message {
             return this;
         }
 
-        public Text build() {
-            Text text = new Text();
-            text.mBody = mMessage;
-            text.mAddress = mRecipient.getPhoneNumber();
-            return text;
-        }
+//        public Text build() {
+//            Text text = new Text();
+//            text.mBody = mMessage;
+//            text.mAddress = mRecipient.getPhoneNumber();
+//            return text;
+//        }
     }
 }

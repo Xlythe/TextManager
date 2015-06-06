@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.xlythe.textmanager.text.CustomThreadCursor;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextThread;
 
 /**
@@ -37,13 +38,17 @@ public class CursorThreadAdapter extends CursorAdapter {
         TextThread thread = mCursor.getThread();
         view.setTag(thread);
 
+        // Get name from contacts
+        TextManager manager = TextManager.getInstance(context);
+        String name = manager.getSender(thread).getName();
+
         // Color user icons
         ImageView user = (ImageView) view.findViewById(R.id.user);
         user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
 
         // Add numbers to the list.
         TextView number = (TextView) view.findViewById(R.id.number);
-        number.setText(thread.getAddress());
+        number.setText(name);
 
         // Add message bodies to the list.
         TextView message = (TextView) view.findViewById(R.id.message);
