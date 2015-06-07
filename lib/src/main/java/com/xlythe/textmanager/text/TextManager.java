@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.util.Log;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
@@ -198,12 +199,47 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         getContext().getContentResolver().insert(Uri.parse("content://sms/sent"), values);
     }
 
+    public Cursor getContactCursor(Text text) {
+        ContentResolver contentResolver = getContext().getContentResolver();
+        final String[] projection;
+        Uri uri;
+
+        if (android.os.Build.VERSION.SDK_INT >= 5) {
+            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+            projection = new String[] { "display_name" };
+        }
+        else {
+            uri = Uri.parse("content://contacts/phones/filter");
+            projection = new String[] { "name" };
+        }
+
+        uri = Uri.withAppendedPath(uri, Uri.encode(text.getAddress()));
+        return contentResolver.query(uri, projection, null, null, null);
+    }
+
+    public Cursor getContactCursor(TextThread textThread) {
+        ContentResolver contentResolver = getContext().getContentResolver();
+        final String[] projection;
+        Uri uri;
+
+        if (android.os.Build.VERSION.SDK_INT >= 5) {
+            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+            projection = new String[] { "display_name" };
+        }
+        else {
+            uri = Uri.parse("content://contacts/phones/filter");
+            projection = new String[] { "name" };
+        }
+
+        uri = Uri.withAppendedPath(uri, Uri.encode(textThread.getAddress()));
+        return contentResolver.query(uri, null, null, null, null);
+    }
+
     public TextUser getSender(Text text) {
-        TextUser user = new TextUser(text, getContext());
-        return user;
+        return new TextUser(getContactCursor(text), text.getAddress());
     }
     public TextUser getSender(TextThread textThread) {
-        TextUser user = new TextUser(textThread, getContext());
-        return user;
+        String address = textThread.getAddress();
+        return new TextUser(getContactCursor(textThread), address);
     }
 }

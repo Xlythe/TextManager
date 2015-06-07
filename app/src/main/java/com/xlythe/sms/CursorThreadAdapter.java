@@ -2,6 +2,8 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,11 +42,33 @@ public class CursorThreadAdapter extends CursorAdapter {
 
         // Get name from contacts
         TextManager manager = TextManager.getInstance(context);
-        String name = manager.getSender(thread).getName();
+        String name = manager.getSender(thread).getDisplayName();
+        Uri photo = manager.getSender(thread).getPhotoUri();
 
         // Color user icons
         ImageView user = (ImageView) view.findViewById(R.id.user);
-        user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
+        ImageView userImage = (ImageView) view.findViewById(R.id.profile_image);
+        ImageView userIcon = (ImageView) view.findViewById(R.id.user_icon);
+        TextView text = (TextView) view.findViewById(R.id.text);
+        if(photo!=null){
+            userImage.setImageURI(photo);
+            userImage.setVisibility(View.VISIBLE);
+            userIcon.setVisibility(View.GONE);
+            user.setVisibility(View.GONE);
+            text.setVisibility(View.GONE);
+        }
+        else {
+            user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
+            userImage.setVisibility(View.GONE);
+            userIcon.setVisibility(View.VISIBLE);
+            user.setVisibility(View.VISIBLE);
+            text.setVisibility(View.GONE);
+            if (manager.getSender(thread).hasName()){
+                text.setText(name.charAt(0)+"");
+                text.setVisibility(View.VISIBLE);
+                userIcon.setVisibility(View.GONE);
+            }
+        }
 
         // Add numbers to the list.
         TextView number = (TextView) view.findViewById(R.id.number);

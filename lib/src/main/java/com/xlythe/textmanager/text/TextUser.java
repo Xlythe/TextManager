@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.util.Log;
 
 import com.xlythe.textmanager.User;
 
@@ -16,66 +17,73 @@ import java.util.Map;
 public class TextUser implements User {
 
     private String mAddress;
-    private String mName;
+    private String mId;
+    private String mType;
+    private String mTimesContacted;
+    private String mNumber;
+    private String mPhotoUri;
+    private String mSendToVoicemail;
+    private String mLookup;
+    private String mDisplayName;
+    private String mLastTimeContacted;
+    private String mHasPhoneNumber;
+    private String mInVisibleGroup;
+    private String mPhotoFileId;
+    private String mLabel;
+    private String mStarred;
+    private String mNormalizedNumber;
+    private String mPhotoThumbUri;
+    private String mPhotoId;
+    private String mInDefaultDirectory;
+    private String mCustomRingtone;
 
-    protected TextUser(Text text, Context context) {
-        mAddress = text.getAddress();
-        mName = getName(mAddress, context);
+    protected TextUser(Cursor c, String address) {
+        mAddress = address;
+        if(c.moveToFirst()) {
+            mId = c.getString(c.getColumnIndex("_id"));
+            mType = c.getString(c.getColumnIndex("type"));
+            mTimesContacted = c.getString(c.getColumnIndex("times_contacted"));
+            mNumber = c.getString(c.getColumnIndex("number"));
+            mPhotoUri = c.getString(c.getColumnIndex("photo_uri"));
+            mSendToVoicemail = c.getString(c.getColumnIndex("send_to_voicemail"));
+            mLookup = c.getString(c.getColumnIndex("lookup"));
+            mDisplayName = c.getString(c.getColumnIndex("display_name"));
+            mLastTimeContacted = c.getString(c.getColumnIndex("last_time_contacted"));
+            mHasPhoneNumber = c.getString(c.getColumnIndex("has_phone_number"));
+            mInVisibleGroup = c.getString(c.getColumnIndex("in_visible_group"));
+            mPhotoFileId = c.getString(c.getColumnIndex("photo_file_id"));
+            mLabel = c.getString(c.getColumnIndex("label"));
+            mStarred = c.getString(c.getColumnIndex("starred"));
+            mNormalizedNumber = c.getString(c.getColumnIndex("normalized_number"));
+            mPhotoThumbUri = c.getString(c.getColumnIndex("photo_thumb_uri"));
+            mPhotoId = c.getString(c.getColumnIndex("photo_id"));
+            mInDefaultDirectory = c.getString(c.getColumnIndex("in_default_directory"));
+            mCustomRingtone = c.getString(c.getColumnIndex("custom_ringtone"));
+        }
+        c.close();
     }
 
-    protected TextUser(TextThread textThread, Context context) {
-        mAddress = textThread.getAddress();
-        mName = getName(mAddress, context);
-    }
-
-    public String getName() {
-        return hasName() ? mName : mAddress;
+    public String getDisplayName() {
+        return hasName() ? mDisplayName : mAddress;
     }
 
     public boolean hasName() {
-        return !mName.equals("");
+        return mDisplayName != null;
     }
 
-    public Uri getImageThumbnailUri(){
+    public Uri getPhotoThumbUri(){
+        return mPhotoThumbUri!=null ? Uri.parse(mPhotoThumbUri) : null;
+    }
+
+    public Uri getPhotoUri(){
+        return mPhotoUri!=null ? Uri.parse(mPhotoUri) : null;
+    }
+
+    public Drawable getPhotoThumbDrawable(){
         return null;
     }
 
-    public Uri getImageUri(){
+    public Drawable getPhotoDrawable(){
         return null;
     }
-
-    public Drawable getImageThumbnailDrawable(){
-        return null;
-    }
-
-    public Drawable getImageDrawable(){
-        return null;
-    }
-
-    private String getName(String number, Context context) {
-        Uri uri;
-        String[] projection;
-
-        if (android.os.Build.VERSION.SDK_INT >= 5) {
-            uri = Uri.parse("content://com.android.contacts/phone_lookup");
-            projection = new String[] { "display_name" };
-        }
-        else {
-            uri = Uri.parse("content://contacts/phones/filter");
-            projection = new String[] { "name" };
-        }
-
-        uri = Uri.withAppendedPath(uri, Uri.encode(number));
-        Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
-
-        String contactName = "";
-
-        if (cursor.moveToFirst()) {
-            contactName = cursor.getString(0);
-        }
-        cursor.close();
-
-        return contactName;
-    }
-
 }

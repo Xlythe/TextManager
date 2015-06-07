@@ -8,18 +8,37 @@
     android:layout_height="match_parent">
 
     <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
         android:layout_marginRight="@dimen/activity_horizontal_margin">
+        <de.hdodenhof.circleimageview.CircleImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/profile_image"
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:src="@drawable/user"
+            app:border_width="0dp"
+            app:border_color="#FFFFFFFF"/>
         <ImageView
+            android:gravity="center"
             android:id="@+id/user"
             android:src="@drawable/user"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="58dp"
+            android:layout_height="58dp" />
         <ImageView
+            android:gravity="center"
+            android:id="@+id/user_icon"
             android:src="@drawable/user_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="58dp"
+            android:layout_height="58dp" />
+        <TextView
+            android:gravity="center"
+            android:id="@+id/text"
+            android:textSize="38sp"
+            android:fontFamily="sans-serif-thin"
+            android:layout_width="58dp"
+            android:layout_height="58dp"
+            android:textColor="#ffffff"/>
     </RelativeLayout>
 <LinearLayout
     android:layout_width="wrap_content"

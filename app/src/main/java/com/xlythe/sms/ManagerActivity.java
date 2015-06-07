@@ -53,7 +53,7 @@ public class ManagerActivity extends Activity {
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
                 i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((TextThread) v.getTag()).getThreadId());
-                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((TextThread) v.getTag()).getName());
+                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((TextThread) v.getTag()).getDisplayName());
                 startActivity(i);
             }
         });

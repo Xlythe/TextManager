@@ -48,6 +48,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <ImageView
+            android:id="@+id/user_icon"
             android:src="@drawable/user_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -100,6 +101,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <ImageView
+        android:id="@+id/user_icon2"
         android:src="@drawable/user_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
