@@ -40,7 +40,7 @@ public class CursorThreadAdapter extends CursorAdapter {
         TextThread thread = mCursor.getThread();
         view.setTag(thread);
 
-        // Get name from contacts
+        // Get name and photo from contacts
         TextManager manager = TextManager.getInstance(context);
         String name = manager.getSender(thread).getDisplayName();
         Uri photo = manager.getSender(thread).getPhotoUri();

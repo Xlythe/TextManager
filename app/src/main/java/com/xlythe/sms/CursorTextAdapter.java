@@ -3,6 +3,7 @@ package com.xlythe.sms;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 
 import com.xlythe.textmanager.text.CustomTextCursor;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 
 /**
  * Created by Niko on 5/23/15.
@@ -45,6 +47,11 @@ public class CursorTextAdapter extends CursorAdapter{
         // Get Text from cursor.
         Text text = mCursor.getText();
         view.setTag(text);
+
+        // Get name and photo from contacts
+        TextManager manager = TextManager.getInstance(context);
+        String name = manager.getSender(text).getDisplayName();
+        Uri photo = manager.getSender(text).getPhotoUri();
 
         // Get both base layouts (User and Recipient)
         RelativeLayout userLayout = (RelativeLayout) view.findViewById(R.id.you);
@@ -243,7 +250,28 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Display the user icon.
             ImageView user = (ImageView) view.findViewById(R.id.user2);
-            user.setColorFilter(ColorUtils.getColor(text.getThreadId()));
+            ImageView userImage = (ImageView) view.findViewById(R.id.profile_image2);
+            ImageView userIcon = (ImageView) view.findViewById(R.id.user_icon2);
+            TextView textLetter = (TextView) view.findViewById(R.id.text2);
+            if(photo!=null){
+                userImage.setImageURI(photo);
+                userImage.setVisibility(View.VISIBLE);
+                userIcon.setVisibility(View.GONE);
+                user.setVisibility(View.GONE);
+                textLetter.setVisibility(View.GONE);
+            }
+            else {
+                user.setColorFilter(ColorUtils.getColor(text.getThreadId()));
+                userImage.setVisibility(View.GONE);
+                userIcon.setVisibility(View.VISIBLE);
+                user.setVisibility(View.VISIBLE);
+                textLetter.setVisibility(View.GONE);
+                if (manager.getSender(text).hasName()){
+                    textLetter.setText(name.charAt(0)+"");
+                    textLetter.setVisibility(View.VISIBLE);
+                    userIcon.setVisibility(View.GONE);
+                }
+            }
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message2);

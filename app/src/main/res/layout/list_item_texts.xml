@@ -42,16 +42,34 @@
         android:layout_alignParentRight="true"
         android:layout_width="42dp"
         android:layout_height="42dp">
+        <de.hdodenhof.circleimageview.CircleImageView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/profile_image"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/user"
+            app:border_width="0dp"
+            app:border_color="#FFFFFFFF"/>
         <ImageView
+            android:gravity="center"
             android:id="@+id/user"
             android:src="@drawable/user"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <ImageView
+            android:gravity="center"
             android:id="@+id/user_icon"
             android:src="@drawable/user_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+        <TextView
+            android:gravity="center"
+            android:id="@+id/text"
+            android:textSize="28sp"
+            android:fontFamily="sans-serif-thin"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:textColor="#ffffff"/>
     </RelativeLayout>
     </RelativeLayout>
 
@@ -95,16 +113,34 @@
     android:id="@+id/icon2"
     android:layout_width="42dp"
     android:layout_height="42dp">
+    <de.hdodenhof.circleimageview.CircleImageView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/profile_image2"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:src="@drawable/user"
+        app:border_width="0dp"
+        app:border_color="#FFFFFFFF"/>
     <ImageView
+        android:gravity="center"
         android:id="@+id/user2"
         android:src="@drawable/user"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <ImageView
+        android:gravity="center"
         android:id="@+id/user_icon2"
         android:src="@drawable/user_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+    <TextView
+        android:gravity="center"
+        android:id="@+id/text2"
+        android:textSize="28sp"
+        android:fontFamily="sans-serif-thin"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:textColor="#ffffff"/>
 </RelativeLayout>
 </RelativeLayout>
 </RelativeLayout>

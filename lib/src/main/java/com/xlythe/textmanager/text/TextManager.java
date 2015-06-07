@@ -214,7 +214,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         }
 
         uri = Uri.withAppendedPath(uri, Uri.encode(text.getAddress()));
-        return contentResolver.query(uri, projection, null, null, null);
+        return contentResolver.query(uri, null, null, null, null);
     }
 
     public Cursor getContactCursor(TextThread textThread) {
