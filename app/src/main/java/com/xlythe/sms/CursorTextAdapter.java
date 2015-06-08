@@ -2,8 +2,10 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +58,10 @@ public class CursorTextAdapter extends CursorAdapter{
         // Get both base layouts (User and Recipient)
         RelativeLayout userLayout = (RelativeLayout) view.findViewById(R.id.you);
         RelativeLayout recipientLayout = (RelativeLayout) view.findViewById(R.id.them);
+
+        // This is a test for mms data
+        ImageView pic = (ImageView) view.findViewById(R.id.pic);
+        pic.setImageURI(text.getMmsImageUri(context));
 
         // Used to convert dp to pixels
         final float scale = context.getResources().getDisplayMetrics().density;

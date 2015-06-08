@@ -68,7 +68,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
             order = "date DESC";
         }
 
-        return new CustomThreadCursor(contentResolver.query(uri, projection, null, null, order));
+        return new CustomThreadCursor(contentResolver.query(uri, null, null, null, order));
     }
 
     @Override
@@ -114,6 +114,7 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
                     Telephony.Sms.SUBJECT,
                     Telephony.Sms.THREAD_ID,
                     Telephony.Sms.TYPE,
+                    Telephony.Mms._ID
             };
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
         }
