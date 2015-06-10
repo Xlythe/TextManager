@@ -144,6 +144,41 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         mContext.getContentResolver().delete(uri, clausole, null);
     }
 
+    public void deleteTexts(List<Text> texts) {
+        String clausole = "";
+        for (int i=0; i<texts.size(); i++) {
+            if(texts.size()==i+1){
+                clausole = clausole + "_ID = " + texts.get(i).getId();
+            }
+            else {
+                clausole = clausole + "_ID = " + texts.get(i).getId() + " OR ";
+            }
+        }
+        Uri uri = Uri.parse("content://mms-sms/conversations/" + texts.get(0).getThreadId());
+        mContext.getContentResolver().delete(uri, clausole, null);
+    }
+
+    public void delete(Thread thread) {
+        String clausole = "_ID = ";
+        clausole = clausole + thread.getId();
+        Uri uri = Uri.parse("content://mms-sms/conversations/");
+        mContext.getContentResolver().delete(uri, clausole, null);
+    }
+
+    public void deleteThreads(List<Thread> threads) {
+        String clausole = "";
+        for (int i=0; i<threads.size(); i++) {
+            if(threads.size()==i+1){
+                clausole = clausole + "_ID = " + threads.get(i).getId();
+            }
+            else {
+                clausole = clausole + "_ID = " + threads.get(i).getId() + " OR ";
+            }
+        }
+        Uri uri = Uri.parse("content://mms-sms/conversations/");
+        mContext.getContentResolver().delete(uri, clausole, null);
+    }
+
     public void markRead(TextThread thread) {
         ContentValues values = new ContentValues();
         values.put("read", true);
