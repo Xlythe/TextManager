@@ -32,11 +32,11 @@ public class ComposeActivity extends Activity {
             @Override
             public void onClick(View v) {
                 TextManager manager = TextManager.getInstance(getBaseContext());
-//                manager.send(new Text.Builder(getBaseContext())
-//                                .message(mMessage.getText().toString())
-//                                .recipient(TextUser.get(mNumber.getText().toString()))
-//                                .build()
-//                );
+                manager.send(new Text.Builder()
+                                .message(mMessage.getText().toString())
+                                .recipient(mNumber.getText().toString())
+                                .build()
+                );
                 mMessage.setText("");
             }
         });

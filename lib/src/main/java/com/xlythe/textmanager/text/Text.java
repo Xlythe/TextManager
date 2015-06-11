@@ -238,12 +238,11 @@ public class Text implements Message {
     }
 
     public static class Builder {
-        private final Context mContext;
         private String mMessage;
-        private TextUser mRecipient;
+        private String mRecipient;
 
-        public Builder(Context context) {
-            mContext = context;
+        public Builder() {
+
         }
 
         public Builder drawable(Drawable drawable) {
@@ -251,7 +250,7 @@ public class Text implements Message {
             return this;
         }
 
-        public Builder recipient(TextUser recipient) {
+        public Builder recipient(String recipient) {
             mRecipient = recipient;
             return this;
         }
@@ -261,11 +260,11 @@ public class Text implements Message {
             return this;
         }
 
-//        public Text build() {
-//            Text text = new Text();
-//            text.mBody = mMessage;
-//            text.mAddress = mRecipient.getPhoneNumber();
-//            return text;
-//        }
+        public Text build() {
+            Text text = new Text();
+            text.mBody = mMessage;
+            text.mAddress = mRecipient;
+            return text;
+        }
     }
 }

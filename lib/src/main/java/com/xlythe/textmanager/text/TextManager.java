@@ -1,13 +1,19 @@
 package com.xlythe.textmanager.text;
 
+import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
@@ -226,13 +232,122 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
     }
 
     @Override
-    public void send(Text text) {
+    public void send(final Text text) {
+        String SMS_SENT = "SMS_SENT";
+        String SMS_DELIVERED = "SMS_DELIVERED";
+
+        PendingIntent sentPendingIntent = PendingIntent.getBroadcast(getContext(), 0, new Intent(SMS_SENT), 0);
+        PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(getContext(), 0, new Intent(SMS_DELIVERED), 0);
+
+        // For when the SMS has been sent
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ContentValues values = new ContentValues();
+                Uri uri;
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_COMPLETE);
+                            uri = Telephony.Sms.Sent.CONTENT_URI;
+                        }
+                        else {
+                            values.put("status", "0");
+                            uri = Uri.parse("content://sms/sent");
+                        }
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        getContext().getContentResolver().insert(uri, values);
+                        Toast.makeText(getContext(), "SMS sent successfully", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_FAILED);
+                            uri = Telephony.Sms.Sent.CONTENT_URI;
+                        }
+                        else {
+                            values.put("status", "64");
+                            uri = Uri.parse("content://sms/sent");
+                        }
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        getContext().getContentResolver().insert(uri, values);
+                        Toast.makeText(getContext(), "Generic failure cause", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_FAILED);
+                            uri = Telephony.Sms.Sent.CONTENT_URI;
+                        }
+                        else {
+                            values.put("status", "64");
+                            uri = Uri.parse("content://sms/sent");
+                        }
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        getContext().getContentResolver().insert(uri, values);
+                        Toast.makeText(getContext(), "Service is currently unavailable", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_FAILED);
+                            uri = Telephony.Sms.Sent.CONTENT_URI;
+                        }
+                        else {
+                            values.put("status", "64");
+                            uri = Uri.parse("content://sms/sent");
+                        }
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        getContext().getContentResolver().insert(uri, values);
+                        Toast.makeText(getContext(), "No pdu provided", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_FAILED);
+                            uri = Telephony.Sms.Sent.CONTENT_URI;
+                        }
+                        else {
+                            values.put("status", "64");
+                            uri = Uri.parse("content://sms/sent");
+                        }
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        getContext().getContentResolver().insert(uri, values);
+                        Toast.makeText(getContext(), "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        }, new IntentFilter(SMS_SENT));
+
+        // For when the SMS has been delivered
+        getContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        Toast.makeText(getContext(), "SMS delivered", Toast.LENGTH_SHORT).show();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Toast.makeText(getContext(), "SMS not delivered", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        }, new IntentFilter(SMS_DELIVERED));
+
         SmsManager sms = SmsManager.getDefault();
-        sms.sendTextMessage(text.getAddress(), null, text.getBody(), null, null);
+        sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         ContentValues values = new ContentValues();
-        values.put("address", text.getAddress());
-        values.put("body", text.getBody());
-        getContext().getContentResolver().insert(Uri.parse("content://sms/sent"), values);
+        Uri uri;
+
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            values.put(Telephony.Sms.Sent.ADDRESS, text.getAddress());
+            values.put(Telephony.Sms.Sent.BODY, text.getBody());
+            values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_PENDING);
+            uri = Telephony.Sms.Sent.CONTENT_URI;
+        }
+        else {
+            values.put("address", text.getAddress());
+            values.put("body", text.getBody());
+            values.put("status", "32");
+            uri = Uri.parse("content://sms/sent");
+        }
+        getContext().getContentResolver().insert(uri, values);
     }
 
     public Cursor getContactCursor(Text text) {

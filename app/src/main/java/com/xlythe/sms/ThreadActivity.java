@@ -22,6 +22,7 @@ import com.xlythe.textmanager.text.TextUser;
 public class ThreadActivity extends Activity {
     public static String EXTRA_THREAD_ID = "threadId";
     public static String EXTRA_ADDRESS = "address";
+    public static String EXTRA_NUMBER = "number";
 
     private CursorTextAdapter mTextAdapter;
     private ListView mListView;
@@ -29,6 +30,7 @@ public class ThreadActivity extends Activity {
     private EditText mMessage;
     private TextManager mManager;
     private String mAddress;
+    private String mNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +47,7 @@ public class ThreadActivity extends Activity {
 
         // Get address.
         mAddress = getIntent().getStringExtra(EXTRA_ADDRESS);
+        mNumber = getIntent().getStringExtra(EXTRA_NUMBER);
 
         // Color bars to match thread color.
         Window window = getWindow();
@@ -74,12 +77,12 @@ public class ThreadActivity extends Activity {
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                TextManager manager = TextManager.getInstance(getBaseContext());
-//                manager.send(new Text.Builder(getBaseContext())
-//                                .message(mMessage.getText().toString())
-//                                .recipient(TextUser.get(mAddress))
-//                                .build()
-//                );
+                TextManager manager = TextManager.getInstance(getBaseContext());
+                manager.send(new Text.Builder()
+                                .message(mMessage.getText().toString())
+                                .recipient(mNumber)
+                                .build()
+                );
                 mMessage.setText("");
             }
         });

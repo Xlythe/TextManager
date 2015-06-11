@@ -54,6 +54,7 @@ public class ManagerActivity extends Activity {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
                 i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((TextThread) v.getTag()).getThreadId());
                 i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((TextThread) v.getTag()).getDisplayName());
+                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((TextThread) v.getTag()).getAddress());
                 startActivity(i);
             }
         });
