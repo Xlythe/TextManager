@@ -212,6 +212,7 @@ public class CursorTextAdapter extends CursorAdapter{
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon);
             icon.setVisibility(View.VISIBLE);
             ImageView user = (ImageView) view.findViewById(R.id.user);
+            // TODO: Add user image instead of just grey
             user.setColorFilter(0xff757575);
 
             // Set the message body.

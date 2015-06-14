@@ -54,13 +54,8 @@ public class ThreadActivity extends Activity {
         getActionBar().setTitle(mAddress);
 
         // Populate Adapter with list of texts.
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                mTextAdapter = new CursorTextAdapter(getBaseContext(), mManager.getTextCursor(mThreadId));
-                mListView.setAdapter(mTextAdapter);
-            }
-        });
+        mTextAdapter = new CursorTextAdapter(getBaseContext(), mManager.getTextCursor(mThreadId));
+        mListView.setAdapter(mTextAdapter);
 
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
