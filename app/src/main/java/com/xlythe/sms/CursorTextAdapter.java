@@ -26,6 +26,7 @@ import com.xlythe.textmanager.text.TextManager;
 
 public class CursorTextAdapter extends CursorAdapter{
 
+    private int SPLIT_DURATION = 60000;
     private CustomTextCursor mCursor;
 
     public CursorTextAdapter(Context context, CustomTextCursor c) {
@@ -109,7 +110,7 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if time gap between the current and previous message is less than 1 minute
         // they are both the same sender, and if the sender is you.
         // (This means an older message exists in the cluster)
-        if(splitCP<=60000 && userCurrent==userPrevious && userCurrent){
+        if(splitCP<=SPLIT_DURATION && userCurrent==userPrevious && userCurrent){
             // Hide and show respective layouts.
             userLayout.setVisibility(View.VISIBLE);
             recipientLayout.setVisibility(View.GONE);
@@ -131,21 +132,21 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists in the cluster)
-            if(splitNC<=60000 && userNext){
+            if(splitNC<=SPLIT_DURATION && userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -154,7 +155,7 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if time gap between the current and previous message is less than 1 minute
         // they are both the same sender, and if the sender is not you.
         // (This means an older message exists in the cluster)
-        else if(splitCP<=60000 && userCurrent==userPrevious && !userCurrent){
+        else if(splitCP<=SPLIT_DURATION && userCurrent==userPrevious && !userCurrent){
             // Hide and show respective layouts.
             recipientLayout.setVisibility(View.VISIBLE);
             userLayout.setVisibility(View.GONE);
@@ -177,21 +178,21 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists in the cluster)
-            if(splitNC<=60000 && !userNext){
+            if(splitNC<=SPLIT_DURATION && !userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -223,21 +224,21 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists and a cluster has formed)
-            if(splitNC<=60000 && userNext){
+            if(splitNC<=SPLIT_DURATION && userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -291,21 +292,21 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists and a cluster has formed)
-            if(splitNC<=60000 && !userNext){
+            if(splitNC<=SPLIT_DURATION && !userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
