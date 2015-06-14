@@ -73,7 +73,7 @@ public class CursorTextAdapter extends CursorAdapter{
         // * Next meaning most recently received
 
         // Get the date of the current, previous and next message.
-        long dateCurrent = Long.parseLong(text.getDate());
+        long dateCurrent = text.getDate();
         long datePrevious = 0;
         long dateNext = 0;
 
@@ -89,16 +89,18 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if previous message exists, then get the date and sender.
         if(!mCursor.isFirst()) {
             mCursor.moveToPrevious();
-            datePrevious = Long.parseLong(mCursor.getText().getDate());
-            userPrevious = mCursor.getText().sentByUser();
+            Text nextText = mCursor.getText();
+            datePrevious = nextText.getDate();
+            userPrevious = nextText.sentByUser();
             mCursor.moveToNext();
         }
 
         // Check if next message exists, then get the date and sender.
         if(!mCursor.isLast()) {
             mCursor.moveToNext();
-            dateNext = Long.parseLong(mCursor.getText().getDate());
-            userNext = mCursor.getText().sentByUser();
+            Text nextText = mCursor.getText();
+            dateNext = nextText.getDate();
+            userNext = nextText.sentByUser();
             mCursor.moveToPrevious();
         }
 
@@ -129,7 +131,7 @@ public class CursorTextAdapter extends CursorAdapter{
             // Set the date and show it because this might be the last message in the cluster.
             TextView date = (TextView) view.findViewById(R.id.date);
             date.setVisibility(View.VISIBLE);
-            date.setText(text.getFormattedDate());
+            date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
             int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
@@ -175,7 +177,7 @@ public class CursorTextAdapter extends CursorAdapter{
             // Set the date and show it because this might be the last message in the cluster.
             TextView date = (TextView) view.findViewById(R.id.date2);
             date.setVisibility(View.VISIBLE);
-            date.setText(text.getFormattedDate());
+            date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
             int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
@@ -222,7 +224,7 @@ public class CursorTextAdapter extends CursorAdapter{
             // Set the date.
             TextView date = (TextView) view.findViewById(R.id.date);
             date.setVisibility(View.VISIBLE);
-            date.setText(text.getFormattedDate());
+            date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because a cluster may never form.
             int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
@@ -290,7 +292,7 @@ public class CursorTextAdapter extends CursorAdapter{
             // Set the date.
             TextView date = (TextView) view.findViewById(R.id.date2);
             date.setVisibility(View.VISIBLE);
-            date.setText(text.getFormattedDate());
+            date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because a cluster may never form.
             int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);

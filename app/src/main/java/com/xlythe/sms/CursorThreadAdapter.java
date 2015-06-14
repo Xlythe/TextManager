@@ -78,6 +78,6 @@ public class CursorThreadAdapter extends CursorAdapter {
 
         // Add a formatted dates to the list.
         TextView date = (TextView) view.findViewById(R.id.date);
-        date.setText(ThreadDateFormatter.getFormattedDate(thread));
+        date.setText(DateFormatter.getFormattedDate(thread));
     }
 }
