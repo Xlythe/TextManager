@@ -38,15 +38,6 @@ public class ManagerActivity extends Activity {
             }
         });
 
-        // Populate Adapter with list of threads.
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                mThreadAdapter = new CursorThreadAdapter(getBaseContext(), mManager.getThreadCursor());
-                mListView.setAdapter(mThreadAdapter);
-            }
-        });
-
         // Start Thread Activity.
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -58,6 +49,10 @@ public class ManagerActivity extends Activity {
                 startActivity(i);
             }
         });
+
+        // Populate Adapter with list of threads.
+        mThreadAdapter = new CursorThreadAdapter(getBaseContext(), mManager.getThreadCursor());
+        mListView.setAdapter(mThreadAdapter);
     }
 
     @Override
