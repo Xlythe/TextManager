@@ -132,9 +132,9 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
@@ -144,9 +144,9 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -178,9 +178,9 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
@@ -190,9 +190,9 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -212,6 +212,7 @@ public class CursorTextAdapter extends CursorAdapter{
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon);
             icon.setVisibility(View.VISIBLE);
             ImageView user = (ImageView) view.findViewById(R.id.user);
+            // TODO: Add user image instead of just grey
             user.setColorFilter(0xff757575);
 
             // Set the message body.
@@ -224,9 +225,9 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
@@ -236,9 +237,9 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
@@ -292,9 +293,9 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(text.getFormattedDate());
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(4 * scale + 0.5f);
+            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
             ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(16 * scale + 0.5f);
+            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
             ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
 
             // Check if time gap between the next and current message is less than 1 minute
@@ -304,9 +305,9 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(12 * scale + 0.5f);
+                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
                 ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(2.5 * scale + 0.5f);
+                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
                 ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
             }
         }
