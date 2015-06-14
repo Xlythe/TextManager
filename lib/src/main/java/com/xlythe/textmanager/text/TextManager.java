@@ -12,7 +12,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
@@ -26,7 +25,7 @@ import java.util.List;
 /**
  * Manages sms and mms messages
  */
-public class TextManager implements MessageManager<Text, TextThread, TextUser> {
+public class TextManager implements MessageManager<Text, TextThread, Contact> {
     private static TextManager sTextManager;
     private Context mContext;
 
@@ -386,11 +385,12 @@ public class TextManager implements MessageManager<Text, TextThread, TextUser> {
         return contentResolver.query(uri, null, null, null, null);
     }
 
-    public TextUser getSender(Text text) {
-        return new TextUser(getContactCursor(text), text.getAddress());
+    public Contact getSender(Text text) {
+        return new Contact(getContactCursor(text), text.getAddress());
     }
-    public TextUser getSender(TextThread textThread) {
+
+    public Contact getSender(TextThread textThread) {
         String address = textThread.getAddress();
-        return new TextUser(getContactCursor(textThread), address);
+        return new Contact(getContactCursor(textThread), address);
     }
 }

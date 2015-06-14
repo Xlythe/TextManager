@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.CustomTextCursor;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -52,8 +53,9 @@ public class CursorTextAdapter extends CursorAdapter{
 
         // Get name and photo from contacts
         TextManager manager = TextManager.getInstance(context);
-        String name = manager.getSender(text).getDisplayName();
-        Uri photo = manager.getSender(text).getPhotoUri();
+        Contact sender = manager.getSender(text);
+        String name = sender.getDisplayName();
+        Uri photo = sender.getPhotoUri();
 
         // Get both base layouts (User and Recipient)
         RelativeLayout userLayout = (RelativeLayout) view.findViewById(R.id.you);
@@ -272,7 +274,7 @@ public class CursorTextAdapter extends CursorAdapter{
                 userIcon.setVisibility(View.VISIBLE);
                 user.setVisibility(View.VISIBLE);
                 textLetter.setVisibility(View.GONE);
-                if (manager.getSender(text).hasName()){
+                if (sender.hasName()){
                     textLetter.setText(name.charAt(0)+"");
                     textLetter.setVisibility(View.VISIBLE);
                     userIcon.setVisibility(View.GONE);

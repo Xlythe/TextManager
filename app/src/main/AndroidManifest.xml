@@ -57,7 +57,8 @@
         <!-- Activity that allows the user to send new SMS/MMS messages -->
         <activity
             android:name=".ComposeActivity"
-            android:label="@string/title_activity_compose_sms" >
+            android:label="@string/title_activity_compose_sms"
+            android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SENDTO" />
@@ -75,7 +76,8 @@
         <!-- Activity that allows the user to send new SMS/MMS messages -->
         <activity
             android:name=".ThreadActivity"
-            android:label="@string/title_activity_conversation" >
+            android:label="@string/title_activity_conversation"
+            android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SENDTO" />

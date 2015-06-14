@@ -11,8 +11,8 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.CustomThreadCursor;
-import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextThread;
 
@@ -42,8 +42,9 @@ public class CursorThreadAdapter extends CursorAdapter {
 
         // Get name and photo from contacts
         TextManager manager = TextManager.getInstance(context);
-        String name = manager.getSender(thread).getDisplayName();
-        Uri photo = manager.getSender(thread).getPhotoUri();
+        Contact sender = manager.getSender(thread);
+        String name = sender.getDisplayName();
+        Uri photo = sender.getPhotoUri();
 
         // Color user icons
         ImageView user = (ImageView) view.findViewById(R.id.user);
@@ -63,7 +64,7 @@ public class CursorThreadAdapter extends CursorAdapter {
             userIcon.setVisibility(View.VISIBLE);
             user.setVisibility(View.VISIBLE);
             text.setVisibility(View.GONE);
-            if (manager.getSender(thread).hasName()){
+            if (sender.hasName()){
                 text.setText(name.charAt(0)+"");
                 text.setVisibility(View.VISIBLE);
                 userIcon.setVisibility(View.GONE);

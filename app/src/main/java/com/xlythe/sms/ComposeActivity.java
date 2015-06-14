@@ -10,7 +10,6 @@ import android.widget.EditText;
 
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.TextUser;
 
 
 public class ComposeActivity extends Activity {

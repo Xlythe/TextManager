@@ -1,20 +1,15 @@
 package com.xlythe.textmanager.text;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.util.Log;
 
 import com.xlythe.textmanager.User;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Represents a phone number.
  */
-public class TextUser implements User {
+public class Contact implements User {
 
     private String mAddress;
     private String mId;
@@ -37,7 +32,7 @@ public class TextUser implements User {
     private String mInDefaultDirectory;
     private String mCustomRingtone;
 
-    protected TextUser(Cursor c, String address) {
+    protected Contact(Cursor c, String address) {
         mAddress = address;
         if(c.moveToFirst()) {
             mId = c.getString(c.getColumnIndex("_id"));

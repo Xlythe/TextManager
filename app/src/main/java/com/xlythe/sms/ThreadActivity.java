@@ -13,10 +13,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 
-import com.xlythe.textmanager.text.CustomTextCursor;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.TextUser;
 
 
 public class ThreadActivity extends Activity {
