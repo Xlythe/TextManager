@@ -96,37 +96,38 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public TextCursor getTextCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection;
-        final Uri uri;
+        final String[] projection = new String[]{
+                Telephony.Sms._ID,
+                Telephony.Sms.ADDRESS,
+                Telephony.Sms.BODY,
+                Telephony.Sms.CREATOR,
+                Telephony.Sms.DATE,
+                Telephony.Sms.DATE_SENT,
+                Telephony.Sms.ERROR_CODE,
+                Telephony.Sms.LOCKED,
+                Telephony.Sms.PERSON,
+                Telephony.Sms.READ,
+                Telephony.Sms.REPLY_PATH_PRESENT,
+                Telephony.Sms.SERVICE_CENTER,
+                Telephony.Sms.SEEN,
+                Telephony.Sms.STATUS,
+                Telephony.Sms.SUBJECT,
+                Telephony.Sms.THREAD_ID,
+                Telephony.Sms.TYPE,
+                Telephony.Mms._ID,
+                Telephony.Mms.CREATOR,
+                Telephony.Mms.DATE,
+                Telephony.Mms.DATE_SENT,
+                Telephony.Mms.LOCKED,
+                Telephony.Mms.READ,
+                Telephony.Mms.SEEN,
+                Telephony.Mms.STATUS,
+                Telephony.Mms.SUBJECT,
+                Telephony.Mms.THREAD_ID,
+                Telephony.Mms.CONTENT_TYPE
+        };
+        final Uri uri = Uri.parse("content://mms-sms/conversations/" + threadId);
         final String order = "date ASC";
-
-        if (android.os.Build.VERSION.SDK_INT >= 19) {
-            projection = new String[]{
-                    Telephony.Sms._ID,
-                    Telephony.Sms.ADDRESS,
-                    Telephony.Sms.BODY,
-                    Telephony.Sms.CREATOR,
-                    Telephony.Sms.DATE,
-                    Telephony.Sms.DATE_SENT,
-                    Telephony.Sms.ERROR_CODE,
-                    Telephony.Sms.LOCKED,
-                    Telephony.Sms.PERSON,
-                    Telephony.Sms.READ,
-                    Telephony.Sms.REPLY_PATH_PRESENT,
-                    Telephony.Sms.SERVICE_CENTER,
-                    Telephony.Sms.SEEN,
-                    Telephony.Sms.STATUS,
-                    Telephony.Sms.SUBJECT,
-                    Telephony.Sms.THREAD_ID,
-                    Telephony.Sms.TYPE,
-                    Telephony.Mms._ID
-            };
-            uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-        }
-        else {
-            projection = new String[]{};
-            uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-        }
         return new TextCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
@@ -254,7 +255,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "0");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "SMS sent successfully", Toast.LENGTH_SHORT).show();
                         break;
@@ -267,7 +268,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Generic failure cause", Toast.LENGTH_SHORT).show();
                         break;
@@ -280,7 +281,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Service is currently unavailable", Toast.LENGTH_SHORT).show();
                         break;
@@ -293,7 +294,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "No pdu provided", Toast.LENGTH_SHORT).show();
                         break;
@@ -306,7 +307,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
+                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
                         break;

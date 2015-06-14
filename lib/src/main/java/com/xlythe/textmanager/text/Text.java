@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.Telephony;
+import android.util.Log;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
@@ -14,13 +15,16 @@ import com.xlythe.textmanager.MessageCallback;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 
 /**
  * Either an sms or an mms
  */
 public class Text implements Message {
-    private String mId;
+    private static final String TAG = Text.class.getSimpleName();
+
+    private long mId;
     private String mAddress;
     private String mBody;
     private String mCreator;
@@ -38,7 +42,6 @@ public class Text implements Message {
     private long mThreadId;
     private int mType;
 
-    private long mMmsId;
     private Uri mMmsImageUri;
 
     /**
@@ -54,8 +57,9 @@ public class Text implements Message {
      * @param c cursor
      */
     protected Text(Cursor c) {
-        if (android.os.Build.VERSION.SDK_INT >= 19) {
-            mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+        if (!isMMS(c)) {
+            Log.d(TAG, "I'm a SMS!");
+            mId = c.getLong(c.getColumnIndex(Telephony.Sms._ID));
             mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
             mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
             mCreator = c.getString(c.getColumnIndex(Telephony.Sms.CREATOR));
@@ -72,11 +76,62 @@ public class Text implements Message {
             mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
             mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
             mType = c.getInt(c.getColumnIndex(Telephony.Sms.TYPE));
-            mMmsId = c.getLong(c.getColumnIndex(Telephony.Mms._ID));
+            Log.d(TAG, String.format("Spew... id=%s, creator=%s, date=%s, " +
+                            "dateSent=%s, locked=%s, read=%s, seen=%s, status=%s, " +
+                            "subject=%s, threadId=%s", mId, mCreator, mDate, mDateSent, mLocked,
+                    mRead, mSeen, mStatus, mSubject, mThreadId));
+        } else {
+            Log.d(TAG, "I'm a MMS!");
+            mId = c.getLong(c.getColumnIndex(Telephony.Mms._ID));
+            mCreator = c.getString(c.getColumnIndex(Telephony.Mms.CREATOR));
+            mDate = c.getLong(c.getColumnIndex(Telephony.Mms.DATE)) * 1000;
+            mDateSent = c.getString(c.getColumnIndex(Telephony.Mms.DATE_SENT));
+            mLocked = c.getString(c.getColumnIndex(Telephony.Mms.LOCKED));
+            mRead = c.getInt(c.getColumnIndex(Telephony.Mms.READ)) == 1;
+            mSeen = c.getInt(c.getColumnIndex(Telephony.Mms.SEEN)) == 1;
+            mStatus = c.getInt(c.getColumnIndex(Telephony.Mms.STATUS));
+            mSubject = c.getString(c.getColumnIndex(Telephony.Mms.SUBJECT));
+            mThreadId = c.getLong(c.getColumnIndex(Telephony.Mms.THREAD_ID));
+            Log.d(TAG, String.format("Spew... id=%s, creator=%s, date=%s, " +
+                    "dateSent=%s, locked=%s, read=%s, seen=%s, status=%s, " +
+                    "subject=%s, threadId=%s", mId, mCreator, mDate, mDateSent, mLocked,
+                    mRead, mSeen, mStatus, mSubject, mThreadId));
         }
     }
 
-    public String getId() {
+    private static boolean isMMS(Cursor query) {
+        int index = query.getColumnIndex(Telephony.Mms.CONTENT_TYPE);
+        if (index != -1) {
+            return "application/vnd.wap.multipart.related".equals(query.getString(index));
+        }
+        return false;
+    }
+
+    private static String getMmsAddress(Context context, long id) {
+        String selectionAdd = new String("msg_id=" + id);
+        String uriStr = MessageFormat.format("content://mms/{0}/addr", id);
+        Uri uriAddress = Uri.parse(uriStr);
+        Cursor cursor = context.getContentResolver().query(uriAddress, null, selectionAdd, null, null);
+        String name = null;
+        if(cursor.moveToFirst()) {
+            String number = cursor.getString(cursor.getColumnIndex("address"));
+            if(number != null) {
+                try {
+                    Long.parseLong(number.replace("-", ""));
+                    name = number;
+                }
+                catch(NumberFormatException nfe) {
+                    if(name == null) {
+                        name = number;
+                    }
+                }
+            }
+        }
+        cursor.close();
+        return name;
+    }
+
+    public long getId() {
         return mId;
     }
 
@@ -176,7 +231,7 @@ public class Text implements Message {
     }
 
     private void setMmsImage(Context context) {
-        String selectionPart = "mid=" + mMmsId;
+        String selectionPart = "mid=" + mId;
         Uri uri = Uri.parse("content://mms/part");
         Cursor cPart = context.getContentResolver().query(uri, null, selectionPart, null, null);
         if (cPart.moveToFirst()) {
