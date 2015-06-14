@@ -1,9 +1,5 @@
 package com.xlythe.textmanager;
 
-import android.content.Context;
-
-import com.xlythe.textmanager.text.TextThread;
-
 import java.util.List;
 
 /**

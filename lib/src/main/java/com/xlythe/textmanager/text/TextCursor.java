@@ -7,8 +7,8 @@ import android.database.CursorWrapper;
  * A custom text cursor.
  * Created by Niko on 5/23/15.
  */
-public class CustomTextCursor extends CursorWrapper {
-    public CustomTextCursor(Cursor c) {
+public class TextCursor extends CursorWrapper {
+    public TextCursor(Cursor c) {
         super(c);
     }
 

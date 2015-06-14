@@ -12,11 +12,11 @@ import java.text.SimpleDateFormat;
 /**
  * An SMS conversation
  */
-public class TextThread implements MessageThread<Text>, Serializable {
+public class Thread implements MessageThread<Text>, Serializable {
     private String mId;
     private String mAddress;
     private String mBody;
-    private String mDate;
+    private long mDate;
     private String mDateSent;
     private String mErrorCode;
     private String mLocked;
@@ -33,12 +33,12 @@ public class TextThread implements MessageThread<Text>, Serializable {
      *  Protected constructor for creating Threads.
      * @param c cursor
      */
-    protected TextThread(Cursor c) {
+    protected Thread(Cursor c) {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             mId = c.getString(c.getColumnIndex(Telephony.Sms._ID));
             mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
             mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
-            mDate = c.getString(c.getColumnIndex(Telephony.Sms.DATE));
+            mDate = c.getLong(c.getColumnIndex(Telephony.Sms.DATE));
             mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
             mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
             mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
@@ -65,53 +65,8 @@ public class TextThread implements MessageThread<Text>, Serializable {
         return mBody;
     }
 
-    public String getDate(){
+    public long getDate(){
         return mDate;
-    }
-
-    public String getFormattedDate(){
-        Long lDate = Long.parseLong(getDate());
-        Long time = System.currentTimeMillis()-lDate;
-        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
-
-        if(time<60000){
-            // Just now
-            return "Just now";
-        }
-        else if(time>=60000 && time<3600000){
-            // 1 min, 2 mins
-            if(time/60000==1)
-                return time/60000+" min";
-            else
-                return time/60000+" mins";
-        }
-        else if (time>=3600000 && time<7200000) {
-            // 1 hour
-            if (time / 3600000 == 1)
-                return time / 3600000 + " hour";
-            else
-                return time / 3600000 + " hours";
-        }
-        else if (time>=7200000 && f.format(lDate).equals(f.format(System.currentTimeMillis()))) {
-            // 3:09 PM
-            SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
-            return formatter.format(lDate);
-        }
-        else if (time<604800000) {
-            // Mon
-            SimpleDateFormat formatter = new SimpleDateFormat("EEE");
-            return formatter.format(lDate);
-        }
-        else if (time>=604800000 && time/1000<31560000) {
-            // Apr 15
-            SimpleDateFormat formatter = new SimpleDateFormat("MMM d");
-            return formatter.format(lDate);
-        }
-        else {
-            // 4/15/14
-            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yy");
-            return formatter.format(lDate);
-        }
     }
 
     public String getDateSent(){

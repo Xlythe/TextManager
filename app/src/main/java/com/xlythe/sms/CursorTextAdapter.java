@@ -2,10 +2,8 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.CustomTextCursor;
+import com.xlythe.textmanager.text.TextCursor;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 
@@ -26,9 +24,12 @@ import com.xlythe.textmanager.text.TextManager;
 
 public class CursorTextAdapter extends CursorAdapter{
 
-    private CustomTextCursor mCursor;
+    // Duration between considering a text to be part of the same message, or split into different messages
+    private static final long SPLIT_DURATION = 60 * 1000;
 
-    public CursorTextAdapter(Context context, CustomTextCursor c) {
+    private TextCursor mCursor;
+
+    public CursorTextAdapter(Context context, TextCursor c) {
         super(context, c);
         mCursor = c;
     }
@@ -109,7 +110,7 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if time gap between the current and previous message is less than 1 minute
         // they are both the same sender, and if the sender is you.
         // (This means an older message exists in the cluster)
-        if(splitCP<=60000 && userCurrent==userPrevious && userCurrent){
+        if(splitCP<=SPLIT_DURATION && userCurrent==userPrevious && userCurrent){
             // Hide and show respective layouts.
             userLayout.setVisibility(View.VISIBLE);
             recipientLayout.setVisibility(View.GONE);
@@ -138,7 +139,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists in the cluster)
-            if(splitNC<=60000 && userNext){
+            if(splitNC<=SPLIT_DURATION && userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
@@ -154,7 +155,7 @@ public class CursorTextAdapter extends CursorAdapter{
         // Check if time gap between the current and previous message is less than 1 minute
         // they are both the same sender, and if the sender is not you.
         // (This means an older message exists in the cluster)
-        else if(splitCP<=60000 && userCurrent==userPrevious && !userCurrent){
+        else if(splitCP<=SPLIT_DURATION && userCurrent==userPrevious && !userCurrent){
             // Hide and show respective layouts.
             recipientLayout.setVisibility(View.VISIBLE);
             userLayout.setVisibility(View.GONE);
@@ -184,7 +185,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists in the cluster)
-            if(splitNC<=60000 && !userNext){
+            if(splitNC<=SPLIT_DURATION && !userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
@@ -230,7 +231,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists and a cluster has formed)
-            if(splitNC<=60000 && userNext){
+            if(splitNC<=SPLIT_DURATION && userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 
@@ -275,7 +276,7 @@ public class CursorTextAdapter extends CursorAdapter{
                 user.setVisibility(View.VISIBLE);
                 textLetter.setVisibility(View.GONE);
                 if (sender.hasName()){
-                    textLetter.setText(name.charAt(0)+"");
+                    textLetter.setText(Character.toString(name.charAt(0)));
                     textLetter.setVisibility(View.VISIBLE);
                     userIcon.setVisibility(View.GONE);
                 }
@@ -298,7 +299,7 @@ public class CursorTextAdapter extends CursorAdapter{
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists and a cluster has formed)
-            if(splitNC<=60000 && !userNext){
+            if(splitNC<=SPLIT_DURATION && !userNext){
                 // Hide the date because it is not the most recent in the cluster.
                 date.setVisibility(View.GONE);
 

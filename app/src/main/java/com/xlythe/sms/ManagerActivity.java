@@ -3,7 +3,6 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -11,8 +10,8 @@ import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.ListView;
 
-import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.TextThread;
+import com.xlythe.textmanager.text.*;
+import com.xlythe.textmanager.text.Thread;
 
 public class ManagerActivity extends Activity {
     private CursorThreadAdapter mThreadAdapter;
@@ -43,9 +42,9 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((TextThread) v.getTag()).getThreadId());
-                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((TextThread) v.getTag()).getDisplayName());
-                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((TextThread) v.getTag()).getAddress());
+                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((Thread) v.getTag()).getThreadId());
+                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((Thread) v.getTag()).getDisplayName());
+                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((Thread) v.getTag()).getAddress());
                 startActivity(i);
             }
         });

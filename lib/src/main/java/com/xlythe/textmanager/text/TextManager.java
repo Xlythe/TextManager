@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Manages sms and mms messages
  */
-public class TextManager implements MessageManager<Text, TextThread, Contact> {
+public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static TextManager sTextManager;
     private Context mContext;
 
@@ -40,7 +40,7 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
         mContext = context;
     }
 
-    public CustomThreadCursor getThreadCursor() {
+    public ThreadCursor getThreadCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         final Uri uri;
@@ -73,16 +73,16 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
             order = "date DESC";
         }
 
-        return new CustomThreadCursor(contentResolver.query(uri, null, null, null, order));
+        return new ThreadCursor(contentResolver.query(uri, null, null, null, order));
     }
 
     @Override
-    public List<TextThread> getThreads() {
-        List<TextThread> mt = new ArrayList<>();
+    public List<Thread> getThreads() {
+        List<Thread> mt = new ArrayList<>();
         Cursor c = getThreadCursor();
         if (c.moveToFirst()) {
             do {
-                mt.add(new TextThread(c));
+                mt.add(new Thread(c));
             } while (c.moveToNext());
         }
         c.close();
@@ -90,11 +90,11 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
     }
 
     @Override
-    public void getThreads(MessageCallback<List<TextThread>> callback) {
+    public void getThreads(MessageCallback<List<Thread>> callback) {
         callback.onSuccess(getThreads());
     }
 
-    public CustomTextCursor getTextCursor(long threadId) {
+    public TextCursor getTextCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         final Uri uri;
@@ -127,7 +127,7 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
             projection = new String[]{};
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
         }
-        return new CustomTextCursor(contentResolver.query(uri, projection, null, null, order));
+        return new TextCursor(contentResolver.query(uri, projection, null, null, order));
     }
 
     public List<Text> getMessages(long threadId) {
@@ -184,7 +184,7 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
         mContext.getContentResolver().delete(uri, clausole, null);
     }
 
-    public void markRead(TextThread thread) {
+    public void markRead(Thread thread) {
         ContentValues values = new ContentValues();
         values.put("read", true);
         Uri uri =Uri.parse("content://mms-sms/conversations/");
@@ -367,7 +367,7 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
         return contentResolver.query(uri, null, null, null, null);
     }
 
-    public Cursor getContactCursor(TextThread textThread) {
+    public Cursor getContactCursor(Thread textThread) {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         Uri uri;
@@ -389,7 +389,7 @@ public class TextManager implements MessageManager<Text, TextThread, Contact> {
         return new Contact(getContactCursor(text), text.getAddress());
     }
 
-    public Contact getSender(TextThread textThread) {
+    public Contact getSender(Thread textThread) {
         String address = textThread.getAddress();
         return new Contact(getContactCursor(textThread), address);
     }

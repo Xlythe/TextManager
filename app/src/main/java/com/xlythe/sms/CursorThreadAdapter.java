@@ -3,7 +3,6 @@ package com.xlythe.sms;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,19 +10,17 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.CustomThreadCursor;
-import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.TextThread;
+import com.xlythe.textmanager.text.*;
+import com.xlythe.textmanager.text.Thread;
 
 /**
  * Created by Niko on 5/24/15.
  */
 public class CursorThreadAdapter extends CursorAdapter {
 
-    private CustomThreadCursor mCursor;
+    private ThreadCursor mCursor;
 
-    public CursorThreadAdapter(Context context, CustomThreadCursor c) {
+    public CursorThreadAdapter(Context context, ThreadCursor c) {
         super(context, c);
         mCursor = c;
     }
@@ -37,7 +34,7 @@ public class CursorThreadAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         // Get thread from cursor.
-        TextThread thread = mCursor.getThread();
+        Thread thread = mCursor.getThread();
         view.setTag(thread);
 
         // Get name and photo from contacts
@@ -65,7 +62,7 @@ public class CursorThreadAdapter extends CursorAdapter {
             user.setVisibility(View.VISIBLE);
             text.setVisibility(View.GONE);
             if (sender.hasName()){
-                text.setText(name.charAt(0)+"");
+                text.setText(Character.toString(name.charAt(0)));
                 text.setVisibility(View.VISIBLE);
                 userIcon.setVisibility(View.GONE);
             }
@@ -81,6 +78,6 @@ public class CursorThreadAdapter extends CursorAdapter {
 
         // Add a formatted dates to the list.
         TextView date = (TextView) view.findViewById(R.id.date);
-        date.setText(thread.getFormattedDate());
+        date.setText(ThreadDateFormatter.getFormattedDate(thread));
     }
 }

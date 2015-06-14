@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
 import android.widget.Toast;
@@ -37,7 +38,7 @@ public class SmsReceiver extends BroadcastReceiver {
                     Toast.makeText(context, number + ": " + message, Toast.LENGTH_LONG).show();
                 }
 
-                if("android.provider.Telephony.SMS_DELIVER".equals(intent.getAction())) {
+                if(Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
                     Receive.storeMessage(context, messages, 0);
                 }
             }
