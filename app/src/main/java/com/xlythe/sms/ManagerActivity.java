@@ -14,7 +14,7 @@ import com.xlythe.textmanager.text.*;
 import com.xlythe.textmanager.text.Thread;
 
 public class ManagerActivity extends Activity {
-    private CursorThreadAdapter mThreadAdapter;
+    private ThreadAdapter mThreadAdapter;
     private ImageButton mCompose;
     private ListView mListView;
     private TextManager mManager;
@@ -42,15 +42,15 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((Thread) v.getTag()).getThreadId());
-                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((Thread) v.getTag()).getDisplayName());
-                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((Thread) v.getTag()).getAddress());
+                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((Thread) av.getItemAtPosition(position)).getThreadId());
+                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((Thread) av.getItemAtPosition(position)).getDisplayName());
+                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((Thread) av.getItemAtPosition(position)).getAddress());
                 startActivity(i);
             }
         });
 
         // Populate Adapter with list of threads.
-        mThreadAdapter = new CursorThreadAdapter(getBaseContext(), mManager.getThreadCursor());
+        mThreadAdapter = new ThreadAdapter(getBaseContext(), R.layout.list_item_threads, mManager.getThreads());
         mListView.setAdapter(mThreadAdapter);
     }
 

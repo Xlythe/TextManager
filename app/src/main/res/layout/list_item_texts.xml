@@ -2,10 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageView
-        android:id="@+id/pic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
     <RelativeLayout
         android:visibility="visible"
         android:id="@+id/you"
@@ -19,27 +15,31 @@
         android:layout_marginLeft="52dp"
         android:layout_toLeftOf="@+id/icon"
         android:background="@drawable/you">
-    <TextView
-        android:layout_marginTop="12dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="4dp"
-        android:text="hi"
-        android:id="@+id/message"
-        android:textColor="#323232"
-        android:textSize="16sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <TextView
-        android:id="@+id/date"
-        android:textColor="#7a000000"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="12dp"
-        android:text="now"
-        android:textSize="12sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <ImageView
+            android:id="@+id/pic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="4dp"
+            android:text="hi"
+            android:id="@+id/message"
+            android:textColor="#323232"
+            android:textSize="16sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/date"
+            android:textColor="#7a000000"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="12dp"
+            android:text="now"
+            android:textSize="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
     <RelativeLayout
         android:id="@+id/icon"
@@ -48,28 +48,17 @@
         android:layout_height="42dp">
         <de.hdodenhof.circleimageview.CircleImageView
             xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/profile_image"
+            android:id="@+id/user_background"
             android:layout_width="42dp"
             android:layout_height="42dp"
             android:src="@drawable/user"
             app:border_width="0dp"
             app:border_color="#FFFFFFFF"/>
-        <ImageView
-            android:gravity="center"
-            android:id="@+id/user"
-            android:src="@drawable/user"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <ImageView
-            android:gravity="center"
-            android:id="@+id/user_icon"
-            android:src="@drawable/user_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
         <TextView
             android:gravity="center"
-            android:id="@+id/text"
+            android:id="@+id/user_overlay"
             android:textSize="28sp"
+            android:background="@drawable/user_icon"
             android:fontFamily="sans-serif-thin"
             android:layout_width="42dp"
             android:layout_height="42dp"
@@ -93,6 +82,10 @@
     android:layout_marginRight="52dp"
     android:layout_toRightOf="@+id/icon2"
     android:background="@drawable/other">
+    <ImageView
+        android:id="@+id/pic2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
     <TextView
         android:layout_marginTop="12dp"
         android:layout_marginLeft="16dp"
@@ -119,28 +112,17 @@
     android:layout_height="42dp">
     <de.hdodenhof.circleimageview.CircleImageView
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/profile_image2"
+        android:id="@+id/user_background2"
         android:layout_width="42dp"
         android:layout_height="42dp"
         android:src="@drawable/user"
         app:border_width="0dp"
         app:border_color="#FFFFFFFF"/>
-    <ImageView
-        android:gravity="center"
-        android:id="@+id/user2"
-        android:src="@drawable/user"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <ImageView
-        android:gravity="center"
-        android:id="@+id/user_icon2"
-        android:src="@drawable/user_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
     <TextView
         android:gravity="center"
-        android:id="@+id/text2"
+        android:id="@+id/user_overlay2"
         android:textSize="28sp"
+        android:background="@drawable/user_icon"
         android:fontFamily="sans-serif-thin"
         android:layout_width="42dp"
         android:layout_height="42dp"

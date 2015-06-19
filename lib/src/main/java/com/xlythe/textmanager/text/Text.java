@@ -6,7 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.provider.Telephony;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
@@ -17,118 +19,143 @@ import java.io.InputStream;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Either an sms or an mms
  */
-public class Text implements Message {
-    private static final String TAG = Text.class.getSimpleName();
+public class Text implements Message, Comparable{
+    private static final String TYPE_SMS = "sms";
+    private static final String TYPE_MMS = "mms";
+    private static final long MILLI_TO_SEC = 1000;
+
+    static final String[] MMS_PROJECTION = new String[] {
+            BaseColumns._ID,
+            Telephony.Mms.Part.CONTENT_TYPE,
+            Telephony.Mms.Part.TEXT,
+            Telephony.Mms.Part._DATA
+    };
 
     private long mId;
+    private long mThreadId;
+    private long mDate;
     private String mAddress;
     private String mBody;
-    private String mCreator;
-    private long mDate;
-    private String mDateSent;
-    private String mErrorCode;
-    private String mLocked;
-    private String mPerson;
-    private boolean mRead;
-    private String mReplyPathPresent;
-    private String mServiceCenter;
-    private boolean mSeen;
-    private int mStatus;
-    private String mSubject;
-    private long mThreadId;
-    private int mType;
+    private boolean mIncoming;
+    private Uri mAttachment;
 
-    private Uri mMmsImageUri;
+    private Text() { }
 
-    /**
-     * We don't want anyone to create a text without using the builder
-     */
-    private Text() {
-
-    }
-
-    /**
-     * Protected constructor for creating Threads.
-     *
-     * @param c cursor
-     */
-    protected Text(Cursor c) {
-        if (!isMMS(c)) {
-            Log.d(TAG, "I'm a SMS!");
-            mId = c.getLong(c.getColumnIndex(Telephony.Sms._ID));
-            mAddress = c.getString(c.getColumnIndex(Telephony.Sms.ADDRESS));
-            mBody = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
-            mCreator = c.getString(c.getColumnIndex(Telephony.Sms.CREATOR));
-            mDate = c.getLong(c.getColumnIndex(Telephony.Sms.DATE));
-            mDateSent = c.getString(c.getColumnIndex(Telephony.Sms.DATE_SENT));
-            mErrorCode = c.getString(c.getColumnIndex(Telephony.Sms.ERROR_CODE));
-            mLocked = c.getString(c.getColumnIndex(Telephony.Sms.LOCKED));
-            mPerson = c.getString(c.getColumnIndex(Telephony.Sms.PERSON));
-            mRead = c.getInt(c.getColumnIndex(Telephony.Sms.READ)) == 1;
-            mReplyPathPresent = c.getString(c.getColumnIndex(Telephony.Sms.REPLY_PATH_PRESENT));
-            mServiceCenter = c.getString(c.getColumnIndex(Telephony.Sms.SERVICE_CENTER));
-            mSeen = c.getInt(c.getColumnIndex(Telephony.Sms.SEEN)) == 1;
-            mStatus = c.getInt(c.getColumnIndex(Telephony.Sms.STATUS));
-            mSubject = c.getString(c.getColumnIndex(Telephony.Sms.SUBJECT));
-            mThreadId = c.getLong(c.getColumnIndex(Telephony.Sms.THREAD_ID));
-            mType = c.getInt(c.getColumnIndex(Telephony.Sms.TYPE));
-            Log.d(TAG, String.format("Spew... id=%s, creator=%s, date=%s, " +
-                            "dateSent=%s, locked=%s, read=%s, seen=%s, status=%s, " +
-                            "subject=%s, threadId=%s", mId, mCreator, mDate, mDateSent, mLocked,
-                    mRead, mSeen, mStatus, mSubject, mThreadId));
-        } else {
-            Log.d(TAG, "I'm a MMS!");
-            mId = c.getLong(c.getColumnIndex(Telephony.Mms._ID));
-            mCreator = c.getString(c.getColumnIndex(Telephony.Mms.CREATOR));
-            mDate = c.getLong(c.getColumnIndex(Telephony.Mms.DATE)) * 1000;
-            mDateSent = c.getString(c.getColumnIndex(Telephony.Mms.DATE_SENT));
-            mLocked = c.getString(c.getColumnIndex(Telephony.Mms.LOCKED));
-            mRead = c.getInt(c.getColumnIndex(Telephony.Mms.READ)) == 1;
-            mSeen = c.getInt(c.getColumnIndex(Telephony.Mms.SEEN)) == 1;
-            mStatus = c.getInt(c.getColumnIndex(Telephony.Mms.STATUS));
-            mSubject = c.getString(c.getColumnIndex(Telephony.Mms.SUBJECT));
-            mThreadId = c.getLong(c.getColumnIndex(Telephony.Mms.THREAD_ID));
-            Log.d(TAG, String.format("Spew... id=%s, creator=%s, date=%s, " +
-                    "dateSent=%s, locked=%s, read=%s, seen=%s, status=%s, " +
-                    "subject=%s, threadId=%s", mId, mCreator, mDate, mDateSent, mLocked,
-                    mRead, mSeen, mStatus, mSubject, mThreadId));
+    protected Text(Context context, Cursor cursor, String myNumber) {
+        String type = getMessageType(cursor);
+        if (TYPE_SMS.equals(type)){
+            parseSmsMessage(cursor);
+        }
+        else if (TYPE_MMS.equals(type)){
+            parseMmsMessage(context, cursor, myNumber);
+        }
+        else {
+            Log.w("TelephonyProvider", "Unknown Message Type");
         }
     }
 
-    private static boolean isMMS(Cursor query) {
-        int index = query.getColumnIndex(Telephony.Mms.CONTENT_TYPE);
-        if (index != -1) {
-            return "application/vnd.wap.multipart.related".equals(query.getString(index));
-        }
-        return false;
-    }
-
-    private static String getMmsAddress(Context context, long id) {
-        String selectionAdd = new String("msg_id=" + id);
-        String uriStr = MessageFormat.format("content://mms/{0}/addr", id);
-        Uri uriAddress = Uri.parse(uriStr);
-        Cursor cursor = context.getContentResolver().query(uriAddress, null, selectionAdd, null, null);
-        String name = null;
-        if(cursor.moveToFirst()) {
-            String number = cursor.getString(cursor.getColumnIndex("address"));
-            if(number != null) {
-                try {
-                    Long.parseLong(number.replace("-", ""));
-                    name = number;
-                }
-                catch(NumberFormatException nfe) {
-                    if(name == null) {
-                        name = number;
-                    }
-                }
+    private String getMessageType(Cursor cursor) {
+        int typeIndex = cursor.getColumnIndex(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
+        if (typeIndex < 0) {
+            // Type column not in projection, use another discriminator
+            String cType = cursor.getString(cursor.getColumnIndex(Telephony.Mms.CONTENT_TYPE));
+            // If content type is present, this is an MMS message
+            if (cType != null) {
+                return TYPE_MMS;
+            } else {
+                return TYPE_SMS;
             }
         }
-        cursor.close();
-        return name;
+        else {
+            return cursor.getString(typeIndex);
+        }
+    }
+
+    private void parseSmsMessage(Cursor data) {
+        mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
+        mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
+        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE));
+
+        mAddress = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
+        mBody = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.BODY));
+        mIncoming = isIncomingMessage(data, true);
+    }
+
+    private void parseMmsMessage(Context context, Cursor data, String myNumber) {
+        mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
+        mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
+        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE))*MILLI_TO_SEC;
+        mIncoming = isIncomingMessage(data, false);
+
+        long _id = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
+
+        // Query the address information for this message
+        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");
+        Cursor addr = context.getContentResolver().query(
+                addressUri,
+                null,
+                null,
+                null,
+                null
+        );
+        HashSet<String> recipients = new HashSet<>();
+        while (addr.moveToNext()) {
+            String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+            // Don't add our own number to the displayed list
+            if (myNumber == null || !address.contains(myNumber)) {
+                recipients.add(address);
+            }
+        }
+        mAddress = TextUtils.join(",", recipients);
+        addr.close();
+
+        // Query all the MMS parts associated with this message
+        Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/part");
+        Cursor inner = context.getContentResolver().query(
+                messageUri,
+                MMS_PROJECTION,
+                Telephony.Mms.Part.MSG_ID + " = ?",
+                new String[] {String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
+                null
+        );
+
+        while (inner.moveToNext()) {
+            String contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+            if (contentType == null) {
+                continue;
+            }
+            else if (contentType.matches("image/.*")) {
+                // Find any part that is an image attachment
+                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
+                mAttachment = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
+            }
+            else if (contentType.matches("text/.*")) {
+                // Find any part that is text data
+                mBody = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.TEXT));
+            }
+        }
+        inner.close();
+    }
+
+    private static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
+        int boxId;
+        if (isSMS) {
+            boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Sms.TYPE));
+            return (boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_INBOX ||
+                    boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_ALL);
+        }
+        else {
+            boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Mms.MESSAGE_BOX));
+            return (boxId == Telephony.Mms.MESSAGE_BOX_INBOX ||
+                    boxId == Telephony.Mms.MESSAGE_BOX_ALL);
+        }
     }
 
     public long getId() {
@@ -143,114 +170,33 @@ public class Text implements Message {
         return mBody;
     }
 
-    public String getCreator() {
-        return mCreator;
-    }
-
     public long getDate() {
         return mDate;
-    }
-
-    public String getDateSent() {
-        return mDateSent;
-    }
-
-    public String getErrorCode() {
-        return mErrorCode;
-    }
-
-    public String getLocked() {
-        return mLocked;
-    }
-
-    public String getPerson() {
-        return mPerson;
-    }
-
-    public String getReplyPathPresent() {
-        return mReplyPathPresent;
-    }
-
-    public String getServiceCenter() {
-        return mServiceCenter;
-    }
-
-
-    public String getSubject() {
-        return mSubject;
     }
 
     public long getThreadId() {
         return mThreadId;
     }
 
-    public int getType() {
-        return mType;
+    public Uri getAttachment() {
+        return mAttachment;
     }
 
-    public boolean sentByUser() {
-        mType = getType();
-        switch (mType) {
-            case Telephony.Sms.MESSAGE_TYPE_INBOX:
-                return false;
-            case Telephony.Sms.MESSAGE_TYPE_OUTBOX:
-            case Telephony.Sms.MESSAGE_TYPE_FAILED:
-            case Telephony.Sms.MESSAGE_TYPE_QUEUED:
-            case Telephony.Sms.MESSAGE_TYPE_SENT:
-            case Telephony.Sms.MESSAGE_TYPE_DRAFT:
-                return true;
-        }
-        return false;
-    }
-
-    public Status getStatus() {
-        switch (mStatus) {
-            case Telephony.Sms.STATUS_PENDING:
-                return Status.SENDING;
-            case Telephony.Sms.STATUS_FAILED:
-                return Status.FAILED;
-            case Telephony.Sms.STATUS_COMPLETE:
-                if (mSeen) {
-                    return Status.SEEN;
-                } else {
-                    return Status.SENT;
-                }
-            case Telephony.Sms.STATUS_NONE:
-                if (mRead) {
-                    return Status.READ;
-                } else {
-                    return Status.UNREAD;
-                }
-        }
-        throw new IllegalStateException("Could not determine Message state");
-    }
-
-    public Uri getMmsImageUri(Context context){
-        setMmsImage(context);
-        return mMmsImageUri;
-    }
-
-    private void setMmsImage(Context context) {
-        String selectionPart = "mid=" + mId;
-        Uri uri = Uri.parse("content://mms/part");
-        Cursor cPart = context.getContentResolver().query(uri, null, selectionPart, null, null);
-        if (cPart.moveToFirst()) {
-            do {
-                String partId = cPart.getString(cPart.getColumnIndex("_id"));
-                String type = cPart.getString(cPart.getColumnIndex("ct"));
-                if ("image/jpeg".equals(type) || "image/bmp".equals(type) ||
-                        "image/gif".equals(type) || "image/jpg".equals(type) ||
-                        "image/png".equals(type)) {
-                    mMmsImageUri = Uri.parse("content://mms/part/" + partId);
-                }
-            } while (cPart.moveToNext());
-        }
-        cPart.close();
+    public boolean getIncoming() {
+        return mIncoming;
     }
 
     @Override
-    public String toString() {
-        return mBody;
+    public int compareTo(Object o) {
+        float myDate = getDate();
+        float theirDate = ((Text) o).getDate();
+        if(myDate > theirDate) {
+            return 1;
+        }
+        if(theirDate > myDate) {
+            return -1;
+        }
+        return 0;
     }
 
     public static class Builder {
@@ -258,7 +204,6 @@ public class Text implements Message {
         private String mRecipient;
 
         public Builder() {
-
         }
 
         public Builder drawable(Drawable drawable) {

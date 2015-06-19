@@ -22,7 +22,7 @@ public class ThreadActivity extends Activity {
     public static String EXTRA_ADDRESS = "address";
     public static String EXTRA_NUMBER = "number";
 
-    private CursorTextAdapter mTextAdapter;
+    private TextAdapter mTextAdapter;
     private ListView mListView;
     private ImageButton mSend;
     private EditText mMessage;
@@ -54,7 +54,7 @@ public class ThreadActivity extends Activity {
         getActionBar().setTitle(mAddress);
 
         // Populate Adapter with list of texts.
-        mTextAdapter = new CursorTextAdapter(getBaseContext(), mManager.getTextCursor(mThreadId));
+        mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mManager.getMessages(mThreadId));
         mListView.setAdapter(mTextAdapter);
 
         // Delete a message on long press.

@@ -4,14 +4,18 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
@@ -19,6 +23,7 @@ import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,6 +31,43 @@ import java.util.List;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
+    public static final String[] PROJECTION = new String[] {
+            // Determine if message is SMS or MMS
+            Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
+            // Base item ID
+            BaseColumns._ID,
+            // Conversation (thread) ID
+            Telephony.Sms.Conversations.THREAD_ID,
+            // Date values
+            Telephony.Sms.DATE,
+            Telephony.Sms.DATE_SENT,
+            // For SMS only
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.TYPE,
+            // For MMS only
+            Telephony.Mms.SUBJECT,
+            Telephony.Mms.MESSAGE_BOX
+    };
+    public static final String[] PROJECTION_PRE_LOLLIPOP = new String[] {
+            // Determine if message is SMS or MMS
+            "type_discriminator_column",
+            // Base item ID
+            "_id",
+            // Conversation (thread) ID
+            "thread_id",
+            // Date values
+            "date",
+            "date_sent",
+            // For SMS only
+            "address",
+            "body",
+            "type",
+            // For MMS only
+            "subject",
+            "message_box"
+    };
+    private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
 
@@ -37,110 +79,73 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     private TextManager(Context context) {
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        mDeviceNumber = manager.getLine1Number();
         mContext = context;
     }
 
-    public ThreadCursor getThreadCursor() {
+    private Cursor getCursor() {
+        ContentResolver contentResolver = getContext().getContentResolver();
+        final Uri uri;
+        final String order;
+
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+            order = Telephony.Sms.DEFAULT_SORT_ORDER;
+        }
+        else {
+            uri = Uri.parse("content://mms-sms/conversations/");
+            order = "date DESC";
+        }
+        return contentResolver.query(uri, null, null, null, order);
+    }
+
+    private Cursor getCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         final Uri uri;
         final String order;
 
         if (android.os.Build.VERSION.SDK_INT >= 19) {
-            projection = new String[]{
-                    Telephony.Sms._ID,
-                    Telephony.Sms.ADDRESS,
-                    Telephony.Sms.BODY,
-                    Telephony.Sms.DATE,
-                    Telephony.Sms.DATE_SENT,
-                    Telephony.Sms.ERROR_CODE,
-                    Telephony.Sms.LOCKED,
-                    Telephony.Sms.PERSON,
-                    Telephony.Sms.READ,
-                    Telephony.Sms.REPLY_PATH_PRESENT,
-                    Telephony.Sms.SERVICE_CENTER,
-                    Telephony.Sms.STATUS,
-                    Telephony.Sms.SUBJECT,
-                    Telephony.Sms.THREAD_ID,
-                    Telephony.Sms.TYPE,
-            };
-            uri = Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-            order = Telephony.Sms.DEFAULT_SORT_ORDER;
+            projection = PROJECTION;
+            uri = ContentUris.withAppendedId(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
+            order = "date ASC";
         }
         else {
-            projection = new String[]{};
-            uri = Uri.parse("content://mms-sms/conversations/");
-            order = "date DESC";
+            projection = PROJECTION_PRE_LOLLIPOP;
+            uri = Uri.parse("content://mms-sms/conversations/" + threadId);
+            order = "date ASC";
         }
 
-        return new ThreadCursor(contentResolver.query(uri, null, null, null, order));
+        return contentResolver.query(uri, projection, null, null, order);
     }
 
     @Override
     public List<Thread> getThreads() {
-        List<Thread> mt = new ArrayList<>();
-        Cursor c = getThreadCursor();
+        List<Thread> threads = new ArrayList<>();
+        Cursor c = getCursor();
         if (c.moveToFirst()) {
             do {
-                mt.add(new Thread(c));
+                threads.add(new Thread(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        return mt;
+        Collections.sort(threads);
+        return threads;
     }
 
     @Override
-    public void getThreads(MessageCallback<List<Thread>> callback) {
-        callback.onSuccess(getThreads());
-    }
-
-    public TextCursor getTextCursor(long threadId) {
-        ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection = new String[]{
-                Telephony.Sms._ID,
-                Telephony.Sms.ADDRESS,
-                Telephony.Sms.BODY,
-                Telephony.Sms.CREATOR,
-                Telephony.Sms.DATE,
-                Telephony.Sms.DATE_SENT,
-                Telephony.Sms.ERROR_CODE,
-                Telephony.Sms.LOCKED,
-                Telephony.Sms.PERSON,
-                Telephony.Sms.READ,
-                Telephony.Sms.REPLY_PATH_PRESENT,
-                Telephony.Sms.SERVICE_CENTER,
-                Telephony.Sms.SEEN,
-                Telephony.Sms.STATUS,
-                Telephony.Sms.SUBJECT,
-                Telephony.Sms.THREAD_ID,
-                Telephony.Sms.TYPE,
-                Telephony.Mms._ID,
-                Telephony.Mms.CREATOR,
-                Telephony.Mms.DATE,
-                Telephony.Mms.DATE_SENT,
-                Telephony.Mms.LOCKED,
-                Telephony.Mms.READ,
-                Telephony.Mms.SEEN,
-                Telephony.Mms.STATUS,
-                Telephony.Mms.SUBJECT,
-                Telephony.Mms.THREAD_ID,
-                Telephony.Mms.CONTENT_TYPE
-        };
-        final Uri uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-        final String order = "date ASC";
-        return new TextCursor(contentResolver.query(uri, projection, null, null, order));
-    }
-
     public List<Text> getMessages(long threadId) {
-        List<Text> list = new ArrayList<>();
-        Cursor c = getTextCursor(threadId);
+        List<Text> messages = new ArrayList<>();
+        Cursor c = getCursor(threadId);
         if (c.moveToFirst()) {
             do {
-                list.add(new Text(c));
+                messages.add(new Text(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        return list;
+        Collections.sort(messages);
+        return messages;
     }
 
     public void delete(Text text) {
@@ -197,6 +202,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     }
 
+    @Override
     public List<Text> getMessages(int limit) {
         return null;
     }
@@ -204,6 +210,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     @Override
     public void registerObserver() {
 
+    }
+
+    @Override
+    public void getThreads(MessageCallback<List<Thread>> callback) {
+        callback.onSuccess(getThreads());
     }
 
     @Override

@@ -1,59 +1,63 @@
 package com.xlythe.sms;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.TextCursor;
-import com.xlythe.textmanager.text.Text;
-import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.*;
+
+import java.util.List;
 
 /**
- * Created by Niko on 5/23/15.
+ * Created by Niko on 6/18/15.
  */
-
-public class CursorTextAdapter extends CursorAdapter{
+public class TextAdapter extends ArrayAdapter {
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
 
-    private TextCursor mCursor;
+    private Context mContext;
+    private int mLayoutResourceId;
+    private List<Text> mTexts;
 
-    public CursorTextAdapter(Context context, TextCursor c) {
-        super(context, c);
-        mCursor = c;
+    public TextAdapter(Context context, int layoutResourceId, List<Text> texts) {
+        super(context, layoutResourceId, texts);
+        mLayoutResourceId = layoutResourceId;
+        mContext = context;
+        mTexts = texts;
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        return inflater.inflate(R.layout.list_item_texts, parent, false);
-    }
+    public View getView(int position, View view, ViewGroup parent) {
+        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        ViewHolder holder;
+        if (view != null) {
+            holder = (ViewHolder) view.getTag();
+        } else {
+            view = inflater.inflate(mLayoutResourceId, parent, false);
+            holder = new ViewHolder(view);
+            view.setTag(holder);
+        }
 
-    @Override
-    public void bindView(View view, Context context, Cursor cursor) {
         // Here's where things get a little messy. There are four different layouts.
         // User: The messages that you sent.
         // User Recent: Messages that you sent in quick succession (appear close together, date displays once).
         // Recipient: The messages that you received.
         // Recipient Recent: Messages that you received in quick succession (appear close together, date displays once).
 
-        // Get Text from cursor.
-        Text text = mCursor.getText();
-        view.setTag(text);
+        // Get the text.
+        Text text = mTexts.get(position);
 
-        // Get name and photo from contacts
-        TextManager manager = TextManager.getInstance(context);
+        // Get name and photo from contacts.
+        TextManager manager = TextManager.getInstance(mContext);
         Contact sender = manager.getSender(text);
         String name = sender.getDisplayName();
         Uri photo = sender.getPhotoUri();
@@ -61,13 +65,6 @@ public class CursorTextAdapter extends CursorAdapter{
         // Get both base layouts (User and Recipient)
         RelativeLayout userLayout = (RelativeLayout) view.findViewById(R.id.you);
         RelativeLayout recipientLayout = (RelativeLayout) view.findViewById(R.id.them);
-
-        // This is a test for mms data
-        ImageView pic = (ImageView) view.findViewById(R.id.pic);
-        pic.setImageURI(text.getMmsImageUri(context));
-
-        // Used to convert dp to pixels
-        final float scale = context.getResources().getDisplayMetrics().density;
 
         // * Previous meaning older message
         // * Next meaning most recently received
@@ -78,30 +75,26 @@ public class CursorTextAdapter extends CursorAdapter{
         long dateNext = 0;
 
         // Get the sender of the current, previous and next message. (returns true if you)
-        boolean userCurrent = text.sentByUser();
-        boolean userPrevious = text.sentByUser();
-        boolean userNext = !text.sentByUser();
+        boolean userCurrent = !text.getIncoming();
+        boolean userPrevious = !text.getIncoming();
+        boolean userNext = text.getIncoming();
 
         // Time gap between the current and previous, and the next and current messages.
         long splitCP;
         long splitNC;
 
         // Check if previous message exists, then get the date and sender.
-        if(!mCursor.isFirst()) {
-            mCursor.moveToPrevious();
-            Text nextText = mCursor.getText();
+        if(position!=0) {
+            Text nextText = mTexts.get(position - 1);
             datePrevious = nextText.getDate();
-            userPrevious = nextText.sentByUser();
-            mCursor.moveToNext();
+            userPrevious = !nextText.getIncoming();
         }
 
         // Check if next message exists, then get the date and sender.
-        if(!mCursor.isLast()) {
-            mCursor.moveToNext();
-            Text nextText = mCursor.getText();
+        if(position!=mTexts.size()-1) {
+            Text nextText = mTexts.get(position + 1);
             dateNext = nextText.getDate();
-            userNext = nextText.sentByUser();
-            mCursor.moveToPrevious();
+            userNext = !nextText.getIncoming();
         }
 
         // Calculate time gap.
@@ -124,6 +117,10 @@ public class CursorTextAdapter extends CursorAdapter{
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon);
             icon.setVisibility(View.INVISIBLE);
 
+            // Set the mms data
+            ImageView pic = (ImageView) view.findViewById(R.id.pic);
+            pic.setImageURI(text.getAttachment());
+
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message);
             message.setText(text.getBody());
@@ -134,10 +131,8 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
-            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
-            ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom);
+            ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom);
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists in the cluster)
@@ -146,10 +141,8 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
-                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
-                ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom_compact);
+                ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom_compact);
             }
         }
 
@@ -170,6 +163,10 @@ public class CursorTextAdapter extends CursorAdapter{
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon2);
             icon.setVisibility(View.INVISIBLE);
 
+            // Set the mms data
+            ImageView pic = (ImageView) view.findViewById(R.id.pic2);
+            pic.setImageURI(text.getAttachment());
+
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message2);
             message.setText(text.getBody());
@@ -180,10 +177,8 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because this might be the last message in the cluster.
-            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
-            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
-            ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom);
+            ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom);
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists in the cluster)
@@ -192,10 +187,8 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
-                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
-                ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom_compact);
+                ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom_compact);
             }
         }
 
@@ -213,9 +206,13 @@ public class CursorTextAdapter extends CursorAdapter{
             // Display the user icon.
             RelativeLayout icon = (RelativeLayout) view.findViewById(R.id.icon);
             icon.setVisibility(View.VISIBLE);
-            ImageView user = (ImageView) view.findViewById(R.id.user);
-            // TODO: Add user image instead of just grey
+            ImageView user = (ImageView) view.findViewById(R.id.user_background);
+            TextView userIcon = (TextView) view.findViewById(R.id.user_overlay);
             user.setColorFilter(0xff757575);
+
+            // Set the mms data
+            ImageView pic = (ImageView) view.findViewById(R.id.pic);
+            pic.setImageURI(text.getAttachment());
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message);
@@ -227,10 +224,8 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
-            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
-            ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom);
+            ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom);
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still you. (This means a newer message exists and a cluster has formed)
@@ -239,10 +234,8 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
-                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
-                ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom_compact);
+                ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom_compact);
             }
         }
 
@@ -261,29 +254,24 @@ public class CursorTextAdapter extends CursorAdapter{
             recipientLayout.getChildAt(0).getBackground().setColorFilter(ColorUtils.getColor(text.getThreadId()), PorterDuff.Mode.SRC_IN);
 
             // Display the user icon.
-            ImageView user = (ImageView) view.findViewById(R.id.user2);
-            ImageView userImage = (ImageView) view.findViewById(R.id.profile_image2);
-            ImageView userIcon = (ImageView) view.findViewById(R.id.user_icon2);
-            TextView textLetter = (TextView) view.findViewById(R.id.text2);
+            ImageView userImage = (ImageView) view.findViewById(R.id.user_background2);
+            TextView textLetter = (TextView) view.findViewById(R.id.user_overlay2);
             if(photo!=null){
                 userImage.setImageURI(photo);
-                userImage.setVisibility(View.VISIBLE);
-                userIcon.setVisibility(View.GONE);
-                user.setVisibility(View.GONE);
-                textLetter.setVisibility(View.GONE);
+                textLetter.setBackground(null);
             }
             else {
-                user.setColorFilter(ColorUtils.getColor(text.getThreadId()));
-                userImage.setVisibility(View.GONE);
-                userIcon.setVisibility(View.VISIBLE);
-                user.setVisibility(View.VISIBLE);
-                textLetter.setVisibility(View.GONE);
+                userImage.setColorFilter(ColorUtils.getColor(text.getThreadId()));
+                textLetter.setText("");
                 if (sender.hasName()){
                     textLetter.setText(Character.toString(name.charAt(0)));
-                    textLetter.setVisibility(View.VISIBLE);
-                    userIcon.setVisibility(View.GONE);
+                    textLetter.setBackground(null);
                 }
             }
+
+            // Set the mms data
+            ImageView pic = (ImageView) view.findViewById(R.id.pic2);
+            pic.setImageURI(text.getAttachment());
 
             // Set the message body.
             TextView message = (TextView) view.findViewById(R.id.message2);
@@ -295,10 +283,8 @@ public class CursorTextAdapter extends CursorAdapter{
             date.setText(DateFormatter.getFormattedDate(text));
 
             // Update bottom margins to regular size because a cluster may never form.
-            int pixel =  (int)(R.dimen.message_margin_bottom * scale + 0.5f);
-            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-            pixel =  (int)(R.dimen.bubble_margin_bottom * scale + 0.5f);
-            ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+            ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom);
+            ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom);
 
             // Check if time gap between the next and current message is less than 1 minute
             // and that the sender is still not you. (This means a newer message exists and a cluster has formed)
@@ -307,17 +293,26 @@ public class CursorTextAdapter extends CursorAdapter{
                 date.setVisibility(View.GONE);
 
                 // Update margins so bubbles in cluster are closer together.
-                pixel =  (int)(R.dimen.message_margin_bottom_compact * scale + 0.5f);
-                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = pixel;
-                pixel =  (int)(R.dimen.bubble_margin_bottom_compact * scale + 0.5f);
-                ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = pixel;
+                ((LinearLayout.LayoutParams)message.getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.message_margin_bottom_compact);
+                ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = mContext.getResources().getDimensionPixelSize(R.dimen.bubble_margin_bottom_compact);
             }
         }
 
         // Get rid of any bottom margins if its the newest message.
-        if(mCursor.isLast()) {
+        if(position==mTexts.size()-1) {
             ((RelativeLayout.LayoutParams)recipientLayout.getChildAt(0).getLayoutParams()).bottomMargin = 0;
             ((RelativeLayout.LayoutParams)userLayout.getChildAt(0).getLayoutParams()).bottomMargin = 0;
         }
+
+        return view;
+    }
+
+    static class ViewHolder {
+
+
+        public ViewHolder(View view) {
+
+        }
     }
 }
+
