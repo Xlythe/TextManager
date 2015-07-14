@@ -3,6 +3,7 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +24,14 @@ public class ManagerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager);
+
+//        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getBaseContext());
+//        if(apnParameters != null) {
+//            Log.d("Manager Activity", apnParameters.getMmscUrl()+"");
+//            new GetMms().execute("https://snq2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-7-13b-2f7-5-65-4b5be63");
+//        } else {
+//            Log.d("Manager Activity", "apn failed");
+//        }
 
         mManager = TextManager.getInstance(getBaseContext());
         mCompose = (ImageButton) findViewById(R.id.compose);
