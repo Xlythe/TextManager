@@ -8,9 +8,11 @@ import android.provider.Telephony;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.HashSet;
 
 /**
@@ -36,6 +38,7 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
     private Uri mAttachment;
 
     protected Thread(Context context, Cursor cursor, String myNumber) {
+        Log.e("thread","constructor");
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             parseSmsMessage(cursor);

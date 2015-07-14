@@ -44,7 +44,7 @@ public class SmsReceiver extends BroadcastReceiver {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            Log.e("SmsReceiver", "Exception smsReceiver" + e);
+            Log.e("SmsReciver", "Exception smsReciver" + e);
         }
     }
 }
