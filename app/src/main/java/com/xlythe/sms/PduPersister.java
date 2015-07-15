@@ -568,8 +568,9 @@ public class PduPersister {
 
                 set = OCTET_COLUMN_INDEX_MAP.entrySet();
                 for (Entry<Integer, Integer> e : set) {
-                    setOctetToHeaders(
-                            c, e.getValue(), headers, e.getKey());
+//                    setOctetToHeaders(
+//                            c, e.getValue(), headers, e.getKey());
+                    Log.e("PduPersister", "OCTET ERROR");
                 }
 
                 set = LONG_COLUMN_INDEX_MAP.entrySet();
@@ -969,7 +970,6 @@ public class PduPersister {
      * Update headers of a SendReq.
      *
      * @param uri The PDU which need to be updated.
-     * @param pdu New headers.
      * @throws MmsException Bad URI or updating failed.
      */
     public void updateHeaders(Uri uri, SendReq sendReq) {
@@ -1070,7 +1070,8 @@ public class PduPersister {
             }
         }
         if (!recipients.isEmpty()) {
-            long threadId = Threads.getOrCreateThreadId(mContext, recipients);
+            Log.e("PduPersister", "get or creat thread not found");
+            long threadId = 0;//Threads.getOrCreateThreadId(mContext, recipients);
             values.put(Mms.THREAD_ID, threadId);
         }
 
@@ -1357,7 +1358,8 @@ public class PduPersister {
             if (createThreadId && !recipients.isEmpty()) {
                 // Given all the recipients associated with this message, find (or create) the
                 // correct thread.
-                threadId = Threads.getOrCreateThreadId(mContext, recipients);
+                Log.e("PduPersister", "get or creat thread not found");
+                //threadId = Threads.getOrCreateThreadId(mContext, recipients);
             }
             values.put(Mms.THREAD_ID, threadId);
         }

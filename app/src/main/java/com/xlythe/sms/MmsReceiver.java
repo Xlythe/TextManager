@@ -87,11 +87,12 @@ public class MmsReceiver extends BroadcastReceiver {
                     nInd.setContentLocation(contentLocationWithId);
                 }
 
-                Uri uri = p.persist(pdu,
-                        Telephony.Mms.Inbox.CONTENT_URI,
-                        !NotificationTransaction.allowAutoDownload(),
-                        MessagingPreferenceActivity.getIsGroupMmsEnabled(mContext),
-                        null);
+                Uri uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, false, false, null);
+
+                Intent svc = new Intent(mContext, TransactionService.class);
+                svc.putExtra(TransactionBundle.URI, uri.toString());
+                svc.putExtra(TransactionBundle.TRANSACTION_TYPE, Transaction.NOTIFICATION_TRANSACTION);
+                mContext.startService(svc);
             }
         } catch (Exception e) {
             // TODO: handle exception
