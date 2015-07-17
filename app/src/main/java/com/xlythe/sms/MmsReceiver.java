@@ -59,7 +59,7 @@ public class MmsReceiver extends BroadcastReceiver {
 //                String data = new String(buffer3);
 //                Log.d(DEBUG_TAG, "data " + data);
 
-                // Get raw PDU push-data from the message and parse it
+                // Get raw PDU push-data from the message and parse it.
                 byte[] pushData = intent.getByteArrayExtra("data");
                 PduParser parser = new PduParser(pushData, PduParserUtil.shouldParseContentDisposition());
                 GenericPdu pdu = parser.parse();
@@ -68,31 +68,11 @@ public class MmsReceiver extends BroadcastReceiver {
                     Log.e(DEBUG_TAG, "Invalid PUSH data");
                 }
                 else {
-                    Log.e(DEBUG_TAG, "PUSH data" + pdu);
+                    Log.d(DEBUG_TAG, "success");
                 }
-
-                NotificationInd nInd = (NotificationInd) pdu;
 
                 PduPersister p = PduPersister.getPduPersister(mContext);
-                ContentResolver cr = mContext.getContentResolver();
-                int type = pdu.getMessageType();
-                long threadId = -1;
-
-                byte [] contentLocation = nInd.getContentLocation();
-                if ('=' == contentLocation[contentLocation.length - 1]) {
-                    byte [] transactionId = nInd.getTransactionId();
-                    byte [] contentLocationWithId = new byte [contentLocation.length + transactionId.length];
-                    System.arraycopy(contentLocation, 0, contentLocationWithId, 0, contentLocation.length);
-                    System.arraycopy(transactionId, 0, contentLocationWithId, contentLocation.length, transactionId.length);
-                    nInd.setContentLocation(contentLocationWithId);
-                }
-
                 Uri uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, false, false, null);
-
-                Intent svc = new Intent(mContext, TransactionService.class);
-                svc.putExtra(TransactionBundle.URI, uri.toString());
-                svc.putExtra(TransactionBundle.TRANSACTION_TYPE, Transaction.NOTIFICATION_TRANSACTION);
-                mContext.startService(svc);
             }
         } catch (Exception e) {
             // TODO: handle exception
