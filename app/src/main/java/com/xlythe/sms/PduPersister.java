@@ -31,6 +31,7 @@ import android.provider.Telephony.Mms.Addr;
 import android.provider.Telephony.Mms.Part;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
@@ -41,8 +42,11 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is the high-level manager of PDU storage.
@@ -50,6 +54,15 @@ import java.util.Map.Entry;
 public class PduPersister {
     private static final String TAG = "PduPersister";
     private static final boolean LOCAL_LOGV = false;
+
+    // Email Address Pattern.
+    private static final Pattern EMAIL_ADDRESS_PATTERN = Pattern.compile(
+            "[a-zA-Z0-9\\+\\.\\_\\%\\-]{1,256}" + "\\@" + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+                    "(" + "\\." + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" + ")+"
+    );
+
+    // Name Address Email Pattern.
+    private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
 
     /**
      * The uri of temporary drm objects.
@@ -195,8 +208,7 @@ public class PduPersister {
         mContext = context;
         mContentResolver = context.getContentResolver();
         mDrmManagerClient = new DrmManagerClient(context);
-        mTelephonyManager = (TelephonyManager)context
-                .getSystemService(Context.TELEPHONY_SERVICE);
+        mTelephonyManager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
     }
 
     /** Get(or create if not exist) an instance of PduPersister */
@@ -222,7 +234,7 @@ public class PduPersister {
             values.put(Addr.TYPE, type);
 
             Uri uri = Uri.parse("content://mms/" + msgId + "/addr");
-            SqliteWrapper.insert(mContext, mContentResolver, uri, values);
+            mContentResolver.insert(uri, values);
         }
     }
 
@@ -230,8 +242,7 @@ public class PduPersister {
         return part.getContentType() == null ? null : toIsoString(part.getContentType());
     }
 
-    public Uri persistPart(PduPart part, long msgId, HashMap<Uri, InputStream> preOpenedFiles)
-            throws MmsException {
+    public Uri persistPart(PduPart part, long msgId, HashMap<Uri, InputStream> preOpenedFiles) {
         Uri uri = Uri.parse("content://mms/" + msgId + "/part");
         ContentValues values = new ContentValues(8);
 
@@ -254,7 +265,7 @@ public class PduPersister {
                 values.put(Part.SEQ, -1);
             }
         } else {
-            throw new MmsException("MIME type of the part must be set.");
+            Log.d("PduPersister","MIME type of the part must be set.");
         }
 
         if (part.getFilename() != null) {
@@ -283,9 +294,9 @@ public class PduPersister {
             values.put(Part.CONTENT_LOCATION, (String) value);
         }
 
-        Uri res = SqliteWrapper.insert(mContext, mContentResolver, uri, values);
+        Uri res = mContentResolver.insert(uri, values);
         if (res == null) {
-            throw new MmsException("Failed to persist part, return null.");
+            Log.d("PduPersister","Failed to persist part, return null.");
         }
 
         persistData(part, res, contentType, preOpenedFiles);
@@ -307,12 +318,10 @@ public class PduPersister {
      * @param uri The URI of the part.
      * @param contentType The MIME type of the part.
      * @param preOpenedFiles if not null, a map of preopened InputStreams for the parts.
-     * @throws MmsException Cannot find source data or error occurred
      *         while saving the data.
      */
     private void persistData(PduPart part, Uri uri,
-                             String contentType, HashMap<Uri, InputStream> preOpenedFiles)
-            throws MmsException {
+                             String contentType, HashMap<Uri, InputStream> preOpenedFiles) {
         OutputStream os = null;
         InputStream is = null;
         DrmConvertSession drmConvertSession = null;
@@ -330,7 +339,7 @@ public class PduPersister {
                 }
                 cv.put(Part.TEXT, new EncodedStringValue(data).getString());
                 if (mContentResolver.update(uri, cv, null, null) != 1) {
-                    throw new MmsException("unable to update " + uri.toString());
+                    Log.d("PduPersister","unable to update " + uri.toString());
                 }
             } else {
                 boolean isDrm = DownloadDrmHelper.isDrmConvertNeeded(contentType);
@@ -358,8 +367,7 @@ public class PduPersister {
                     // We haven't converted the file yet, start the conversion
                     drmConvertSession = DrmConvertSession.open(mContext, contentType);
                     if (drmConvertSession == null) {
-                        throw new MmsException("Mimetype " + contentType +
-                                " can not be converted.");
+                        Log.d("PduPersister","Mimetype " + contentType +  " can not be converted.");
                     }
                 }
                 // uri can look like:
@@ -393,7 +401,7 @@ public class PduPersister {
                             if (convertedData != null) {
                                 os.write(convertedData, 0, convertedData.length);
                             } else {
-                                throw new MmsException("Error converting drm data.");
+                                Log.d("PduPersister","Error converting drm data.");
                             }
                         }
                     }
@@ -409,17 +417,17 @@ public class PduPersister {
                         if (convertedData != null) {
                             os.write(convertedData, 0, convertedData.length);
                         } else {
-                            throw new MmsException("Error converting drm data.");
+                            Log.d("PduPersister","Error converting drm data.");
                         }
                     }
                 }
             }
         } catch (FileNotFoundException e) {
             Log.e(TAG, "Failed to open Input/Output stream.", e);
-            throw new MmsException(e);
+            //throw new MmsException(e);
         } catch (IOException e) {
             Log.e(TAG, "Failed to read/write data.", e);
-            throw new MmsException(e);
+            //throw new MmsException(e);
         } finally {
             if (os != null) {
                 try {
@@ -442,8 +450,7 @@ public class PduPersister {
                 // permission.
                 File f = new File(path);
                 ContentValues values = new ContentValues(0);
-                SqliteWrapper.update(mContext, mContentResolver,
-                        Uri.parse("content://mms/resetFilePerm/" + f.getName()),
+                mContentResolver.update(Uri.parse("content://mms/resetFilePerm/" + f.getName()),
                         values, null, null);
             }
         }
@@ -510,10 +517,9 @@ public class PduPersister {
      */
 
     public Uri persist(GenericPdu pdu, Uri uri, boolean createThreadId, boolean groupMmsEnabled,
-                       HashMap<Uri, InputStream> preOpenedFiles)
-            throws MmsException {
+                       HashMap<Uri, InputStream> preOpenedFiles) {
         if (uri == null) {
-            throw new MmsException("Uri may not be null.");
+            Log.d("PduPersister","Uri may not be null.");
         }
         long msgId = -1;
         try {
@@ -524,8 +530,7 @@ public class PduPersister {
         boolean existingUri = msgId != -1;
 
         if (!existingUri && MESSAGE_BOX_MAP.get(uri) == null) {
-            throw new MmsException(
-                    "Bad destination, must be one of "
+            Log.d("PduPersister","Bad destination, must be one of "
                             + "content://mms/inbox, content://mms/sent, "
                             + "content://mms/drafts, content://mms/outbox, "
                             + "content://mms/temp.");
@@ -640,8 +645,8 @@ public class PduPersister {
             if (createThreadId && !recipients.isEmpty()) {
                 // Given all the recipients associated with this message, find (or create) the
                 // correct thread.
-                Log.e("PduPersister", "get or creat thread not found");
-                //threadId = Threads.getOrCreateThreadId(mContext, recipients);
+                //Log.e("PduPersister", "get or creat thread not found");
+                threadId = getOrCreateThreadId(mContext, recipients);
             }
             values.put(Mms.THREAD_ID, threadId);
         }
@@ -696,11 +701,11 @@ public class PduPersister {
         Uri res = null;
         if (existingUri) {
             res = uri;
-            SqliteWrapper.update(mContext, mContentResolver, res, values, null, null);
+            mContentResolver.update(res, values, null, null);
         } else {
-            res = SqliteWrapper.insert(mContext, mContentResolver, uri, values);
+            res = mContentResolver.insert(uri, values);
             if (res == null) {
-                throw new MmsException("persist() failed: return null.");
+                Log.d("PduPersister","persist() failed: return null.");
             }
             // Get the real ID of the PDU and update all parts which were
             // saved with the dummy ID.
@@ -709,8 +714,7 @@ public class PduPersister {
 
         values = new ContentValues(1);
         values.put(Part.MSG_ID, msgId);
-        SqliteWrapper.update(mContext, mContentResolver,
-                Uri.parse("content://mms/" + dummyId + "/part"),
+        mContentResolver.update(Uri.parse("content://mms/" + dummyId + "/part"),
                 values, null, null);
         // We should return the longest URI of the persisted PDU, for
         // example, if input URI is "content://mms/inbox" and the _ID of
@@ -782,6 +786,61 @@ public class PduPersister {
      */
     public void release() {
         Uri uri = Uri.parse(TEMPORARY_DRM_OBJECT_URI);
-        SqliteWrapper.delete(mContext, mContentResolver, uri, null, null);
+        mContentResolver.delete(uri, null, null);
+    }
+
+    public static long getOrCreateThreadId(Context context, Set<String> recipients) {
+        Uri.Builder uriBuilder = Uri.parse("content://mms-sms/threadID").buildUpon();
+        for (String recipient : recipients) {
+            if (isEmailAddress(recipient)) {
+                recipient = extractAddrSpec(recipient);
+            }
+            uriBuilder.appendQueryParameter("recipient", recipient);
+        }
+
+        Uri uri = uriBuilder.build();
+        Cursor cursor = context.getContentResolver().query(uri, new String[]{"_id"}, null, null, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    return cursor.getLong(0);
+                } else {
+
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+
+        Random random = new Random();
+        return random.nextLong();
+    }
+
+    /**
+     * Check if it is an email address
+     * @param address Address
+     * @return Boolean
+     */
+    private static boolean isEmailAddress(String address) {
+        if (TextUtils.isEmpty(address)) {
+            return false;
+        }
+        String s = extractAddrSpec(address);
+        Matcher match = EMAIL_ADDRESS_PATTERN.matcher(s);
+        return match.matches();
+    }
+
+    /**
+     * Get the name of the address
+     * @param address Address
+     * @return String
+     */
+    private static String extractAddrSpec(String address) {
+        Matcher match = NAME_ADDR_EMAIL_PATTERN.matcher(address);
+
+        if (match.matches()) {
+            return match.group(2);
+        }
+        return address;
     }
 }
