@@ -126,8 +126,7 @@ public class PduParser {
             return null;
         }
 
-        if ((PduHeaders.MESSAGE_TYPE_SEND_REQ == messageType) ||
-                (PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF == messageType)) {
+        if ((PduHeaders.MESSAGE_TYPE_SEND_REQ == messageType) || (PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF == messageType)) {
             /* need to parse the parts */
             mBody = parseParts(mPduDataStream);
             if (null == mBody) {
@@ -138,33 +137,23 @@ public class PduParser {
 
         switch (messageType) {
             case PduHeaders.MESSAGE_TYPE_SEND_REQ:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_REQ");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_REQ");
                 SendReq sendReq = new SendReq(mHeaders, mBody);
                 return sendReq;
             case PduHeaders.MESSAGE_TYPE_SEND_CONF:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_CONF");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_CONF");
                 SendConf sendConf = new SendConf(mHeaders);
                 return sendConf;
             case PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFICATION_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFICATION_IND");
                 NotificationInd notificationInd = new NotificationInd(mHeaders);
                 return notificationInd;
             case PduHeaders.MESSAGE_TYPE_NOTIFYRESP_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFYRESP_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFYRESP_IND");
                 NotifyRespInd notifyRespInd = new NotifyRespInd(mHeaders);
                 return notifyRespInd;
             case PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_RETRIEVE_CONF");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_RETRIEVE_CONF");
                 RetrieveConf retrieveConf = new RetrieveConf(mHeaders, mBody);
 
                 byte[] contentType = retrieveConf.getContentType();
@@ -189,31 +178,23 @@ public class PduParser {
                 }
                 return null;
             case PduHeaders.MESSAGE_TYPE_DELIVERY_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_DELIVERY_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_DELIVERY_IND");
                 DeliveryInd deliveryInd = new DeliveryInd(mHeaders);
                 return deliveryInd;
             case PduHeaders.MESSAGE_TYPE_ACKNOWLEDGE_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_ACKNOWLEDGE_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_ACKNOWLEDGE_IND");
                 AcknowledgeInd acknowledgeInd = new AcknowledgeInd(mHeaders);
                 return acknowledgeInd;
             case PduHeaders.MESSAGE_TYPE_READ_ORIG_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_ORIG_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_ORIG_IND");
                 ReadOrigInd readOrigInd = new ReadOrigInd(mHeaders);
                 return readOrigInd;
             case PduHeaders.MESSAGE_TYPE_READ_REC_IND:
-                if (LOCAL_LOGV) {
-                    Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_REC_IND");
-                }
+                Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_REC_IND");
                 ReadRecInd readRecInd = new ReadRecInd(mHeaders);
                 return readRecInd;
             default:
-                log("Parser doesn't support this message type in this version!");
+                Log.v(LOG_TAG,"Parser doesn't support this message type in this version!");
                 return null;
         }
     }
@@ -272,9 +253,6 @@ public class PduParser {
                     }
                     try {
                         headers.setOctet(messageType, headerField);
-                    } catch(InvalidHeaderValueException e) {
-                        Log.d(DEBUG_TAG, "Set invalid Octet value: " + messageType + " into the header filed: " + headerField);
-                        return null;
                     } catch(RuntimeException e) {
                         Log.d(DEBUG_TAG, headerField + "is not Octet header field!");
                         return null;
@@ -318,10 +296,6 @@ public class PduParser {
 
                     try {
                         headers.setOctet(value, headerField);
-                    } catch(InvalidHeaderValueException e) {
-                        Log.d(DEBUG_TAG, "Set invalid Octet value: " + value +
-                                " into the header filed: " + headerField);
-                        return null;
                     } catch(RuntimeException e) {
                         Log.d(DEBUG_TAG, headerField + "is not Octet header field!");
                         return null;
@@ -631,10 +605,6 @@ public class PduParser {
                                     + " value: " + version);
                         }
                         headers.setOctet(version, PduHeaders.MMS_VERSION);
-                    } catch(InvalidHeaderValueException e) {
-                        Log.d(DEBUG_TAG, "Set invalid Octet value: " + version +
-                                " into the header filed: " + headerField);
-                        return null;
                     } catch(RuntimeException e) {
                         Log.d(DEBUG_TAG, headerField + "is not Octet header field!");
                         return null;
