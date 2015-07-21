@@ -61,10 +61,9 @@ public class GenericPdu {
      * Set X-Mms-Message-Type field value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      *         RuntimeException if field's value is not Octet.
      */
-    public void setMessageType(int value) throws InvalidHeaderValueException {
+    public void setMessageType(int value) {
         mPduHeaders.setOctet(value, PduHeaders.MESSAGE_TYPE);
     }
 
@@ -81,10 +80,9 @@ public class GenericPdu {
      * Set X-Mms-MMS-Version field value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      *         RuntimeException if field's value is not Octet.
      */
-    public void setMmsVersion(int value) throws InvalidHeaderValueException {
+    public void setMmsVersion(int value) {
         mPduHeaders.setOctet(value, PduHeaders.MMS_VERSION);
     }
 

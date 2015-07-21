@@ -26,11 +26,9 @@ public class AcknowledgeInd extends GenericPdu {
      *
      * @param mmsVersion current viersion of mms
      * @param transactionId the transaction-id value
-     * @throws InvalidHeaderValueException if parameters are invalid.
      *         NullPointerException if transactionId is null.
      */
-    public AcknowledgeInd(int mmsVersion, byte[] transactionId)
-            throws InvalidHeaderValueException {
+    public AcknowledgeInd(int mmsVersion, byte[] transactionId) {
         super();
 
         setMessageType(PduHeaders.MESSAGE_TYPE_ACKNOWLEDGE_IND);
@@ -60,9 +58,8 @@ public class AcknowledgeInd extends GenericPdu {
      * Set X-Mms-Report-Allowed field value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setReportAllowed(int value) throws InvalidHeaderValueException {
+    public void setReportAllowed(int value) {
         mPduHeaders.setOctet(value, PduHeaders.REPORT_ALLOWED);
     }
 

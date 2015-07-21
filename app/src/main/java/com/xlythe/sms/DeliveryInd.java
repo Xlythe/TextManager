@@ -26,10 +26,8 @@ public class DeliveryInd extends GenericPdu {
      * Since the Pdu corresponding to this class is constructed
      * by the Proxy-Relay server, this class is only instantiated
      * by the Pdu Parser.
-     *
-     * @throws InvalidHeaderValueException if error occurs.
      */
-    public DeliveryInd() throws InvalidHeaderValueException {
+    public DeliveryInd(){
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_DELIVERY_IND);
     }
@@ -93,9 +91,8 @@ public class DeliveryInd extends GenericPdu {
      * Set Status value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setStatus(int value) throws InvalidHeaderValueException {
+    public void setStatus(int value) {
         mPduHeaders.setOctet(value, PduHeaders.STATUS);
     }
 

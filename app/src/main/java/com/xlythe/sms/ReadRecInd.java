@@ -26,14 +26,12 @@ public class ReadRecInd extends GenericPdu {
      * @param mmsVersion current viersion of mms
      * @param readStatus the read status value
      * @param to the to value
-     * @throws InvalidHeaderValueException if parameters are invalid.
-     *         NullPointerException if messageId or to is null.
      */
     public ReadRecInd(EncodedStringValue from,
                       byte[] messageId,
                       int mmsVersion,
                       int readStatus,
-                      EncodedStringValue[] to) throws InvalidHeaderValueException {
+                      EncodedStringValue[] to){
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_READ_REC_IND);
         setFrom(from);
@@ -121,9 +119,8 @@ public class ReadRecInd extends GenericPdu {
      * Set X-MMS-Read-status value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setReadStatus(int value) throws InvalidHeaderValueException {
+    public void setReadStatus(int value) {
         mPduHeaders.setOctet(value, PduHeaders.READ_STATUS);
     }
 

@@ -122,9 +122,8 @@ public class MultimediaMessagePdu extends GenericPdu{
      * Set X-Mms-Priority value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setPriority(int value) throws InvalidHeaderValueException {
+    public void setPriority(int value) {
         mPduHeaders.setOctet(value, PduHeaders.PRIORITY);
     }
 

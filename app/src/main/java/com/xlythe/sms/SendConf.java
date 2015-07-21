@@ -24,9 +24,8 @@ public class SendConf extends GenericPdu {
      * by the Proxy-Relay server, this class is only instantiated
      * by the Pdu Parser.
      *
-     * @throws InvalidHeaderValueException if error occurs.
      */
-    public SendConf() throws InvalidHeaderValueException {
+    public SendConf() {
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_SEND_CONF);
     }
@@ -72,9 +71,8 @@ public class SendConf extends GenericPdu {
      * Set X-Mms-Response-Status.
      *
      * @param value the values
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setResponseStatus(int value) throws InvalidHeaderValueException {
+    public void setResponseStatus(int value) {
         mPduHeaders.setOctet(value, PduHeaders.RESPONSE_STATUS);
     }
 

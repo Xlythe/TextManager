@@ -27,9 +27,8 @@ public class RetrieveConf extends MultimediaMessagePdu {
      * by the Proxy-Relay server, this class is only instantiated
      * by the Pdu Parser.
      *
-     * @throws InvalidHeaderValueException if error occurs.
      */
-    public RetrieveConf() throws InvalidHeaderValueException {
+    public RetrieveConf(){
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF);
     }
@@ -104,9 +103,8 @@ public class RetrieveConf extends MultimediaMessagePdu {
      * Set X-Mms-Delivery-Report value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setDeliveryReport(int value) throws InvalidHeaderValueException {
+    public void setDeliveryReport(int value) {
         mPduHeaders.setOctet(value, PduHeaders.DELIVERY_REPORT);
     }
 
@@ -184,9 +182,8 @@ public class RetrieveConf extends MultimediaMessagePdu {
      * Set X-Mms-Read-Report value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setReadReport(int value) throws InvalidHeaderValueException {
+    public void setReadReport(int value) {
         mPduHeaders.setOctet(value, PduHeaders.READ_REPORT);
     }
 
@@ -203,9 +200,8 @@ public class RetrieveConf extends MultimediaMessagePdu {
      * Set X-Mms-Retrieve-Status value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setRetrieveStatus(int value) throws InvalidHeaderValueException {
+    public void setRetrieveStatus(int value) {
         mPduHeaders.setOctet(value, PduHeaders.RETRIEVE_STATUS);
     }
 

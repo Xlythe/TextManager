@@ -24,9 +24,8 @@ public class ReadOrigInd extends GenericPdu {
      * by the Proxy-Relay server, this class is only instantiated
      * by the Pdu Parser.
      *
-     * @throws InvalidHeaderValueException if error occurs.
      */
-    public ReadOrigInd() throws InvalidHeaderValueException {
+    public ReadOrigInd() {
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_READ_ORIG_IND);
     }
@@ -111,9 +110,8 @@ public class ReadOrigInd extends GenericPdu {
      * Set X-MMS-Read-status value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      */
-    public void setReadStatus(int value) throws InvalidHeaderValueException {
+    public void setReadStatus(int value) {
         mPduHeaders.setOctet(value, PduHeaders.READ_STATUS);
     }
 

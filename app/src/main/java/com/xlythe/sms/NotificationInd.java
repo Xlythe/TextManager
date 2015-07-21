@@ -27,10 +27,9 @@ public class NotificationInd extends GenericPdu {
      * by the Proxy-Relay server, this class is only instantiated
      * by the Pdu Parser.
      *
-     * @throws InvalidHeaderValueException if error occurs.
      *         RuntimeException if an undeclared error occurs.
      */
-    public NotificationInd() throws InvalidHeaderValueException {
+    public NotificationInd() {
         super();
         setMessageType(PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND);
     }
@@ -57,10 +56,9 @@ public class NotificationInd extends GenericPdu {
      * Set X-Mms-Content-Class Value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      *         RuntimeException if an undeclared error occurs.
      */
-    public void setContentClass(int value) throws InvalidHeaderValueException {
+    public void setContentClass(int value) {
         mPduHeaders.setOctet(value, PduHeaders.CONTENT_CLASS);
     }
 
@@ -225,10 +223,9 @@ public class NotificationInd extends GenericPdu {
      * Set X-Mms-Delivery-Report Value.
      *
      * @param value the value
-     * @throws InvalidHeaderValueException if the value is invalid.
      *         RuntimeException if an undeclared error occurs.
      */
-    public void setDeliveryReport(int value) throws InvalidHeaderValueException {
+    public void setDeliveryReport(int value) {
         mPduHeaders.setOctet(value, PduHeaders.DELIVERY_REPORT);
     }
 
