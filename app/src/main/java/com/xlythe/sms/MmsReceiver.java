@@ -90,12 +90,11 @@ public class MmsReceiver extends BroadcastReceiver {
 
                             // Start service to finish the notification transaction.
                             Intent svc = new Intent(mContext, TransactionService.class);
-                            svc.putExtra(TransactionBundle.URI, uri.toString());
-                            svc.putExtra(TransactionBundle.TRANSACTION_TYPE, Transaction.NOTIFICATION_TRANSACTION);
+                            svc.putExtra("uri", uri.toString());
+                            svc.putExtra("type", 0);
                             mContext.startService(svc);
                         } else{
-                            Log.v(TAG, "Skip downloading duplicate message: "
-                                    + new String(nInd.getContentLocation()));
+                            Log.v(TAG, "Skip downloading duplicate message: " + new String(nInd.getContentLocation()));
                         }
                         break;
                     }

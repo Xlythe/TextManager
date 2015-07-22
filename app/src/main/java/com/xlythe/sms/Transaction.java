@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.util.Log;
 
 /**
  * Transaction is an abstract class for notification transaction, send transaction
@@ -38,8 +39,7 @@ public abstract class Transaction extends Observable {
      */
     public static final int READREC_TRANSACTION      = 3;
 
-    public Transaction(Context context, int serviceId,
-                       TransactionSettings settings) {
+    public Transaction(Context context, int serviceId, TransactionSettings settings) {
         mContext = context;
         mTransactionState = new TransactionState();
         mServiceId = serviceId;
@@ -95,11 +95,9 @@ public abstract class Transaction extends Observable {
      *         If an HTTP error code is returned, an IOException will be thrown.
      * @throws IOException if any error occurred on network interface or
      *         an HTTP error code(>=400) returned from the server.
-     * @throws MmsException if pdu is null.
      */
-    protected byte[] sendPdu(byte[] pdu) throws IOException, MmsException {
-        return sendPdu(SendingProgressTokenManager.NO_TOKEN, pdu,
-                mTransactionSettings.getMmscUrl());
+    protected byte[] sendPdu(byte[] pdu) throws IOException {
+        return sendPdu(SendingProgressTokenManager.NO_TOKEN, pdu, mTransactionSettings.getMmscUrl());
     }
 
     /**
@@ -111,9 +109,8 @@ public abstract class Transaction extends Observable {
      *         If an HTTP error code is returned, an IOException will be thrown.
      * @throws IOException if any error occurred on network interface or
      *         an HTTP error code(>=400) returned from the server.
-     * @throws MmsException if pdu is null.
      */
-    protected byte[] sendPdu(byte[] pdu, String mmscUrl) throws IOException, MmsException {
+    protected byte[] sendPdu(byte[] pdu, String mmscUrl) throws IOException {
         return sendPdu(SendingProgressTokenManager.NO_TOKEN, pdu, mmscUrl);
     }
 
@@ -126,9 +123,8 @@ public abstract class Transaction extends Observable {
      *         If an HTTP error code is returned, an IOException will be thrown.
      * @throws IOException if any error occurred on network interface or
      *         an HTTP error code(>=400) returned from the server.
-     * @throws MmsException if pdu is null.
      */
-    protected byte[] sendPdu(long token, byte[] pdu) throws IOException, MmsException {
+    protected byte[] sendPdu(long token, byte[] pdu) throws IOException {
         return sendPdu(token, pdu, mTransactionSettings.getMmscUrl());
     }
 
@@ -142,12 +138,11 @@ public abstract class Transaction extends Observable {
      *         If an HTTP error code is returned, an IOException will be thrown.
      * @throws IOException if any error occurred on network interface or
      *         an HTTP error code(>=400) returned from the server.
-     * @throws MmsException if pdu is null.
      */
     protected byte[] sendPdu(long token, byte[] pdu,
-                             String mmscUrl) throws IOException, MmsException {
+                             String mmscUrl) throws IOException {
         if (pdu == null) {
-            throw new MmsException();
+            Log.d("Transaction","Mms Exception");
         }
 
         ensureRouteToHost(mmscUrl, mTransactionSettings);
@@ -199,9 +194,9 @@ public abstract class Transaction extends Observable {
                 throw new IOException("Cannot establish route for " + url +
                         ": Unknown proxy " + proxyAddr);
             }
-            if (!connMgr.requestRouteToHostAddress(ConnectivityManager.TYPE_MOBILE_MMS, inetAddr)) {
-                throw new IOException("Cannot establish route to proxy " + inetAddr);
-            }
+//            if (!connMgr.requestRouteToHostAddress(ConnectivityManager.TYPE_MOBILE_MMS, inetAddr)) {
+//                throw new IOException("Cannot establish route to proxy " + inetAddr);
+//            }
         } else {
             Uri uri = Uri.parse(url);
             try {
@@ -209,9 +204,9 @@ public abstract class Transaction extends Observable {
             } catch (UnknownHostException e) {
                 throw new IOException("Cannot establish route for " + url + ": Unknown host");
             }
-            if (!connMgr.requestRouteToHostAddress(ConnectivityManager.TYPE_MOBILE_MMS, inetAddr)) {
-                throw new IOException("Cannot establish route to " + inetAddr + " for " + url);
-            }
+//            if (!connMgr.requestRouteToHostAddress(ConnectivityManager.TYPE_MOBILE_MMS, inetAddr)) {
+//                throw new IOException("Cannot establish route to " + inetAddr + " for " + url);
+//            }
         }
     }
 
