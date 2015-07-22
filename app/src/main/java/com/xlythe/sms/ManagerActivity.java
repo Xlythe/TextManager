@@ -28,7 +28,6 @@ public class ManagerActivity extends Activity {
 //        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getBaseContext());
 //        if(apnParameters != null) {
 //            Log.d("Manager Activity", apnParameters.getMmscUrl()+"");
-//            new GetMms().execute("https://snq2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-7-13b-2f7-5-65-4b5be63");
 //        } else {
 //            Log.d("Manager Activity", "apn failed");
 //        }

@@ -67,8 +67,7 @@ public class TransactionSettings {
                     }
 
                     mServiceCenter = NetworkUtils.trimV4AddrZeros(mmsc.trim());
-                    mProxyAddress = NetworkUtils.trimV4AddrZeros(
-                            cursor.getString(COLUMN_MMSPROXY));
+                    mProxyAddress = NetworkUtils.trimV4AddrZeros(cursor.getString(COLUMN_MMSPROXY));
                     if (isProxySet()) {
                         String portString = cursor.getString(COLUMN_MMSPORT);
                         try {
