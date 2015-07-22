@@ -25,13 +25,6 @@ public class ManagerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager);
 
-//        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getBaseContext());
-//        if(apnParameters != null) {
-//            Log.d("Manager Activity", apnParameters.getMmscUrl()+"");
-//        } else {
-//            Log.d("Manager Activity", "apn failed");
-//        }
-
         mManager = TextManager.getInstance(getBaseContext());
         mCompose = (ImageButton) findViewById(R.id.compose);
         mListView = (ListView) findViewById(R.id.listView);

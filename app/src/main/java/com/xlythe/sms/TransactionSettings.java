@@ -43,49 +43,41 @@ public class TransactionSettings {
             selectionArgs = new String[]{ apnName.trim() };
         }
 
-        Cursor cursor = context.getContentResolver().query(Telephony.Carriers.CONTENT_URI,
-                APN_PROJECTION, selection, selectionArgs, null);
+//        Cursor cursor = context.getContentResolver().query(Telephony.Carriers.CONTENT_URI,
+//                APN_PROJECTION, selection, selectionArgs, null);
 
-        Log.v(TAG, "TransactionSettings looking for apn: " + selection + " returned: " +
-                    (cursor ==null ? "null cursor" : (cursor.getCount() + " hits")));
-
-        if (cursor == null) {
-            Log.e(TAG, "Apn is not found in Database!");
-            return;
-        }
+//        Log.v(TAG, "TransactionSettings looking for apn: " + selection + " returned: " +
+//                    (cursor ==null ? "null cursor" : (cursor.getCount() + " hits")));
+//
+//        if (cursor == null) {
+//            Log.e(TAG, "Apn is not found in Database!");
+//            return;
+//        }
 
         boolean sawValidApn = false;
         try {
-            while (cursor.moveToNext() && TextUtils.isEmpty(mServiceCenter)) {
-                // Read values from APN settings
-                if (isValidApnType(cursor.getString(COLUMN_TYPE), PhoneConstants.APN_TYPE_MMS)) {
-                    sawValidApn = true;
-
-                    String mmsc = cursor.getString(COLUMN_MMSC);
-                    if (mmsc == null) {
-                        continue;
-                    }
-
-                    mServiceCenter = NetworkUtils.trimV4AddrZeros(mmsc.trim());
-                    mProxyAddress = NetworkUtils.trimV4AddrZeros(cursor.getString(COLUMN_MMSPROXY));
-                    if (isProxySet()) {
-                        String portString = cursor.getString(COLUMN_MMSPORT);
-                        try {
-                            mProxyPort = Integer.parseInt(portString);
-                        } catch (NumberFormatException e) {
-                            if (TextUtils.isEmpty(portString)) {
-                                Log.w(TAG, "mms port not set!");
-                            } else {
-                                Log.e(TAG, "Bad port number format: " + portString, e);
-                            }
+            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+            if (apnParameters != null) {
+                sawValidApn = true;
+                //String mmsc = apnParameters.getMmscUrl();
+                mServiceCenter = apnParameters.getMmscUrl();
+                mProxyAddress = apnParameters.getProxyAddress();
+                if (isProxySet()) {
+                    String portString = apnParameters.getProxyPort().toString();
+                    try {
+                        mProxyPort = Integer.parseInt(portString);
+                    } catch (NumberFormatException e) {
+                        if (TextUtils.isEmpty(portString)) {
+                            Log.w(TAG, "mms port not set!");
+                        } else {
+                            Log.e(TAG, "Bad port number format: " + portString, e);
                         }
                     }
                 }
             }
         } finally {
-            cursor.close();
-        }
 
+        }
         Log.v(TAG, "APN setting: MMSC: " + mServiceCenter + " looked for: " + selection);
 
         if (sawValidApn && TextUtils.isEmpty(mServiceCenter)) {
@@ -126,17 +118,17 @@ public class TransactionSettings {
         return (mProxyAddress != null) && (mProxyAddress.trim().length() != 0);
     }
 
-    static private boolean isValidApnType(String types, String requestType) {
-        // If APN type is unspecified, assume APN_TYPE_ALL.
-        if (TextUtils.isEmpty(types)) {
-            return true;
-        }
-
-        for (String t : types.split(",")) {
-            if (t.equals(requestType) || t.equals(PhoneConstants.APN_TYPE_ALL)) {
-                return true;
-            }
-        }
-        return false;
-    }
+//    static private boolean isValidApnType(String types, String requestType) {
+//        // If APN type is unspecified, assume APN_TYPE_ALL.
+//        if (TextUtils.isEmpty(types)) {
+//            return true;
+//        }
+//
+//        for (String t : types.split(",")) {
+//            if (t.equals(requestType) || t.equals(PhoneConstants.APN_TYPE_ALL)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 }

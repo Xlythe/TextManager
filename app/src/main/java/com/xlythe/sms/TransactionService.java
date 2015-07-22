@@ -68,8 +68,7 @@ public class TransactionService extends Service implements Observer {
      * Used to identify notification intents broadcasted by the
      * TransactionService when a Transaction is completed.
      */
-    public static final String TRANSACTION_COMPLETED_ACTION =
-            "android.intent.action.TRANSACTION_COMPLETED_ACTION";
+    public static final String TRANSACTION_COMPLETED_ACTION = "android.intent.action.TRANSACTION_COMPLETED_ACTION";
 
     /**
      * Action for the Intent which is sent by Alarm service to launch
@@ -81,8 +80,7 @@ public class TransactionService extends Service implements Observer {
      * Action for the Intent which is sent when the user turns on the auto-retrieve setting.
      * This service gets started to auto-retrieve any undownloaded messages.
      */
-    public static final String ACTION_ENABLE_AUTO_RETRIEVE
-            = "android.intent.action.ACTION_ENABLE_AUTO_RETRIEVE";
+    public static final String ACTION_ENABLE_AUTO_RETRIEVE = "android.intent.action.ACTION_ENABLE_AUTO_RETRIEVE";
 
     /**
      * Used as extra key in notification intents broadcasted by the TransactionService
@@ -116,8 +114,8 @@ public class TransactionService extends Service implements Observer {
 
     private ServiceHandler mServiceHandler;
     private Looper mServiceLooper;
-    private final ArrayList<Transaction> mProcessing  = new ArrayList<Transaction>();
-    private final ArrayList<Transaction> mPending  = new ArrayList<Transaction>();
+    private final ArrayList<Transaction> mProcessing  = new ArrayList<>();
+    private final ArrayList<Transaction> mPending  = new ArrayList<>();
     private ConnectivityManager mConnMgr;
     private ConnectivityBroadcastReceiver mReceiver;
 
@@ -192,8 +190,7 @@ public class TransactionService extends Service implements Observer {
         Log.v(TAG, "    networkAvailable=" + !noNetwork);
 
         String action = intent.getAction();
-        if (ACTION_ONALARM.equals(action) || ACTION_ENABLE_AUTO_RETRIEVE.equals(action) ||
-                (intent.getExtras() == null)) {
+        if (ACTION_ONALARM.equals(action) || ACTION_ENABLE_AUTO_RETRIEVE.equals(action) || (intent.getExtras() == null)) {
             // Scan database to find all pending operations.
             Cursor cursor = PduPersister.getPduPersister(this).getPendingMessages(System.currentTimeMillis());
             if (cursor != null) {
@@ -210,8 +207,7 @@ public class TransactionService extends Service implements Observer {
                     }
 
                     int columnIndexOfMsgId = cursor.getColumnIndexOrThrow(PendingMessages.MSG_ID);
-                    int columnIndexOfMsgType = cursor.getColumnIndexOrThrow(
-                            PendingMessages.MSG_TYPE);
+                    int columnIndexOfMsgType = cursor.getColumnIndexOrThrow(PendingMessages.MSG_TYPE);
 
                     while (cursor.moveToNext()) {
                         int msgType = cursor.getInt(columnIndexOfMsgType);
@@ -231,8 +227,8 @@ public class TransactionService extends Service implements Observer {
                                 // downloading mode. If the user just turned on the auto-retrieve
                                 // option, we also retry those messages that don't have any errors.
                                 int failureType = cursor.getInt(cursor.getColumnIndexOrThrow(PendingMessages.ERROR_TYPE));
-                                DownloadManager downloadManager = DownloadManager.getInstance();
-                                boolean autoDownload = downloadManager.isAuto();
+                                //DownloadManager downloadManager = DownloadManager.getInstance();
+                                boolean autoDownload = true;//downloadManager.isAuto();
                                 Log.v(TAG, "onNewIntent: failureType=" + failureType +
                                         " action=" + action + " isTransientFailure:" +
                                         isTransientFailure(failureType) + " autoDownload=" +
@@ -242,8 +238,8 @@ public class TransactionService extends Service implements Observer {
                                     // transaction.
                                     Log.v(TAG, "onNewIntent: skipping - autodownload off");
                                     // Re-enable "download" button if auto-download is off
-                                    Uri uri = ContentUris.withAppendedId(Mms.CONTENT_URI, cursor.getLong(columnIndexOfMsgId));
-                                    downloadManager.markState(uri, DownloadManager.STATE_SKIP_RETRYING);
+//                                    Uri uri = ContentUris.withAppendedId(Mms.CONTENT_URI, cursor.getLong(columnIndexOfMsgId));
+//                                    downloadManager.markState(uri, DownloadManager.STATE_SKIP_RETRYING);
                                     break;
                                 }
                                 // Logic is twisty. If there's no failure or the failure
@@ -402,15 +398,12 @@ public class TransactionService extends Service implements Observer {
                         case Transaction.RETRIEVE_TRANSACTION:
                             // We're already in a non-UI thread called from
                             // NotificationTransacation.run(), so ok to block here.
-                            long threadId = MessagingNotification.getThreadId(
-                                    this, state.getContentUri());
-                            MessagingNotification.blockingUpdateNewMessageIndicator(this,
-                                    threadId,
-                                    false);
-                            MessagingNotification.updateDownloadFailedNotification(this);
+//                            long threadId = MessagingNotification.getThreadId(this, state.getContentUri());
+//                            MessagingNotification.blockingUpdateNewMessageIndicator(this, threadId, false);
+//                            MessagingNotification.updateDownloadFailedNotification(this);
                             break;
                         case Transaction.SEND_TRANSACTION:
-                            RateController.getInstance().update();
+//                            RateController.getInstance().update();
                             break;
                     }
                     break;
@@ -460,8 +453,7 @@ public class TransactionService extends Service implements Observer {
         // Take a wake lock so we don't fall asleep before the message is downloaded.
         createWakeLock();
 
-        int result = mConnMgr.startUsingNetworkFeature(
-                ConnectivityManager.TYPE_MOBILE, Phone.FEATURE_ENABLE_MMS);
+        int result = mConnMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, Phone.FEATURE_ENABLE_MMS);
 
         Log.v(TAG, "beginMmsConnectivity: result=" + result);
 
@@ -601,21 +593,17 @@ public class TransactionService extends Service implements Observer {
                             case Transaction.NOTIFICATION_TRANSACTION:
                                 String uri = args.getUri();
                                 if (uri != null) {
-                                    transaction = new NotificationTransaction(
-                                            TransactionService.this, serviceId,
+                                    transaction = new NotificationTransaction(TransactionService.this, serviceId,
                                             transactionSettings, uri);
                                 } else {
                                     // Now it's only used for test purpose.
                                     byte[] pushData = args.getPushData();
-                                    PduParser parser = new PduParser(
-                                            pushData,
-                                            PduParserUtil.shouldParseContentDisposition());
+                                    PduParser parser = new PduParser(pushData,true);
                                     GenericPdu ind = parser.parse();
 
                                     int type = PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
                                     if ((ind != null) && (ind.getMessageType() == type)) {
-                                        transaction = new NotificationTransaction(
-                                                TransactionService.this, serviceId,
+                                        transaction = new NotificationTransaction(TransactionService.this, serviceId,
                                                 transactionSettings, (NotificationInd) ind);
                                     } else {
                                         Log.e(TAG, "Invalid PUSH data.");
@@ -625,18 +613,15 @@ public class TransactionService extends Service implements Observer {
                                 }
                                 break;
                             case Transaction.RETRIEVE_TRANSACTION:
-                                transaction = new RetrieveTransaction(
-                                        TransactionService.this, serviceId,
+                                transaction = new RetrieveTransaction(TransactionService.this, serviceId,
                                         transactionSettings, args.getUri());
                                 break;
                             case Transaction.SEND_TRANSACTION:
-                                transaction = new SendTransaction(
-                                        TransactionService.this, serviceId,
+                                transaction = new SendTransaction(TransactionService.this, serviceId,
                                         transactionSettings, args.getUri());
                                 break;
                             case Transaction.READREC_TRANSACTION:
-                                transaction = new ReadRecTransaction(
-                                        TransactionService.this, serviceId,
+                                transaction = new ReadRecTransaction( TransactionService.this, serviceId,
                                         transactionSettings, args.getUri());
                                 break;
                             default:
@@ -832,7 +817,7 @@ public class TransactionService extends Service implements Observer {
 
             NetworkInfo mmsNetworkInfo = null;
 
-            if (mConnMgr != null && mConnMgr.getMobileDataEnabled()) {
+            if (mConnMgr != null) {
                 mmsNetworkInfo = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE_MMS);
             } else {
                 Log.v(TAG, "mConnMgr is null, bail");

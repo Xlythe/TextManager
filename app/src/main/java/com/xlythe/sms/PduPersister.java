@@ -26,6 +26,7 @@ import android.database.sqlite.SQLiteException;
 import android.drm.DrmManagerClient;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.Telephony;
 import android.provider.Telephony.Mms;
 import android.provider.Telephony.Mms.Addr;
 import android.provider.Telephony.Mms.Part;
@@ -842,5 +843,24 @@ public class PduPersister {
             return match.group(2);
         }
         return address;
+    }
+
+    /**
+     * Find all messages to be sent or downloaded before certain time.
+     */
+    public Cursor getPendingMessages(long dueTime) {
+        Uri.Builder uriBuilder = Telephony.MmsSms.PendingMessages.CONTENT_URI.buildUpon();
+        uriBuilder.appendQueryParameter("protocol", "mms");
+
+        String selection = Telephony.MmsSms.PendingMessages.ERROR_TYPE + " < ?"
+                + " AND " + Telephony.MmsSms.PendingMessages.DUE_TIME + " <= ?";
+
+        String[] selectionArgs = new String[] {
+                String.valueOf(Telephony.MmsSms.ERR_TYPE_GENERIC_PERMANENT),
+                String.valueOf(dueTime)
+        };
+
+        return mContentResolver.query(uriBuilder.build(), null, selection, selectionArgs,
+                Telephony.MmsSms.PendingMessages.DUE_TIME);
     }
 }
