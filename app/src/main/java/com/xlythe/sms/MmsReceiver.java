@@ -42,31 +42,47 @@ public class MmsReceiver extends BroadcastReceiver {
             byte[] pushData = intent.getByteArrayExtra("data");
             String pd = new String(pushData);
             Log.d("pushData", pd+"");
-//            TestMms test = new TestMms(mContext);
-//            try {
-//                byte[] resp = test.getPdu("http://atl2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-1-13b-c3-1-cb-1dcae91");
-//                String resp2 = new String(pushData);
-//                Log.d("resp", resp2+"");
-//                RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
-//                if (null == retrieveConf) {
-//                    Log.d("receiver","failed");
-//                }
-//                PduPersister persister = PduPersister.getPduPersister(mContext);
-//                Uri msgUri;
-//                try {
-//                    msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-//
-//                    // Use local time instead of PDU time
-//                    ContentValues values = new ContentValues(1);
-//                    values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-//                    mContext.getContentResolver().update(
-//                            msgUri, values, null, null);
-//                } catch (Exception e){
-//
-//                }
-//            }catch (IOException ioe){
-//
-//            }
+
+            PduParser parser = new PduParser(pushData, true);
+            GenericPdu pdu = parser.parse();
+
+            if (null == pdu) {
+                Log.e(TAG, "Invalid PUSH data");
+                return null;
+            }
+            PduPersister p = PduPersister.getPduPersister(mContext);
+            Uri uri=null;
+            try {
+                uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, false, true, null);
+            } catch (Exception e){
+
+            }
+
+            TestMms test = new TestMms(mContext);
+            try {
+                byte[] resp = test.getPdu(uri);
+                String resp2 = new String(resp);
+                Log.d("resp", resp2+"");
+                RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
+                if (null == retrieveConf) {
+                    Log.d("receiver","failed");
+                }
+                PduPersister persister = PduPersister.getPduPersister(mContext);
+                Uri msgUri;
+                try {
+                    msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+
+                    // Use local time instead of PDU time
+                    ContentValues values = new ContentValues(1);
+                    values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                    mContext.getContentResolver().update(
+                            msgUri, values, null, null);
+                } catch (Exception e){
+
+                }
+            }catch (IOException ioe){
+
+            }
 
 //            PduParser parser = new PduParser(
 //                    pushData, true);

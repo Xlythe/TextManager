@@ -30,32 +30,32 @@ public class ManagerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager);
 
-        TestMms test = new TestMms(getBaseContext());
-        try {
-            Log.d("main","trying");
-            byte[] resp = test.getPdu("http://snq2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-1-13b-34d-2-66-626adf8");
-//            String resp2 = new String(resp);
-//            Log.d("resp", resp2+"");
-            RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
-            if (null == retrieveConf) {
-                Log.d("receiver","failed");
-            }
-            PduPersister persister = PduPersister.getPduPersister(getBaseContext());
-            Uri msgUri;
-            try {
-                msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-
-                // Use local time instead of PDU time
-                ContentValues values = new ContentValues(1);
-                values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                getBaseContext().getContentResolver().update(
-                        msgUri, values, null, null);
-            } catch (Exception e){
-
-            }
-        }catch (IOException ioe){
-
-        }
+//        TestMms test = new TestMms(getBaseContext());
+//        try {
+//            Log.d("main","trying");
+//            byte[] resp = test.getPdu("http://snq2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-1-13b-34d-2-66-626adf8");
+////            String resp2 = new String(resp);
+////            Log.d("resp", resp2+"");
+//            RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
+//            if (null == retrieveConf) {
+//                Log.d("receiver","failed");
+//            }
+//            PduPersister persister = PduPersister.getPduPersister(getBaseContext());
+//            Uri msgUri;
+//            try {
+//                msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+//
+//                // Use local time instead of PDU time
+//                ContentValues values = new ContentValues(1);
+//                values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+//                getBaseContext().getContentResolver().update(
+//                        msgUri, values, null, null);
+//            } catch (Exception e){
+//
+//            }
+//        }catch (IOException ioe){
+//
+//        }
 
         mManager = TextManager.getInstance(getBaseContext());
         mCompose = (ImageButton) findViewById(R.id.compose);
