@@ -169,6 +169,12 @@ public class HttpUtils {
 
             HttpResponse response = client.execute(target, req);
             StatusLine status = response.getStatusLine();
+            Log.d("HttpUtils",status+"");
+            if (status.getStatusCode() == 302) {
+                for (int i = 0; i<response.getAllHeaders().length; i++) {
+                    Log.d("httputils", response.getAllHeaders()[i].toString());
+                }
+            }
             if (status.getStatusCode() != 200) { // HTTP 200 is success.
                 throw new IOException("HTTP error: " + status.getReasonPhrase());
             }
@@ -260,7 +266,7 @@ public class HttpUtils {
     private static void handleHttpConnectionException(Exception exception, String url)
             throws IOException {
         // Inner exception should be logged to make life easier.
-        Log.e("HttpUtils", "Url: " + url + "\n" + exception.getMessage());
+        Log.e("HttpUtils", "Url: " + url + "\n" + exception.getMessage(), exception);
         IOException e = new IOException(exception.getMessage());
         e.initCause(exception);
         throw e;

@@ -6064,7 +6064,7 @@ public class ApnDefaults {
         }
 
         public Integer getProxyPort() {
-            if (isProxySet() && proxyPort == null) {
+            if (!isProxySet() && proxyPort == null) {
                 return 80;
             }
 

@@ -58,8 +58,8 @@ public class TestMms {
         return HttpUtils.httpConnection(
                 mContext, SendingProgressTokenManager.NO_TOKEN,
                 url, null, HttpUtils.HTTP_GET_METHOD,
-                false,
+                apnParameters.isProxySet(),
                 apnParameters.getProxyAddress(),
-                80);
+                apnParameters.getProxyPort());
     }
 }
