@@ -23,7 +23,6 @@ import android.content.Context;
 import android.net.http.AndroidHttpClient;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.util.Config;
 import android.util.Log;
 
 public class HttpUtils {
