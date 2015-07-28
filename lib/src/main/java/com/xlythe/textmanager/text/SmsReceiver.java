@@ -1,15 +1,21 @@
-package com.xlythe.sms;
+package com.xlythe.textmanager.text;
 
-public class SmsReceiver extends com.xlythe.textmanager.text.SmsReceiver {
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.provider.Telephony;
+import android.telephony.SmsMessage;
+import android.util.Log;
+import android.widget.Toast;
+
+public class SmsReceiver extends BroadcastReceiver {
     public SmsReceiver() {
     }
-<<<<<<< HEAD
 
     @Override
     public void onReceive(Context context, Intent intent) {
         // TODO: This method is called when the BroadcastReceiver is receiving
-        // an Intent broadcast.
-        //throw new UnsupportedOperationException("Not yet implemented");
 
         final Bundle bundle = intent.getExtras();
 
@@ -36,9 +42,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.SmsReceiver {
             }
         } catch (Exception e) {
             // TODO: handle exception
-            Log.e("SmsReciver", "Exception smsReciver" + e);
+            Log.e("SmsReceiver", "Exception smsReceiver" + e);
         }
     }
-=======
->>>>>>> mms
 }
