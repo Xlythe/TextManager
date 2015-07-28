@@ -1,19 +1,12 @@
 package com.xlythe.sms;
 
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
-import static com.xlythe.sms.PduHeaders.MESSAGE_TYPE_DELIVERY_IND;
-import static com.xlythe.sms.PduHeaders.MESSAGE_TYPE_READ_ORIG_IND;
-import static com.xlythe.sms.PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Telephony;
 import android.util.Log;
