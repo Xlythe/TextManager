@@ -3,6 +3,7 @@ package com.xlythe.sms;
 import android.app.ActionBar;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -31,8 +32,6 @@ public class AttachView extends FrameLayout {
     private ActionBar mActionBar;
     private FrameLayout mView;
     private float mInitPercent = -1;
-
-
 
     public AttachView(Context context) {
         super(context);
@@ -123,10 +122,12 @@ public class AttachView extends FrameLayout {
 
     public void dragView(float percent) {
         if(mState == CardState.PARTIAL) {
-            if (mInitPercent == -1 && percent < 0.6) {
+            if (mInitPercent == -1 && percent < PARTIAL_PERCENT-0.1f) {
+                Log.d("init", mInitPercent+"");
+                Log.d("percent", percent+"");
                 return;
             }
-            else if (mInitPercent == -1 && percent > 0.6){
+            else if (mInitPercent == -1 && percent > PARTIAL_PERCENT-0.1f){
                 mInitPercent = percent;
             }
             if (mView != null)
@@ -166,9 +167,11 @@ public class AttachView extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
                 float x = event.getX();
                 float y = event.getY();
+
                 if (mState==CardState.EXPANDED && (y-mLastY)<0){
                     return false;
                 }
+
                 if (mState==CardState.EXPANDED && (y-mLastY)>0 && mScrollView.getChildAt(0).canScrollVertically(-1)){
                     return false;
                 }
