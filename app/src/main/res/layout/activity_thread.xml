@@ -1,11 +1,21 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="0dp"
+    tools:context="com.xlythe.sms.ThreadActivity">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/messages_xxx">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:id="@+id/message_blurb"
-    android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.xlythe.sms.ThreadActivity">
-
+    android:paddingBottom="@dimen/activity_vertical_margin">
     <ListView
         android:paddingTop="16dp"
         android:layout_weight="1"
@@ -49,3 +59,16 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 </LinearLayout>
+    </FrameLayout>
+    <com.xlythe.sms.AttachView
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/attach_view"
+        android:layout_height="match_parent">
+        <android.support.v4.view.ViewPager
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ffffff"/>
+    </com.xlythe.sms.AttachView>
+</RelativeLayout>
