@@ -1,4 +1,4 @@
-package com.xlythe.textmanager.text;
+package com.xlythe.sms;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,7 +8,6 @@ import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -30,44 +29,6 @@ public class Receive {
 
     // Name Address Email Pattern.
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
-
-    private static final String[] PROJECTION = new String[] {
-            Telephony.Mms.CONTENT_LOCATION,
-            Telephony.Mms.LOCKED
-    };
-
-    private static final int COLUMN_CONTENT_LOCATION = 0;
-
-    /**
-     * HTTP request to the MMSC database
-     * @param uri
-     * @param context
-     * @return byte array pdu
-     * @throws IOException
-     */
-    protected static byte[] getPdu(Uri uri, Context context) throws IOException {
-        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
-
-        String url = "";
-
-        if (cursor != null) {
-            try {
-                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-
-        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-        return HttpUtils.httpConnection(
-                context, -1L,
-                url, null, HttpUtils.HTTP_GET_METHOD,
-                apnParameters.isProxySet(),
-                apnParameters.getProxyAddress(),
-                apnParameters.getProxyPort());
-    }
 
     /**
      * Store message in the content provider.

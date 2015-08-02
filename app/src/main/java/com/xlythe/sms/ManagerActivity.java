@@ -1,15 +1,8 @@
 package com.xlythe.sms;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-<<<<<<< HEAD
-=======
-import android.provider.Telephony;
-import android.util.Log;
->>>>>>> mms
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,8 +12,6 @@ import android.widget.ListView;
 
 import com.xlythe.textmanager.text.*;
 import com.xlythe.textmanager.text.Thread;
-
-import java.io.IOException;
 
 public class ManagerActivity extends Activity {
     private ThreadAdapter mThreadAdapter;
@@ -33,36 +24,6 @@ public class ManagerActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager);
 
-<<<<<<< HEAD
-=======
-//        TestMms test = new TestMms(getBaseContext());
-//        try {
-//            Log.d("main","trying");
-//            byte[] resp = test.getPdu("http://snq2mosget.msg.eng.t-mobile.com/mms/wapenc?T=mavodi-1-13b-34d-2-66-626adf8");
-////            String resp2 = new String(resp);
-////            Log.d("resp", resp2+"");
-//            RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
-//            if (null == retrieveConf) {
-//                Log.d("receiver","failed");
-//            }
-//            PduPersister persister = PduPersister.getPduPersister(getBaseContext());
-//            Uri msgUri;
-//            try {
-//                msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-//
-//                // Use local time instead of PDU time
-//                ContentValues values = new ContentValues(1);
-//                values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-//                getBaseContext().getContentResolver().update(
-//                        msgUri, values, null, null);
-//            } catch (Exception e){
-//
-//            }
-//        }catch (IOException ioe){
-//
-//        }
-
->>>>>>> mms
         mManager = TextManager.getInstance(getBaseContext());
         mCompose = (ImageButton) findViewById(R.id.compose);
         mListView = (ListView) findViewById(R.id.listView);

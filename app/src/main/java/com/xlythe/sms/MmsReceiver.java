@@ -1,6 +1,5 @@
 package com.xlythe.sms;
 
-<<<<<<< HEAD
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,9 +14,4 @@ public class MmsReceiver extends BroadcastReceiver {
         // an Intent broadcast.
         throw new UnsupportedOperationException("Not yet implemented");
     }
-=======
-public class MmsReceiver extends com.xlythe.textmanager.text.MmsReceiver {
-    public MmsReceiver() {
-    }
->>>>>>> mms
 }

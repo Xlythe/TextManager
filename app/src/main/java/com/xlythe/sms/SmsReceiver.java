@@ -1,9 +1,17 @@
 package com.xlythe.sms;
 
-public class SmsReceiver extends com.xlythe.textmanager.text.SmsReceiver {
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.provider.Telephony;
+import android.telephony.SmsMessage;
+import android.util.Log;
+import android.widget.Toast;
+
+public class SmsReceiver extends BroadcastReceiver {
     public SmsReceiver() {
     }
-<<<<<<< HEAD
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -39,6 +47,4 @@ public class SmsReceiver extends com.xlythe.textmanager.text.SmsReceiver {
             Log.e("SmsReciver", "Exception smsReciver" + e);
         }
     }
-=======
->>>>>>> mms
 }
