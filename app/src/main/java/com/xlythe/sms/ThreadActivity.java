@@ -14,11 +14,13 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
@@ -30,6 +32,7 @@ public class ThreadActivity extends FragmentActivity {
     public static String EXTRA_THREAD_ID = "threadId";
     public static String EXTRA_ADDRESS = "address";
     public static String EXTRA_NUMBER = "number";
+    private static final int NUM_PAGES = 5;
 
     ImageButton mCamera;
     ImageButton mPhoto;
@@ -43,7 +46,7 @@ public class ThreadActivity extends FragmentActivity {
     private ImageButton mButton;
     private ViewPager mPager;
     private PagerAdapter mPagerAdapter;
-    private static final int NUM_PAGES = 5;
+    private LinearLayout mTabBar;
 
     private TextAdapter mTextAdapter;
     private ListView mListView;
@@ -69,6 +72,15 @@ public class ThreadActivity extends FragmentActivity {
         mListView = (ListView) findViewById(R.id.messages);
         mSend = (ImageButton) findViewById(R.id.send);
         mMessage = (EditText) findViewById(R.id.message);
+        mTabBar = (LinearLayout) findViewById(R.id.tab_bar);
+
+        mTabBar.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mTabBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                mTabBar.setTranslationY(mTabBar.getHeight());
+            }
+        });
 
         // Get threadId that was clicked.
         final long mThreadId = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
@@ -82,6 +94,9 @@ public class ThreadActivity extends FragmentActivity {
         window.setStatusBarColor(ColorUtils.getDarkColor(mThreadId));
         getActionBar().setBackgroundDrawable(new ColorDrawable(ColorUtils.getColor(mThreadId)));
         getActionBar().setTitle(mAddress);
+
+        // Set tab bar color
+        mTabBar.setBackground(new ColorDrawable(ColorUtils.getColor(mThreadId)));
 
         // Populate Adapter with list of texts.
         mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mManager.getMessages(mThreadId));
@@ -171,6 +186,7 @@ public class ThreadActivity extends FragmentActivity {
         mAttachView.setUpperView(mMessages);
         mActionBar = getActionBar();
         mAttachView.setActionBar(mActionBar);
+        mAttachView.setTabBar(mTabBar);
 
         mButton = (ImageButton) findViewById(R.id.attach);
         mButton.setOnClickListener(new View.OnClickListener() {

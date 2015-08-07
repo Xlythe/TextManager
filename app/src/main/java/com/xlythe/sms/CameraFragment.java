@@ -22,8 +22,6 @@ public class CameraFragment extends Fragment {
         // Create an instance of Camera
         mCamera = getCameraInstance();
 
-        //ThreadActivity activity = (ThreadActivity) getActivity();
-
         // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(getActivity(), mCamera);
         FrameLayout preview = (FrameLayout) rootView.findViewById(R.id.camera_preview);
@@ -47,15 +45,12 @@ public class CameraFragment extends Fragment {
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
-        Log.d("camera","get camera");
         Camera c = null;
         try {
             c = Camera.open(); // attempt to get a Camera instance
-            Log.d("camera","camera active");
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
-            Log.d("camera","camera failed");
         }
         return c; // returns null if camera is unavailable
     }

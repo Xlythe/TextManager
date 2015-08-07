@@ -9,6 +9,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 /**
@@ -19,6 +20,7 @@ public class AttachView extends FrameLayout {
 
     private CardState mState;
     private AttachView mAttachView;
+    private LinearLayout mTabBar;
     private ScrollView mScrollView;
     private float mLastX;
     private float mLastY;
@@ -90,6 +92,10 @@ public class AttachView extends FrameLayout {
         mActionBar = actionBar;
     }
 
+    public void setTabBar(LinearLayout tabBar){
+        mTabBar = tabBar;
+    }
+
     public void setScrollView(ScrollView sv){
         mScrollView = sv;
     }
@@ -101,6 +107,8 @@ public class AttachView extends FrameLayout {
         mView.animate().translationY(-getHeight()).setDuration(300);
         mAttachView.animate().translationY(0f).setDuration(300);
         setCardState(CardState.EXPANDED);
+        if(mTabBar!=null)
+            mTabBar.animate().translationY(mTabBar.getHeight()).setDuration(100);
     }
     public void partial(){
         if(mActionBar!=null)
@@ -109,15 +117,18 @@ public class AttachView extends FrameLayout {
             mView.animate().translationY((PARTIAL_PERCENT - 1f) * getHeight()).setDuration(300);
         mAttachView.animate().translationY(PARTIAL_PERCENT * getHeight()).setDuration(300);
         setCardState(CardState.PARTIAL);
+        if(mTabBar!=null)
+            mTabBar.animate().translationY(0f).setDuration(100);
     }
     public void collapse(){
-
         if(mActionBar!=null)
             mActionBar.show();
         if(mView!=null)
             mView.animate().translationY(0f).setDuration(300);
         mAttachView.animate().translationY(getHeight()).setDuration(300);
         setCardState(CardState.COLLAPSED);
+        if(mTabBar!=null)
+            mTabBar.animate().translationY(mTabBar.getHeight()).setDuration(100);
     }
 
     public void dragView(float percent) {
