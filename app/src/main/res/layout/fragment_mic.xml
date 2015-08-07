@@ -1,0 +1,54 @@
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <TextView
+            android:id="@+id/timer"
+            android:layout_centerHorizontal="true"
+            android:padding="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Touch &amp; hold" />
+
+     <FrameLayout
+         android:layout_centerInParent="true"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content">
+         <ImageView
+             android:id="@+id/level"
+             android:layout_gravity="center"
+             android:background="@drawable/circle"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content" />
+         <ImageButton
+             android:background="@drawable/back_mic"
+             android:layout_gravity="center"
+             android:id="@+id/record"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content" />
+         <ImageView
+             android:background="@drawable/ring"
+             android:layout_gravity="center"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content" />
+         <ImageView
+             android:backgroundTint="#03a9f4"
+             android:background="@drawable/mic_rec"
+             android:layout_gravity="center"
+             android:id="@+id/mic_rec"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content" />
+
+     </FrameLayout>
+
+     <Button
+         android:id="@+id/play"
+         android:text="play"
+         android:layout_centerHorizontal="true"
+         android:layout_marginBottom="48dp"
+         android:layout_alignParentBottom="true"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content" />
+ </RelativeLayout>

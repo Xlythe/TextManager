@@ -31,13 +31,19 @@ public class ThreadActivity extends FragmentActivity {
     public static String EXTRA_ADDRESS = "address";
     public static String EXTRA_NUMBER = "number";
 
+    ImageButton mCamera;
+    ImageButton mPhoto;
+    ImageButton mFace;
+    ImageButton mMic;
+    ImageButton mLocation;
+
     private ActionBar mActionBar;
     private AttachView mAttachView;
     private FrameLayout mMessages;
     private ImageButton mButton;
     private ViewPager mPager;
     private PagerAdapter mPagerAdapter;
-    private static final int NUM_PAGES = 1;
+    private static final int NUM_PAGES = 5;
 
     private TextAdapter mTextAdapter;
     private ListView mListView;
@@ -52,6 +58,12 @@ public class ThreadActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         setContentView(R.layout.activity_thread);
+
+        mCamera = (ImageButton) findViewById(R.id.camera);
+        mPhoto = (ImageButton) findViewById(R.id.photo);
+        mFace = (ImageButton) findViewById(R.id.face);
+        mMic = (ImageButton) findViewById(R.id.mic);
+        mLocation = (ImageButton) findViewById(R.id.location);
 
         mManager = TextManager.getInstance(getBaseContext());
         mListView = (ListView) findViewById(R.id.messages);
@@ -101,6 +113,58 @@ public class ThreadActivity extends FragmentActivity {
         mPager = (ViewPager) findViewById(R.id.pager);
         mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         mPager.setAdapter(mPagerAdapter);
+        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int i, float v, int i1) {
+            }
+
+            @Override
+            public void onPageSelected(int i) {
+                switch (i) {
+                    case 0:
+                        mCamera.setAlpha(1f);
+                        mPhoto.setAlpha(0.5f);
+                        mFace.setAlpha(0.5f);
+                        mMic.setAlpha(0.5f);
+                        mLocation.setAlpha(0.5f);
+                        break;
+                    case 1:
+                        mCamera.setAlpha(0.5f);
+                        mPhoto.setAlpha(1f);
+                        mFace.setAlpha(0.5f);
+                        mMic.setAlpha(0.5f);
+                        mLocation.setAlpha(0.5f);
+                        break;
+                    case 2:
+                        mCamera.setAlpha(0.5f);
+                        mPhoto.setAlpha(0.5f);
+                        mFace.setAlpha(1f);
+                        mMic.setAlpha(0.5f);
+                        mLocation.setAlpha(0.5f);
+                        break;
+                    case 3:
+                        mCamera.setAlpha(0.5f);
+                        mPhoto.setAlpha(0.5f);
+                        mFace.setAlpha(0.5f);
+                        mMic.setAlpha(1f);
+                        mLocation.setAlpha(0.5f);
+                        break;
+                    case 4:
+                        mCamera.setAlpha(0.5f);
+                        mPhoto.setAlpha(0.5f);
+                        mFace.setAlpha(0.5f);
+                        mMic.setAlpha(0.5f);
+                        mLocation.setAlpha(1f);
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int i) {
+
+            }
+        });
+
 
         mAttachView = (AttachView) findViewById(R.id.attach_view);
         mMessages = (FrameLayout) findViewById(R.id.messages_xxx);
@@ -137,6 +201,22 @@ public class ThreadActivity extends FragmentActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void jumpToCamera(View v){
+        mPager.setCurrentItem(0);
+    }
+    public void jumpToPhoto(View v){
+        mPager.setCurrentItem(1);
+    }
+    public void jumpToFace(View v){
+        mPager.setCurrentItem(2);
+    }
+    public void jumpToMic(View v){
+        mPager.setCurrentItem(3);
+    }
+    public void jumpToLocation(View v){
+        mPager.setCurrentItem(4);
+    }
+
     /**
      * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
      * sequence.
@@ -148,7 +228,30 @@ public class ThreadActivity extends FragmentActivity {
 
         @Override
         public Fragment getItem(int position) {
-            return new com.xlythe.sms.ScreenSlidePageFragment();
+            final Fragment result;
+            switch (position) {
+                case 0:
+                    //result = new ScreenSlidePageFragment();
+                    result = new CameraFragment();
+                    break;
+                case 1:
+                    result = new ScreenSlidePageFragment();
+                    break;
+                case 2:
+                    result = new FaceFragment();
+                    break;
+                case 3:
+                    result = new MicFragment();
+                    break;
+                case 4:
+                    result = new LocationFragment();
+                    break;
+                default:
+                    result = null;
+                    break;
+            }
+
+            return result;
         }
 
         @Override
