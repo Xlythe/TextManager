@@ -22,13 +22,16 @@ import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages sms and mms messages
@@ -73,9 +76,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
-    private List<Thread> mThreads;
-    private List<Text> mMessages;
-    private long mThreadId = -1;
+    private final Set<MessageObserver> mObservers = new HashSet<>();
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -129,31 +130,30 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public List<Thread> getThreads() {
-        mThreads = new ArrayList<>();
+        List<Thread> threads = new ArrayList<>();
         Cursor c = getCursor();
         if (c.moveToFirst()) {
             do {
-                mThreads.add(new Thread(getContext(), c, mDeviceNumber));
+                threads.add(new Thread(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(mThreads);
-        return mThreads;
+        Collections.sort(threads);
+        return threads;
     }
 
     @Override
     public List<Text> getMessages(long threadId) {
-        mThreadId = threadId;
-        mMessages = new ArrayList<>();
+        List<Text> messages = new ArrayList<>();
         Cursor c = getCursor(threadId);
         if (c.moveToFirst()) {
             do {
-                mMessages.add(new Text(getContext(), c, mDeviceNumber));
+                messages.add(new Text(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(mMessages);
-        return mMessages;
+        Collections.sort(messages);
+        return messages;
     }
 
     public void delete(Text text) {
@@ -216,8 +216,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public void registerObserver() {
+    public void registerObserver(MessageObserver observer) {
+        mObservers.add(observer);
+    }
 
+    @Override
+    public void unregisterObserver(MessageObserver observer) {
+        mObservers.remove(observer);
     }
 
     @Override
@@ -414,7 +419,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new Contact(getContactCursor(textThread), address);
     }
 
-    public class TextObserver extends ContentObserver {
+    private class TextObserver extends ContentObserver {
         TextObserver(Handler handler) {
             super(handler);
         }
@@ -426,12 +431,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            if (mThreadId == -1) {
-                Log.d("observer", "getThreads");
-                mThreads.addAll(getThreads());
-            } else {
-                Log.d("observer", "getMessages :" + mThreadId);
-                mMessages.addAll(getMessages(mThreadId));
+            for (MessageObserver observer : mObservers) {
+                observer.notifyDataChanged();
             }
         }
     }

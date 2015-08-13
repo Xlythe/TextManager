@@ -29,7 +29,12 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.
      * */
-    void registerObserver();
+    void registerObserver(MessageObserver observer);
+
+    /**
+     * Remove a registered observer
+     * */
+    void unregisterObserver(MessageObserver observer);
 
     /**
      * Get all messages involving that user.
