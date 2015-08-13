@@ -9,8 +9,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
@@ -24,6 +26,7 @@ import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,6 +73,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
+    private List<Thread> mThreads;
+    private List<Text> mMessages;
+    private long mThreadId = -1;
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -82,10 +88,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
         mContext = context;
+        context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
     }
 
     private Cursor getCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
+
         final Uri uri;
         final String order;
 
@@ -116,36 +124,36 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
             order = "date ASC";
         }
-
         return contentResolver.query(uri, projection, null, null, order);
     }
 
     @Override
     public List<Thread> getThreads() {
-        List<Thread> threads = new ArrayList<>();
+        mThreads = new ArrayList<>();
         Cursor c = getCursor();
         if (c.moveToFirst()) {
             do {
-                threads.add(new Thread(getContext(), c, mDeviceNumber));
+                mThreads.add(new Thread(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(threads);
-        return threads;
+        Collections.sort(mThreads);
+        return mThreads;
     }
 
     @Override
     public List<Text> getMessages(long threadId) {
-        List<Text> messages = new ArrayList<>();
+        mThreadId = threadId;
+        mMessages = new ArrayList<>();
         Cursor c = getCursor(threadId);
         if (c.moveToFirst()) {
             do {
-                messages.add(new Text(getContext(), c, mDeviceNumber));
+                mMessages.add(new Text(getContext(), c, mDeviceNumber));
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(messages);
-        return messages;
+        Collections.sort(mMessages);
+        return mMessages;
     }
 
     public void delete(Text text) {
@@ -404,5 +412,27 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Contact getSender(Thread textThread) {
         String address = textThread.getAddress();
         return new Contact(getContactCursor(textThread), address);
+    }
+
+    public class TextObserver extends ContentObserver {
+        TextObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            this.onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            if (mThreadId == -1) {
+                Log.d("observer", "getThreads");
+                mThreads.addAll(getThreads());
+            } else {
+                Log.d("observer", "getMessages :" + mThreadId);
+                mMessages.addAll(getMessages(mThreadId));
+            }
+        }
     }
 }
