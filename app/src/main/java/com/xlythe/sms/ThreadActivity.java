@@ -2,7 +2,9 @@ package com.xlythe.sms;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.database.ContentObserver;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -11,6 +13,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,8 +27,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+
+import java.util.List;
 
 
 public class ThreadActivity extends FragmentActivity {
@@ -55,6 +61,9 @@ public class ThreadActivity extends FragmentActivity {
     private TextManager mManager;
     private String mAddress;
     private String mNumber;
+    private long mThreadId;
+
+    private List<Text> mTexts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +92,7 @@ public class ThreadActivity extends FragmentActivity {
         });
 
         // Get threadId that was clicked.
-        final long mThreadId = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
+         mThreadId = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
 
         // Get address.
         mAddress = getIntent().getStringExtra(EXTRA_ADDRESS);
@@ -98,9 +107,22 @@ public class ThreadActivity extends FragmentActivity {
         // Set tab bar color
         mTabBar.setBackground(new ColorDrawable(ColorUtils.getColor(mThreadId)));
 
+        mTexts = mManager.getMessages(mThreadId);
+
         // Populate Adapter with list of texts.
-        mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mManager.getMessages(mThreadId));
+        mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mTexts);
         mListView.setAdapter(mTextAdapter);
+
+        //register observer
+        mManager.registerObserver(new MessageObserver() {
+            @Override
+            public void notifyDataChanged() {
+                Log.d("activity","change");
+                mTexts.clear();
+                mTexts.addAll(mManager.getMessages(mThreadId));
+                mTextAdapter.notifyDataSetChanged();
+            }
+        });
 
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

@@ -432,6 +432,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             for (MessageObserver observer : mObservers) {
+                Log.d("manager","change");
                 observer.notifyDataChanged();
             }
         }
