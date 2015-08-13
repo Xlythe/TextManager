@@ -1,10 +1,8 @@
 package com.xlythe.sms;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -18,7 +16,6 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -42,7 +39,7 @@ public class ThreadActivity extends FragmentActivity {
 
     private ActionBar mActionBar;
     private AttachView mAttachView;
-    private FrameLayout mMessages;
+    private LinearLayout mMessages;
     private ImageButton mButton;
     private ViewPager mPager;
     private PagerAdapter mPagerAdapter;
@@ -180,9 +177,8 @@ public class ThreadActivity extends FragmentActivity {
             }
         });
 
-
         mAttachView = (AttachView) findViewById(R.id.attach_view);
-        mMessages = (FrameLayout) findViewById(R.id.messages_xxx);
+        mMessages = (LinearLayout) findViewById(R.id.message_blurb);
         mAttachView.setUpperView(mMessages);
         mActionBar = getActionBar();
         mAttachView.setActionBar(mActionBar);

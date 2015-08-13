@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -32,7 +33,7 @@ public class AttachView extends FrameLayout {
     private int mMaximumFlingVelocity;
     private float mLastDeltaY;
     private ActionBar mActionBar;
-    private FrameLayout mView;
+    private View mView;
     private float mInitPercent = -1;
 
     public AttachView(Context context) {
@@ -84,7 +85,7 @@ public class AttachView extends FrameLayout {
 
     }
 
-    public void setUpperView(FrameLayout view){
+    public void setUpperView(View view){
         mView = view;
     }
 

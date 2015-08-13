@@ -97,7 +97,7 @@ public class Text implements Message, Comparable{
         long _id = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
 
         // Query the address information for this message
-        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");
+        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");// TODO Telephony.Mms.CONTENT_URL is api 19+
         Cursor addr = context.getContentResolver().query(
                 addressUri,
                 null,

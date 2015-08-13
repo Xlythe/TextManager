@@ -17,7 +17,6 @@ import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
@@ -28,7 +27,6 @@ import com.xlythe.textmanager.User;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
