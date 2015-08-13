@@ -26,12 +26,12 @@ import java.util.List;
 /**
  * Either an sms or an mms
  */
-public class Text implements Message, Comparable{
+public class Text implements Message, Comparable {
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long MILLI_TO_SEC = 1000;
 
-    static final String[] MMS_PROJECTION = new String[] {
+    static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Telephony.Mms.Part.CONTENT_TYPE,
             Telephony.Mms.Part.TEXT,
@@ -225,6 +225,7 @@ public class Text implements Message, Comparable{
             Text text = new Text();
             text.mBody = mMessage;
             text.mAddress = mRecipient;
+            text.mDate = System.currentTimeMillis();
             return text;
         }
     }

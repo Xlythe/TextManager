@@ -9,8 +9,20 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.xlythe.textmanager.MessageObserver;
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class SmsReceiver extends BroadcastReceiver {
+
+    private final Set<MessageObserver> mObservers = new HashSet<>();
+
     public SmsReceiver() {
+    }
+
+    public void registerObserver(MessageObserver observer) {
+        mObservers.add(observer);
     }
 
     @Override
@@ -34,6 +46,14 @@ public class SmsReceiver extends BroadcastReceiver {
 
                     Log.i("SmsReciver", number + ": " + message);
                     Toast.makeText(context, number + ": " + message, Toast.LENGTH_LONG).show();
+                    Text text = new Text.Builder()
+                            .message(message)
+                            .recipient(number)
+                            .build();
+                    for (MessageObserver observer : mObservers) {
+                        Log.d("add","add");
+                        observer.dataAdded(text);
+                    }
                 }
 
                 if(Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {

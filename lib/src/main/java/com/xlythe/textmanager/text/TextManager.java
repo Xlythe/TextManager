@@ -89,7 +89,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
         mContext = context;
-        context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
+        SmsReceiver sr = new SmsReceiver();
+        for (MessageObserver observer : mObservers) {
+            sr.registerObserver(observer);
+        }
     }
 
     private Cursor getCursor() {
@@ -260,6 +263,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         String SMS_SENT = "SMS_SENT";
         String SMS_DELIVERED = "SMS_DELIVERED";
 
+        for (MessageObserver observer : mObservers) {
+            observer.dataAdded(text);
+        }
+
         PendingIntent sentPendingIntent = PendingIntent.getBroadcast(getContext(), 0, new Intent(SMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(getContext(), 0, new Intent(SMS_DELIVERED), 0);
 
@@ -281,6 +288,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         }
                         Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
+                        for (MessageObserver observer : mObservers) {
+                            observer.dataUpdated(0,null);
+                        }
                         Toast.makeText(getContext(), "SMS sent successfully", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
@@ -294,6 +304,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         }
                         Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
+                        for (MessageObserver observer : mObservers) {
+                            observer.dataUpdated(0,null);
+                        }
                         Toast.makeText(getContext(), "Generic failure cause", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
@@ -307,6 +320,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         }
                         Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
+                        for (MessageObserver observer : mObservers) {
+                            observer.dataUpdated(0,null);
+                        }
                         Toast.makeText(getContext(), "Service is currently unavailable", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NULL_PDU:
@@ -320,6 +336,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         }
                         Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
+                        for (MessageObserver observer : mObservers) {
+                            observer.dataUpdated(0,null);
+                        }
                         Toast.makeText(getContext(), "No pdu provided", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_RADIO_OFF:
@@ -333,6 +352,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         }
                         Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
                         getContext().getContentResolver().insert(uri, values);
+                        for (MessageObserver observer : mObservers) {
+                            observer.dataUpdated(0,null);
+                        }
                         Toast.makeText(getContext(), "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
                         break;
                 }
@@ -419,22 +441,22 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new Contact(getContactCursor(textThread), address);
     }
 
-    private class TextObserver extends ContentObserver {
-        TextObserver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            this.onChange(selfChange, null);
-        }
-
-        @Override
-        public void onChange(boolean selfChange, Uri uri) {
-            for (MessageObserver observer : mObservers) {
-                Log.d("manager","change");
-                observer.notifyDataChanged();
-            }
-        }
-    }
+//    private class TextObserver extends ContentObserver {
+//        TextObserver(Handler handler) {
+//            super(handler);
+//        }
+//
+//        @Override
+//        public void onChange(boolean selfChange) {
+//            this.onChange(selfChange, null);
+//        }
+//
+//        @Override
+//        public void onChange(boolean selfChange, Uri uri) {
+//            for (MessageObserver observer : mObservers) {
+//                Log.d("manager","change");
+//                observer.notifyDataChanged();
+//            }
+//        }
+//    }
 }
