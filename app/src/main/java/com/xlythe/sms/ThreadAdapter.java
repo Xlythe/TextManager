@@ -50,20 +50,19 @@ public class ThreadAdapter extends ArrayAdapter {
         Uri photo = sender.getPhotoUri();
 
         // Color user icons
-        if(photo!=null){
+        if (photo != null) {
             holder.userImage.setImageURI(photo);
             holder.userImage.setVisibility(View.VISIBLE);
             holder.userIcon.setVisibility(View.GONE);
             holder.user.setVisibility(View.GONE);
             holder.text.setVisibility(View.GONE);
-        }
-        else {
+        } else {
             holder.user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
             holder.userImage.setVisibility(View.GONE);
             holder.userIcon.setVisibility(View.VISIBLE);
             holder.user.setVisibility(View.VISIBLE);
             holder.text.setVisibility(View.GONE);
-            if (sender.hasName()){
+            if (sender.hasName()) {
                 holder.text.setText(Character.toString(name.charAt(0)));
                 holder.text.setVisibility(View.VISIBLE);
                 holder.userIcon.setVisibility(View.GONE);

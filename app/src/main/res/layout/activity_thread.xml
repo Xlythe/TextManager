@@ -18,6 +18,7 @@
             android:paddingRight="12dp"
             android:paddingLeft="12dp"
             android:id="@+id/messages"
+            android:transcriptMode="alwaysScroll"
             android:stackFromBottom="true"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp"

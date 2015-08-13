@@ -26,12 +26,12 @@ import java.util.List;
 /**
  * Either an sms or an mms
  */
-public class Text implements Message, Comparable{
+public class Text implements Message, Comparable {
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long MILLI_TO_SEC = 1000;
 
-    static final String[] MMS_PROJECTION = new String[] {
+    static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Telephony.Mms.Part.CONTENT_TYPE,
             Telephony.Mms.Part.TEXT,
@@ -46,14 +46,25 @@ public class Text implements Message, Comparable{
     private boolean mIncoming;
     private Uri mAttachment;
 
+    private Context mContext;
+    private boolean mIsMms = false;
+    private long mMmsId;
+    private String mMyNumber;
+
     private Text() { }
 
-    protected Text(Context context, Cursor cursor, String myNumber) {
+    Text(Context context, Cursor cursor, String myNumber) {
+        invalidate(context, cursor, myNumber);
+    }
+
+    void invalidate(Context context, Cursor cursor, String myNumber) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             parseSmsMessage(cursor);
         }
         else if (TYPE_MMS.equals(type)){
+            mIsMms = true;
+            mContext = context.getApplicationContext();
             parseMmsMessage(context, cursor, myNumber);
         }
         else {
@@ -91,57 +102,10 @@ public class Text implements Message, Comparable{
     private void parseMmsMessage(Context context, Cursor data, String myNumber) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
-        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE))*MILLI_TO_SEC;
+        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE)) * MILLI_TO_SEC;
         mIncoming = isIncomingMessage(data, false);
-
-        long _id = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
-
-        // Query the address information for this message
-        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");// TODO Telephony.Mms.CONTENT_URL is api 19+
-        Cursor addr = context.getContentResolver().query(
-                addressUri,
-                null,
-                null,
-                null,
-                null
-        );
-        HashSet<String> recipients = new HashSet<>();
-        while (addr.moveToNext()) {
-            String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
-            // Don't add our own number to the displayed list
-            if (myNumber == null || !address.contains(myNumber)) {
-                recipients.add(address);
-            }
-        }
-        mAddress = TextUtils.join(",", recipients);
-        addr.close();
-
-        // Query all the MMS parts associated with this message
-        Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/part");
-        Cursor inner = context.getContentResolver().query(
-                messageUri,
-                MMS_PROJECTION,
-                Telephony.Mms.Part.MSG_ID + " = ?",
-                new String[] {String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
-                null
-        );
-
-        while (inner.moveToNext()) {
-            String contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
-            if (contentType == null) {
-                continue;
-            }
-            else if (contentType.matches("image/.*")) {
-                // Find any part that is an image attachment
-                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                mAttachment = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
-            }
-            else if (contentType.matches("text/.*")) {
-                // Find any part that is text data
-                mBody = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.TEXT));
-            }
-        }
-        inner.close();
+        mMmsId = data.getLong(data.getColumnIndex(Telephony.Mms._ID));
+        mMyNumber = myNumber;
     }
 
     private static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
@@ -163,6 +127,27 @@ public class Text implements Message, Comparable{
     }
 
     public String getAddress() {
+        if (mIsMms && mAddress == null) {
+            // Query the address information for this message
+            Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/addr");
+            Cursor addr = mContext.getContentResolver().query(
+                    addressUri,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            HashSet<String> recipients = new HashSet<>();
+            while (addr.moveToNext()) {
+                String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+                // Don't add our own number to the displayed list
+                if (mMyNumber == null || !address.contains(mMyNumber)) {
+                    recipients.add(address);
+                }
+            }
+            mAddress = TextUtils.join(",", recipients);
+            addr.close();
+        }
         return mAddress;
     }
 
@@ -179,6 +164,34 @@ public class Text implements Message, Comparable{
     }
 
     public Uri getAttachment() {
+        if (mIsMms && mAttachment == null) {
+            // Query all the MMS parts associated with this message
+            Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/part");
+            Cursor inner = mContext.getContentResolver().query(
+                    messageUri,
+                    MMS_PROJECTION,
+                    Telephony.Mms.Part.MSG_ID + " = ?",
+                    new String[] {String.valueOf(mMmsId)},
+                    null
+            );
+
+            while (inner.moveToNext()) {
+                String contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+                if (contentType == null) {
+                    continue;
+                }
+
+                if (contentType.matches("image/.*")) {
+                    // Find any part that is an image attachment
+                    long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
+                    mAttachment = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
+                } else if (contentType.matches("text/.*")) {
+                    // Find any part that is text data
+                    mBody = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.TEXT));
+                }
+            }
+            inner.close();
+        }
         return mAttachment;
     }
 
@@ -225,6 +238,7 @@ public class Text implements Message, Comparable{
             Text text = new Text();
             text.mBody = mMessage;
             text.mAddress = mRecipient;
+            text.mDate = System.currentTimeMillis();
             return text;
         }
     }

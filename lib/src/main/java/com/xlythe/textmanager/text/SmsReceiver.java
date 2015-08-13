@@ -9,7 +9,13 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.xlythe.textmanager.MessageObserver;
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class SmsReceiver extends BroadcastReceiver {
+
     public SmsReceiver() {
     }
 

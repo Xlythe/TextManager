@@ -26,9 +26,11 @@ import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -75,6 +77,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static TextManager sTextManager;
     private Context mContext;
     private final Set<MessageObserver> mObservers = new HashSet<>();
+
+    private final Map<Long, List<Text>> mTexts = new HashMap<>();
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -392,18 +396,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Cursor getContactCursor(Thread textThread) {
         ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection;
-        Uri uri;
-
-        if (android.os.Build.VERSION.SDK_INT >= 5) {
-            uri = Uri.parse("content://com.android.contacts/phone_lookup");
-            projection = new String[] { "display_name" };
-        }
-        else {
-            uri = Uri.parse("content://contacts/phones/filter");
-            projection = new String[] { "name" };
-        }
-
+        Uri uri = Uri.parse("content://com.android.contacts/phone_lookup");
         uri = Uri.withAppendedPath(uri, Uri.encode(textThread.getAddress()));
         return contentResolver.query(uri, null, null, null, null);
     }
