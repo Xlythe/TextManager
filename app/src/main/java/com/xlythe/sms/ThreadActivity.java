@@ -104,6 +104,8 @@ public class ThreadActivity extends FragmentActivity {
 
         mTexts = mManager.getMessages(mThreadId);
 
+        Log.d("text amount",mTexts.size()+"");
+
         // Populate Adapter with list of texts.
         mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mTexts);
         mListView.setAdapter(mTextAdapter);
