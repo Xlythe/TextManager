@@ -158,6 +158,35 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return messages;
     }
 
+    /**
+     *  A version of getMessages that reuses the Texts from the expired list. Saves memory for large lists.
+     * */
+    public List<Text> getMessages(long threadId, List<Text> expiredList) {
+        Cursor c = getCursor(threadId);
+
+        // Throw away anything extra
+        while (c.getCount() < expiredList.size()) {
+            expiredList.remove(expiredList.size() - 1);
+        }
+
+        if (c.moveToFirst()) {
+            do {
+                if (c.getPosition() < expiredList.size()) {
+                    // If we can, reuse the Text from the expired list
+                    Text text = expiredList.get(c.getPosition());
+                    text.invalidate(getContext(), c, mDeviceNumber);
+                } else {
+                    // Otherwise, just create a new one
+                    expiredList.add(new Text(getContext(), c, mDeviceNumber));
+                }
+            } while (c.moveToNext());
+        }
+        c.close();
+
+        Collections.sort(expiredList);
+        return expiredList;
+    }
+
     public void delete(Text text) {
         String clausole = "_ID = ";
         clausole = clausole + text.getId();

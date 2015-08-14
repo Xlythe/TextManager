@@ -112,8 +112,7 @@ public class ThreadActivity extends FragmentActivity {
         mManager.registerObserver(new MessageObserver() {
             @Override
             public void notifyDataChanged() {
-                mTexts.clear();
-                mTexts.addAll(mManager.getMessages(mThreadId));
+                mManager.getMessages(mThreadId, mTexts);
                 mTextAdapter.notifyDataSetChanged();
             }
         });
