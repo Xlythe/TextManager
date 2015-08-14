@@ -58,13 +58,23 @@ public class Text implements Message, Comparable {
     }
 
     void invalidate(Context context, Cursor cursor, String myNumber) {
+        mId = -1;
+        mThreadId = -1;
+        mDate = -1;
+        mAddress = null;
+        mBody = null;
+        mAttachment = null;
+        mMmsId = -1;
+        mMyNumber = null;
+
+        mContext = context.getApplicationContext();
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
+            mIsMms = false;
             parseSmsMessage(cursor);
         }
         else if (TYPE_MMS.equals(type)){
             mIsMms = true;
-            mContext = context.getApplicationContext();
             parseMmsMessage(context, cursor, myNumber);
         }
         else {
