@@ -120,12 +120,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             projection = PROJECTION;
             uri = ContentUris.withAppendedId(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
-            order = "date ASC";
+            //order = "date ASC";
+            order = "normalized_date ASC";
         }
         else {
             projection = PROJECTION_PRE_LOLLIPOP;
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-            order = "date ASC";
+            //order = "date ASC";
+            order = "normalized_date ASC";
         }
         return contentResolver.query(uri, projection, null, null, order);
     }
@@ -154,7 +156,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(messages);
+        //Collections.sort(messages);
         return messages;
     }
 

@@ -29,7 +29,7 @@ import java.util.List;
 public class Text implements Message, Comparable {
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
-    private static final long MILLI_TO_SEC = 1000;
+    private static final long SEC_TO_MILLI = 1000;
 
     static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
@@ -102,6 +102,10 @@ public class Text implements Message, Comparable {
     private void parseSmsMessage(Cursor data) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
+
+        // MMS TEST
+        Log.d("type sms", data.getString(data.getColumnIndexOrThrow(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN))+"");
+
         mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE));
 
         mAddress = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
@@ -112,7 +116,11 @@ public class Text implements Message, Comparable {
     private void parseMmsMessage(Context context, Cursor data, String myNumber) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
-        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE)) * MILLI_TO_SEC;
+
+        // MMS TEST
+        Log.d("type mms", data.getString(data.getColumnIndexOrThrow(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN)) + "");
+
+        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mIncoming = isIncomingMessage(data, false);
         mMmsId = data.getLong(data.getColumnIndex(Telephony.Mms._ID));
         mMyNumber = myNumber;
