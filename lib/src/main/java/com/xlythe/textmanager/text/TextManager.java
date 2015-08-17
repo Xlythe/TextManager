@@ -94,7 +94,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
     }
 
-    private Cursor getCursor() {
+    public Cursor getCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
 
         final Uri uri;
@@ -111,7 +111,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return contentResolver.query(uri, null, null, null, order);
     }
 
-    private Cursor getCursor(long threadId) {
+    public Cursor getCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         final Uri uri;

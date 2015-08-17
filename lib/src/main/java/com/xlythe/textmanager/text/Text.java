@@ -53,7 +53,7 @@ public class Text implements Message, Comparable {
 
     private Text() { }
 
-    Text(Context context, Cursor cursor, String myNumber) {
+    public Text(Context context, Cursor cursor, String myNumber) {
         invalidate(context, cursor, myNumber);
     }
 

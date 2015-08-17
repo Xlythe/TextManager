@@ -50,7 +50,7 @@ public class ThreadActivity extends FragmentActivity {
     private PagerAdapter mPagerAdapter;
     private LinearLayout mTabBar;
 
-    private TextAdapter mTextAdapter;
+    private TextCursorAdapter mTextAdapter;
     private ListView mListView;
     private ImageButton mSend;
     private EditText mMessage;
@@ -59,7 +59,7 @@ public class ThreadActivity extends FragmentActivity {
     private String mNumber;
     private long mThreadId;
 
-    private List<Text> mTexts;
+    //private List<Text> mTexts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,33 +103,36 @@ public class ThreadActivity extends FragmentActivity {
         // Set tab bar color
         mTabBar.setBackground(new ColorDrawable(ColorUtils.getColor(mThreadId)));
 
-        mTexts = mManager.getMessages(mThreadId);
+        //mTexts = mManager.getMessages(mThreadId);
 
-        Log.d("text amount",mTexts.size()+"");
+        //Log.d("text amount",mTexts.size()+"");
 
         // Populate Adapter with list of texts.
-        mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mTexts);
+//        mTextAdapter = new TextAdapter(getBaseContext(), R.layout.list_item_texts, mTexts);
+//        mListView.setAdapter(mTextAdapter);
+
+        mTextAdapter = new TextCursorAdapter(getBaseContext(),mManager.getCursor(mThreadId));
         mListView.setAdapter(mTextAdapter);
 
         //register observer
-        mManager.registerObserver(new MessageObserver() {
-            @Override
-            public void notifyDataChanged() {
-                mManager.getMessages(mThreadId, new MessageCallback<List<Text>>() {
-                    @Override
-                    public void onSuccess(List<Text> texts) {
-                        mTexts.clear();
-                        mTexts.addAll(texts);
-                        mTextAdapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-
-                    }
-                });
-            }
-        });
+//        mManager.registerObserver(new MessageObserver() {
+//            @Override
+//            public void notifyDataChanged() {
+//                mManager.getMessages(mThreadId, new MessageCallback<List<Text>>() {
+//                    @Override
+//                    public void onSuccess(List<Text> texts) {
+//                        mTexts.clear();
+//                        mTexts.addAll(texts);
+//                        mTextAdapter.notifyDataSetChanged();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//
+//                    }
+//                });
+//            }
+//        });
 
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
