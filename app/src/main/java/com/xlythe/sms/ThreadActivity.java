@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
+import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -114,8 +115,19 @@ public class ThreadActivity extends FragmentActivity {
         mManager.registerObserver(new MessageObserver() {
             @Override
             public void notifyDataChanged() {
-                mManager.getMessages(mThreadId, mTexts);
-                mTextAdapter.notifyDataSetChanged();
+                mManager.getMessages(mThreadId, new MessageCallback<List<Text>>() {
+                    @Override
+                    public void onSuccess(List<Text> texts) {
+                        mTexts.clear();
+                        mTexts.addAll(texts);
+                        mTextAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+
+                    }
+                });
             }
         });
 

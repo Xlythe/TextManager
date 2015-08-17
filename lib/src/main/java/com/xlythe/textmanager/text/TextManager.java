@@ -121,8 +121,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             projection = PROJECTION;
             uri = ContentUris.withAppendedId(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
             order = "date ASC";
-        }
-        else {
+        } else {
             projection = PROJECTION_PRE_LOLLIPOP;
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
             order = "date ASC";
@@ -145,6 +144,29 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
+    public void getThreads(final MessageCallback<List<Thread>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getThreads is a long running operation
+                final List<Thread> threads = getThreads();
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    @Override
     public List<Text> getMessages(long threadId) {
         List<Text> messages = new ArrayList<>();
         Cursor c = getCursor(threadId);
@@ -156,6 +178,29 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         c.close();
         Collections.sort(messages);
         return messages;
+    }
+
+    @Override
+    public void getMessages(final long threadId, final MessageCallback<List<Text>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getMessages is a long running operation
+                final List<Text> threads = getMessages(threadId);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
     }
 
     /**
@@ -237,15 +282,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         mContext.getContentResolver().update(uri, values, clausole, null);
     }
 
-    public void markRead(MessageCallback<Void> callback){
-
-    }
-
-    @Override
-    public List<Text> getMessages(int limit) {
-        return null;
-    }
-
     @Override
     public void registerObserver(MessageObserver observer) {
         mObservers.add(observer);
@@ -257,29 +293,31 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public void getThreads(MessageCallback<List<Thread>> callback) {
-        callback.onSuccess(getThreads());
-    }
-
-    @Override
-    public List<Text> getMessages(User user) {
-        return null;
-    }
-
-
-    @Override
-    public void getMessages(User user, MessageCallback<List<Text>> callback) {
-        callback.onSuccess(getMessages(user));
-    }
-
-    @Override
     public List<Text> search(String text) {
         return new LinkedList<>();
     }
 
     @Override
-    public void search(String text, MessageCallback<List<Text>> callback) {
-        callback.onSuccess(search(text));
+    public void search(final String text, final MessageCallback<List<Text>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // search is a long running operation
+                final List<Text> threads = search(text);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
     }
 
     protected Context getContext() {
