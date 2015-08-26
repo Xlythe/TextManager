@@ -70,19 +70,19 @@ public class HttpUtils {
     }
 
     /**
-     * A helper method to send or retrieve data through HTTP protocol.
+     * Execute an MMS HTTP request, either a POST (sending) or a GET (downloading)
      *
-     * @param token The token to identify the sending progress.
-     * @param url The URL used in a GET request. Null when the method is
-     *         HTTP_POST_METHOD.
-     * @param pdu The data to be POST. Null when the method is HTTP_GET_METHOD.
-     * @param method HTTP_POST_METHOD or HTTP_GET_METHOD.
-     * @return A byte array which contains the response data.
-     *         If an HTTP error code is returned, an IOException will be thrown.
-     * @throws IOException if any error occurred on network interface or
-     *         an HTTP error code(&gt;=400) returned from the server.
+     * @param url The request URL, for sending it is usually the MMSC, and for downloading
+     *                  it is the message URL
+     * @param pdu For POST (sending) only, the PDU to send
+     * @param method HTTP method, POST for sending and GET for downloading
+     * @param isProxySet Is there a proxy for the MMSC
+     * @param proxyHost The proxy host
+     * @param proxyPort The proxy port
+     * @return The HTTP response body
      */
-    protected static byte[] httpConnection(Context context, long token,
+    // TODO: CHANGE BACK TO PRIVATE!
+    public static byte[] httpConnection(Context context, long token,
                                            String url, byte[] pdu, int method, boolean isProxySet,
                                            String proxyHost, int proxyPort) throws IOException {
         if (url == null) {
@@ -110,16 +110,15 @@ public class HttpUtils {
             client = createHttpClient(context);
             HttpRequest req = null;
             switch(method) {
-//                case HTTP_POST_METHOD:
-//                    ProgressCallbackEntity entity = new ProgressCallbackEntity(
-//                            context, token, pdu);
-//                    // Set request content type.
-//                    entity.setContentType("application/vnd.wap.mms-message");
-//
-//                    HttpPost post = new HttpPost(url);
-//                    post.setEntity(entity);
-//                    req = post;
-//                    break;
+                case HTTP_POST_METHOD:
+                    ProgressCallbackEntity entity = new ProgressCallbackEntity(context, token, pdu);
+                    // Set request content type.
+                    entity.setContentType("application/vnd.wap.mms-message");
+
+                    HttpPost post = new HttpPost(url);
+                    post.setEntity(entity);
+                    req = post;
+                    break;
                 case HTTP_GET_METHOD:
                     req = new HttpGet(url);
                     break;

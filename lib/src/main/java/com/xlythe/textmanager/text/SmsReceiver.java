@@ -33,6 +33,8 @@ public class SmsReceiver extends BroadcastReceiver {
                 for (int i = 0; i < pdusObj.length; i++) {
                     SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
 
+                    Log.d("pdu", bytesToHex((byte[]) pdusObj[i]) +"");
+
                     messages[i] = currentMessage;
 
                     String number = currentMessage.getDisplayOriginatingAddress();
@@ -50,5 +52,16 @@ public class SmsReceiver extends BroadcastReceiver {
             // TODO: handle exception
             Log.e("SmsReceiver", "Exception smsReceiver" + e);
         }
+    }
+
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
     }
 }
