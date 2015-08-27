@@ -124,9 +124,9 @@ public class ManagerActivity extends Activity {
 //                startActivity(i);
                 new Thread(new Runnable() {
                     public void run() {
-                        String text = "FUCKING WORK";
-                        String address = "2163138473";
-                        String subject = "x";
+                        String text = "FUCKING WORKS BITCH - no images yet haha";
+                        String address = "4132828427";
+                        String subject = "im pro";
                         address = address.trim();
 
                         ArrayList<MMSPart> data = new ArrayList<>();
