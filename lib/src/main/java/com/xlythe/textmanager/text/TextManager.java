@@ -9,23 +9,29 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages sms and mms messages
@@ -70,6 +76,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
+    private final Set<MessageObserver> mObservers = new HashSet<>();
+
+    private final Map<Long, List<Text>> mTexts = new HashMap<>();
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -82,10 +91,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
         mContext = context;
+        context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
     }
 
-    private Cursor getCursor() {
+    public Cursor getCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
+
         final Uri uri;
         final String order;
 
@@ -100,7 +111,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return contentResolver.query(uri, null, null, null, order);
     }
 
-    private Cursor getCursor(long threadId) {
+    public Cursor getCursor(long threadId) {
         ContentResolver contentResolver = getContext().getContentResolver();
         final String[] projection;
         final Uri uri;
@@ -109,14 +120,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             projection = PROJECTION;
             uri = ContentUris.withAppendedId(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
-            order = "date ASC";
+            //order = "date ASC";
+            order = "normalized_date ASC";
         }
         else {
             projection = PROJECTION_PRE_LOLLIPOP;
             uri = Uri.parse("content://mms-sms/conversations/" + threadId);
-            order = "date ASC";
+            //order = "date ASC";
+            order = "normalized_date ASC";
         }
-
         return contentResolver.query(uri, projection, null, null, order);
     }
 
@@ -135,6 +147,29 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
+    public void getThreads(final MessageCallback<List<Thread>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getThreads is a long running operation
+                final List<Thread> threads = getThreads();
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    @Override
     public List<Text> getMessages(long threadId) {
         List<Text> messages = new ArrayList<>();
         Cursor c = getCursor(threadId);
@@ -144,8 +179,60 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(messages);
+        //Collections.sort(messages);
         return messages;
+    }
+
+    @Override
+    public void getMessages(final long threadId, final MessageCallback<List<Text>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getMessages is a long running operation
+                final List<Text> threads = getMessages(threadId);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    /**
+     *  A version of getMessages that reuses the Texts from the expired list. Saves memory for large lists.
+     * */
+    public List<Text> getMessages(long threadId, List<Text> expiredList) {
+        Cursor c = getCursor(threadId);
+
+        // Throw away anything extra
+        while (c.getCount() < expiredList.size()) {
+            expiredList.remove(expiredList.size() - 1);
+        }
+
+        if (c.moveToFirst()) {
+            do {
+                if (c.getPosition() < expiredList.size()) {
+                    // If we can, reuse the Text from the expired list
+                    Text text = expiredList.get(c.getPosition());
+                    text.invalidate(getContext(), c, mDeviceNumber);
+                } else {
+                    // Otherwise, just create a new one
+                    expiredList.add(new Text(getContext(), c, mDeviceNumber));
+                }
+            } while (c.moveToNext());
+        }
+        c.close();
+
+        Collections.sort(expiredList);
+        return expiredList;
     }
 
     public void delete(Text text) {
@@ -198,34 +285,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         mContext.getContentResolver().update(uri, values, clausole, null);
     }
 
-    public void markRead(MessageCallback<Void> callback){
-
+    @Override
+    public void registerObserver(MessageObserver observer) {
+        mObservers.add(observer);
     }
 
     @Override
-    public List<Text> getMessages(int limit) {
-        return null;
-    }
-
-    @Override
-    public void registerObserver() {
-
-    }
-
-    @Override
-    public void getThreads(MessageCallback<List<Thread>> callback) {
-        callback.onSuccess(getThreads());
-    }
-
-    @Override
-    public List<Text> getMessages(User user) {
-        return null;
-    }
-
-
-    @Override
-    public void getMessages(User user, MessageCallback<List<Text>> callback) {
-        callback.onSuccess(getMessages(user));
+    public void unregisterObserver(MessageObserver observer) {
+        mObservers.remove(observer);
     }
 
     @Override
@@ -234,8 +301,26 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public void search(String text, MessageCallback<List<Text>> callback) {
-        callback.onSuccess(search(text));
+    public void search(final String text, final MessageCallback<List<Text>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // search is a long running operation
+                final List<Text> threads = search(text);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
     }
 
     protected Context getContext() {
@@ -381,18 +466,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Cursor getContactCursor(Thread textThread) {
         ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection;
-        Uri uri;
-
-        if (android.os.Build.VERSION.SDK_INT >= 5) {
-            uri = Uri.parse("content://com.android.contacts/phone_lookup");
-            projection = new String[] { "display_name" };
-        }
-        else {
-            uri = Uri.parse("content://contacts/phones/filter");
-            projection = new String[] { "name" };
-        }
-
+        Uri uri = Uri.parse("content://com.android.contacts/phone_lookup");
         uri = Uri.withAppendedPath(uri, Uri.encode(textThread.getAddress()));
         return contentResolver.query(uri, null, null, null, null);
     }
@@ -404,5 +478,23 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Contact getSender(Thread textThread) {
         String address = textThread.getAddress();
         return new Contact(getContactCursor(textThread), address);
+    }
+
+    private class TextObserver extends ContentObserver {
+        TextObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            this.onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            for (MessageObserver observer : mObservers) {
+                observer.notifyDataChanged();
+            }
+        }
     }
 }

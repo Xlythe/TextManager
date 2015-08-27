@@ -22,24 +22,19 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
     List<M> getMessages(long threadId);
 
     /**
-     * Get the {limit} most recent messages.
+     * Get the messages sorted by date
      * */
-    List<M> getMessages(int limit);
+    void getMessages(long threadId, MessageCallback<List<M>> callback);
 
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.
      * */
-    void registerObserver();
+    void registerObserver(MessageObserver observer);
 
     /**
-     * Get all messages involving that user.
+     * Remove a registered observer
      * */
-    List<M> getMessages(User user);
-
-    /**
-     * Get all messages involving that user.
-     * */
-    void getMessages(User user, MessageCallback<List<M>> callback);
+    void unregisterObserver(MessageObserver observer);
 
     /**
      * Return all messages containing the text.

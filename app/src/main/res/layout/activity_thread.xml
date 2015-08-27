@@ -1,51 +1,134 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:orientation="vertical"
-    android:id="@+id/message_blurb"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.xlythe.sms.ThreadActivity">
 
-    <ListView
-        android:paddingTop="16dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingRight="12dp"
-        android:paddingLeft="12dp"
-        android:id="@+id/messages"
-        android:stackFromBottom="true"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp" />
     <LinearLayout
-        android:layout_marginTop="16dp"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <ImageButton
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:id="@+id/attach"
-            android:background="@drawable/attach"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <EditText
-            android:textColor="#323232"
-            android:id="@+id/message"
-            android:paddingLeft="8dp"
-            android:paddingRight="16dp"
-            android:hint="Send message"
-            android:background="@drawable/you"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/message_blurb"
+        android:paddingBottom="@dimen/activity_vertical_margin">
+
+        <ListView
+            android:paddingTop="16dp"
             android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <ImageButton
-            android:id="@+id/send"
-            android:layout_marginRight="12dp"
-            android:background="@drawable/send"
+            android:clipToPadding="false"
+            android:paddingRight="12dp"
+            android:paddingLeft="12dp"
+            android:id="@+id/messages"
+            android:transcriptMode="alwaysScroll"
+            android:stackFromBottom="true"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="0dp" />
+
+        <LinearLayout
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:id="@+id/attach"
+                android:background="@drawable/attach"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:textColor="#323232"
+                android:id="@+id/message"
+                android:paddingLeft="8dp"
+                android:paddingRight="16dp"
+                android:hint="Send message"
+                android:background="@drawable/you"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <ImageButton
+                android:id="@+id/send"
+                android:layout_marginRight="12dp"
+                android:background="@drawable/send"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
     </LinearLayout>
-</LinearLayout>
+
+    <com.xlythe.sms.AttachView
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/attach_view"
+        android:layout_height="match_parent">
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ffffff"/>
+
+    </com.xlythe.sms.AttachView>
+
+    <LinearLayout
+        android:id="@+id/tab_bar"
+        android:gravity="center"
+        android:layout_alignParentBottom="true"
+        android:background="#03a9f4"
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+
+        <ImageButton
+            android:alpha="1"
+            android:id="@+id/camera"
+            android:layout_marginRight="12dp"
+            android:background="@drawable/camera"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:onClick="jumpToCamera"/>
+
+        <ImageButton
+            android:alpha=".5"
+            android:id="@+id/photo"
+            android:layout_margin="12dp"
+            android:background="@drawable/photo"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:onClick="jumpToPhoto"/>
+
+        <ImageButton
+            android:alpha=".5"
+            android:id="@+id/face"
+            android:layout_margin="12dp"
+            android:background="@drawable/face"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:onClick="jumpToFace"/>
+
+        <ImageButton
+            android:alpha=".5"
+            android:id="@+id/mic"
+            android:layout_margin="12dp"
+            android:background="@drawable/mic"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:onClick="jumpToMic"/>
+
+        <ImageButton
+            android:alpha=".5"
+            android:id="@+id/location"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/location"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:onClick="jumpToLocation"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
