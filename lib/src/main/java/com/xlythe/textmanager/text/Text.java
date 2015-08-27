@@ -45,7 +45,7 @@ public class Text implements Message, Comparable {
     private String mBody;
     private boolean mIncoming;
     private Uri mAttachment;
-
+    private ArrayList<Bitmap> mAttachments = new ArrayList<>();
     private Context mContext;
     private boolean mIsMms = false;
     private long mMmsId;
@@ -140,37 +140,45 @@ public class Text implements Message, Comparable {
         }
     }
 
+    public boolean isMms() {
+        return mIsMms;
+    }
+
     public long getId() {
         return mId;
     }
 
     public String getAddress() {
-        if (mIsMms && mAddress == null) {
-            // Query the address information for this message
-            Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/addr");
-            Cursor addr = mContext.getContentResolver().query(
-                    addressUri,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            HashSet<String> recipients = new HashSet<>();
-            while (addr.moveToNext()) {
-                String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
-                // Don't add our own number to the displayed list
-                if (mMyNumber == null || !address.contains(mMyNumber)) {
-                    recipients.add(address);
-                }
-            }
-            mAddress = TextUtils.join(",", recipients);
-            addr.close();
-        }
+//        if (mIsMms && mAddress == null) {
+//            // Query the address information for this message
+//            Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/addr");
+//            Cursor addr = mContext.getContentResolver().query(
+//                    addressUri,
+//                    null,
+//                    null,
+//                    null,
+//                    null
+//            );
+//            HashSet<String> recipients = new HashSet<>();
+//            while (addr.moveToNext()) {
+//                String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+//                // Don't add our own number to the displayed list
+//                if (mMyNumber == null || !address.contains(mMyNumber)) {
+//                    recipients.add(address);
+//                }
+//            }
+//            mAddress = TextUtils.join(",", recipients);
+//            addr.close();
+//        }
         return mAddress;
     }
 
     public String getBody() {
         return mBody;
+    }
+
+    public ArrayList<Bitmap> getAttachments() {
+        return mAttachments;
     }
 
     public long getDate() {
@@ -233,17 +241,18 @@ public class Text implements Message, Comparable {
     public static class Builder {
         private String mMessage;
         private String mRecipient;
+        private ArrayList<Bitmap> mAttachments = new ArrayList<>();
 
         public Builder() {
         }
 
-        public Builder drawable(Drawable drawable) {
-            // TODO support mms
+        public Builder recipient(String recipient) {
+            mRecipient = recipient;
             return this;
         }
 
-        public Builder recipient(String recipient) {
-            mRecipient = recipient;
+        public Builder attach(Bitmap attachment) {
+            mAttachments.add(attachment);
             return this;
         }
 
@@ -256,6 +265,10 @@ public class Text implements Message, Comparable {
             Text text = new Text();
             text.mBody = mMessage;
             text.mAddress = mRecipient;
+            if(mAttachments.size()>0){
+                text.mIsMms = true;
+                text.mAttachments.addAll(mAttachments);
+            }
             text.mDate = System.currentTimeMillis();
             return text;
         }

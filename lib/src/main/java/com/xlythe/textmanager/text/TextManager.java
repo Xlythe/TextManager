@@ -11,20 +11,28 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.User;
+import com.xlythe.textmanager.text.smil.SmilHelper;
+import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -327,6 +335,151 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return mContext;
     }
 
+    public static byte[] bitmapToByteArray(Bitmap image) {
+        if (image == null) {
+            Log.v("Message", "image is null, returning byte array of size 0");
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        return stream.toByteArray();
+    }
+
+    public void sendMediaMessage(final String address,
+                                 final String subject,
+                                 final String body,
+                                 final ArrayList<Bitmap> attachments,
+                                 PendingIntent sentPendingIntent,
+                                 PendingIntent deliveredPendingIntent){
+        new java.lang.Thread(new Runnable() {
+            public void run() {
+
+                ArrayList<MMSPart> data = new ArrayList<>();
+
+                for (int i = 0; i < attachments.size(); i++) {
+                    // turn bitmap into byte array to be stored
+                    byte[] imageBytes = bitmapToByteArray(attachments.get(i));
+
+                    MMSPart part = new MMSPart();
+                    part.MimeType = "image/jpeg";
+                    part.Name = "image" + i;
+                    part.Data = imageBytes;
+                    data.add(part);
+                }
+
+                // add any extra media according to their mimeType set in the message
+                //      eg. videos, audio, contact cards, location maybe?
+//                if (parts != null) {
+//                    for (Message.Part p : parts) {
+//                        MMSPart part = new MMSPart();
+//                        if (p.getName() != null) {
+//                            part.Name = p.getName();
+//                        } else {
+//                            part.Name = p.getContentType().split("/")[0];
+//                        }
+//                        part.MimeType = p.getContentType();
+//                        part.Data = p.getMedia();
+//                        data.add(part);
+//                    }
+//                }
+
+                if (!body.isEmpty()) {
+                    // add text to the end of the part and send
+                    MMSPart part = new MMSPart();
+                    part.Name = "text";
+                    part.MimeType = "text/plain";
+                    part.Data = body.getBytes();
+                    data.add(part);
+                }
+
+                byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+
+                Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
+
+                try {
+                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+                    HttpUtils.httpConnection(
+                            getContext(), 4444L,
+                            apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
+                            apnParameters.isProxySet(),
+                            apnParameters.getProxyAddress(),
+                            apnParameters.getProxyPort());
+                } catch (IOException ioe) {
+                    Log.d("in","failed");
+                }
+            }
+        }).start();
+    }
+
+    public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
+        final SendReq sendRequest = new SendReq();
+        // create send request addresses
+        for (int i = 0; i < recipients.length; i++) {
+            final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipients[i]);
+            Log.d("send", recipients[i] + "");
+            if (phoneNumbers != null && phoneNumbers.length > 0) {
+                sendRequest.addTo(phoneNumbers[0]);
+            }
+        }
+        if (subject != null) {
+            sendRequest.setSubject(new EncodedStringValue(subject));
+        }
+        sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
+        try {
+            //TODO: add number
+            sendRequest.setFrom(new EncodedStringValue("2163138473"));
+        } catch (Exception e) {
+            Log.d("bad number","bad number");
+        }
+        final PduBody pduBody = new PduBody();
+        // assign parts to the pdu body which contains sending data
+        long size = 0;
+        if (parts != null) {
+            for (int i = 0; i < parts.length; i++) {
+                MMSPart part = parts[i];
+                if (part != null) {
+                    try {
+                        PduPart partPdu = new PduPart();
+                        partPdu.setName(part.Name.getBytes());
+                        partPdu.setContentType(part.MimeType.getBytes());
+                        if (part.MimeType.startsWith("text")) {
+                            partPdu.setCharset(CharacterSets.UTF_8);
+                        }
+                        partPdu.setData(part.Data);
+                        pduBody.addPart(partPdu);
+                        size += (part.Name.getBytes().length + part.MimeType.getBytes().length + part.Data.length);
+                    } catch (Exception e) {
+                        Log.d("bad part","failed");
+                    }
+                }
+            }
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        SmilXmlSerializer.serialize(SmilHelper.createSmilDocument(pduBody), out);
+        PduPart smilPart = new PduPart();
+        smilPart.setContentId("smil".getBytes());
+        smilPart.setContentLocation("smil.xml".getBytes());
+        smilPart.setContentType(ContentType.APP_SMIL.getBytes());
+        smilPart.setData(out.toByteArray());
+        pduBody.addPart(0, smilPart);
+        sendRequest.setBody(pduBody);
+        Log.d("send", "setting message size to " + size + " bytes");
+        sendRequest.setMessageSize(size);
+        // create byte array which will actually be sent
+        final PduComposer composer = new PduComposer(context, sendRequest);
+        final byte[] bytesToSend;
+        bytesToSend = composer.make();
+        return bytesToSend;
+    }
+
+    public class MMSPart {
+        public String Name = "";
+        public String MimeType = "";
+        public byte[] Data;
+        public Uri Path;
+    }
+
     @Override
     public void send(final Text text) {
         String SMS_SENT = "SMS_SENT";
@@ -426,8 +579,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             }
         }, new IntentFilter(SMS_DELIVERED));
 
-        SmsManager sms = SmsManager.getDefault();
-        sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
+        if (!text.isMms()) {
+            SmsManager sms = SmsManager.getDefault();
+            sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
+        }
+        else {
+            sendMediaMessage(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
+        }
+
         ContentValues values = new ContentValues();
         Uri uri;
 
@@ -460,6 +619,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             projection = new String[] { "name" };
         }
 
+        String s = text.getAddress();
         uri = Uri.withAppendedPath(uri, Uri.encode(text.getAddress()));
         return contentResolver.query(uri, null, null, null, null);
     }
