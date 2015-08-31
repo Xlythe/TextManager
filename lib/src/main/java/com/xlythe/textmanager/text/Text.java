@@ -3,25 +3,14 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.MessageCallback;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Either an sms or an mms
