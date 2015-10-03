@@ -357,11 +357,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                  final ArrayList<Bitmap> attachments,
                                  PendingIntent sentPendingIntent,
                                  PendingIntent deliveredPendingIntent){
-        ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
         new java.lang.Thread(new Runnable() {
             public void run() {
-
+                ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+                connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
                 ArrayList<MMSPart> data = new ArrayList<>();
 
                 for (int i = 0; i < attachments.size(); i++) {
@@ -415,9 +414,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 } catch (IOException ioe) {
                     Log.d("in","failed");
                 }
+                connMgr.stopUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
             }
         }).start();
-        connMgr.stopUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
