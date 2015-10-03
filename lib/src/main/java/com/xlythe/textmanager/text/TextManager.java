@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -45,6 +46,7 @@ import java.util.Set;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
+    @SuppressLint("NewApi")
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
@@ -63,6 +65,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Telephony.Mms.SUBJECT,
             Telephony.Mms.MESSAGE_BOX
     };
+
     public static final String[] PROJECTION_PRE_LOLLIPOP = new String[] {
             // Determine if message is SMS or MMS
             "type_discriminator_column",
@@ -81,12 +84,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             "subject",
             "message_box"
     };
+
     private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
     private final Set<MessageObserver> mObservers = new HashSet<>();
 
-    private final Map<Long, List<Text>> mTexts = new HashMap<>();
+    //private final Map<Long, List<Text>> mTexts = new HashMap<>();
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -395,7 +399,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
                 byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
 
-                Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
+                //Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
 
                 try {
                     ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());

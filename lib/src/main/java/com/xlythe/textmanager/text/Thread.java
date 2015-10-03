@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -23,11 +24,19 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
     private static final String TYPE_MMS = "mms";
     private static final long MILLI_TO_SEC = 1000;
 
+    @SuppressLint("NewApi")
     static final String[] MMS_PROJECTION = new String[] {
             BaseColumns._ID,
             Telephony.Mms.Part.CONTENT_TYPE,
             Telephony.Mms.Part.TEXT,
             Telephony.Mms.Part._DATA
+    };
+
+    static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
+            BaseColumns._ID,
+            "ct",
+            "text",
+            "_data"
     };
 
     private long mId;
@@ -51,10 +60,20 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
     }
 
     private String getMessageType(Cursor cursor) {
-        int typeIndex = cursor.getColumnIndex(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
+        int typeIndex;
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            typeIndex = cursor.getColumnIndex(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
+        } else {
+            typeIndex = cursor.getColumnIndex("transport_type");
+        }
         if (typeIndex < 0) {
             // Type column not in projection, use another discriminator
-            String cType = cursor.getString(cursor.getColumnIndex(Telephony.Mms.CONTENT_TYPE));
+            String cType;
+            if (android.os.Build.VERSION.SDK_INT >= 19) {
+                cType = cursor.getString(cursor.getColumnIndex(Telephony.Mms.CONTENT_TYPE));
+            } else {
+                cType = cursor.getString(cursor.getColumnIndex("ct"));
+            }
             // If content type is present, this is an MMS message
             if (cType != null) {
                 return TYPE_MMS;
@@ -69,21 +88,34 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
 
     private void parseSmsMessage(Cursor data) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
-        mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
-        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE));
-        mAddress = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
-        mBody = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.BODY));
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
+            mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE));
+            mAddress = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
+            mBody = data.getString(data.getColumnIndexOrThrow(Telephony.Sms.BODY));
+        } else {
+            mThreadId = data.getLong(data.getColumnIndexOrThrow("thread_id"));
+            mDate = data.getLong(data.getColumnIndexOrThrow("date"));
+            mAddress = data.getString(data.getColumnIndexOrThrow("address"));
+            mBody = data.getString(data.getColumnIndexOrThrow("body"));
+        }
     }
 
     private void parseMmsMessage(Context context, Cursor data, String myNumber) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
-        mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
-        mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE))*MILLI_TO_SEC;
-
         long _id = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
+        Uri addressUri;
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
+            mDate = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.DATE)) * MILLI_TO_SEC;
+            addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");
+        } else {
+            mThreadId = data.getLong(data.getColumnIndexOrThrow("thread_id"));
+            mDate = data.getLong(data.getColumnIndexOrThrow("date")) * MILLI_TO_SEC;
+            addressUri = Uri.parse("content://" + _id + "/addr");
+        }
 
         // Query the address information for this message
-        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/addr");
         Cursor addr = context.getContentResolver().query(
                 addressUri,
                 null,
@@ -93,7 +125,12 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
         );
         HashSet<String> recipients = new HashSet<>();
         while (addr.moveToNext()) {
-            String address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+            String address;
+            if (android.os.Build.VERSION.SDK_INT >= 19) {
+                address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+            } else {
+                address = addr.getString(addr.getColumnIndex("address"));
+            }
             // Don't add our own number to the displayed list
             if (myNumber == null || !address.contains(myNumber)) {
                 recipients.add(address);
@@ -103,28 +140,53 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
         addr.close();
 
         // Query all the MMS parts associated with this message
-        Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/part");
-        Cursor inner = context.getContentResolver().query(
-                messageUri,
-                MMS_PROJECTION,
-                Telephony.Mms.Part.MSG_ID + " = ?",
-                new String[] {String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
-                null
-        );
+        Cursor inner;
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, _id + "/part");
+            inner = context.getContentResolver().query(
+                    messageUri,
+                    MMS_PROJECTION,
+                    Telephony.Mms.Part.MSG_ID + " = ?",
+                    new String[]{String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
+                    null
+            );
+        } else {
+            Uri messageUri = Uri.parse("content://" + _id + "/part");
+            inner = context.getContentResolver().query(
+                    messageUri,
+                    MMS_PROJECTION_PRE_LOLLIPOP,
+                    "mid" + " = ?",
+                    new String[]{String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
+                    null
+            );
+        }
 
         while (inner.moveToNext()) {
-            String contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+            String contentType;
+            if (android.os.Build.VERSION.SDK_INT >= 19) {
+                contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
+            } else {
+                contentType = inner.getString(inner.getColumnIndex("ct"));
+            }
             if (contentType == null) {
                 continue;
             }
             else if (contentType.matches("image/.*")) {
                 // Find any part that is an image attachment
                 long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                mAttachment = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
+                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    mAttachment = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
+                } else {
+                    mAttachment = Uri.parse("content://part/" + partId);
+                }
             }
             else if (contentType.matches("text/.*")) {
                 // Find any part that is text data
-                mBody = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.TEXT));
+                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    mBody = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.TEXT));
+                } else {
+                    mBody = inner.getString(inner.getColumnIndex("text"));
+                }
             }
         }
         inner.close();
