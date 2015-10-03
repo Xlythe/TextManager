@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.BaseColumns;
@@ -356,6 +357,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                  final ArrayList<Bitmap> attachments,
                                  PendingIntent sentPendingIntent,
                                  PendingIntent deliveredPendingIntent){
+        ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
         new java.lang.Thread(new Runnable() {
             public void run() {
 
@@ -414,6 +417,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 }
             }
         }).start();
+        connMgr.stopUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
