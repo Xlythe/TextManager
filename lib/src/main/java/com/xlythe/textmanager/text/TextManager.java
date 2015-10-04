@@ -359,23 +359,29 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                  PendingIntent deliveredPendingIntent){
         new java.lang.Thread(new Runnable() {
             public void run() {
-                ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-                connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
-                ArrayList<MMSPart> data = new ArrayList<>();
+//                ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+//                int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+//                try {
+//                    java.lang.Thread.sleep(5000);                 //1000 milliseconds is one second.
+//                } catch(InterruptedException ex) {
+//                    java.lang.Thread.currentThread().interrupt();
+//                }
+//                if (result == 0) {
+                    ArrayList<MMSPart> data = new ArrayList<>();
 
-                for (int i = 0; i < attachments.size(); i++) {
-                    // turn bitmap into byte array to be stored
-                    byte[] imageBytes = bitmapToByteArray(attachments.get(i));
+                    for (int i = 0; i < attachments.size(); i++) {
+                        // turn bitmap into byte array to be stored
+                        byte[] imageBytes = bitmapToByteArray(attachments.get(i));
 
-                    MMSPart part = new MMSPart();
-                    part.MimeType = "image/jpeg";
-                    part.Name = "image" + i;
-                    part.Data = imageBytes;
-                    data.add(part);
-                }
+                        MMSPart part = new MMSPart();
+                        part.MimeType = "image/jpeg";
+                        part.Name = "image" + i;
+                        part.Data = imageBytes;
+                        data.add(part);
+                    }
 
-                // add any extra media according to their mimeType set in the message
-                //      eg. videos, audio, contact cards, location maybe?
+                    // add any extra media according to their mimeType set in the message
+                    //      eg. videos, audio, contact cards, location maybe?
 //                if (parts != null) {
 //                    for (Message.Part p : parts) {
 //                        MMSPart part = new MMSPart();
@@ -390,33 +396,36 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 //                    }
 //                }
 
-                if (!body.isEmpty()) {
-                    // add text to the end of the part and send
-                    MMSPart part = new MMSPart();
-                    part.Name = "text";
-                    part.MimeType = "text/plain";
-                    part.Data = body.getBytes();
-                    data.add(part);
-                }
+                    if (!body.isEmpty()) {
+                        // add text to the end of the part and send
+                        MMSPart part = new MMSPart();
+                        part.Name = "text";
+                        part.MimeType = "text/plain";
+                        part.Data = body.getBytes();
+                        data.add(part);
+                    }
 
-                byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+                    byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
 
-                //Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
+                    //Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
 
-                try {
-                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
-                    HttpUtils.httpConnection(
-                            getContext(), 4444L,
-                            apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
-                            apnParameters.isProxySet(),
-                            apnParameters.getProxyAddress(),
-                            apnParameters.getProxyPort());
-                } catch (IOException ioe) {
-                    Log.d("in","failed");
-                }
-                connMgr.stopUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+                    try {
+                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+                        HttpUtils.httpConnection(
+                                getContext(), 4444L,
+                                apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
+                                apnParameters.isProxySet(),
+                                apnParameters.getProxyAddress(),
+                                apnParameters.getProxyPort());
+                    } catch (IOException ioe) {
+                        Log.d("in", "failed");
+                    }
+//                } else {
+//                    // need to set up connection
+//                }
             }
         }).start();
+        Toast.makeText(mContext, "Maybe you sent a MMS, but probs not cuz I suck", Toast.LENGTH_SHORT).show();
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
