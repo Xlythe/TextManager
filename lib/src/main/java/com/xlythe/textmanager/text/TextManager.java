@@ -400,7 +400,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     }
             }
         }).start();
-        Toast.makeText(mContext, "Maybe you sent a MMS, but probs not cuz I suck", Toast.LENGTH_SHORT).show();
     }
 
     private void sendMMSWiFi(final String address,
