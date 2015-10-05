@@ -14,8 +14,10 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
@@ -89,6 +91,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private String mDeviceNumber;
     private static TextManager sTextManager;
     private Context mContext;
+    private ConnectivityManager mConnMgr;
+    private boolean mAlreadySending;
     private final Set<MessageObserver> mObservers = new HashSet<>();
 
     //private final Map<Long, List<Text>> mTexts = new HashMap<>();
@@ -359,14 +363,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                  PendingIntent deliveredPendingIntent){
         new java.lang.Thread(new Runnable() {
             public void run() {
-//                ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-//                int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
-//                try {
-//                    java.lang.Thread.sleep(5000);                 //1000 milliseconds is one second.
-//                } catch(InterruptedException ex) {
-//                    java.lang.Thread.currentThread().interrupt();
-//                }
-//                if (result == 0) {
                     ArrayList<MMSPart> data = new ArrayList<>();
 
                     for (int i = 0; i < attachments.size(); i++) {
@@ -380,22 +376,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         data.add(part);
                     }
 
-                    // add any extra media according to their mimeType set in the message
-                    //      eg. videos, audio, contact cards, location maybe?
-//                if (parts != null) {
-//                    for (Message.Part p : parts) {
-//                        MMSPart part = new MMSPart();
-//                        if (p.getName() != null) {
-//                            part.Name = p.getName();
-//                        } else {
-//                            part.Name = p.getContentType().split("/")[0];
-//                        }
-//                        part.MimeType = p.getContentType();
-//                        part.Data = p.getMedia();
-//                        data.add(part);
-//                    }
-//                }
-
                     if (!body.isEmpty()) {
                         // add text to the end of the part and send
                         MMSPart part = new MMSPart();
@@ -406,8 +386,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     }
 
                     byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
-
-                    //Log.d("bytes", new String(pdu, StandardCharsets.UTF_8));
 
                     try {
                         ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
@@ -420,12 +398,108 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     } catch (IOException ioe) {
                         Log.d("in", "failed");
                     }
-//                } else {
-//                    // need to set up connection
-//                }
             }
         }).start();
         Toast.makeText(mContext, "Maybe you sent a MMS, but probs not cuz I suck", Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendMMSWiFi(final String address,
+                             final String subject,
+                             final String body,
+                             final ArrayList<Bitmap> attachments,
+                             PendingIntent sentPendingIntent,
+                             PendingIntent deliveredPendingIntent){
+        // enable mms connection to mobile data
+        mConnMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo.State state = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE_MMS).getState();
+
+        if ((0 == state.compareTo(NetworkInfo.State.CONNECTED) || 0 == state.compareTo(NetworkInfo.State.CONNECTING))) {
+            //TODO: Send data
+            sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+        } else {
+            int resultInt = mConnMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+
+            if (resultInt == 0) {
+                //TODO: Send data
+                sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+//                try {
+//                    Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
+//                    sendData(bytesToSend);
+//                } catch (Exception e) {
+//                    sendData(bytesToSend);
+//                }
+            } else {
+                // if mms feature is not already running (most likely isn't...) then register a receiver and wait for it to be active
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+                final BroadcastReceiver receiver = new BroadcastReceiver() {
+
+                    @Override
+                    public void onReceive(Context context1, Intent intent) {
+                        String action = intent.getAction();
+
+                        if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                            return;
+                        }
+
+                        NetworkInfo mNetworkInfo = mConnMgr.getActiveNetworkInfo();
+                        if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
+                            return;
+                        }
+
+                        if (!mNetworkInfo.isConnected()) {
+                            return;
+                        } else {
+                            mAlreadySending = true;
+
+                            //TODO: Send data
+                            sendMediaMessage(address, subject, body, attachments, null, null);
+
+//                            try {
+//                                Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
+//                                sendData(bytesToSend);
+//                            } catch (Exception e) {
+//                                sendData(bytesToSend);
+//                            }
+
+                            mContext.unregisterReceiver(this);
+                        }
+
+                    }
+
+                };
+
+                mContext.registerReceiver(receiver, filter);
+
+                try {
+                    Looper.prepare();
+                } catch (Exception e) {
+                    // Already on UI thread probably
+                }
+
+                // try sending after 3 seconds anyways if for some reason the receiver doesn't work
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!mAlreadySending) {
+                            try {
+                                mContext.unregisterReceiver(receiver);
+                            } catch (Exception e) {
+
+                            }
+                            //TODO: Send data
+                            sendMediaMessage(address, subject, body, attachments, null, null);
+//                            try {
+//                                Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
+//                                sendData(bytesToSend);
+//                            } catch (Exception e) {
+//                                sendData(bytesToSend);
+//                            }
+                        }
+                    }
+                }, 7000);
+            }
+        }
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
@@ -600,7 +674,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         }
         else {
-            sendMediaMessage(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
+            sendMMSWiFi(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
