@@ -8,13 +8,17 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +38,9 @@ import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -361,145 +368,225 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                  final ArrayList<Bitmap> attachments,
                                  PendingIntent sentPendingIntent,
                                  PendingIntent deliveredPendingIntent){
+        final ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkRequest.Builder builder = new NetworkRequest.Builder();
+
+        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+
+        final NetworkRequest networkRequest = builder.build();
         new java.lang.Thread(new Runnable() {
             public void run() {
-                    ArrayList<MMSPart> data = new ArrayList<>();
+                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        ConnectivityManager.setProcessDefaultNetwork(network);
+                        ArrayList<MMSPart> data = new ArrayList<>();
 
-                    for (int i = 0; i < attachments.size(); i++) {
-                        // turn bitmap into byte array to be stored
-                        byte[] imageBytes = bitmapToByteArray(attachments.get(i));
+                        for (int i = 0; i < attachments.size(); i++) {
+                            // turn bitmap into byte array to be stored
+                            byte[] imageBytes = bitmapToByteArray(attachments.get(i));
 
-                        MMSPart part = new MMSPart();
-                        part.MimeType = "image/jpeg";
-                        part.Name = "image" + i;
-                        part.Data = imageBytes;
-                        data.add(part);
+                            MMSPart part = new MMSPart();
+                            part.MimeType = "image/jpeg";
+                            part.Name = "image" + i;
+                            part.Data = imageBytes;
+                            data.add(part);
+                        }
+
+                        if (!body.isEmpty()) {
+                            // add text to the end of the part and send
+                            MMSPart part = new MMSPart();
+                            part.Name = "text";
+                            part.MimeType = "text/plain";
+                            part.Data = body.getBytes();
+                            data.add(part);
+                        }
+
+                        byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+
+                        try {
+                            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+                            HttpUtils.httpConnection(
+                                    getContext(), 4444L,
+                                    apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
+                                    apnParameters.isProxySet(),
+                                    apnParameters.getProxyAddress(),
+                                    apnParameters.getProxyPort());
+                        } catch (IOException ioe) {
+                            Log.d("in", "failed");
+                        }
+                    connectivityManager.unregisterNetworkCallback(this);
                     }
-
-                    if (!body.isEmpty()) {
-                        // add text to the end of the part and send
-                        MMSPart part = new MMSPart();
-                        part.Name = "text";
-                        part.MimeType = "text/plain";
-                        part.Data = body.getBytes();
-                        data.add(part);
-                    }
-
-                    byte[] pdu = getBytes(getContext(), address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
-
-                    try {
-                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
-                        HttpUtils.httpConnection(
-                                getContext(), 4444L,
-                                apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
-                                apnParameters.isProxySet(),
-                                apnParameters.getProxyAddress(),
-                                apnParameters.getProxyPort());
-                    } catch (IOException ioe) {
-                        Log.d("in", "failed");
-                    }
+                });
             }
         }).start();
     }
 
-    private void sendMMSWiFi(final String address,
-                             final String subject,
-                             final String body,
-                             final ArrayList<Bitmap> attachments,
-                             PendingIntent sentPendingIntent,
-                             PendingIntent deliveredPendingIntent){
-        // enable mms connection to mobile data
-        mConnMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo.State state = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE_MMS).getState();
+//    private void sendMMSWiFi(final String address,
+//                             final String subject,
+//                             final String body,
+//                             final ArrayList<Bitmap> attachments,
+//                             PendingIntent sentPendingIntent,
+//                             PendingIntent deliveredPendingIntent){
+//        final ConnectivityManager connectivityManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+//
+//        NetworkRequest.Builder builder = new NetworkRequest.Builder();
+//
+//        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+//        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+//
+//        final NetworkRequest networkRequest = builder.build();
+//        connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+//            @Override
+//            public void onAvailable(Network network) {
+//                super.onAvailable(network);
+//                ConnectivityManager.setProcessDefaultNetwork(network);
+//                sendMediaMessage(address, subject, body, attachments, null, null);
+//                connectivityManager.unregisterNetworkCallback(this);
+//            }
+//        });
+//
+//
+//    }
 
-        if ((0 == state.compareTo(NetworkInfo.State.CONNECTED) || 0 == state.compareTo(NetworkInfo.State.CONNECTING))) {
-            //TODO: Send data
-            sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
-        } else {
-            int resultInt = mConnMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
-
-            if (resultInt == 0) {
-                //TODO: Send data
-                sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+//    private void sendMMSWiFi(final String address,
+//                             final String subject,
+//                             final String body,
+//                             final ArrayList<Bitmap> attachments,
+//                             PendingIntent sentPendingIntent,
+//                             PendingIntent deliveredPendingIntent){
+//        // enable mms connection to mobile data
+//        mConnMgr = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo.State state = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE_MMS).getState();
+//
+//        if (state.equals(NetworkInfo.State.CONNECTED) || state.equals(NetworkInfo.State.CONNECTING)) {
+//            Log.e("HI", "Should work out of the gate: network = connected");
+//            sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+//        } else {
+//            int resultInt = mConnMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+//            if (resultInt == 0) {
 //                try {
-//                    Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
-//                    sendData(bytesToSend);
+//                    Log.e("HI", "might work: result = 0");
+//                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+//                    ensureRouteToHost(mContext, apnParameters.getMmscUrl(), apnParameters.getProxyAddress());
+//                    sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
 //                } catch (Exception e) {
-//                    sendData(bytesToSend);
+//                    sendMediaMessage(address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
 //                }
-            } else {
-                // if mms feature is not already running (most likely isn't...) then register a receiver and wait for it to be active
-                IntentFilter filter = new IntentFilter();
-                filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-                final BroadcastReceiver receiver = new BroadcastReceiver() {
-
-                    @Override
-                    public void onReceive(Context context1, Intent intent) {
-                        String action = intent.getAction();
-
-                        if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                            return;
-                        }
-
-                        NetworkInfo mNetworkInfo = mConnMgr.getActiveNetworkInfo();
-                        if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
-                            return;
-                        }
-
-                        if (!mNetworkInfo.isConnected()) {
-                            return;
-                        } else {
-                            mAlreadySending = true;
-
-                            //TODO: Send data
-                            sendMediaMessage(address, subject, body, attachments, null, null);
-
+//            } else {
+//                Log.e("HI","register receiver");
+//                // if mms feature is not already running (most likely isn't...) then register a receiver and wait for it to be active
+//                IntentFilter filter = new IntentFilter();
+//                filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+//                final BroadcastReceiver receiver = new BroadcastReceiver() {
+//
+//                    @Override
+//                    public void onReceive(Context context1, Intent intent) {
+//                        String action = intent.getAction();
+//
+//                        if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+//                            return;
+//                        }
+//
+//                        NetworkInfo mNetworkInfo = mConnMgr.getActiveNetworkInfo();
+//                        if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
+//                            return;
+//                        }
+//
+//                        if (!mNetworkInfo.isConnected()) {
+//                            return;
+//                        } else {
+//                            mAlreadySending = true;
+//
 //                            try {
-//                                Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
-//                                sendData(bytesToSend);
+//                                Log.e("HI", "mms wasnt running, probably wont work...");
+//                                ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+//                                ensureRouteToHost(mContext, apnParameters.getMmscUrl(), apnParameters.getProxyAddress());
+//                                sendMediaMessage(address, subject, body, attachments, null, null);
 //                            } catch (Exception e) {
-//                                sendData(bytesToSend);
+//                                sendMediaMessage(address, subject, body, attachments, null, null);
 //                            }
-
-                            mContext.unregisterReceiver(this);
-                        }
-
-                    }
-
-                };
-
-                mContext.registerReceiver(receiver, filter);
-
-                try {
-                    Looper.prepare();
-                } catch (Exception e) {
-                    // Already on UI thread probably
-                }
-
-                // try sending after 3 seconds anyways if for some reason the receiver doesn't work
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!mAlreadySending) {
-                            try {
-                                mContext.unregisterReceiver(receiver);
-                            } catch (Exception e) {
-
-                            }
-                            //TODO: Send data
-                            sendMediaMessage(address, subject, body, attachments, null, null);
+//
+//                            mContext.unregisterReceiver(this);
+//                        }
+//
+//                    }
+//
+//                };
+//
+//                mContext.registerReceiver(receiver, filter);
+//
+//                try {
+//                    Looper.prepare();
+//                } catch (Exception e) {
+//                    // Already on UI thread probably
+//                }
+//
+//                // try sending after 3 seconds anyways if for some reason the receiver doesn't work
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (!mAlreadySending) {
 //                            try {
-//                                Utils.ensureRouteToHost(context, settings.getMmsc(), settings.getProxy());
-//                                sendData(bytesToSend);
+//                                mContext.unregisterReceiver(receiver);
 //                            } catch (Exception e) {
-//                                sendData(bytesToSend);
+//
 //                            }
-                        }
-                    }
-                }, 7000);
-            }
-        }
-    }
+//                            try {
+//                                Log.e("HI", "try sending again?");
+//                                ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getContext());
+//                                ensureRouteToHost(mContext, apnParameters.getMmscUrl(), apnParameters.getProxyAddress());
+//                                sendMediaMessage(address, subject, body, attachments, null, null);
+//                            } catch (Exception e) {
+//                                sendMediaMessage(address, subject, body, attachments, null, null);
+//                            }
+//                        }
+//                    }
+//                }, 7000);
+//            }
+//        }
+//    }
+
+//    public static void ensureRouteToHost(Context context, String url, String proxy) throws IOException {
+//        ConnectivityManager connMgr =
+//                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+//
+//        InetAddress inetAddr;
+//        if (proxy != null && proxy.trim().length() != 0) {
+//            try {
+//                inetAddr = InetAddress.getByName(proxy);
+//            } catch (UnknownHostException e) {
+//                throw new IOException("Cannot establish route for " + url +
+//                        ": Unknown proxy " + proxy);
+//            }
+//            try {
+//                Method requestRoute = ConnectivityManager.class.getMethod("requestRouteToHostAddress", Integer.TYPE, InetAddress.class);
+//                if (!((Boolean) requestRoute.invoke(connMgr, ConnectivityManager.TYPE_MOBILE_MMS, inetAddr))) {
+//                    throw new IOException("Cannot establish route to proxy " + inetAddr);
+//                }
+//            } catch (Exception e) {
+//                Log.e("FAG", "Cannot establishh route to proxy " + inetAddr, e);
+//            }
+//        } else {
+//            Uri uri = Uri.parse(url);
+//            try {
+//                inetAddr = InetAddress.getByName(uri.getHost());
+//            } catch (UnknownHostException e) {
+//                throw new IOException("Cannot establish route for " + url + ": Unknown host");
+//            }
+//            try {
+//                Method requestRoute = ConnectivityManager.class.getMethod("requestRouteToHostAddress", Integer.TYPE, InetAddress.class);
+//                if (!((Boolean) requestRoute.invoke(connMgr, ConnectivityManager.TYPE_MOBILE_MMS, inetAddr))) {
+//                    throw new IOException("Cannot establish route to proxy " + inetAddr);
+//                }
+//            } catch (Exception e) {
+//                Log.e("FAG", "Cannot establishh route to proxy " + inetAddr + " for " + url, e);
+//            }
+//        }
+//    }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
         final SendReq sendRequest = new SendReq();
@@ -673,7 +760,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         }
         else {
-            sendMMSWiFi(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
+            Log.e("HI", "should log something!!!!!!!!");
+            sendMediaMessage(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
