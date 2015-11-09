@@ -362,6 +362,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return stream.toByteArray();
     }
 
+    /**
+     * Send message over data, even when connected to WiFi
+     * @param address
+     * @param subject
+     * @param body
+     * @param attachments
+     * @param sentPendingIntent
+     * @param deliveredPendingIntent
+     */
     public void sendMediaMessage(final String address,
                                  final String subject,
                                  final String body,

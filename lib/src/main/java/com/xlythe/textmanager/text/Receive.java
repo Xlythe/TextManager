@@ -3,6 +3,10 @@ package com.xlythe.textmanager.text;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
@@ -49,28 +53,56 @@ public class Receive {
      * @return byte array pdu
      * @throws IOException
      */
-    protected static byte[] getPdu(Uri uri, Context context) throws IOException {
-        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
+    protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
+        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        String url = "";
+        NetworkRequest.Builder builder = new NetworkRequest.Builder();
 
-        if (cursor != null) {
-            try {
-                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                }
-            } finally {
-                cursor.close();
+        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+
+        final NetworkRequest networkRequest = builder.build();
+        new java.lang.Thread(new Runnable() {
+            public void run() {
+                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        ConnectivityManager.setProcessDefaultNetwork(network);
+                        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
+
+                        String url = "";
+
+                        if (cursor != null) {
+                            try {
+                                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
+                                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                                }
+                            } finally {
+                                cursor.close();
+                            }
+                        }
+                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+                        try {
+                            byte[] data = HttpUtils.httpConnection(
+                                    context, -1L,
+                                    url, null, HttpUtils.HTTP_GET_METHOD,
+                                    apnParameters.isProxySet(),
+                                    apnParameters.getProxyAddress(),
+                                    apnParameters.getProxyPort());
+                            callback.onSuccess(data);
+                        } catch (IOException ioe){
+
+                        }
+                        connectivityManager.unregisterNetworkCallback(this);
+                    }
+                });
             }
-        }
+        }).start();
+    }
 
-        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-        return HttpUtils.httpConnection(
-                context, -1L,
-                url, null, HttpUtils.HTTP_GET_METHOD,
-                apnParameters.isProxySet(),
-                apnParameters.getProxyAddress(),
-                apnParameters.getProxyPort());
+    public interface DataCallback{
+        void onSuccess(byte[] result);
     }
 
 

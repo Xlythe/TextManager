@@ -5,6 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
@@ -45,28 +49,28 @@ public class MmsReceiver extends BroadcastReceiver {
             } catch (Exception e) {
 
             }
-            try {
-                byte[] resp = Receive.getPdu(uri, mContext);
-                RetrieveConf retrieveConf = (RetrieveConf) new PduParser(resp, true).parse();
-                if (null == retrieveConf) {
-                    Log.d("receiver", "failed");
+            // TODO: Add recieve over data, while on wifi
+            Receive.getPdu(uri, mContext, new Receive.DataCallback(){
+                @Override
+                public void onSuccess(byte[] result){
+                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+                    if (null == retrieveConf) {
+                        Log.d("receiver", "failed");
+                    }
+                    PduPersister persister = PduPersister.getPduPersister(mContext);
+                    Uri msgUri;
+                    try {
+                        msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+
+                        // Use local time instead of PDU time
+                        ContentValues values = new ContentValues(1);
+                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        mContext.getContentResolver().update(msgUri, values, null, null);
+                    } catch (Exception e) {
+
+                    }
                 }
-                PduPersister persister = PduPersister.getPduPersister(mContext);
-                Uri msgUri;
-                try {
-                    msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-
-                    // Use local time instead of PDU time
-                    ContentValues values = new ContentValues(1);
-                    values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                    mContext.getContentResolver().update(
-                            msgUri, values, null, null);
-                } catch (Exception e) {
-
-                }
-            } catch (IOException ioe) {
-
-            }
+            });
             return null;
         }
     }
