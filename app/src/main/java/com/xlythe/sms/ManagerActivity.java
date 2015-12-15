@@ -35,19 +35,19 @@ public class ManagerActivity extends Activity {
         mCompose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent i = new Intent(getBaseContext(), ComposeActivity.class);
-//                startActivity(i);
-                Bitmap bmp1 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.photo);
-                Bitmap bmp2 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.mic);
-                Bitmap bmp3 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.face);
-                mManager.send(new Text.Builder()
-                                .message("HIII!!!!")
-                                .recipient("2163138473")
-                                .attach(bmp1)
-                                .attach(bmp2)
-                                .attach(bmp3)
-                                .build()
-                );
+                Intent i = new Intent(getBaseContext(), ComposeActivity.class);
+                startActivity(i);
+//                Bitmap bmp1 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.photo);
+//                Bitmap bmp2 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.mic);
+//                Bitmap bmp3 = BitmapFactory.decodeResource(getBaseContext().getResources(), R.drawable.face);
+//                mManager.send(new Text.Builder()
+//                                .message("HIII!!!!")
+//                                .recipient("2163138473")
+//                                .attach(bmp1)
+//                                .attach(bmp2)
+//                                .attach(bmp3)
+//                                .build()
+//                );
             }
         });
 
