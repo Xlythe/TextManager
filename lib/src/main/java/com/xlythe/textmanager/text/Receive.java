@@ -105,7 +105,6 @@ public class Receive {
         void onSuccess(byte[] result);
     }
 
-
     /**
      * Store message in the content provider.
      * @param context Context

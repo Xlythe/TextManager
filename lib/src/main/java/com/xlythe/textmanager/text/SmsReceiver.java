@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SmsReceiver extends BroadcastReceiver {
+    private String mNumber = "not set";
+    private String mMessage = "not set";
 
     public SmsReceiver() {
     }
@@ -33,15 +35,15 @@ public class SmsReceiver extends BroadcastReceiver {
                 for (int i = 0; i < pdusObj.length; i++) {
                     SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
 
-                    Log.d("pdu", bytesToHex((byte[]) pdusObj[i]) +"");
+                    //Log.d("pdu", bytesToHex((byte[]) pdusObj[i]) +"");
 
                     messages[i] = currentMessage;
 
-                    String number = currentMessage.getDisplayOriginatingAddress();
-                    String message = currentMessage.getDisplayMessageBody();
+                    mNumber = currentMessage.getDisplayOriginatingAddress();
+                    mMessage = currentMessage.getDisplayMessageBody();
 
-                    Log.i("SmsReciver", number + ": " + message);
-                    Toast.makeText(context, number + ": " + message, Toast.LENGTH_LONG).show();
+//                    Log.i("SmsReciver", number + ": " + message);
+//                    Toast.makeText(context, number + ": " + message, Toast.LENGTH_LONG).show();
                 }
 
                 if(Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
@@ -54,14 +56,22 @@ public class SmsReceiver extends BroadcastReceiver {
         }
     }
 
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
+    public String getNumber() {
+        return mNumber;
     }
+
+    public String getMessage() {
+        return mMessage;
+    }
+
+    //    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+//    public static String bytesToHex(byte[] bytes) {
+//        char[] hexChars = new char[bytes.length * 2];
+//        for ( int j = 0; j < bytes.length; j++ ) {
+//            int v = bytes[j] & 0xFF;
+//            hexChars[j * 2] = hexArray[v >>> 4];
+//            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+//        }
+//        return new String(hexChars);
+//    }
 }

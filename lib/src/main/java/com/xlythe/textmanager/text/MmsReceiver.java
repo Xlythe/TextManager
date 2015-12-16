@@ -1,10 +1,16 @@
 package com.xlythe.textmanager.text;
 
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
+
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -12,6 +18,7 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
+import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.util.Log;
 
@@ -19,12 +26,15 @@ import java.io.IOException;
 
 public class MmsReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
+    private Bitmap mBitmap;
+    private Context mContext;
+    private Intent mIntent;
 
     private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
-        private Context mContext;
+        private OnReceive mOnReceive;
+        public ReceivePushTask(OnReceive onReceive) {
+            mOnReceive = onReceive;
 
-        public ReceivePushTask(Context context) {
-            mContext = context;
         }
 
         @Override
@@ -35,7 +45,7 @@ public class MmsReceiver extends BroadcastReceiver {
             String pd = new String(pushData);
             Log.d("pushData", pd + "");
 
-            PduParser parser = new PduParser(pushData, true);
+            final PduParser parser = new PduParser(pushData, true);
             GenericPdu pdu = parser.parse();
 
             if (null == pdu) {
@@ -49,7 +59,7 @@ public class MmsReceiver extends BroadcastReceiver {
             } catch (Exception e) {
 
             }
-            // TODO: Add recieve over data, while on wifi
+
             Receive.getPdu(uri, mContext, new Receive.DataCallback(){
                 @Override
                 public void onSuccess(byte[] result){
@@ -57,6 +67,24 @@ public class MmsReceiver extends BroadcastReceiver {
                     if (null == retrieveConf) {
                         Log.d("receiver", "failed");
                     }
+                    PduBody body;
+                    if (retrieveConf != null) {
+                        body = retrieveConf.getBody();
+                        // Start saving parts if necessary.
+                        if (body != null) {
+                            int partsNum = body.getPartsNum();
+                            if (partsNum > 2) {
+                                // mms
+                            }
+                            for (int i = 0; i < partsNum; i++) {
+                                PduPart part = body.getPart(i);
+                                byte[] bitmapdata = part.getData();
+                                mBitmap = BitmapFactory.decodeByteArray(bitmapdata , 0, bitmapdata .length);
+                                mOnReceive.onSuccess(mBitmap);
+                            }
+                        }
+                    }
+
                     PduPersister persister = PduPersister.getPduPersister(mContext);
                     Uri msgUri;
                     try {
@@ -67,7 +95,7 @@ public class MmsReceiver extends BroadcastReceiver {
                         values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (Exception e) {
-
+                        Log.d("mms exception", "thrown");
                     }
                 }
             });
@@ -75,17 +103,33 @@ public class MmsReceiver extends BroadcastReceiver {
         }
     }
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
-            Log.v(TAG, "Received PUSH Intent: " + intent);
+    public void onMessageReceived(OnReceive onReceive){
+        if (mIntent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(mIntent.getType())) {
+            Log.v(TAG, "Received PUSH Intent: " + mIntent);
 
             // Hold a wake lock for 5 seconds, enough to give any
             // services we start time to take their own wake locks.
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS PushReceiver");
             wl.acquire(5000);
-            new ReceivePushTask(context).execute(intent);
+            new ReceivePushTask(onReceive).execute(mIntent);
         }
+    }
+
+    public interface OnReceive{
+        void onSuccess(Bitmap bitmap);
+    }
+
+    static final String[] MMS_PROJECTION = new String[]{
+            BaseColumns._ID,
+            Telephony.Mms.Part.CONTENT_TYPE,
+            Telephony.Mms.Part.TEXT,
+            Telephony.Mms.Part._DATA
+    };
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        mContext = context;
+        mIntent = intent;
     }
 }
