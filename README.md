@@ -7,7 +7,15 @@ Our goal is to make sending SMS and MMS easier on the Android OS.
 Usage
 -----
 ```java
-
+mManager = TextManager.getInstance(getBaseContext());
+mManager.send(new Text.Builder()
+                .message("HIII!!!!")
+                .recipient("2163138473")
+                .attach(bmp1)
+                .attach(bmp2)
+                .attach(bmp3)
+                .build()
+);
 ```
 
 Limitations
