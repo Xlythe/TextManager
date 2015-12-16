@@ -461,19 +461,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             for (int i = 0; i < parts.length; i++) {
                 MMSPart part = parts[i];
                 if (part != null) {
-                    try {
-                        PduPart partPdu = new PduPart();
-                        partPdu.setName(part.Name.getBytes());
-                        partPdu.setContentType(part.MimeType.getBytes());
-                        if (part.MimeType.startsWith("text")) {
-                            partPdu.setCharset(CharacterSets.UTF_8);
-                        }
-                        partPdu.setData(part.Data);
-                        pduBody.addPart(partPdu);
-                        size += (part.Name.getBytes().length + part.MimeType.getBytes().length + part.Data.length);
-                    } catch (Exception e) {
-                        Log.d("bad part","failed");
+                    PduPart partPdu = new PduPart();
+                    partPdu.setName(part.Name.getBytes());
+                    partPdu.setContentType(part.MimeType.getBytes());
+                    if (part.MimeType.startsWith("text")) {
+                        partPdu.setCharset(CharacterSets.UTF_8);
                     }
+                    partPdu.setData(part.Data);
+                    pduBody.addPart(partPdu);
+                    size += (part.Name.getBytes().length + part.MimeType.getBytes().length + part.Data.length);
                 }
             }
         }

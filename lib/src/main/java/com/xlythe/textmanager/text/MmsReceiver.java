@@ -2,27 +2,18 @@ package com.xlythe.textmanager.text;
 
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
-import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.util.Log;
 
-import java.io.IOException;
 
 public class MmsReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
@@ -55,7 +46,7 @@ public class MmsReceiver extends BroadcastReceiver {
             Uri uri = null;
             try {
                 uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, false, true, null);
-            } catch (Exception e) {
+            } catch (MmsException e) {
 
             }
 
@@ -93,8 +84,8 @@ public class MmsReceiver extends BroadcastReceiver {
                         ContentValues values = new ContentValues(1);
                         values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
-                    } catch (Exception e) {
-                        Log.d("mms exception", "thrown");
+                    } catch (MmsException e) {
+
                     }
                 }
             });
