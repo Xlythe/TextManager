@@ -8,7 +8,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
@@ -17,11 +16,9 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
@@ -32,24 +29,17 @@ import android.widget.Toast;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.smil.SmilHelper;
 import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -448,12 +438,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             sendRequest.setSubject(new EncodedStringValue(subject));
         }
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
-        try {
-            //TODO: add number
-            sendRequest.setFrom(new EncodedStringValue("2163138473"));
-        } catch (RuntimeException re) {
-            Log.d("bad number","bad number");
-        }
+        //TODO: add number
+        sendRequest.setFrom(new EncodedStringValue("2163138473"));
         final PduBody pduBody = new PduBody();
         // assign parts to the pdu body which contains sending data
         long size = 0;
