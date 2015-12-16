@@ -23,36 +23,26 @@ public class SmsReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // TODO: This method is called when the BroadcastReceiver is receiving
 
         final Bundle bundle = intent.getExtras();
 
-        try {
-            if (bundle != null) {
-                final Object[] pdusObj = (Object[]) bundle.get("pdus");
-                SmsMessage[] messages = new SmsMessage[pdusObj.length];
+        if (bundle != null) {
+            final Object[] pdusObj = (Object[]) bundle.get("pdus");
+            SmsMessage[] messages = new SmsMessage[pdusObj.length];
 
-                for (int i = 0; i < pdusObj.length; i++) {
-                    SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
+            for (int i = 0; i < pdusObj.length; i++) {
+                SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
 
-                    //Log.d("pdu", bytesToHex((byte[]) pdusObj[i]) +"");
+                messages[i] = currentMessage;
 
-                    messages[i] = currentMessage;
+                mNumber = currentMessage.getDisplayOriginatingAddress();
+                mMessage = currentMessage.getDisplayMessageBody();
 
-                    mNumber = currentMessage.getDisplayOriginatingAddress();
-                    mMessage = currentMessage.getDisplayMessageBody();
-
-//                    Log.i("SmsReciver", number + ": " + message);
-//                    Toast.makeText(context, number + ": " + message, Toast.LENGTH_LONG).show();
-                }
-
-                if(Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
-                    Receive.storeMessage(context, messages, 0);
-                }
             }
-        } catch (Exception e) {
-            // TODO: handle exception
-            Log.e("SmsReceiver", "Exception smsReceiver" + e);
+
+            if (Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
+                Receive.storeMessage(context, messages, 0);
+            }
         }
     }
 
@@ -63,15 +53,4 @@ public class SmsReceiver extends BroadcastReceiver {
     public String getMessage() {
         return mMessage;
     }
-
-    //    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-//    public static String bytesToHex(byte[] bytes) {
-//        char[] hexChars = new char[bytes.length * 2];
-//        for ( int j = 0; j < bytes.length; j++ ) {
-//            int v = bytes[j] & 0xFF;
-//            hexChars[j * 2] = hexArray[v >>> 4];
-//            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-//        }
-//        return new String(hexChars);
-//    }
 }

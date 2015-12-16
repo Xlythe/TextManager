@@ -81,8 +81,7 @@ public class HttpUtils {
      * @param proxyPort The proxy port
      * @return The HTTP response body
      */
-    // TODO: CHANGE BACK TO PRIVATE!
-    public static byte[] httpConnection(Context context, long token,
+    protected static byte[] httpConnection(Context context, long token,
                                            String url, byte[] pdu, int method, boolean isProxySet,
                                            String proxyHost, int proxyPort) throws IOException {
         if (url == null) {
@@ -97,8 +96,6 @@ public class HttpUtils {
         Log.v("HttpUtils", "\tisProxySet\t= " + isProxySet);
         Log.v("HttpUtils", "\tproxyHost\t= " + proxyHost);
         Log.v("HttpUtils", "\tproxyPort\t= " + proxyPort);
-        // TODO Print out binary data more readable.
-        //Log.v(TAG, "\tpdu\t\t= " + Arrays.toString(pdu));
 
         AndroidHttpClient client = null;
 

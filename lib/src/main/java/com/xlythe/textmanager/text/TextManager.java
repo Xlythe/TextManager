@@ -451,7 +451,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         try {
             //TODO: add number
             sendRequest.setFrom(new EncodedStringValue("2163138473"));
-        } catch (Exception e) {
+        } catch (RuntimeException re) {
             Log.d("bad number","bad number");
         }
         final PduBody pduBody = new PduBody();
