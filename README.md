@@ -7,10 +7,10 @@ Our goal is to make sending SMS and MMS easier on the Android OS.
 Usage
 -----
 ```java
-mManager = TextManager.getInstance(getBaseContext());
+mManager = TextManager.getInstance(context);
 mManager.send(new Text.Builder()
                 .message("HIII!!!!")
-                .recipient("2163138473")
+                .recipient("1234567890")
                 .attach(bmp1)
                 .attach(bmp2)
                 .attach(bmp3)
