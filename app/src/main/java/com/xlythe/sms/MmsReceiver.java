@@ -4,60 +4,42 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
-public class MmsReceiver extends com.xlythe.textmanager.text.MmsReceiver {
-    private Context mContext;
+import com.xlythe.textmanager.text.Text;
+
+public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
+
     @Override
-    public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
-        mContext = context;
-        onMessageReceived(new OnReceiveCallback() {
-            @Override
-            public void onSuccess(Bitmap bitmap) {
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(mContext)
-                                .setLargeIcon(bitmap)
-                                .setSmallIcon(R.drawable.user_icon)
-                                .setContentTitle("")
-                                .setContentText("picture");
-                // Creates an explicit intent for an Activity in your app
-                NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-                String[] events = new String[6];
-                // Sets a title for the Inbox in expanded layout
-                inboxStyle.setBigContentTitle("Event tracker details:");
-                // Moves events into the expanded layout
-                for (int i=0; i < events.length; i++) {
+    public void onMessageReceived(Context context, Text text) {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(context)
+                        .setLargeIcon(text.getAttachments().get(0))
+                        .setSmallIcon(R.drawable.user_icon)
+                        .setContentTitle(text.getAddress())
+                        .setContentText(text.getBody());
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(context, ManagerActivity.class);
 
-                    inboxStyle.addLine(events[i]);
-                }
-                // Moves the expanded layout object into the notification object.
-                mBuilder.setStyle(inboxStyle);
-
-                Intent resultIntent = new Intent(mContext, ManagerActivity.class);
-
-                // The stack builder object will contain an artificial back stack for the
-                // started Activity.
-                // This ensures that navigating backward from the Activity leads out of
-                // your application to the Home screen.
-                TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
-                // Adds the back stack for the Intent (but not the Intent itself)
-                stackBuilder.addParentStack(ManagerActivity.class);
-                // Adds the Intent that starts the Activity to the top of the stack
-                stackBuilder.addNextIntent(resultIntent);
-                PendingIntent resultPendingIntent =
-                        stackBuilder.getPendingIntent(
-                                0,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                        );
-                mBuilder.setContentIntent(resultPendingIntent);
-                NotificationManager mNotificationManager =
-                        (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-                // mId allows you to update the notification later on.
-                mNotificationManager.notify(12345, mBuilder.build());
-            }
-        });
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(ManagerActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        // mId allows you to update the notification later on.
+        mNotificationManager.notify(12345, mBuilder.build());
     }
 }

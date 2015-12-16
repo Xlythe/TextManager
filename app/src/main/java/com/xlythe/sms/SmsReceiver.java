@@ -7,16 +7,17 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
-public class SmsReceiver extends com.xlythe.textmanager.text.SmsReceiver {
+import com.xlythe.textmanager.text.Text;
+
+public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
-    public void onReceive(Context context, Intent intent) {
-        super.onReceive(context, intent);
+    public void onMessageReceived(Context context, Text text) {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(getNumber())
-                        .setContentText(getMessage());
+                        .setContentTitle(text.getAddress())
+                        .setContentText(text.getBody());
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(context, ManagerActivity.class);
 

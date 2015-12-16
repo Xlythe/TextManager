@@ -1,7 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
-
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,21 +8,63 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Telephony;
+import android.telephony.SmsMessage;
 import android.util.Log;
 
+import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 
-public class MmsReceiver extends BroadcastReceiver {
+/**
+ * Created by Niko on 12/16/15.
+ */
+public abstract class TextReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
-    private Bitmap mBitmap;
-    private Context mContext;
-    private Intent mIntent;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
+            Log.v(TAG, "Received PUSH Intent: " + intent);
+
+            // Hold a wake lock for 5 seconds, enough to give any
+            // services we start time to take their own wake locks.
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS PushReceiver");
+            wl.acquire(5000);
+            new ReceivePushTask(context).execute(intent);
+        }
+
+
+        if (Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
+            final Bundle bundle = intent.getExtras();
+
+            if (bundle != null) {
+                final Object[] pdusObj = (Object[]) bundle.get("pdus");
+                SmsMessage[] messages = new SmsMessage[pdusObj.length];
+
+                for (int i = 0; i < pdusObj.length; i++) {
+                    SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
+
+                    messages[i] = currentMessage;
+
+                    String number = currentMessage.getDisplayOriginatingAddress();
+                    String message = currentMessage.getDisplayMessageBody();
+                    onMessageReceived(context, new Text.Builder()
+                            .message(message)
+                            .recipient(number)
+                            .build());
+
+                }
+                Receive.storeMessage(context, messages, 0);
+            }
+        }
+    }
 
     private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
-        private OnReceiveCallback mOnReceive;
-        public ReceivePushTask(OnReceiveCallback onReceive) {
-            mOnReceive = onReceive;
+        Context mContext;
+        public ReceivePushTask(Context context) {
+            mContext = context;
         }
 
         @Override
@@ -69,8 +109,12 @@ public class MmsReceiver extends BroadcastReceiver {
                             for (int i = 0; i < partsNum; i++) {
                                 PduPart part = body.getPart(i);
                                 byte[] bitmapdata = part.getData();
-                                mBitmap = BitmapFactory.decodeByteArray(bitmapdata , 0, bitmapdata .length);
-                                mOnReceive.onSuccess(mBitmap);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
+                                onMessageReceived(mContext, new Text.Builder()
+                                        .message("")
+                                        .recipient("")
+                                        .attach(bitmap)
+                                        .build());
                             }
                         }
                     }
@@ -93,26 +137,5 @@ public class MmsReceiver extends BroadcastReceiver {
         }
     }
 
-    public void onMessageReceived(OnReceiveCallback onReceive){
-        if (mIntent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(mIntent.getType())) {
-            Log.v(TAG, "Received PUSH Intent: " + mIntent);
-
-            // Hold a wake lock for 5 seconds, enough to give any
-            // services we start time to take their own wake locks.
-            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS PushReceiver");
-            wl.acquire(5000);
-            new ReceivePushTask(onReceive).execute(mIntent);
-        }
-    }
-
-    public interface OnReceiveCallback{
-        void onSuccess(Bitmap bitmap);
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        mContext = context;
-        mIntent = intent;
-    }
+    public abstract void onMessageReceived(Context context, Text text);
 }
