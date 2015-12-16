@@ -14,10 +14,9 @@ public class MmsReceiver extends com.xlythe.textmanager.text.MmsReceiver {
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         mContext = context;
-        onMessageReceived(new OnReceive() {
+        onMessageReceived(new OnReceiveCallback() {
             @Override
             public void onSuccess(Bitmap bitmap) {
-
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(mContext)
                                 .setLargeIcon(bitmap)
@@ -25,6 +24,18 @@ public class MmsReceiver extends com.xlythe.textmanager.text.MmsReceiver {
                                 .setContentTitle("")
                                 .setContentText("picture");
                 // Creates an explicit intent for an Activity in your app
+                NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+                String[] events = new String[6];
+                // Sets a title for the Inbox in expanded layout
+                inboxStyle.setBigContentTitle("Event tracker details:");
+                // Moves events into the expanded layout
+                for (int i=0; i < events.length; i++) {
+
+                    inboxStyle.addLine(events[i]);
+                }
+                // Moves the expanded layout object into the notification object.
+                mBuilder.setStyle(inboxStyle);
+
                 Intent resultIntent = new Intent(mContext, ManagerActivity.class);
 
                 // The stack builder object will contain an artificial back stack for the
@@ -48,6 +59,5 @@ public class MmsReceiver extends com.xlythe.textmanager.text.MmsReceiver {
                 mNotificationManager.notify(12345, mBuilder.build());
             }
         });
-
     }
 }

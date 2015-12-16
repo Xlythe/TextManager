@@ -31,10 +31,9 @@ public class MmsReceiver extends BroadcastReceiver {
     private Intent mIntent;
 
     private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
-        private OnReceive mOnReceive;
-        public ReceivePushTask(OnReceive onReceive) {
+        private OnReceiveCallback mOnReceive;
+        public ReceivePushTask(OnReceiveCallback onReceive) {
             mOnReceive = onReceive;
-
         }
 
         @Override
@@ -103,7 +102,7 @@ public class MmsReceiver extends BroadcastReceiver {
         }
     }
 
-    public void onMessageReceived(OnReceive onReceive){
+    public void onMessageReceived(OnReceiveCallback onReceive){
         if (mIntent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(mIntent.getType())) {
             Log.v(TAG, "Received PUSH Intent: " + mIntent);
 
@@ -116,16 +115,9 @@ public class MmsReceiver extends BroadcastReceiver {
         }
     }
 
-    public interface OnReceive{
+    public interface OnReceiveCallback{
         void onSuccess(Bitmap bitmap);
     }
-
-    static final String[] MMS_PROJECTION = new String[]{
-            BaseColumns._ID,
-            Telephony.Mms.Part.CONTENT_TYPE,
-            Telephony.Mms.Part.TEXT,
-            Telephony.Mms.Part._DATA
-    };
 
     @Override
     public void onReceive(Context context, Intent intent) {
