@@ -1,9 +1,11 @@
 package com.xlythe.sms;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
@@ -13,22 +15,28 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
     public void onMessageReceived(Context context, Text text) {
+        Intent dismissIntent = new Intent(context, ManagerActivity.class);
+        PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
+
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
                         .setContentTitle(text.getAddress())
-                        .setContentText(text.getBody());
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(context, ManagerActivity.class);
+                        .setContentText(text.getBody())
+                        .setAutoCancel(true)
+                        .setLights(Color.WHITE, 500, 1500)
+                        .setPriority(Notification.PRIORITY_HIGH)
+                        .setCategory(Notification.CATEGORY_MESSAGE)
+                        .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
 
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+        inboxStyle.setBigContentTitle("X new messages");
+        inboxStyle.addLine(text.getBody());
+        builder.setStyle(inboxStyle);
+
+        Intent resultIntent = new Intent(context, ManagerActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        // Adds the back stack for the Intent (but not the Intent itself)
         stackBuilder.addParentStack(ManagerActivity.class);
-        // Adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(
@@ -36,9 +44,8 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         builder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        // mId allows you to update the notification later on.
+
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(12345, builder.build());
     }
 }
