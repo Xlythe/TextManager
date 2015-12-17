@@ -13,7 +13,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
     public void onMessageReceived(Context context, Text text) {
-        NotificationCompat.Builder mBuilder =
+        NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
                         .setContentTitle(text.getAddress())
@@ -35,10 +35,10 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                         0,
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
-        mBuilder.setContentIntent(resultPendingIntent);
+        builder.setContentIntent(resultPendingIntent);
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // mId allows you to update the notification later on.
-        mNotificationManager.notify(12345, mBuilder.build());
+        mNotificationManager.notify(12345, builder.build());
     }
 }

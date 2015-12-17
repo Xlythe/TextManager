@@ -15,6 +15,7 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
+import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
 
 /**
  * Created by Niko on 12/16/15.
@@ -24,7 +25,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(WAP_PUSH_DELIVER_ACTION) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
+        if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             Log.v(TAG, "Received PUSH Intent: " + intent);
 
             // Hold a wake lock for 5 seconds, enough to give any
@@ -34,9 +35,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             wl.acquire(5000);
             new ReceivePushTask(context).execute(intent);
         }
-
-
-        if (Telephony.Sms.Intents.SMS_DELIVER_ACTION.equals(intent.getAction())) {
+        else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
             final Bundle bundle = intent.getExtras();
 
             if (bundle != null) {
