@@ -69,6 +69,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
         @Override
         protected Void doInBackground(Intent... intents) {
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            wl.acquire();
             Intent intent = intents[0];
 
             byte[] pushData = intent.getByteArrayExtra("data");
@@ -133,6 +136,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     }
                 }
             });
+            wl.release();
             return null;
         }
     }
