@@ -39,6 +39,7 @@
                         android:textColor="#00acc1"
                         android:fontFamily="sans-serif-medium"
                         android:id="@+id/sender"
+                        android:paddingRight="4dp"
                         android:text="Will Harmon"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
@@ -46,8 +47,10 @@
                         android:textSize="16sp"
                         android:textColor="#00acc1"
                         android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
                         android:id="@+id/unread"
                         android:text="6 new"
+                        android:background="@drawable/highlight"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content" />
                 </LinearLayout>

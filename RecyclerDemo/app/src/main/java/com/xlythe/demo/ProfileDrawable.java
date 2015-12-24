@@ -2,6 +2,7 @@ package com.xlythe.demo;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,6 +15,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
 
 /**
  * Created by Niko on 12/22/15.
@@ -23,8 +25,12 @@ public class ProfileDrawable extends Drawable {
     RectF mRect;
     Path mPath;
     Context mContext;
+    char mInitial;
+    float px;
+    float sp;
 
-    public ProfileDrawable(Context context) {
+    public ProfileDrawable(Context context, char initial) {
+        mInitial = initial;
         mContext = context;
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
@@ -33,15 +39,18 @@ public class ProfileDrawable extends Drawable {
         mPath.setFillType(Path.FillType.EVEN_ODD);
 
         mRect = new RectF();
+
+        px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
+        sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, mContext.getResources().getDisplayMetrics());
     }
 
     @Override
     public int getIntrinsicHeight() {
-        return 160;
+        return (int)px;
     }
     @Override
     public int getIntrinsicWidth() {
-        return 160;
+        return (int)px;
     }
 
     @Override
@@ -55,9 +64,20 @@ public class ProfileDrawable extends Drawable {
         mPaint.setColor(mContext.getResources().getColor(R.color.icon));
         canvas.drawPath(mPath, mPaint);
         mPaint.setColor(mContext.getResources().getColor(R.color.text));
-        mPaint.setTextSize(96);
-        mPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("W", 80, 115, mPaint);
+        if (!(mInitial+"").equals("(")) {
+            mPaint.setTextSize(sp);
+            mPaint.setTextAlign(Paint.Align.CENTER);
+
+            String text = mInitial + "";
+            Rect r = new Rect();
+            mPaint.getTextBounds(text, 0, text.length(), r);
+            int y = (int) px/2 + (Math.abs(r.height()))/2;
+
+            canvas.drawText(text, px/2, y, mPaint);
+        } else {
+            Bitmap bmp1 = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_profile);
+            canvas.drawBitmap(bmp1,0,0,mPaint);
+        }
     }
 
     @Override

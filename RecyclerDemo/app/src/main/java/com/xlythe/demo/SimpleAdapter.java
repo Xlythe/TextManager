@@ -47,6 +47,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
         public final TextView title;
+        public final TextView unread;
         public final TextView message;
         public final TextView date;
         public final CardView card;
@@ -55,6 +56,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         public SimpleViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.sender);
+            unread = (TextView) view.findViewById(R.id.unread);
             message = (TextView) view.findViewById(R.id.message);
             date = (TextView) view.findViewById(R.id.date);
             card = (CardView) view.findViewById(R.id.card);
@@ -70,7 +72,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                invalidate();
+                //invalidate();
             }
         });
         mMultiSelector = new MultiSelector();
@@ -89,13 +91,16 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         holder.date.setText(mData.get(position).mTimeStamp);
 
         if (mData.get(position).mUnreadCount>0){
-            holder.title.setText(mData.get(position).mSender +" "+mData.get(position).mUnreadCount+" new");
+            holder.title.setText(mData.get(position).mSender);
+            holder.unread.setVisibility(View.VISIBLE);
+            holder.unread.setText(mData.get(position).mUnreadCount+" new");
             holder.title.setTextColor(mContext.getColor(R.color.icon));
             holder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             holder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             holder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         } else {
             holder.title.setText(mData.get(position).mSender);
+            holder.unread.setVisibility(View.GONE);
             holder.title.setTextColor(mContext.getColor(R.color.headerText));
             holder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
             holder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
@@ -108,7 +113,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         if (mMultiSelector.selectMode()) {
             holder.profile.setImageResource(android.R.color.transparent);
         } else {
-            ProfileDrawable border = new ProfileDrawable(mContext);
+            ProfileDrawable border = new ProfileDrawable(mContext, mData.get(position).mSender.charAt(0));
             holder.profile.setImageDrawable(border);
         }
         holder.profile.setOnClickListener(new View.OnClickListener() {
@@ -119,7 +124,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                 if (mMultiSelector.selectMode()) {
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
-                    ProfileDrawable border = new ProfileDrawable(mContext);
+                    ProfileDrawable border = new ProfileDrawable(mContext, mData.get(position).mSender.charAt(0));
                     holder.profile.setImageDrawable(border);
                 }
                 if (holder.profile.isActivated()) {
@@ -129,7 +134,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                 }
                 mMultiSelector.setItemChecked(position, holder.profile.isActivated());
                 if (selected != mMultiSelector.selectMode()) {
-                    invalidate();
+                    notifyDataSetChanged();
+                    //invalidate();
                 }
             }
         });
@@ -154,7 +160,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                     Log.d("Simple Adapter", "simple holder: "+i);
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
-                    ProfileDrawable border = new ProfileDrawable(mContext);
+                    ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
                     holder.profile.setImageDrawable(border);
                 }
             }

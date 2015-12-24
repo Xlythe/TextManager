@@ -31,8 +31,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Resources r = getResources();
-        px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, r.getDisplayMetrics());
+        px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, getResources().getDisplayMetrics());
 
         //String[] array = {"Josh Cheston","Oriana","Alex Goldstein","Will Harmon","1 (717) 332-6482",
         //        "Natalie","Mom","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
