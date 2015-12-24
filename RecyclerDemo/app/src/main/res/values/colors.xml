@@ -6,4 +6,5 @@
     <color name="colorBackground">#ececec</color>
     <color name="icon">#00acc1</color>
     <color name="text">#99ffffff</color>
+    <color name="headerText">#181818</color>
 </resources>

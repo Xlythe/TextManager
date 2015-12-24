@@ -34,8 +34,18 @@ public class MainActivity extends AppCompatActivity {
         Resources r = getResources();
         px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, r.getDisplayMetrics());
 
-        String[] array = {"Josh Cheston","Oriana","Alex Goldstein","Will Harmon","1 (717) 332-6482",
-                "Natalie","Mom","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
+        //String[] array = {"Josh Cheston","Oriana","Alex Goldstein","Will Harmon","1 (717) 332-6482",
+        //        "Natalie","Mom","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
+
+        ArrayList<Thread> list = new ArrayList<>();
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6));
+        list.add(new Thread("Oriana Capone", "picture", "2:17pm", null, 0));
+        list.add(new Thread("Mom", "Random message to show this off ...", "6:22pm", null, 0));
+        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 0));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
@@ -52,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //Your RecyclerView.Adapter
-        mAdapter = new SimpleAdapter(this, array, mRecyclerView);
+        mAdapter = new SimpleAdapter(this, list, mRecyclerView);
 
         //This is the code to provide a sectioned list
         List<ManagerAdapter.Section> sections = new ArrayList<>();

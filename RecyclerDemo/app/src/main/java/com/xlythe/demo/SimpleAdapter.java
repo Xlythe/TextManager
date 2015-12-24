@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -26,12 +27,12 @@ import java.util.List;
 public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
 
     private final Context mContext;
-    private List<String> mData;
+    private List<Thread> mData;
     private MultiSelector mMultiSelector;
     private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(232, 240, 254);
     private final int CARD_STATE_COLOR = Color.WHITE;
 
-    public void add(String s,int position) {
+    public void add(Thread s,int position) {
         position = position == -1 ? getItemCount()  : position;
         mData.add(position,s);
         notifyItemInserted(position);
@@ -46,12 +47,16 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
         public final TextView title;
+        public final TextView message;
+        public final TextView date;
         public final CardView card;
         public final de.hdodenhof.circleimageview.CircleImageView profile;
 
         public SimpleViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.sender);
+            message = (TextView) view.findViewById(R.id.message);
+            date = (TextView) view.findViewById(R.id.date);
             card = (CardView) view.findViewById(R.id.card);
             profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
         }
@@ -59,7 +64,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     RecyclerView mRecyclerView;
 
-    public SimpleAdapter(Context context, String[] data, RecyclerView recyclerView) {
+    public SimpleAdapter(Context context, ArrayList<Thread> data, RecyclerView recyclerView) {
         mRecyclerView = recyclerView;
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -70,9 +75,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         });
         mMultiSelector = new MultiSelector();
         mContext = context;
-        if (data != null)
-            mData = new ArrayList<String>(Arrays.asList(data));
-        else mData = new ArrayList<String>();
+        mData = data;
     }
 
     public SimpleViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -82,10 +85,27 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     @Override
     public void onBindViewHolder(final SimpleViewHolder holder, final int position) {
-            holder.title.setText(mData.get(position));
-            holder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+        holder.message.setText(mData.get(position).mMessagesPeek);
+        holder.date.setText(mData.get(position).mTimeStamp);
 
-        if (mMultiSelector.selectMode(mData.size())) {
+        if (mData.get(position).mUnreadCount>0){
+            holder.title.setText(mData.get(position).mSender +" "+mData.get(position).mUnreadCount+" new");
+            holder.title.setTextColor(mContext.getColor(R.color.icon));
+            holder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            holder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            holder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        } else {
+            holder.title.setText(mData.get(position).mSender);
+            holder.title.setTextColor(mContext.getColor(R.color.headerText));
+            holder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+            holder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+            holder.date.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+
+        }
+
+        holder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+
+        if (mMultiSelector.selectMode()) {
             holder.profile.setImageResource(android.R.color.transparent);
         } else {
             ProfileDrawable border = new ProfileDrawable(mContext);
@@ -94,9 +114,9 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         holder.profile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                boolean selected = mMultiSelector.selectMode(mData.size());
+                boolean selected = mMultiSelector.selectMode();
                 holder.profile.setActivated(!holder.profile.isActivated());
-                if (mMultiSelector.selectMode(mData.size())) {
+                if (mMultiSelector.selectMode()) {
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
                     ProfileDrawable border = new ProfileDrawable(mContext);
@@ -108,7 +128,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                     holder.card.setCardBackgroundColor(CARD_STATE_COLOR);
                 }
                 mMultiSelector.setItemChecked(position, holder.profile.isActivated());
-                if (selected != mMultiSelector.selectMode(mData.size())) {
+                if (selected != mMultiSelector.selectMode()) {
                     invalidate();
                 }
             }
@@ -130,7 +150,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             Log.d("Simple Adapter", "pos: "+i);
             if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
                 SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                if (mMultiSelector.selectMode(mData.size())) {
+                if (mMultiSelector.selectMode()) {
                     Log.d("Simple Adapter", "simple holder: "+i);
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
@@ -149,17 +169,16 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
     public class MultiSelector {
         private SparseBooleanArray mSelectedPositions = new SparseBooleanArray();
 
-        private boolean selectMode(int size){
-            for (int i = 0; i<size; i++) {
-                if (mSelectedPositions.get(i)){
-                    return true;
-                }
-            }
-            return false;
+        private boolean selectMode(){
+            return mSelectedPositions.size()>0;
         }
 
         private void setItemChecked(int position, boolean isChecked) {
-            mSelectedPositions.put(position, isChecked);
+            if (isChecked) {
+                mSelectedPositions.put(position, true);
+            } else {
+                mSelectedPositions.delete(position);
+            }
         }
 
         private boolean isItemChecked(int position) {
