@@ -4,13 +4,18 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -24,7 +29,7 @@ import java.util.List;
 /**
  * Created by Niko on 12/22/15.
  */
-public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
+public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>{
 
     private final Context mContext;
     private List<Thread> mData;
@@ -62,6 +67,11 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             card = (CardView) view.findViewById(R.id.card);
             profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
         }
+
+        public interface ClickListener {
+            public void onItemClicked(int position);
+            public boolean onItemLongClicked(int position);
+        }
     }
 
     RecyclerView mRecyclerView;
@@ -93,8 +103,11 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         if (mData.get(position).mUnreadCount>0){
             holder.title.setText(mData.get(position).mSender);
             holder.unread.setVisibility(View.VISIBLE);
-            holder.unread.setText(mData.get(position).mUnreadCount+" new");
-            holder.title.setTextColor(mContext.getColor(R.color.icon));
+            holder.unread.setText(mData.get(position).mUnreadCount + " new");
+            holder.unread.setTextColor(mData.get(position).mColor);
+            holder.unread.getBackground().setColorFilter(mData.get(position).mColor, PorterDuff.Mode.SRC_IN);
+            holder.unread.getBackground().setAlpha(25);
+            holder.title.setTextColor(mData.get(position).mColor);
             holder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             holder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             holder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
@@ -156,22 +169,22 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     }
 
-    //TODO: Factor in the section count.
-    private void invalidate() {
-        for(int i=0; i<mData.size()+3; i++) {
-            Log.d("Simple Adapter", "pos: "+i);
-            if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
-                SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-                if (mMultiSelector.selectMode()) {
-                    Log.d("Simple Adapter", "simple holder: "+i);
-                    holder.profile.setImageResource(android.R.color.transparent);
-                } else {
-                    //ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
-                    //holder.profile.setImageDrawable(border);
-                }
-            }
-        }
-    }
+//    private void invalidate() {
+//        for(int i=0; i<mData.size()+3; i++) {
+//            Log.d("Simple Adapter", "pos: "+i);
+//            if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
+//                SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
+//                if (mMultiSelector.selectMode()) {
+//                    Log.d("Simple Adapter", "simple holder: "+i);
+//                    holder.profile.setImageResource(android.R.color.transparent);
+//                } else {
+//                    //ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
+//                    //holder.profile.setImageDrawable(border);
+//                }
+//            }
+//        }
+//    }
+
 
     @Override
     public int getItemCount() {

@@ -19,7 +19,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener  {
 
     RecyclerView mRecyclerView;
     SimpleAdapter mAdapter;
@@ -34,20 +34,23 @@ public class MainActivity extends AppCompatActivity {
 
         px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14, getResources().getDisplayMetrics());
 
-        //String[] array = {"Josh Cheston","Oriana","Alex Goldstein","Will Harmon","1 (717) 332-6482",
-        //        "Natalie","Mom","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
+        //String[] array = {"Josh Cheston","Alex Goldstein",
+        //        "Natalie","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
 
         ArrayList<Thread> list = new ArrayList<>();
         list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6, getColor(R.color.icon)));
-        Thread oriana = new Thread("Oriana Capone", "picture", "2:17pm", null, 0, getColor(R.color.icon));
+        Thread oriana = new Thread("Oriana", "picture", "2:17pm", null, 0, getColor(R.color.icon));
         oriana.mDrawable = BitmapFactory.decodeResource(getResources(), R.drawable.oriana);
         list.add(oriana);
         list.add(new Thread("Mom", "Random message to show this off ...", "6:22pm", null, 0, getColor(R.color.purple)));
-        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 0, getColor(R.color.pink)));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 1, getColor(R.color.pink)));
+        list.add(new Thread("Josh Cheston", "Make nick stop", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Alex Goldstein", "hi", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Natalie", "The language!", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Tim Nerozzi", "My only big gripe is that Chewbacca ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Alex Bourdakos", "I agree", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Cyrus Basseri", "Unless you just want it to be on your ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Mark Steffl", "Noice", "10 min", null, 0, getColor(R.color.icon)));
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         //Sections
         sections.add(new ManagerAdapter.Section(0,"Today"));
         sections.add(new ManagerAdapter.Section(2,"Yesterday"));
+        sections.add(new ManagerAdapter.Section(7,"November"));
         sections.add(new ManagerAdapter.Section(list.size(), ""));
 
         //Add your adapter to the sectionAdapter
@@ -87,10 +91,32 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Compose not yet added", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
+    }
+
+    @Override
+    public void onItemClicked(int position) {
+
+    }
+
+    @Override
+    public boolean onItemLongClicked(int position) {
+        return false;
+    }
+
+    private void toggleSelection(int position) {
+        mAdapter.toggleSelection(position);
+        int count = mAdapter.getSelectedItemCount();
+
+        if (count == 0) {
+            actionMode.finish();
+        } else {
+            actionMode.setTitle(String.valueOf(count));
+            actionMode.invalidate();
+        }
     }
 
     @Override
@@ -109,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_search) {
+            Snackbar.make(findViewById(R.id.list), "Search not yet added", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
             return true;
         }
 
