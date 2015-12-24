@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         //mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL, 14));
 
 //        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         //Sections
         sections.add(new ManagerAdapter.Section(0,"Today"));
         sections.add(new ManagerAdapter.Section(2,"Yesterday"));
+        sections.add(new ManagerAdapter.Section(list.size(), ""));
 
         //Add your adapter to the sectionAdapter
         ManagerAdapter.Section[] dummy = new ManagerAdapter.Section[sections.size()];

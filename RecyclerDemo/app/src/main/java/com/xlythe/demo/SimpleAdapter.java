@@ -158,7 +158,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     //TODO: Factor in the section count.
     private void invalidate() {
-        for(int i=0; i<mData.size()+2; i++) {
+        for(int i=0; i<mData.size()+3; i++) {
             Log.d("Simple Adapter", "pos: "+i);
             if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
                 SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
