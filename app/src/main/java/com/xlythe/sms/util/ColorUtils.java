@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.util;
 
 /**
  * Created by Niko on 5/26/15.

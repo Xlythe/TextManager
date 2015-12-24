@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.fragment;
 
 import android.animation.Animator;
 import android.graphics.Color;
@@ -18,6 +18,8 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.xlythe.sms.R;
 
 import java.io.IOException;
 

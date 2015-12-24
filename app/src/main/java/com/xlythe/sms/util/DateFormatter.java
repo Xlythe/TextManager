@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.util;
 
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;

@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.fragment;
 
 import android.database.Cursor;
 import android.os.Bundle;
@@ -10,6 +10,10 @@ import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.ScrollView;
 
+import com.xlythe.sms.R;
+import com.xlythe.sms.ThreadActivity;
+import com.xlythe.sms.adapter.CursorImageAdapter;
+
 public class ScreenSlidePageFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -19,7 +23,7 @@ public class ScreenSlidePageFragment extends Fragment {
         Cursor c = getActivity().getContentResolver().query(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, projection, null, null, "image_id DESC");
 
         GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
-        gridview.setAdapter(new com.xlythe.sms.CursorImageAdapter(getActivity(), c));
+        gridview.setAdapter(new CursorImageAdapter(getActivity(), c));
 
         ThreadActivity activity = (ThreadActivity) getActivity();
 

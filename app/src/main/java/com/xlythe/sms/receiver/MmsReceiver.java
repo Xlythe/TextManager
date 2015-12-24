@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.receiver;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
+import com.xlythe.sms.ManagerActivity;
+import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Text;
 
 public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {

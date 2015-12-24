@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.view;
 
 import android.app.ActionBar;
 import android.content.Context;
@@ -12,6 +12,8 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+
+import com.xlythe.sms.R;
 
 /**
  * Created by Niko on 7/30/15.

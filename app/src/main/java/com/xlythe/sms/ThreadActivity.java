@@ -9,7 +9,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,8 +21,14 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
-import com.xlythe.textmanager.MessageCallback;
-import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.sms.adapter.TextCursorAdapter;
+import com.xlythe.sms.fragment.CameraFragment;
+import com.xlythe.sms.fragment.FaceFragment;
+import com.xlythe.sms.fragment.LocationFragment;
+import com.xlythe.sms.fragment.MicFragment;
+import com.xlythe.sms.fragment.ScreenSlidePageFragment;
+import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.view.AttachView;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 

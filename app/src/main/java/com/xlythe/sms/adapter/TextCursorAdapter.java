@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -14,6 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.xlythe.sms.R;
+import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;

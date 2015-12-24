@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.service;
 
 import android.app.Service;
 import android.content.Intent;

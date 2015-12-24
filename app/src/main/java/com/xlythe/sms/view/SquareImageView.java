@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.view;
 
 import android.content.Context;
 import android.util.AttributeSet;

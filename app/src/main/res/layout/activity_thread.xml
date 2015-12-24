@@ -62,7 +62,7 @@
 
     </LinearLayout>
 
-    <com.xlythe.sms.AttachView
+    <com.xlythe.sms.view.AttachView
         android:layout_width="match_parent"
         android:orientation="vertical"
         android:id="@+id/attach_view"
@@ -74,7 +74,7 @@
             android:layout_height="match_parent"
             android:background="#ffffff"/>
 
-    </com.xlythe.sms.AttachView>
+    </com.xlythe.sms.view.AttachView>
 
     <LinearLayout
         android:id="@+id/tab_bar"

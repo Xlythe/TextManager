@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -9,6 +9,7 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
+import com.xlythe.sms.view.SquareImageView;
 
 import java.io.File;
 

@@ -2,19 +2,15 @@ package com.xlythe.sms;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import com.xlythe.textmanager.text.Text;
+import com.xlythe.sms.adapter.ThreadAdapter;
+import com.xlythe.sms.listener.MultiChoiceModeListener;
 import com.xlythe.textmanager.text.TextManager;
 
 
@@ -68,6 +64,8 @@ public class ManagerActivity extends Activity {
         // Populate Adapter with list of threads.
         mThreadAdapter = new ThreadAdapter(getBaseContext(), R.layout.list_item_threads, mManager.getThreads());
         mListView.setAdapter(mThreadAdapter);
+        mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        mListView.setMultiChoiceModeListener(new MultiChoiceModeListener());
     }
 
     @Override

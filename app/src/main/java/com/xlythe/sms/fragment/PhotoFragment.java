@@ -1,10 +1,12 @@
-package com.xlythe.sms;
+package com.xlythe.sms.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.xlythe.sms.R;
 
 
 public class PhotoFragment extends Fragment {

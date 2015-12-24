@@ -1,13 +1,15 @@
-package com.xlythe.sms;
+package com.xlythe.sms.fragment;
 
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.xlythe.sms.R;
+import com.xlythe.sms.view.CameraPreview;
 
 
 public class CameraFragment extends Fragment {
