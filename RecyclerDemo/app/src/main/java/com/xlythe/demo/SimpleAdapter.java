@@ -89,6 +89,12 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             public void onClick(View view) {
                 boolean selected = mMultiSelector.selectMode(mData.size());
                 holder.profile.setActivated(!holder.profile.isActivated());
+                if (mMultiSelector.selectMode(mData.size())) {
+                    holder.profile.setImageResource(android.R.color.transparent);
+                } else {
+                    ProfileDrawable border = new ProfileDrawable(mContext);
+                    holder.profile.setImageDrawable(border);
+                }
                 if (holder.profile.isActivated()) {
                     holder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
                 } else {
@@ -111,13 +117,14 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     }
 
+    //TODO: Factor in the section count.
     private void invalidate() {
-        for(int i=0; i<mData.size(); i++) {
-            Log.d("Simple Adapter", "invalidate");
+        for(int i=0; i<mData.size()+2; i++) {
+            Log.d("Simple Adapter", "pos: "+i);
             if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
-                Log.d("Simple Adapter", "simple holder");
                 SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
                 if (mMultiSelector.selectMode(mData.size())) {
+                    Log.d("Simple Adapter", "simple holder: "+i);
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
                     ProfileDrawable border = new ProfileDrawable(mContext);
