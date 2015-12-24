@@ -56,7 +56,6 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void onDraw(Canvas c, final RecyclerView parent, RecyclerView.State state) {
         super.onDraw(c, parent, state);
-        Log.d("Divider", "onDraw");
         if (mOrientation == VERTICAL_LIST) {
             drawVertical(parent);
         }

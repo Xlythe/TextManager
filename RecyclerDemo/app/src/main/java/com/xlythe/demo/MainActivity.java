@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //Your RecyclerView.Adapter
-        mAdapter = new SimpleAdapter(this, array);
+        mAdapter = new SimpleAdapter(this, array, mRecyclerView);
 
         //This is the code to provide a sectioned list
         List<ManagerAdapter.Section> sections = new ArrayList<>();

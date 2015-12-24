@@ -57,7 +57,10 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         }
     }
 
-    public SimpleAdapter(Context context, String[] data) {
+    RecyclerView mRecyclerView;
+
+    public SimpleAdapter(Context context, String[] data, RecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
         mMultiSelector = new MultiSelector();
         mContext = context;
         if (data != null)
@@ -76,10 +79,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             holder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
         if (mMultiSelector.selectMode(mData.size())) {
-            Log.d("Simple Adapter", "onBind, select mode: " + position);
             holder.profile.setImageResource(android.R.color.transparent);
         } else {
-            Log.d("Simple Adapter", "onBind, normal mode: " + position);
             ProfileDrawable border = new ProfileDrawable(mContext);
             holder.profile.setImageDrawable(border);
         }
@@ -87,17 +88,15 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             @Override
             public void onClick(View view) {
                 boolean selected = mMultiSelector.selectMode(mData.size());
-                Log.d("Simple Adapter", "toggle");
                 holder.profile.setActivated(!holder.profile.isActivated());
                 if (holder.profile.isActivated()) {
                     holder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
                 } else {
                     holder.card.setCardBackgroundColor(CARD_STATE_COLOR);
                 }
-
                 mMultiSelector.setItemChecked(position, holder.profile.isActivated());
                 if (selected != mMultiSelector.selectMode(mData.size())) {
-                    notifyDataSetChanged();
+                    invalidate();
                 }
             }
         });
@@ -110,6 +109,22 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             holder.card.setCardBackgroundColor(CARD_STATE_COLOR);
         }
 
+    }
+
+    private void invalidate() {
+        for(int i=0; i<mData.size(); i++) {
+            Log.d("Simple Adapter", "invalidate");
+            if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
+                Log.d("Simple Adapter", "simple holder");
+                SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
+                if (mMultiSelector.selectMode(mData.size())) {
+                    holder.profile.setImageResource(android.R.color.transparent);
+                } else {
+                    ProfileDrawable border = new ProfileDrawable(mContext);
+                    holder.profile.setImageDrawable(border);
+                }
+            }
+        }
     }
 
     @Override
