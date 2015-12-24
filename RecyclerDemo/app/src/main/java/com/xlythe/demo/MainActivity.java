@@ -1,6 +1,7 @@
 package com.xlythe.demo;
 
 import android.content.res.Resources;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -37,14 +38,16 @@ public class MainActivity extends AppCompatActivity {
         //        "Natalie","Mom","Tim Nerozzi","Alex Bourdakos","Cyrus Basseri","Mark Steffl"};
 
         ArrayList<Thread> list = new ArrayList<>();
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6));
-        list.add(new Thread("Oriana Capone", "picture", "2:17pm", null, 0));
-        list.add(new Thread("Mom", "Random message to show this off ...", "6:22pm", null, 0));
-        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 0));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
-        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6, getColor(R.color.icon)));
+        Thread oriana = new Thread("Oriana Capone", "picture", "2:17pm", null, 0, getColor(R.color.icon));
+        oriana.mDrawable = BitmapFactory.decodeResource(getResources(), R.drawable.oriana);
+        list.add(oriana);
+        list.add(new Thread("Mom", "Random message to show this off ...", "6:22pm", null, 0, getColor(R.color.purple)));
+        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 0, getColor(R.color.pink)));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
+        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 0, getColor(R.color.icon)));
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);

@@ -113,7 +113,10 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
         if (mMultiSelector.selectMode()) {
             holder.profile.setImageResource(android.R.color.transparent);
         } else {
-            ProfileDrawable border = new ProfileDrawable(mContext, mData.get(position).mSender.charAt(0));
+            ProfileDrawable border = new ProfileDrawable(mContext,
+                    mData.get(position).mSender.charAt(0),
+                    mData.get(position).mColor,
+                    mData.get(position).mDrawable);
             holder.profile.setImageDrawable(border);
         }
         holder.profile.setOnClickListener(new View.OnClickListener() {
@@ -124,7 +127,10 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                 if (mMultiSelector.selectMode()) {
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
-                    ProfileDrawable border = new ProfileDrawable(mContext, mData.get(position).mSender.charAt(0));
+                    ProfileDrawable border = new ProfileDrawable(mContext,
+                            mData.get(position).mSender.charAt(0),
+                            mData.get(position).mColor,
+                            mData.get(position).mDrawable);
                     holder.profile.setImageDrawable(border);
                 }
                 if (holder.profile.isActivated()) {
@@ -160,8 +166,8 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                     Log.d("Simple Adapter", "simple holder: "+i);
                     holder.profile.setImageResource(android.R.color.transparent);
                 } else {
-                    ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
-                    holder.profile.setImageDrawable(border);
+                    //ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
+                    //holder.profile.setImageDrawable(border);
                 }
             }
         }

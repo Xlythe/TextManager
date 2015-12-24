@@ -12,12 +12,15 @@ public class Thread {
     String mTimeStamp;
     Bitmap mAttachment;
     int mUnreadCount;
+    int mColor;
+    Bitmap mDrawable = null;
 
-    Thread(String sender, String peek, String time, Bitmap attach, int unread){
+    Thread(String sender, String peek, String time, Bitmap attach, int unread, int color){
         mSender = sender;
         mMessagesPeek = peek;
         mTimeStamp = time;
         mAttachment = attach;
         mUnreadCount = unread;
+        mColor = color;
     }
 }

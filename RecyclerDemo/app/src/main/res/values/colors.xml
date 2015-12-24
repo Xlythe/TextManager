@@ -5,6 +5,8 @@
     <color name="colorAccent">#009688</color>
     <color name="colorBackground">#ececec</color>
     <color name="icon">#00acc1</color>
+    <color name="purple">#3949ab</color>
+    <color name="pink">#d81b60</color>
     <color name="text">#99ffffff</color>
     <color name="headerText">#181818</color>
 </resources>

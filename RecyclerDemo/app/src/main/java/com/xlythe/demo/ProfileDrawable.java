@@ -26,18 +26,21 @@ public class ProfileDrawable extends Drawable {
     Path mPath;
     Context mContext;
     char mInitial;
+    int mColor;
+    Bitmap mBitmap;
     float px;
     float sp;
 
-    public ProfileDrawable(Context context, char initial) {
-        mInitial = initial;
+    public ProfileDrawable(Context context, char initial, int color, Bitmap bitmap) {
         mContext = context;
+        mInitial = initial;
+        mColor = color;
+        mBitmap = bitmap;
+
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
-
         mPath = new Path();
         mPath.setFillType(Path.FillType.EVEN_ODD);
-
         mRect = new RectF();
 
         px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
@@ -61,9 +64,14 @@ public class ProfileDrawable extends Drawable {
 
     @Override
     public void draw(Canvas canvas) {
-        mPaint.setColor(mContext.getResources().getColor(R.color.icon));
+        mPaint.setColor(mColor);
         canvas.drawPath(mPath, mPaint);
         mPaint.setColor(mContext.getResources().getColor(R.color.text));
+        if(mBitmap!=null){
+            mPaint.setColor(Color.WHITE);
+            canvas.drawBitmap(mBitmap,0,0,mPaint);
+            return;
+        }
         if (!(mInitial+"").equals("(")) {
             mPaint.setTextSize(sp);
             mPaint.setTextAlign(Paint.Align.CENTER);
