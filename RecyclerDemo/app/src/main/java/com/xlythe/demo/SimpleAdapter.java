@@ -61,6 +61,13 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     public SimpleAdapter(Context context, String[] data, RecyclerView recyclerView) {
         mRecyclerView = recyclerView;
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                invalidate();
+            }
+        });
         mMultiSelector = new MultiSelector();
         mContext = context;
         if (data != null)
