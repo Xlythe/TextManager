@@ -53,15 +53,15 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL, 14));
+        //mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL, 14));
 
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                drawVertical(mRecyclerView);
-            }
-        });
+//        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+//            @Override
+//            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+//                super.onScrolled(recyclerView, dx, dy);
+//                //drawVertical(mRecyclerView);
+//            }
+//        });
 
         //Your RecyclerView.Adapter
         mAdapter = new SimpleAdapter(this, list, mRecyclerView);
@@ -113,46 +113,46 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void drawVertical(RecyclerView parent) {
-
-        final int childCount = parent.getChildCount();
-
-        for (int i = 0; i < childCount; i++) {
-            final View child = parent.getChildAt(i);
-            if (child instanceof TextView) {
-                final View childTop = parent.getChildAt(i-1);
-                final View childBottom = parent.getChildAt(i+1);
-                if (childTop instanceof LinearLayout) {
-                    final View card = ((LinearLayout) childTop).getChildAt(0);
-                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
-                    params.setMargins(0, 0, 0, (int)px);
-                    card.setLayoutParams(params);
-                }
-                if (childBottom instanceof LinearLayout) {
-                    final View card = ((LinearLayout) childBottom).getChildAt(0);
-                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
-                    params.setMargins(0, (int)px, 0, 0);
-                    card.setLayoutParams(params);
-                }
-            }
-            else {
-                final View childTop = parent.getChildAt(i-1);
-                final View childBottom = parent.getChildAt(i+1);
-                if (childTop instanceof LinearLayout) {
-                    final View card = ((LinearLayout) child).getChildAt(0);
-                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
-                    int bottom = params.bottomMargin;
-                    params.setMargins(0, 0, 0, bottom);
-                    card.setLayoutParams(params);
-                }
-                if (childBottom instanceof LinearLayout) {
-                    final View card = ((LinearLayout) child).getChildAt(0);
-                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
-                    int top = params.topMargin;
-                    params.setMargins(0, top, 0, 0);
-                    card.setLayoutParams(params);
-                }
-            }
-        }
-    }
+//    public void drawVertical(RecyclerView parent) {
+//
+//        final int childCount = parent.getChildCount();
+//
+//        for (int i = 0; i < childCount; i++) {
+//            final View child = parent.getChildAt(i);
+//            if (child instanceof TextView) {
+//                final View childTop = parent.getChildAt(i-1);
+//                final View childBottom = parent.getChildAt(i+1);
+//                if (childTop instanceof LinearLayout) {
+//                    final View card = ((LinearLayout) childTop).getChildAt(0);
+//                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
+//                    params.setMargins(0, 0, 0, (int)px);
+//                    card.setLayoutParams(params);
+//                }
+//                if (childBottom instanceof LinearLayout) {
+//                    final View card = ((LinearLayout) childBottom).getChildAt(0);
+//                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
+//                    params.setMargins(0, (int)px, 0, 0);
+//                    card.setLayoutParams(params);
+//                }
+//            }
+//            else {
+//                final View childTop = parent.getChildAt(i-1);
+//                final View childBottom = parent.getChildAt(i+1);
+//                if (childTop instanceof LinearLayout) {
+//                    final View card = ((LinearLayout) child).getChildAt(0);
+//                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
+//                    int bottom = params.bottomMargin;
+//                    params.setMargins(0, 0, 0, bottom);
+//                    card.setLayoutParams(params);
+//                }
+//                if (childBottom instanceof LinearLayout) {
+//                    final View card = ((LinearLayout) child).getChildAt(0);
+//                    final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) card.getLayoutParams();
+//                    int top = params.topMargin;
+//                    params.setMargins(0, top, 0, 0);
+//                    card.setLayoutParams(params);
+//                }
+//            }
+//        }
+//    }
 }
