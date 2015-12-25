@@ -14,9 +14,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener {
-
     RecyclerView mRecyclerView;
     SimpleAdapter mAdapter;
 
@@ -45,12 +45,18 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         list.add(new Thread("Cyrus Basseri", "Unless you just want it to be on your ...", "10 min", null, 0, getColor(R.color.icon)));
         list.add(new Thread("Mark Steffl", "Noice", "10 min", null, 0, getColor(R.color.icon)));
 
+        ArrayList<Section> headers = new ArrayList<>();
+        headers.add(new Section(0+headers.size(),"Today"));
+        headers.add(new Section(2+headers.size(),"Yesterday"));
+        headers.add(new Section(7+headers.size(),"November"));
+        headers.add(new Section(list.size()+headers.size(),""));
+
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
-        mAdapter = new SimpleAdapter(this, list);
+        mAdapter = new SimpleAdapter(this, list, headers);
 
 //        List<ManagerAdapter.Section> sections = new ArrayList<>();
 //        sections.add(new ManagerAdapter.Section(0,"Today"));
