@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         if (count == 0) {
             mActionMode.finish();
         } else {
-            mActionMode.setTitle(String.valueOf(count));
+            mActionMode.setTitle(String.valueOf(count)+" selected");
             mActionMode.invalidate();
         }
     }

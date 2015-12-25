@@ -35,7 +35,8 @@ public class SimpleAdapter extends SelectableAdapter<SimpleAdapter.SimpleViewHol
 
     private final Context mContext;
     private List<Thread> mData;
-    private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(232, 240, 254);
+    //private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(232, 240, 254);
+    private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
     private final int CARD_STATE_COLOR = Color.WHITE;
     private SimpleViewHolder.ClickListener mClickListener;
 
