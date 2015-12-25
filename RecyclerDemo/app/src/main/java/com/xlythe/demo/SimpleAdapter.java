@@ -24,81 +24,96 @@ import android.widget.Toast;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by Niko on 12/22/15.
  */
-public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>{
+public class SimpleAdapter extends SelectableAdapter<SimpleAdapter.SimpleViewHolder>{
 
     private final Context mContext;
     private List<Thread> mData;
-    private MultiSelector mMultiSelector;
     private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(232, 240, 254);
     private final int CARD_STATE_COLOR = Color.WHITE;
+    private SimpleViewHolder.ClickListener mClickListener;
 
-    public void add(Thread s,int position) {
-        position = position == -1 ? getItemCount()  : position;
-        mData.add(position,s);
-        notifyItemInserted(position);
-    }
-
-    public void remove(int position){
-        if (position < getItemCount()  ) {
-            mData.remove(position);
-            notifyItemRemoved(position);
-        }
-    }
-
-    public static class SimpleViewHolder extends RecyclerView.ViewHolder {
-        public final TextView title;
-        public final TextView unread;
-        public final TextView message;
-        public final TextView date;
-        public final CardView card;
-        public final de.hdodenhof.circleimageview.CircleImageView profile;
-
-        public SimpleViewHolder(View view) {
-            super(view);
-            title = (TextView) view.findViewById(R.id.sender);
-            unread = (TextView) view.findViewById(R.id.unread);
-            message = (TextView) view.findViewById(R.id.message);
-            date = (TextView) view.findViewById(R.id.date);
-            card = (CardView) view.findViewById(R.id.card);
-            profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
-        }
-
-        public interface ClickListener {
-            public void onItemClicked(int position);
-            public boolean onItemLongClicked(int position);
-        }
-    }
-
-    RecyclerView mRecyclerView;
-
-    public SimpleAdapter(Context context, ArrayList<Thread> data, RecyclerView recyclerView) {
-        mRecyclerView = recyclerView;
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                //invalidate();
-            }
-        });
-        mMultiSelector = new MultiSelector();
+    public SimpleAdapter(Context context, ArrayList<Thread> data) {
+        mClickListener = (SimpleViewHolder.ClickListener) context;
         mContext = context;
         mData = data;
     }
 
+    public void add(Thread s,int position) {
+        position = position == -1 ? getItemCount()  : position;
+        mData.add(position, s);
+        notifyItemInserted(position);
+    }
+
+    public void removeItem(int position) {
+        mData.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public void removeItems(List<Integer> positions) {
+        // Reverse-sort the list
+        Collections.sort(positions, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer lhs, Integer rhs) {
+                return rhs - lhs;
+            }
+        });
+
+        // Split the list in ranges
+        while (!positions.isEmpty()) {
+            if (positions.size() == 1) {
+                removeItem(positions.get(0));
+                positions.remove(0);
+            } else {
+                int count = 1;
+                while (positions.size() > count && positions.get(count).equals(positions.get(count - 1) - 1)) {
+                    ++count;
+                }
+
+                if (count == 1) {
+                    removeItem(positions.get(0));
+                } else {
+                    removeRange(positions.get(count - 1), count);
+                }
+
+                for (int i = 0; i < count; ++i) {
+                    positions.remove(0);
+                }
+            }
+        }
+        clearSelection();
+        invalidate();
+    }
+
+    void invalidate(){
+        for (int i=0; i<mData.size(); i++) {
+            notifyItemChanged(i);
+        }
+    }
+
+    private void removeRange(int positionStart, int itemCount) {
+        for (int i = 0; i < itemCount; ++i) {
+            mData.remove(positionStart);
+        }
+        notifyItemRangeRemoved(positionStart, itemCount);
+    }
+
     public SimpleViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-        return new SimpleViewHolder(view);
+        return new SimpleViewHolder(view, mClickListener);
     }
 
     @Override
     public void onBindViewHolder(final SimpleViewHolder holder, final int position) {
         holder.message.setText(mData.get(position).mMessagesPeek);
         holder.date.setText(mData.get(position).mTimeStamp);
+        holder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
         if (mData.get(position).mUnreadCount>0){
             holder.title.setText(mData.get(position).mSender);
@@ -118,12 +133,11 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
             holder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
             holder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
             holder.date.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-
         }
 
-        holder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+        boolean isSelected = isSelected(position);
 
-        if (mMultiSelector.selectMode()) {
+        if (selectMode()) {
             holder.profile.setImageResource(android.R.color.transparent);
         } else {
             ProfileDrawable border = new ProfileDrawable(mContext,
@@ -132,34 +146,7 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
                     mData.get(position).mDrawable);
             holder.profile.setImageDrawable(border);
         }
-        holder.profile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean selected = mMultiSelector.selectMode();
-                holder.profile.setActivated(!holder.profile.isActivated());
-                if (mMultiSelector.selectMode()) {
-                    holder.profile.setImageResource(android.R.color.transparent);
-                } else {
-                    ProfileDrawable border = new ProfileDrawable(mContext,
-                            mData.get(position).mSender.charAt(0),
-                            mData.get(position).mColor,
-                            mData.get(position).mDrawable);
-                    holder.profile.setImageDrawable(border);
-                }
-                if (holder.profile.isActivated()) {
-                    holder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
-                } else {
-                    holder.card.setCardBackgroundColor(CARD_STATE_COLOR);
-                }
-                mMultiSelector.setItemChecked(position, holder.profile.isActivated());
-                if (selected != mMultiSelector.selectMode()) {
-                    notifyDataSetChanged();
-                    //invalidate();
-                }
-            }
-        });
 
-        boolean isSelected = mMultiSelector.isItemChecked(position);
         holder.profile.setActivated(isSelected);
         if (isSelected) {
             holder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
@@ -169,45 +156,60 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleView
 
     }
 
-//    private void invalidate() {
-//        for(int i=0; i<mData.size()+3; i++) {
-//            Log.d("Simple Adapter", "pos: "+i);
-//            if (mRecyclerView.findViewHolderForAdapterPosition(i) instanceof SimpleViewHolder) {
-//                SimpleViewHolder holder = (SimpleViewHolder) mRecyclerView.findViewHolderForAdapterPosition(i);
-//                if (mMultiSelector.selectMode()) {
-//                    Log.d("Simple Adapter", "simple holder: "+i);
-//                    holder.profile.setImageResource(android.R.color.transparent);
-//                } else {
-//                    //ProfileDrawable border = new ProfileDrawable(mContext, mData.get(i).mSender.charAt(0));
-//                    //holder.profile.setImageDrawable(border);
-//                }
-//            }
-//        }
-//    }
-
-
     @Override
     public int getItemCount() {
         return mData.size();
     }
 
-    public class MultiSelector {
-        private SparseBooleanArray mSelectedPositions = new SparseBooleanArray();
+    public static class SimpleViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
+            View.OnLongClickListener {
+        public final TextView title;
+        public final TextView unread;
+        public final TextView message;
+        public final TextView date;
+        public final CardView card;
+        public final de.hdodenhof.circleimageview.CircleImageView profile;
+        private ClickListener mListener;
 
-        private boolean selectMode(){
-            return mSelectedPositions.size()>0;
+        public SimpleViewHolder(View view, ClickListener listener) {
+            super(view);
+            title = (TextView) view.findViewById(R.id.sender);
+            unread = (TextView) view.findViewById(R.id.unread);
+            message = (TextView) view.findViewById(R.id.message);
+            date = (TextView) view.findViewById(R.id.date);
+            card = (CardView) view.findViewById(R.id.card);
+            profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
+
+            mListener = listener;
+
+            profile.setOnClickListener(this);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
-
-        private void setItemChecked(int position, boolean isChecked) {
-            if (isChecked) {
-                mSelectedPositions.put(position, true);
-            } else {
-                mSelectedPositions.delete(position);
+        @Override
+        public void onClick(View v) {
+            if (mListener != null) {
+                if (v instanceof de.hdodenhof.circleimageview.CircleImageView) {
+                    mListener.onProfileClicked(getAdapterPosition());
+                } else {
+                    mListener.onItemClicked(getAdapterPosition());
+                }
             }
         }
 
-        private boolean isItemChecked(int position) {
-            return mSelectedPositions.get(position);
+        @Override
+        public boolean onLongClick(View v) {
+            if (mListener != null) {
+                return mListener.onItemLongClicked(getAdapterPosition());
+            }
+
+            return false;
+        }
+
+        public interface ClickListener {
+            void onProfileClicked(int position);
+            void onItemClicked(int position);
+            boolean onItemLongClicked(int position);
         }
     }
 }
