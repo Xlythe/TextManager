@@ -58,12 +58,6 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mAdapter = new SimpleAdapter(this, list, headers);
 
-//        List<ManagerAdapter.Section> sections = new ArrayList<>();
-//        sections.add(new ManagerAdapter.Section(0,"Today"));
-//        sections.add(new ManagerAdapter.Section(2,"Yesterday"));
-//        sections.add(new ManagerAdapter.Section(7,"November"));
-//        sections.add(new ManagerAdapter.Section(list.size(), ""));
-
         mRecyclerView.setAdapter(mAdapter);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
