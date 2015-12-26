@@ -119,6 +119,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
 
         @Override
         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            mRecyclerView.setNestedScrollingEnabled(false);
             mAppbar.setExpanded(true);
             return false;
         }
@@ -137,8 +138,10 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
 
         @Override
         public void onDestroyActionMode(ActionMode mode) {
-            mAdapter.clearSelection();
+            mAdapter.removeItems(null);
+            mode.finish();
             mActionMode = null;
+            mRecyclerView.setNestedScrollingEnabled(true);
         }
     }
 

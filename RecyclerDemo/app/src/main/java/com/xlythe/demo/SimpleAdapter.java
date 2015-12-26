@@ -63,32 +63,34 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
 
     public void removeItems(List<Integer> positions) {
         // Reverse-sort the list
-        Collections.sort(positions, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer lhs, Integer rhs) {
-                return rhs - lhs;
-            }
-        });
-
-        // Split the list in ranges
-        while (!positions.isEmpty()) {
-            if (positions.size() == 1) {
-                removeItem(positions.get(0));
-                positions.remove(0);
-            } else {
-                int count = 1;
-                while (positions.size() > count && positions.get(count).equals(positions.get(count - 1) - 1)) {
-                    ++count;
+        if (positions!=null) {
+            Collections.sort(positions, new Comparator<Integer>() {
+                @Override
+                public int compare(Integer lhs, Integer rhs) {
+                    return rhs - lhs;
                 }
+            });
 
-                if (count == 1) {
+            // Split the list in ranges
+            while (!positions.isEmpty()) {
+                if (positions.size() == 1) {
                     removeItem(positions.get(0));
-                } else {
-                    removeRange(positions.get(count - 1), count);
-                }
-
-                for (int i = 0; i < count; ++i) {
                     positions.remove(0);
+                } else {
+                    int count = 1;
+                    while (positions.size() > count && positions.get(count).equals(positions.get(count - 1) - 1)) {
+                        ++count;
+                    }
+
+                    if (count == 1) {
+                        removeItem(positions.get(0));
+                    } else {
+                        removeRange(positions.get(count - 1), count);
+                    }
+
+                    for (int i = 0; i < count; ++i) {
+                        positions.remove(0);
+                    }
                 }
             }
         }

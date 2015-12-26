@@ -8,11 +8,11 @@
         <item name="android:windowContentTransitions">true</item>
 
         <!-- specify enter and exit transitions -->
-        <item name="android:windowEnterTransition">@android:transition/slide_bottom</item>
-        <item name="android:windowExitTransition">@android:transition/fade</item>
+        <item name="android:windowEnterTransition">@transition/window_slide</item>
     </style>
 
     <style name="AppTheme.NoActionBar.compose.edit">
-        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <!--<item name="android:windowDrawsSystemBarBackgrounds">false</item>-->
     </style>
 </resources>

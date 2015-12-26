@@ -18,7 +18,6 @@ public class EditTextActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_text);
-        getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
 
         final EditText field = (EditText) findViewById(R.id.field);
 
