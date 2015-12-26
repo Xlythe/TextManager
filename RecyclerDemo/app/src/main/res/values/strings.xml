@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Fetch</string>
+    <string name="compose">Compose</string>
     <string name="action_search">Search</string>
+    <string name="action_send">Send</string>
     <string name="action_remove">Remove</string>
 </resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:transitionName="edit_text"
+        android:id="@+id/field"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_width="match_parent"
+        android:singleLine="true"
+        android:background="@android:color/transparent"
+        android:layout_height="58dp"
+        android:textColorHint="#6B000000"
+        android:textSize="16sp"
+        android:hint="To">
+        <requestFocus/>
+    </EditText>
+    <View
+        style="@style/Divider"/>
+</LinearLayout>

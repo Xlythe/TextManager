@@ -1,5 +1,6 @@
 package com.xlythe.demo;
 
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -64,8 +65,8 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Compose not yet added", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent i = new Intent(getApplicationContext(), ComposeActivity.class);
+                startActivity(i);
             }
         });
     }
