@@ -3,6 +3,7 @@ package com.xlythe.demo;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -15,7 +16,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener {
     RecyclerView mRecyclerView;
@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
 
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
+    private AppBarLayout mAppbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
         ArrayList<Thread> list = new ArrayList<>();
         list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6, getColor(R.color.icon)));
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
 
         @Override
         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            mAppbar.setExpanded(true);
             return false;
         }
 

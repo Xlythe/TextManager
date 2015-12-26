@@ -13,7 +13,6 @@
     </style>
 
     <style name="AppTheme.NoActionBar.compose.edit">
-        <!--<item name="android:windowDrawsSystemBarBackgrounds">false</item>-->
-        <item name="android:statusBarColor">@android:color/holo_red_dark</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
     </style>
 </resources>

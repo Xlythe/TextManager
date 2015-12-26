@@ -26,7 +26,8 @@
                 android:value="com.xlythe.demo.MainActivity" />
         </activity>
         <activity android:name=".EditTextActivity"
-            android:theme="@style/AppTheme.NoActionBar.compose.edit" >
+            android:theme="@style/AppTheme.NoActionBar.compose.edit"
+            android:windowSoftInputMode="stateVisible|adjustNothing">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.demo.ComposeActivity" />
