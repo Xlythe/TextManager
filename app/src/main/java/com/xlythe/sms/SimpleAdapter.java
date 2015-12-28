@@ -2,28 +2,19 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.InputStream;
+import com.xlythe.textmanager.text.Thread;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -41,7 +32,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
     private final int CARD_STATE_COLOR = Color.WHITE;
     private SimpleViewHolder.ClickListener mClickListener;
 
-    public SimpleAdapter(Context context, ArrayList<Thread> data, ArrayList<Section> headers) {
+    public SimpleAdapter(Context context, List<Thread> data, ArrayList<Section> headers) {
         mClickListener = (SimpleViewHolder.ClickListener) context;
         mContext = context;
         mData = data;
@@ -128,23 +119,27 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         if (holder instanceof SimpleViewHolder) {
             Thread data = (Thread) mData.get(position);
             SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
-            simpleHolder.message.setText(data.mMessagesPeek);
-            simpleHolder.date.setText(data.mTimeStamp);
+            simpleHolder.message.setText(data.getBody());
+            simpleHolder.date.setText(data.getDate()+"");
             simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
-            if (data.mUnreadCount > 0) {
-                simpleHolder.title.setText(data.mSender);
+            int unread=0; //TODO: getUnread()
+            int color=mContext.getColor(R.color.colorPrimary); //TODO: color
+            Bitmap drawable=null; //TODO: drawable
+
+            if (unread > 0) {
+                simpleHolder.title.setText(data.getAddress());
                 simpleHolder.unread.setVisibility(View.VISIBLE);
-                simpleHolder.unread.setText(data.mUnreadCount + " new");
-                simpleHolder.unread.setTextColor(data.mColor);
-                simpleHolder.unread.getBackground().setColorFilter(data.mColor, PorterDuff.Mode.SRC_IN);
+                simpleHolder.unread.setText(unread + " new");
+                simpleHolder.unread.setTextColor(color);
+                simpleHolder.unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 simpleHolder.unread.getBackground().setAlpha(25);
-                simpleHolder.title.setTextColor(data.mColor);
+                simpleHolder.title.setTextColor(color);
                 simpleHolder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             } else {
-                simpleHolder.title.setText(data.mSender);
+                simpleHolder.title.setText(data.getAddress());
                 simpleHolder.unread.setVisibility(View.GONE);
                 simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
                 simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
@@ -157,11 +152,13 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             if (selectMode()) {
                 simpleHolder.profile.setImageResource(android.R.color.transparent);
             } else {
-                ProfileDrawable border = new ProfileDrawable(mContext,
-                        data.mSender.charAt(0),
-                        data.mColor,
-                        data.mDrawable);
-                simpleHolder.profile.setImageDrawable(border);
+                if (data.getAddress()!=null) {
+                    ProfileDrawable border = new ProfileDrawable(mContext,
+                            data.getAddress().charAt(0),
+                            color,
+                            drawable);
+                    simpleHolder.profile.setImageDrawable(border);
+                }
             }
 
             simpleHolder.profile.setActivated(isSelected);

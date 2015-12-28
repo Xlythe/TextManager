@@ -15,12 +15,14 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.xlythe.textmanager.text.TextManager;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener {
-    RecyclerView mRecyclerView;
-    SimpleAdapter mAdapter;
-
+    private RecyclerView mRecyclerView;
+    private SimpleAdapter mAdapter;
+    private TextManager mManager;
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
     private AppBarLayout mAppbar;
@@ -33,33 +35,20 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         setSupportActionBar(toolbar);
         mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
-        ArrayList<Thread> list = new ArrayList<>();
-//        list.add(new Thread("Will Harmon", "How\'s it going, did you get the ...", "10 min", null, 6, getColor(R.color.icon)));
-//        Thread oriana = new Thread("Oriana", "picture", "2:17pm", null, 0, getColor(R.color.icon));
-//        oriana.mDrawable = BitmapFactory.decodeResource(getResources(), R.drawable.oriana);
-//        list.add(oriana);
-//        list.add(new Thread("Mom", "Random message to show this off ...", "6:22pm", null, 0, getColor(R.color.purple)));
-//        list.add(new Thread("(216) 283-3928", "Hopefully Will likes this new design ...", "1:05pm", null, 1, getColor(R.color.pink)));
-//        list.add(new Thread("Josh Cheston", "Make nick stop", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Alex Goldstein", "hi", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Natalie", "The language!", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Tim Nerozzi", "My only big gripe is that Chewbacca ...", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Alex Bourdakos", "I agree", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Cyrus Basseri", "Unless you just want it to be on your ...", "10 min", null, 0, getColor(R.color.icon)));
-//        list.add(new Thread("Mark Steffl", "Noice", "10 min", null, 0, getColor(R.color.icon)));
+        mManager = TextManager.getInstance(getBaseContext());
 
         ArrayList<Section> headers = new ArrayList<>();
-        headers.add(new Section(0+headers.size(),"Today"));
-        headers.add(new Section(2+headers.size(),"Yesterday"));
-        headers.add(new Section(7+headers.size(),"November"));
-        headers.add(new Section(list.size()+headers.size(),""));
+//        headers.add(new Section(0+headers.size(),"Today"));
+//        headers.add(new Section(2+headers.size(),"Yesterday"));
+//        headers.add(new Section(7+headers.size(),"November"));
+//        headers.add(new Section(list.size()+headers.size(),""));
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
-        mAdapter = new SimpleAdapter(this, list, headers);
+        mAdapter = new SimpleAdapter(this, mManager.getThreads(), headers);
 
         mRecyclerView.setAdapter(mAdapter);
 
