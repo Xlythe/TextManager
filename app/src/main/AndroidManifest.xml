@@ -29,7 +29,7 @@
 
         <!-- BroadcastReceiver that listens for incoming SMS messages -->
         <receiver
-            android:name=".SmsReceiver"
+            android:name=".receiver.SmsReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS" >
@@ -40,7 +40,7 @@
 
         <!-- BroadcastReceiver that listens for incoming MMS messages -->
         <receiver
-            android:name=".MmsReceiver"
+            android:name=".receiver.MmsReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH" >
@@ -65,7 +65,7 @@
 
         <!-- Activity that allows the user to send new SMS/MMS messages -->
         <activity
-            android:name=".ComposeActivity"
+            android:name=".ComposeActivity2"
             android:label="@string/title_activity_compose_sms"
             android:windowSoftInputMode="stateHidden" >
             <intent-filter>
@@ -103,7 +103,7 @@
 
         <!-- Service that delivers messages from the phone "quick response" -->
         <service
-            android:name=".HeadlessSmsSendService"
+            android:name=".service.HeadlessSmsSendService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >

@@ -1,56 +1,66 @@
 package com.xlythe.sms;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
+import android.content.Intent;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 
-import com.xlythe.textmanager.text.Text;
-import com.xlythe.textmanager.text.TextManager;
+public class ComposeActivity extends AppCompatActivity {
 
-
-public class ComposeActivity extends Activity {
-
-    private Button mSend;
-    private EditText mNumber;
-    private EditText mMessage;
+    private TextView mContacts;
+    private Activity mActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compose);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mSend = (Button) findViewById(R.id.send);
-        mNumber = (EditText) findViewById(R.id.number);
-        mMessage = (EditText) findViewById(R.id.message);
+        mContacts = (TextView) findViewById(R.id.contacts);
+        mActivity = this;
 
-        mSend.setOnClickListener(new View.OnClickListener() {
+        mContacts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TextManager manager = TextManager.getInstance(getBaseContext());
-                manager.send(new Text.Builder()
-                                .message(mMessage.getText().toString())
-                                .recipient(mNumber.getText().toString())
-                                .build()
-                );
-                mMessage.setText("");
+                Intent intent = new Intent(getApplicationContext(), EditTextActivity.class);
+                ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
+                        Pair.create((View) mContacts, "edit_text"));
+                startActivityForResult(intent, 0, options.toBundle());
             }
         });
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        ((TextView) mContacts.findViewById(R.id.contacts)).setText(intent.getStringExtra("ITEM_ID"));
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_compose, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+
+        if (id == R.id.action_send) {
+            Snackbar.make(findViewById(R.id.toolbar), "Send message", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
             return true;
         }
 
