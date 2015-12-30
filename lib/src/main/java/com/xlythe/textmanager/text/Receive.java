@@ -14,6 +14,8 @@ import android.text.TextUtils;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.help.ApnDefaults;
+import com.xlythe.textmanager.help.HttpUtils;
 
 import java.io.IOException;
 import java.util.Calendar;
