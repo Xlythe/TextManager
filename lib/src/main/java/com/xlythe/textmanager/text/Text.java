@@ -20,24 +20,15 @@ import java.util.List;
  * Either an sms or an mms
  */
 public class Text implements Message {
-    @SuppressLint("NewApi")
     private static final String[] MMS_PROJECTION = new String[]{
-            BaseColumns._ID,
-            Telephony.Mms.Part.CONTENT_TYPE,
-            Telephony.Mms.Part.TEXT,
-            Telephony.Mms.Part._DATA
-    };
-    private static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
-            BaseColumns._ID,
-            "ct",
-            "text",
-            "_data"
+            Mock.Telephony.MmsSms._ID,
+            Mock.Telephony.MmsSms.CONTENT_TYPE,
+            Mock.Telephony.MmsSms.TEXT,
+            Mock.Telephony.MmsSms._DATA
     };
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
-
-
 
     private long mId;
     private long mThreadId;
@@ -152,7 +143,7 @@ public class Text implements Message {
                 Uri messageUri = Uri.parse("content://" + mId + "/part");
                 inner = context.getContentResolver().query(
                         messageUri,
-                        MMS_PROJECTION_PRE_LOLLIPOP,
+                        MMS_PROJECTION,
                         "mid" + " = ?",
                         new String[]{String.valueOf(mMmsId)},
                         null

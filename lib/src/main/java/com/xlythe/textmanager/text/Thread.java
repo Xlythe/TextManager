@@ -22,24 +22,15 @@ import java.util.List;
  * An SMS conversation
  */
 public class Thread implements MessageThread<Text>, Serializable {
-    @SuppressLint("NewApi")
     static final String[] MMS_PROJECTION = new String[] {
-            BaseColumns._ID,
-            Telephony.Mms.Part.CONTENT_TYPE,
-            Telephony.Mms.Part.TEXT,
-            Telephony.Mms.Part._DATA
-    };
-    static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
-            BaseColumns._ID,
-            "ct",
-            "text",
-            "_data"
+            Mock.Telephony.MmsSms._ID,
+            Mock.Telephony.MmsSms.CONTENT_TYPE,
+            Mock.Telephony.MmsSms.TEXT,
+            Mock.Telephony.MmsSms._DATA
     };
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long MILLI_TO_SEC = 1000;
-
-
 
     private long mId;
     private long mThreadId;
@@ -47,8 +38,6 @@ public class Thread implements MessageThread<Text>, Serializable {
     private String mAddress;
     private String mBody;
     private Uri mAttachment;
-
-
 
     protected Thread(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
@@ -158,7 +147,7 @@ public class Thread implements MessageThread<Text>, Serializable {
             Uri messageUri = Uri.parse("content://" + _id + "/part");
             inner = context.getContentResolver().query(
                     messageUri,
-                    MMS_PROJECTION_PRE_LOLLIPOP,
+                    MMS_PROJECTION,
                     "mid" + " = ?",
                     new String[]{String.valueOf((data.getLong(data.getColumnIndex(Telephony.Mms._ID))))},
                     null

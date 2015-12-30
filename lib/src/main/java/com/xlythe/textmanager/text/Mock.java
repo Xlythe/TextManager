@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import android.provider.BaseColumns;
+import android.provider.Telephony;
 
 /**
  * Created by Niko on 12/30/15.
@@ -22,6 +23,9 @@ public class Mock {
             public static String DEFAULT_SORT_ORDER;
             public static String CONTENT_URI;
             public static String STATUS;
+            public static String CONTENT_TYPE;
+            public static String TEXT;
+            public static String _DATA;
             public static int STATUS_COMPLETE;
             public static int STATUS_FAILED;
             public static int STATUS_PENDING;
@@ -41,6 +45,9 @@ public class Mock {
                     DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.DEFAULT_SORT_ORDER;
                     CONTENT_URI = String.valueOf(android.provider.Telephony.Sms.Sent.CONTENT_URI);
                     STATUS = android.provider.Telephony.Sms.Sent.STATUS;
+                    CONTENT_TYPE = android.provider.Telephony.Mms.Part.CONTENT_TYPE;
+                    TEXT = android.provider.Telephony.Mms.Part.TEXT;
+                    _DATA = android.provider.Telephony.Mms.Part._DATA;
                     STATUS_COMPLETE = android.provider.Telephony.Sms.Sent.STATUS_COMPLETE;
                     STATUS_FAILED = android.provider.Telephony.Sms.Sent.STATUS_FAILED;
                     STATUS_PENDING = android.provider.Telephony.Sms.Sent.STATUS_PENDING;
@@ -59,6 +66,9 @@ public class Mock {
                     DEFAULT_SORT_ORDER = "date DESC";
                     CONTENT_URI = "content://sms/sent";
                     STATUS = "status";
+                    CONTENT_TYPE = "ct";
+                    TEXT = "text";
+                    _DATA = "_data";
                     STATUS_COMPLETE = 0;
                     STATUS_FAILED = 64;
                     STATUS_PENDING = 32;
