@@ -13,6 +13,7 @@ import android.os.PowerManager;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.widget.ImageView;
 
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
@@ -112,10 +113,11 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 PduPart part = body.getPart(i);
                                 byte[] bitmapdata = part.getData();
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
+                                ImageAttachment image = new ImageAttachment(bitmap);
                                 onMessageReceived(mContext, new Text.Builder()
                                         .message("")
                                         .recipient("")
-                                        .attach(bitmap)
+                                        .attach(image)
                                         .build());
                             }
                         }

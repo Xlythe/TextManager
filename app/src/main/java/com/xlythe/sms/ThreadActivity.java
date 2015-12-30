@@ -21,7 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
-import com.xlythe.sms.adapter.TextCursorAdapter;
+//import com.xlythe.sms.adapter.TextCursorAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.FaceFragment;
 import com.xlythe.sms.fragment.LocationFragment;
@@ -55,7 +55,7 @@ public class ThreadActivity extends FragmentActivity {
     private PagerAdapter mPagerAdapter;
     private LinearLayout mTabBar;
 
-    private TextCursorAdapter mTextAdapter;
+    //private TextCursorAdapter mTextAdapter;
     private ListView mListView;
     private ImageButton mSend;
     private EditText mMessage;
@@ -106,8 +106,8 @@ public class ThreadActivity extends FragmentActivity {
         // Set tab bar color
         mTabBar.setBackground(new ColorDrawable(ColorUtils.getColor(mThreadId)));
 
-        mTextAdapter = new TextCursorAdapter(getBaseContext(),mManager.getCursor(mThreadId));
-        mListView.setAdapter(mTextAdapter);
+        //mTextAdapter = new TextCursorAdapter(getBaseContext(),mManager.getCursor(mThreadId));
+        //mListView.setAdapter(mTextAdapter);
 
         // Delete a message on long press.
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

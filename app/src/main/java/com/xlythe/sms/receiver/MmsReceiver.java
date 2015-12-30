@@ -11,6 +11,7 @@ import android.support.v4.app.TaskStackBuilder;
 
 import com.xlythe.sms.ManagerActivity;
 import com.xlythe.sms.R;
+import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 
 public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
@@ -22,9 +23,9 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
-                        .setLargeIcon(text.getAttachments().get(0))
+                        .setLargeIcon(((ImageAttachment) text.getAttachments().get(0)).getBitmap())
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getAddress())
+                        .setContentTitle(text.getSender().getDisplayName())
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
@@ -33,9 +34,9 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                         .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
 
         NotificationCompat.BigPictureStyle notiStyle = new NotificationCompat.BigPictureStyle();
-        notiStyle.setBigContentTitle(text.getAddress());
+        notiStyle.setBigContentTitle(text.getSender().getDisplayName());
         notiStyle.setSummaryText(text.getBody());
-        notiStyle.bigPicture(text.getAttachments().get(0));
+        notiStyle.bigPicture(((ImageAttachment) text.getAttachments().get(0)).getBitmap());
         builder.setStyle(notiStyle);
 
 

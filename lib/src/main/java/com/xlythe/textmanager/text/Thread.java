@@ -9,21 +9,19 @@ import android.provider.Telephony;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * An SMS conversation
  */
-public class Thread implements MessageThread<Text>, Serializable, Comparable {
-    private static final String TYPE_SMS = "sms";
-    private static final String TYPE_MMS = "mms";
-    private static final long MILLI_TO_SEC = 1000;
-
+public class Thread implements MessageThread<Text>, Serializable {
     @SuppressLint("NewApi")
     static final String[] MMS_PROJECTION = new String[] {
             BaseColumns._ID,
@@ -31,13 +29,17 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
             Telephony.Mms.Part.TEXT,
             Telephony.Mms.Part._DATA
     };
-
     static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
             BaseColumns._ID,
             "ct",
             "text",
             "_data"
     };
+    private static final String TYPE_SMS = "sms";
+    private static final String TYPE_MMS = "mms";
+    private static final long MILLI_TO_SEC = 1000;
+
+
 
     private long mId;
     private long mThreadId;
@@ -46,13 +48,15 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
     private String mBody;
     private Uri mAttachment;
 
-    protected Thread(Context context, Cursor cursor, String myNumber) {
+
+
+    protected Thread(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             parseSmsMessage(cursor);
         }
         else if (TYPE_MMS.equals(type)){
-            parseMmsMessage(context, cursor, myNumber);
+            parseMmsMessage(context, cursor);
         }
         else {
             Log.w("TelephonyProvider", "Unknown Message Type");
@@ -101,7 +105,7 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
         }
     }
 
-    private void parseMmsMessage(Context context, Cursor data, String myNumber) {
+    private void parseMmsMessage(Context context, Cursor data) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         long _id = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         Uri addressUri;
@@ -132,9 +136,9 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
                 address = addr.getString(addr.getColumnIndex("address"));
             }
             // Don't add our own number to the displayed list
-            if (myNumber == null || !address.contains(myNumber)) {
+//            if (myNumber == null || !address.contains(myNumber)) {
                 recipients.add(address);
-            }
+//            }
         }
         mAddress = TextUtils.join(",", recipients);
         addr.close();
@@ -192,40 +196,23 @@ public class Thread implements MessageThread<Text>, Serializable, Comparable {
         inner.close();
     }
 
-    public long getId(){
-        return mId;
-    }
-
-    public long getThreadId(){
-        return mThreadId;
-    }
-
-    public long getDate(){
-        return mDate;
-    }
-
-    public String getAddress(){
-        return mAddress;
-    }
-
-    public String getBody(){
-        return mBody;
-    }
-
-    public Uri getAttachment() {
-        return mAttachment;
+    @Override
+    public String getId(){
+        return Long.toString(mThreadId);
     }
 
     @Override
-    public int compareTo(Object o) {
-        float myDate = getDate();
-        float theirDate = ((Thread) o).getDate();
-        if(myDate > theirDate) {
-            return -1;
-        }
-        if(theirDate > myDate) {
-            return 1;
-        }
+    public int getCount() {
         return 0;
+    }
+
+    @Override
+    public int getUnreadCount() {
+        return 0;
+    }
+
+    @Override
+    public Text getLatestMessage() {
+        return null;
     }
 }

@@ -13,7 +13,7 @@ public class DateFormatter {
     private static final long ONE_MONTH = 4 * ONE_WEEK;
 
     public static String getFormattedDate(Thread thread) {
-        long date = thread.getDate();
+        long date = 0;//thread.getDate();
         long time = System.currentTimeMillis() - date;
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
 
@@ -54,7 +54,7 @@ public class DateFormatter {
     }
 
     public static String getFormattedDate(Text text) {
-        long date = text.getDate();
+        long date = text.getTimestamp();
         long time = System.currentTimeMillis() - date;
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
 

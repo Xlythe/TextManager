@@ -1,50 +1,42 @@
 package com.xlythe.textmanager;
 
+import android.database.Cursor;
+
 import java.util.List;
 
 /**
  * A generic interface for managing messages
  */
 public interface MessageManager<M extends Message, T extends MessageThread, U extends User> {
-    /**
-     * Return all message threads
-     * */
+    List<M> getMessages(String threadId);
+    Cursor getMessagesCursor(String threadId);
+    List<M> getMessages(T thread);
+    Cursor getMessagesCursor(T thread);
+    M getMessage(String messageId);
+
     List<T> getThreads();
+    Cursor getThreadsCursor();
+    T getThread(String threadId);
 
-    /**
-     * Return all message threads
-     * */
-    void getThreads(MessageCallback<List<T>> callback);
+    void deleteMessage(String messageId);
+    void deleteMessages(String... messageIds);
+    void deleteMessage(M message);
+    void deleteMessages(M... messages);
 
-    /**
-     * Get the messages sorted by date
-     * */
-    List<M> getMessages(long threadId);
+    void deleteThread(String threadId);
+    void deleteThreads(String... threadIds);
+    void deleteThread(T thread);
+    void deleteThreads(T... threads);
 
-    /**
-     * Get the messages sorted by date
-     * */
-    void getMessages(long threadId, MessageCallback<List<M>> callback);
+    void MarkMessageAsRead(String messageId);
+    void MarkMessagesAsRead(String... messageId);
+    void MarkMessageAsRead(M message);
+    void MarkMessagesAsRead(M... message);
 
-    /**
-     * Register an observer to get callbacks every time messages are added, deleted, or changed.
-     * */
-    void registerObserver(MessageObserver observer);
-
-    /**
-     * Remove a registered observer
-     * */
-    void unregisterObserver(MessageObserver observer);
-
-    /**
-     * Return all messages containing the text.
-     * */
-    List<M> search(String text);
-
-    /**
-     * Return all messages containing the text.
-     * */
-    void search(String text, MessageCallback<List<M>> callback);
+    void MarkThreadAsRead(String threadId);
+    void MarkThreadsAsRead(String... threadId);
+    void MarkThreadAsRead(T thread);
+    void MarkThreadsAsRead(T... thread);
 
     void send(M message);
 }

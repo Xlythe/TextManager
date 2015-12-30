@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
@@ -33,6 +34,7 @@ public class Contact implements User {
     private String mCustomRingtone;
 
     protected Contact(Cursor c, String address) {
+        //TODO: can probably use number instead of address
         mAddress = address;
         if(c.moveToFirst()) {
             mId = c.getString(c.getColumnIndex("_id"));
@@ -58,12 +60,23 @@ public class Contact implements User {
         c.close();
     }
 
+    //TODO: add more methods from the contacts app
+
+    public String getNumber() {
+        //TODO: check is hasNumber()
+        return mNumber;
+    }
+
     public String getDisplayName() {
         return hasName() ? mDisplayName : mAddress;
     }
 
     public boolean hasName() {
         return mDisplayName != null;
+    }
+
+    public Bitmap getPhoto() {
+        return null;
     }
 
     public Uri getPhotoThumbUri(){

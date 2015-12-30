@@ -23,7 +23,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getAddress())
+                        .setContentTitle(text.getSender().getDisplayName())
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)

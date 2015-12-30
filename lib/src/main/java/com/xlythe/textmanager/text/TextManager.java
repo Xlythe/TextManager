@@ -152,15 +152,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         Cursor c = getCursor();
         if (c.moveToFirst()) {
             do {
-                threads.add(new Thread(getContext(), c, mDeviceNumber));
+                threads.add(new Thread(getContext(), c));
             } while (c.moveToNext());
         }
         c.close();
-        Collections.sort(threads);
+        //Collections.sort(threads);
         return threads;
     }
 
-    @Override
     public void getThreads(final MessageCallback<List<Thread>> callback) {
         // Create a handler so we call back on the same thread we were called on
         final Handler handler = new Handler();
@@ -183,13 +182,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }.start();
     }
 
-    @Override
     public List<Text> getMessages(long threadId) {
         List<Text> messages = new ArrayList<>();
         Cursor c = getCursor(threadId);
         if (c.moveToFirst()) {
             do {
-                messages.add(new Text(getContext(), c, mDeviceNumber));
+                messages.add(new Text(getContext(), c));
             } while (c.moveToNext());
         }
         c.close();
@@ -197,7 +195,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return messages;
     }
 
-    @Override
     public void getMessages(final long threadId, final MessageCallback<List<Text>> callback) {
         // Create a handler so we call back on the same thread we were called on
         final Handler handler = new Handler();
@@ -236,16 +233,16 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 if (c.getPosition() < expiredList.size()) {
                     // If we can, reuse the Text from the expired list
                     Text text = expiredList.get(c.getPosition());
-                    text.invalidate(getContext(), c, mDeviceNumber);
+                    text.invalidate(getContext(), c);
                 } else {
                     // Otherwise, just create a new one
-                    expiredList.add(new Text(getContext(), c, mDeviceNumber));
+                    expiredList.add(new Text(getContext(), c));
                 }
             } while (c.moveToNext());
         }
         c.close();
 
-        Collections.sort(expiredList);
+        //Collections.sort(expiredList);
         return expiredList;
     }
 
@@ -295,26 +292,22 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         ContentValues values = new ContentValues();
         values.put("read", true);
         Uri uri =Uri.parse("content://mms-sms/conversations/");
-        String clausole = "thread_id=" + thread.getThreadId() + " AND read=0";
+        String clausole = "thread_id=" + thread.getId() + " AND read=0";
         mContext.getContentResolver().update(uri, values, clausole, null);
     }
 
-    @Override
     public void registerObserver(MessageObserver observer) {
         mObservers.add(observer);
     }
 
-    @Override
     public void unregisterObserver(MessageObserver observer) {
         mObservers.remove(observer);
     }
 
-    @Override
     public List<Text> search(String text) {
         return new LinkedList<>();
     }
 
-    @Override
     public void search(final String text, final MessageCallback<List<Text>> callback) {
         // Create a handler so we call back on the same thread we were called on
         final Handler handler = new Handler();
@@ -508,7 +501,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "0");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "SMS sent successfully", Toast.LENGTH_SHORT).show();
                         break;
@@ -521,7 +514,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Generic failure cause", Toast.LENGTH_SHORT).show();
                         break;
@@ -534,7 +527,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Service is currently unavailable", Toast.LENGTH_SHORT).show();
                         break;
@@ -547,7 +540,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "No pdu provided", Toast.LENGTH_SHORT).show();
                         break;
@@ -560,7 +553,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             values.put("status", "64");
                             uri = Uri.parse("content://sms/sent");
                         }
-                        Uri.withAppendedPath(uri, Uri.encode(Long.toString(text.getId())));
+                        Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                         getContext().getContentResolver().insert(uri, values);
                         Toast.makeText(getContext(), "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
                         break;
@@ -585,24 +578,36 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(text.getAddress(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
+            sms.sendTextMessage(((Contact)text.getRecipient()).getNumber(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         }
         else {
             Log.e("HI", "should log something!!!!!!!!");
-            sendMediaMessage(text.getAddress(), "no subject", text.getBody(), text.getAttachments(), sentPendingIntent, deliveredPendingIntent);
+            ArrayList<Bitmap> bitmaps = new ArrayList<>();
+            for(Attachment a: text.getAttachments()){
+                Attachment.Type type = a.getType();
+                switch(type) {
+                    case IMAGE:
+                        bitmaps.add(((ImageAttachment) a).getBitmap());
+                        break;
+                }
+
+            }
+
+            //TODO: Add support for generic media
+            sendMediaMessage(((Contact)text.getRecipient()).getNumber(), "no subject", text.getBody(), bitmaps, sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
         Uri uri;
 
         if (android.os.Build.VERSION.SDK_INT >= 19) {
-            values.put(Telephony.Sms.Sent.ADDRESS, text.getAddress());
+            values.put(Telephony.Sms.Sent.ADDRESS, ((Contact)text.getRecipient()).getNumber());
             values.put(Telephony.Sms.Sent.BODY, text.getBody());
             values.put(Telephony.Sms.Sent.STATUS, Telephony.Sms.Sent.STATUS_PENDING);
             uri = Telephony.Sms.Sent.CONTENT_URI;
         }
         else {
-            values.put("address", text.getAddress());
+            values.put("address", ((Contact)text.getRecipient()).getNumber());
             values.put("body", text.getBody());
             values.put("status", "32");
             uri = Uri.parse("content://sms/sent");
@@ -610,40 +615,40 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         getContext().getContentResolver().insert(uri, values);
     }
 
-    public Cursor getContactCursor(Text text) {
-        ContentResolver contentResolver = getContext().getContentResolver();
-        final String[] projection;
-        Uri uri;
+//    public Cursor getContactCursor(Text text) {
+//        ContentResolver contentResolver = getContext().getContentResolver();
+//        final String[] projection;
+//        Uri uri;
+//
+//        if (android.os.Build.VERSION.SDK_INT >= 5) {
+//            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+//            projection = new String[] { "display_name" };
+//        }
+//        else {
+//            uri = Uri.parse("content://contacts/phones/filter");
+//            projection = new String[] { "name" };
+//        }
+//
+//        String s = ((Contact)text.getRecipient()).getNumber();
+//        uri = Uri.withAppendedPath(uri, Uri.encode(((Contact)text.getRecipient()).getNumber()));
+//        return contentResolver.query(uri, null, null, null, null);
+//    }
+//
+//    public Cursor getContactCursor(Thread textThread) {
+//        ContentResolver contentResolver = getContext().getContentResolver();
+//        Uri uri = Uri.parse("content://com.android.contacts/phone_lookup");
+//        uri = Uri.withAppendedPath(uri, Uri.encode(((Contact)textThread.getRecipient()).getNumber()));
+//        return contentResolver.query(uri, null, null, null, null);
+//    }
 
-        if (android.os.Build.VERSION.SDK_INT >= 5) {
-            uri = Uri.parse("content://com.android.contacts/phone_lookup");
-            projection = new String[] { "display_name" };
-        }
-        else {
-            uri = Uri.parse("content://contacts/phones/filter");
-            projection = new String[] { "name" };
-        }
+//    public Contact getSender(Text text) {
+//        return new Contact(getContactCursor(text), text.getAddress());
+//    }
 
-        String s = text.getAddress();
-        uri = Uri.withAppendedPath(uri, Uri.encode(text.getAddress()));
-        return contentResolver.query(uri, null, null, null, null);
-    }
-
-    public Cursor getContactCursor(Thread textThread) {
-        ContentResolver contentResolver = getContext().getContentResolver();
-        Uri uri = Uri.parse("content://com.android.contacts/phone_lookup");
-        uri = Uri.withAppendedPath(uri, Uri.encode(textThread.getAddress()));
-        return contentResolver.query(uri, null, null, null, null);
-    }
-
-    public Contact getSender(Text text) {
-        return new Contact(getContactCursor(text), text.getAddress());
-    }
-
-    public Contact getSender(Thread textThread) {
-        String address = textThread.getAddress();
-        return new Contact(getContactCursor(textThread), address);
-    }
+//    public Contact getSender(Thread textThread) {
+//        String address = textThread.getRecipient();
+//        return new Contact(getContactCursor(textThread), address);
+//    }
 
     private class TextObserver extends ContentObserver {
         TextObserver(Handler handler) {
@@ -661,5 +666,120 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 observer.notifyDataChanged();
             }
         }
+    }
+
+    @Override
+    public List<Text> getMessages(String threadId) {
+        return null;
+    }
+
+    @Override
+    public Cursor getMessagesCursor(String threadId) {
+        return null;
+    }
+
+    @Override
+    public List<Text> getMessages(Thread thread) {
+        return null;
+    }
+
+    @Override
+    public Cursor getMessagesCursor(Thread thread) {
+        return null;
+    }
+
+    @Override
+    public Text getMessage(String messageId) {
+        return null;
+    }
+
+    @Override
+    public Cursor getThreadsCursor() {
+        return null;
+    }
+
+    @Override
+    public Thread getThread(String threadId) {
+        return null;
+    }
+
+    @Override
+    public void deleteMessage(String messageId) {
+
+    }
+
+    @Override
+    public void deleteMessages(String... messageIds) {
+
+    }
+
+    @Override
+    public void deleteMessage(Text message) {
+
+    }
+
+    @Override
+    public void deleteMessages(Text... messages) {
+
+    }
+
+    @Override
+    public void deleteThread(String threadId) {
+
+    }
+
+    @Override
+    public void deleteThreads(String... threadIds) {
+
+    }
+
+    @Override
+    public void deleteThread(Thread thread) {
+
+    }
+
+    @Override
+    public void deleteThreads(Thread... threads) {
+
+    }
+
+    @Override
+    public void MarkMessageAsRead(String messageId) {
+
+    }
+
+    @Override
+    public void MarkMessagesAsRead(String... messageId) {
+
+    }
+
+    @Override
+    public void MarkMessageAsRead(Text message) {
+
+    }
+
+    @Override
+    public void MarkMessagesAsRead(Text... message) {
+
+    }
+
+    @Override
+    public void MarkThreadAsRead(String threadId) {
+
+    }
+
+    @Override
+    public void MarkThreadsAsRead(String... threadId) {
+
+    }
+
+    @Override
+    public void MarkThreadAsRead(Thread thread) {
+
+    }
+
+    @Override
+    public void MarkThreadsAsRead(Thread... thread) {
+
     }
 }

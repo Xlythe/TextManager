@@ -119,8 +119,8 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         if (holder instanceof SimpleViewHolder) {
             Thread data = (Thread) mData.get(position);
             SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
-            simpleHolder.message.setText(data.getBody());
-            simpleHolder.date.setText(data.getDate()+"");
+            simpleHolder.message.setText("body");
+            simpleHolder.date.setText("date");
             simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
             int unread=0; //TODO: getUnread()
@@ -128,7 +128,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             Bitmap drawable=null; //TODO: drawable
 
             if (unread > 0) {
-                simpleHolder.title.setText(data.getAddress());
+                simpleHolder.title.setText("address");
                 simpleHolder.unread.setVisibility(View.VISIBLE);
                 simpleHolder.unread.setText(unread + " new");
                 simpleHolder.unread.setTextColor(color);
@@ -139,7 +139,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
                 simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             } else {
-                simpleHolder.title.setText(data.getAddress());
+                simpleHolder.title.setText("address");
                 simpleHolder.unread.setVisibility(View.GONE);
                 simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
                 simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
@@ -152,9 +152,9 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             if (selectMode()) {
                 simpleHolder.profile.setImageResource(android.R.color.transparent);
             } else {
-                if (data.getAddress()!=null) {
+                if ("address"!=null) {
                     ProfileDrawable border = new ProfileDrawable(mContext,
-                            data.getAddress().charAt(0),
+                            "address".charAt(0),
                             color,
                             drawable);
                     simpleHolder.profile.setImageDrawable(border);

@@ -10,52 +10,55 @@ import android.provider.Telephony;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
+import com.xlythe.textmanager.MessageCallback;
+import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Either an sms or an mms
  */
-public class Text implements Message, Comparable {
-    private static final String TYPE_SMS = "sms";
-    private static final String TYPE_MMS = "mms";
-    private static final long SEC_TO_MILLI = 1000;
-
+public class Text implements Message {
     @SuppressLint("NewApi")
-    static final String[] MMS_PROJECTION = new String[]{
+    private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Telephony.Mms.Part.CONTENT_TYPE,
             Telephony.Mms.Part.TEXT,
             Telephony.Mms.Part._DATA
     };
-
-    static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
+    private static final String[] MMS_PROJECTION_PRE_LOLLIPOP = new String[]{
             BaseColumns._ID,
             "ct",
             "text",
             "_data"
     };
+    private static final String TYPE_SMS = "sms";
+    private static final String TYPE_MMS = "mms";
+    private static final long SEC_TO_MILLI = 1000;
+
+
 
     private long mId;
     private long mThreadId;
     private long mDate;
+    private long mMmsId;
     private String mAddress;
     private String mBody;
     private boolean mIncoming;
-    private Uri mAttachment;
-    private ArrayList<Bitmap> mAttachments = new ArrayList<>();
-    private Context mContext;
     private boolean mIsMms = false;
-    private long mMmsId;
-    private String mMyNumber;
+    private Uri mAttachment;
+    private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
-    private Text() { }
 
-    public Text(Context context, Cursor cursor, String myNumber) {
-        invalidate(context, cursor, myNumber);
+
+    private Text() {}
+
+    public Text(Context context, Cursor cursor) {
+        invalidate(context, cursor);
     }
 
-    void invalidate(Context context, Cursor cursor, String myNumber) {
+    protected void invalidate(Context context, Cursor cursor) {
         mId = -1;
         mThreadId = -1;
         mDate = -1;
@@ -63,9 +66,7 @@ public class Text implements Message, Comparable {
         mBody = null;
         mAttachment = null;
         mMmsId = -1;
-        mMyNumber = null;
 
-        mContext = context.getApplicationContext();
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             mIsMms = false;
@@ -73,7 +74,7 @@ public class Text implements Message, Comparable {
         }
         else if (TYPE_MMS.equals(type)){
             mIsMms = true;
-            parseMmsMessage(context, cursor, myNumber);
+            parseMmsMessage(cursor, context);
         }
         else {
             Log.w("TelephonyProvider", "Unknown Message Type");
@@ -123,7 +124,7 @@ public class Text implements Message, Comparable {
         mIncoming = isIncomingMessage(data, true);
     }
 
-    private void parseMmsMessage(Context context, Cursor data, String myNumber) {
+    private void parseMmsMessage(Cursor data, Context context) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             mThreadId = data.getLong(data.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
@@ -134,69 +135,13 @@ public class Text implements Message, Comparable {
         }
         mIncoming = isIncomingMessage(data, false);
         mMmsId = data.getLong(data.getColumnIndex(Telephony.Mms._ID));
-        mMyNumber = myNumber;
-    }
 
-    private static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
-        int boxId;
-        if (android.os.Build.VERSION.SDK_INT >= 19) {
-            if (isSMS) {
-                boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Sms.TYPE));
-                return (boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_INBOX ||
-                        boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_ALL);
-            }
-            else {
-                boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Mms.MESSAGE_BOX));
-                return (boxId == Telephony.Mms.MESSAGE_BOX_INBOX ||
-                        boxId == Telephony.Mms.MESSAGE_BOX_ALL);
-            }
-        } else {
-            if (isSMS) {
-                boxId = cursor.getInt(cursor.getColumnIndexOrThrow("type"));
-                return (boxId == 0x00000001 || boxId == 0x00000000);
-            }
-            else {
-                boxId = cursor.getInt(cursor.getColumnIndexOrThrow("msg_box"));
-                return (boxId == 0x00000001 || boxId == 0x00000000);
-            }
-        }
-    }
-
-    public boolean isMms() {
-        return mIsMms;
-    }
-
-    public long getId() {
-        return mId;
-    }
-
-    public String getAddress() {
-        return mAddress;
-    }
-
-    public String getBody() {
-        return mBody;
-    }
-
-    public ArrayList<Bitmap> getAttachments() {
-        return mAttachments;
-    }
-
-    public long getDate() {
-        return mDate;
-    }
-
-    public long getThreadId() {
-        return mThreadId;
-    }
-
-    public Uri getAttachment() {
         if (mIsMms && mAttachment == null) {
             // Query all the MMS parts associated with this message
             Cursor inner;
             if (android.os.Build.VERSION.SDK_INT >= 19) {
                 Uri messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/part");
-                inner = mContext.getContentResolver().query(
+                inner = context.getContentResolver().query(
                         messageUri,
                         MMS_PROJECTION,
                         Telephony.Mms.Part.MSG_ID + " = ?",
@@ -205,7 +150,7 @@ public class Text implements Message, Comparable {
                 );
             } else {
                 Uri messageUri = Uri.parse("content://" + mId + "/part");
-                inner = mContext.getContentResolver().query(
+                inner = context.getContentResolver().query(
                         messageUri,
                         MMS_PROJECTION_PRE_LOLLIPOP,
                         "mid" + " = ?",
@@ -244,30 +189,96 @@ public class Text implements Message, Comparable {
             }
             inner.close();
         }
-        return mAttachment;
     }
 
-    public boolean getIncoming() {
-        return mIncoming;
+    private static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
+        int boxId;
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            if (isSMS) {
+                boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Sms.TYPE));
+                return (boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_INBOX ||
+                        boxId == Telephony.TextBasedSmsColumns.MESSAGE_TYPE_ALL);
+            }
+            else {
+                boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Mms.MESSAGE_BOX));
+                return (boxId == Telephony.Mms.MESSAGE_BOX_INBOX ||
+                        boxId == Telephony.Mms.MESSAGE_BOX_ALL);
+            }
+        } else {
+            if (isSMS) {
+                boxId = cursor.getInt(cursor.getColumnIndexOrThrow("type"));
+                return (boxId == 0x00000001 || boxId == 0x00000000);
+            }
+            else {
+                boxId = cursor.getInt(cursor.getColumnIndexOrThrow("msg_box"));
+                return (boxId == 0x00000001 || boxId == 0x00000000);
+            }
+        }
+    }
+
+
+
+    protected boolean isMms() {
+        return mIsMms;
     }
 
     @Override
-    public int compareTo(Object o) {
-        float myDate = getDate();
-        float theirDate = ((Text) o).getDate();
-        if(myDate > theirDate) {
-            return 1;
-        }
-        if(theirDate > myDate) {
-            return -1;
-        }
-        return 0;
+    public String getId() {
+        return Long.toString(mId);
+    }
+
+
+    @Override
+    public String getBody() {
+        return mBody;
+    }
+
+    @Override
+    public long getTimestamp() {
+        return mDate;
+    }
+
+    @Override
+    public String getThreadId() {
+        return Long.toString(mThreadId);
+    }
+
+//    public Uri getAttachment() {
+//        return mAttachment;
+//    }
+//    public String getAddress() {
+//        return mAddress;
+//    }
+
+    public boolean isIncoming() {
+        return mIncoming;
+    }
+
+
+    public ArrayList<Attachment> getAttachments() {
+        return mAttachments;
+    }
+
+
+    @Override
+    public User getSender() {
+        return null;
+    }
+
+    @Override
+    public User getRecipient() {
+        return null;
+    }
+
+    @Override
+    public Status getStatus() {
+        return null;
     }
 
     public static class Builder {
         private String mMessage;
         private String mRecipient;
-        private ArrayList<Bitmap> mAttachments = new ArrayList<>();
+        private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
         public Builder() {
         }
@@ -277,7 +288,7 @@ public class Text implements Message, Comparable {
             return this;
         }
 
-        public Builder attach(Bitmap attachment) {
+        public Builder attach(Attachment attachment) {
             mAttachments.add(attachment);
             return this;
         }

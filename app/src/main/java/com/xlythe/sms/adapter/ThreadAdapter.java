@@ -48,7 +48,7 @@ public class ThreadAdapter extends ArrayAdapter {
 
         // Get name and photo from contacts
         TextManager manager = TextManager.getInstance(mContext);
-        Contact sender = manager.getSender(thread);
+        Contact sender = null;//manager.getSender(thread);
         String name = sender.getDisplayName();
         Uri photo = sender.getPhotoUri();
 
@@ -60,7 +60,7 @@ public class ThreadAdapter extends ArrayAdapter {
             holder.user.setVisibility(View.GONE);
             holder.text.setVisibility(View.GONE);
         } else {
-            holder.user.setColorFilter(ColorUtils.getColor(thread.getThreadId()));
+            holder.user.setColorFilter(ColorUtils.getColor(Long.parseLong(thread.getId())));
             holder.userImage.setVisibility(View.GONE);
             holder.userIcon.setVisibility(View.VISIBLE);
             holder.user.setVisibility(View.VISIBLE);
@@ -76,7 +76,7 @@ public class ThreadAdapter extends ArrayAdapter {
         holder.number.setText(name);
 
         // Add message bodies to the list.
-        holder.message.setText(thread.getBody());
+        holder.message.setText("Body");
 
         // Add a formatted dates to the list.
         holder.date.setText(DateFormatter.getFormattedDate(thread));

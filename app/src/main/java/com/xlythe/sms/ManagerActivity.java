@@ -54,9 +54,9 @@ public class ManagerActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> av, View v, int position, long id) {
                 Intent i = new Intent(getBaseContext(), ThreadActivity.class);
-                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getThreadId());
-                i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getDisplayName());
-                i.putExtra(ThreadActivity.EXTRA_NUMBER, ((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getAddress());
+                i.putExtra(ThreadActivity.EXTRA_THREAD_ID, ((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getId());
+                //i.putExtra(ThreadActivity.EXTRA_ADDRESS, mManager.getSender((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getDisplayName());
+                //i.putExtra(ThreadActivity.EXTRA_NUMBER, ((com.xlythe.textmanager.text.Thread) av.getItemAtPosition(position)).getAddress());
                 startActivity(i);
             }
         });
