@@ -23,10 +23,10 @@ import java.util.List;
  */
 public class Thread implements MessageThread<Text>, Serializable {
     static final String[] MMS_PROJECTION = new String[] {
-            Mock.Telephony.MmsSms._ID,
-            Mock.Telephony.MmsSms.CONTENT_TYPE,
-            Mock.Telephony.MmsSms.TEXT,
-            Mock.Telephony.MmsSms._DATA
+            BaseColumns._ID,
+            Mock.Telephony.Mms.Part.CONTENT_TYPE,
+            Mock.Telephony.Mms.Part.TEXT,
+            Mock.Telephony.Mms.Part._DATA
     };
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";

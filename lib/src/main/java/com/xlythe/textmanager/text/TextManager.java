@@ -58,19 +58,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
             // Base item ID
-            Mock.Telephony.MmsSms._ID,
+            BaseColumns._ID,
             // Conversation (thread) ID
-            Mock.Telephony.MmsSms.THREAD_ID,
+            Mock.Telephony.Sms.Conversations.THREAD_ID,
             // Date values
-            Mock.Telephony.MmsSms.DATE,
-            Mock.Telephony.MmsSms.DATE_SENT,
+            Mock.Telephony.Sms.DATE,
+            Mock.Telephony.Sms.DATE_SENT,
             // For SMS only
-            Mock.Telephony.MmsSms.ADDRESS,
-            Mock.Telephony.MmsSms.BODY,
-            Mock.Telephony.MmsSms.TYPE,
+            Mock.Telephony.Sms.ADDRESS,
+            Mock.Telephony.Sms.BODY,
+            Mock.Telephony.Sms.TYPE,
             // For MMS only
-            Mock.Telephony.MmsSms.SUBJECT,
-            Mock.Telephony.MmsSms.MESSAGE_BOX
+            Mock.Telephony.Mms.SUBJECT,
+            Mock.Telephony.Mms.MESSAGE_BOX
     };
 
     private String mDeviceNumber;
@@ -99,7 +99,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Cursor getCursor() {
         ContentResolver contentResolver = getContext().getContentResolver();
         final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI);
-        final String order = Mock.Telephony.MmsSms.DEFAULT_SORT_ORDER;
+        final String order = Mock.Telephony.Sms.DEFAULT_SORT_ORDER;
         return contentResolver.query(uri, null, null, null, order);
     }
 
@@ -455,27 +455,27 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             @Override
             public void onReceive(Context context, Intent intent) {
                 ContentValues values = new ContentValues();
-                Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_URI);
+                Uri uri = Uri.parse(Mock.Telephony.Sms.Sent.CONTENT_URI);
                 Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
-                        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_COMPLETE);
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                         Toast.makeText(getContext(), "SMS sent successfully", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_FAILED);
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         Toast.makeText(getContext(), "Generic failure cause", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
-                        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_FAILED);
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         Toast.makeText(getContext(), "Service is currently unavailable", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NULL_PDU:
-                        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_FAILED);
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         Toast.makeText(getContext(), "No pdu provided", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_RADIO_OFF:
-                        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_FAILED);
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         Toast.makeText(getContext(), "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
                         break;
                 }
@@ -520,10 +520,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         ContentValues values = new ContentValues();
-        Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_URI);
-        values.put(Mock.Telephony.MmsSms.ADDRESS, ((Contact)text.getRecipient()).getNumber());
-        values.put(Mock.Telephony.MmsSms.BODY, text.getBody());
-        values.put(Mock.Telephony.MmsSms.STATUS, Mock.Telephony.MmsSms.STATUS_PENDING);
+        Uri uri = Uri.parse(Mock.Telephony.Sms.Sent.CONTENT_URI);
+        values.put(Mock.Telephony.Sms.ADDRESS, ((Contact)text.getRecipient()).getNumber());
+        values.put(Mock.Telephony.Sms.BODY, text.getBody());
+        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
         getContext().getContentResolver().insert(uri, values);
     }
 
