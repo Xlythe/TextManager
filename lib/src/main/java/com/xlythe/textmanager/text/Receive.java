@@ -12,16 +12,13 @@ import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
 
-import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.help.ApnDefaults;
-import com.xlythe.textmanager.help.HttpUtils;
+import com.xlythe.textmanager.text.util.ApnDefaults;
+import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.Observer;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;

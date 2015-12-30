@@ -45,19 +45,7 @@ public class Text implements Message {
 
     private Text() {}
 
-    public Text(Context context, Cursor cursor) {
-        invalidate(context, cursor);
-    }
-
-    protected void invalidate(Context context, Cursor cursor) {
-        mId = -1;
-        mThreadId = -1;
-        mDate = -1;
-        mAddress = null;
-        mBody = null;
-        mAttachment = null;
-        mMmsId = -1;
-
+    protected Text(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             mIsMms = false;
@@ -207,9 +195,7 @@ public class Text implements Message {
         }
     }
 
-
-
-    protected boolean isMms() {
+    boolean isMms() {
         return mIsMms;
     }
 
@@ -217,7 +203,6 @@ public class Text implements Message {
     public String getId() {
         return Long.toString(mId);
     }
-
 
     @Override
     public String getBody() {
@@ -234,22 +219,13 @@ public class Text implements Message {
         return Long.toString(mThreadId);
     }
 
-//    public Uri getAttachment() {
-//        return mAttachment;
-//    }
-//    public String getAddress() {
-//        return mAddress;
-//    }
-
     public boolean isIncoming() {
         return mIncoming;
     }
 
-
     public ArrayList<Attachment> getAttachments() {
         return mAttachments;
     }
-
 
     @Override
     public User getSender() {

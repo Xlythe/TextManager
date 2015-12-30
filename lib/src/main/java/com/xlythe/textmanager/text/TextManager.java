@@ -1,11 +1,9 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -20,7 +18,6 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.BaseColumns;
-import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -29,17 +26,17 @@ import android.widget.Toast;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.help.ApnDefaults;
-import com.xlythe.textmanager.help.CharacterSets;
-import com.xlythe.textmanager.help.ContentType;
-import com.xlythe.textmanager.help.EncodedStringValue;
-import com.xlythe.textmanager.help.HttpUtils;
-import com.xlythe.textmanager.pdu.PduBody;
-import com.xlythe.textmanager.pdu.PduComposer;
-import com.xlythe.textmanager.pdu.PduPart;
-import com.xlythe.textmanager.pdu.SendReq;
-import com.xlythe.textmanager.smil.SmilHelper;
-import com.xlythe.textmanager.smil.SmilXmlSerializer;
+import com.xlythe.textmanager.text.util.ApnDefaults;
+import com.xlythe.textmanager.text.util.CharacterSets;
+import com.xlythe.textmanager.text.util.ContentType;
+import com.xlythe.textmanager.text.util.EncodedStringValue;
+import com.xlythe.textmanager.text.util.HttpUtils;
+import com.xlythe.textmanager.text.pdu.PduBody;
+import com.xlythe.textmanager.text.pdu.PduComposer;
+import com.xlythe.textmanager.text.pdu.PduPart;
+import com.xlythe.textmanager.text.pdu.SendReq;
+import com.xlythe.textmanager.text.smil.SmilHelper;
+import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -182,35 +179,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }.start();
     }
 
-    /**
-     *  A version of getMessages that reuses the Texts from the expired list. Saves memory for large lists.
-     * */
-    public List<Text> getMessages(long threadId, List<Text> expiredList) {
-        Cursor c = getCursor(threadId);
-
-        // Throw away anything extra
-        while (c.getCount() < expiredList.size()) {
-            expiredList.remove(expiredList.size() - 1);
-        }
-
-        if (c.moveToFirst()) {
-            do {
-                if (c.getPosition() < expiredList.size()) {
-                    // If we can, reuse the Text from the expired list
-                    Text text = expiredList.get(c.getPosition());
-                    text.invalidate(getContext(), c);
-                } else {
-                    // Otherwise, just create a new one
-                    expiredList.add(new Text(getContext(), c));
-                }
-            } while (c.moveToNext());
-        }
-        c.close();
-
-        //Collections.sort(expiredList);
-        return expiredList;
-    }
-
     public void delete(Text text) {
         String clausole = "_ID = ";
         clausole = clausole + text.getId();
@@ -295,7 +263,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }.start();
     }
 
-    protected Context getContext() {
+    private Context getContext() {
         return mContext;
     }
 
