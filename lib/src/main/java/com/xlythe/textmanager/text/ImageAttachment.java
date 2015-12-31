@@ -11,7 +11,6 @@ import android.os.Parcelable;
 public class ImageAttachment extends Attachment {
     Bitmap mBitmap;
 
-    // no default constructor in Attachment so I'm forced to set the type
     public ImageAttachment(Bitmap bitmap){
         super(Type.IMAGE);
         mBitmap = bitmap;
@@ -26,7 +25,7 @@ public class ImageAttachment extends Attachment {
     }
 
     private ImageAttachment(Parcel in) {
-        super(in, Type.IMAGE);
+        super(in);
         mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
     }
 

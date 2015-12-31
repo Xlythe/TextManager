@@ -13,13 +13,13 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
         IMAGE, VIDEO, VOICE
     }
 
-    Type mType;
+    private Type mType;
 
-    Type getType(){
+    public Type getType(){
         return mType;
     }
 
-    Uri getUri(){
+    public Uri getUri(){
         return null;
     }
 
@@ -27,7 +27,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
         mType = type;
     }
 
-    public Attachment(Parcel in, Type type) {
+    protected Attachment(Parcel in) {
         // mType = in.read...., mUri = in.read....
     }
 
