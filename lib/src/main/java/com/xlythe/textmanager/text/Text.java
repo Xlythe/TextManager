@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.util.Log;
@@ -19,7 +21,7 @@ import java.util.List;
 /**
  * Either an sms or an mms
  */
-public class Text implements Message {
+public class Text implements Message, Parcelable {
     private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Mock.Telephony.Mms.Part.CONTENT_TYPE,
@@ -195,7 +197,11 @@ public class Text implements Message {
         }
     }
 
-    boolean isMms() {
+    public boolean isIncoming() {
+        return mIncoming;
+    }
+
+    protected boolean isMms() {
         return mIsMms;
     }
 
@@ -219,10 +225,7 @@ public class Text implements Message {
         return Long.toString(mThreadId);
     }
 
-    public boolean isIncoming() {
-        return mIncoming;
-    }
-
+    @Override
     public ArrayList<Attachment> getAttachments() {
         return mAttachments;
     }
@@ -241,6 +244,46 @@ public class Text implements Message {
     public Status getStatus() {
         return null;
     }
+
+    private Text(Parcel in) {
+        mId = in.readLong();
+        mThreadId = in.readLong();
+        mDate = in.readLong();
+        mMmsId = in.readLong();
+        mAddress = in.readString();
+        mBody = in.readString();
+        mIncoming = in.readByte() != 0;
+        mIsMms = in.readByte() != 0;
+        mAttachment = Uri.parse(in.readString());
+        in.readTypedList(mAttachments, Attachment.CREATOR);
+    }
+
+    public int describeContents() {
+        return 0;
+    }
+
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeLong(mId);
+        out.writeLong(mThreadId);
+        out.writeLong(mDate);
+        out.writeLong(mMmsId);
+        out.writeString(mAddress);
+        out.writeString(mBody);
+        out.writeByte((byte) (mIncoming ? 1 : 0));
+        out.writeByte((byte) (mIsMms ? 1 : 0));
+        out.writeString(mAttachment.toString());
+        out.writeTypedList(mAttachments);
+    }
+
+    public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
+        public Text createFromParcel(Parcel in) {
+            return new Text(in);
+        }
+
+        public Text[] newArray(int size) {
+            return new Text[size];
+        }
+    };
 
     public static class Builder {
         private String mMessage;
