@@ -207,7 +207,12 @@ public class Text implements Message, Parcelable {
 
         uri = Uri.withAppendedPath(uri, Uri.encode(mAddress));
         Cursor c = contentResolver.query(uri, null, null, null, null);
-        mSender = new Contact(c, mAddress);
+        if(c != null && c.moveToFirst()) {
+            mSender = new Contact(c, mAddress);
+            c.close();
+        } else {
+            mSender = new Contact(mAddress);
+        }
     }
 
     protected boolean isMms() {

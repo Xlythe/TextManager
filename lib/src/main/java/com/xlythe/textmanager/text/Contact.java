@@ -35,28 +35,29 @@ public class Contact implements User {
 
     protected Contact(Cursor c, String address) {
         mAddress = address;
-        if(c.moveToFirst()) {
-            mId = c.getString(c.getColumnIndex("_id"));
-            mType = c.getString(c.getColumnIndex("type"));
-            mTimesContacted = c.getString(c.getColumnIndex("times_contacted"));
-            mNumber = c.getString(c.getColumnIndex("number"));
-            mPhotoUri = c.getString(c.getColumnIndex("photo_uri"));
-            mSendToVoicemail = c.getString(c.getColumnIndex("send_to_voicemail"));
-            mLookup = c.getString(c.getColumnIndex("lookup"));
-            mDisplayName = c.getString(c.getColumnIndex("display_name"));
-            mLastTimeContacted = c.getString(c.getColumnIndex("last_time_contacted"));
-            mHasPhoneNumber = c.getString(c.getColumnIndex("has_phone_number"));
-            mInVisibleGroup = c.getString(c.getColumnIndex("in_visible_group"));
-            mPhotoFileId = c.getString(c.getColumnIndex("photo_file_id"));
-            mLabel = c.getString(c.getColumnIndex("label"));
-            mStarred = c.getString(c.getColumnIndex("starred"));
-            mNormalizedNumber = c.getString(c.getColumnIndex("normalized_number"));
-            mPhotoThumbUri = c.getString(c.getColumnIndex("photo_thumb_uri"));
-            mPhotoId = c.getString(c.getColumnIndex("photo_id"));
-            mInDefaultDirectory = c.getString(c.getColumnIndex("in_default_directory"));
-            mCustomRingtone = c.getString(c.getColumnIndex("custom_ringtone"));
-        }
-        c.close();
+        mId = c.getString(c.getColumnIndex("_id"));
+        mType = c.getString(c.getColumnIndex("type"));
+        mTimesContacted = c.getString(c.getColumnIndex("times_contacted"));
+        mNumber = c.getString(c.getColumnIndex("number"));
+        mPhotoUri = c.getString(c.getColumnIndex("photo_uri"));
+        mSendToVoicemail = c.getString(c.getColumnIndex("send_to_voicemail"));
+        mLookup = c.getString(c.getColumnIndex("lookup"));
+        mDisplayName = c.getString(c.getColumnIndex("display_name"));
+        mLastTimeContacted = c.getString(c.getColumnIndex("last_time_contacted"));
+        mHasPhoneNumber = c.getString(c.getColumnIndex("has_phone_number"));
+        mInVisibleGroup = c.getString(c.getColumnIndex("in_visible_group"));
+        mPhotoFileId = c.getString(c.getColumnIndex("photo_file_id"));
+        mLabel = c.getString(c.getColumnIndex("label"));
+        mStarred = c.getString(c.getColumnIndex("starred"));
+        mNormalizedNumber = c.getString(c.getColumnIndex("normalized_number"));
+        mPhotoThumbUri = c.getString(c.getColumnIndex("photo_thumb_uri"));
+        mPhotoId = c.getString(c.getColumnIndex("photo_id"));
+        mInDefaultDirectory = c.getString(c.getColumnIndex("in_default_directory"));
+        mCustomRingtone = c.getString(c.getColumnIndex("custom_ringtone"));
+    }
+
+    protected Contact(String address) {
+        mAddress = address;
     }
 
     //TODO: add more methods from the contacts app
