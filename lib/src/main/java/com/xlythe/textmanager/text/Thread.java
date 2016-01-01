@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+
 import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
@@ -21,14 +22,21 @@ public class Thread implements MessageThread<Text>, Serializable {
     protected Thread(Context context, Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
         mCount = 0;
-        mUnreadCount = 0;
-        buildLastMessage(context, mThreadId);
+        buildLastMessage(context);
+        final Uri uri = Uri.parse("content://sms/inbox");
+        Cursor c = context.getContentResolver().query(uri,
+                null,
+                "read = 0 AND thread_id = " + mThreadId,
+                null,
+                null);
+        mUnreadCount = c.getCount();
+        c.close();
     }
 
-    public void buildLastMessage(Context context, long threadId) {
+    public void buildLastMessage(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
         final String[] projection = TextManager.PROJECTION;
-        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
+        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ mThreadId);
         final String order = "normalized_date ASC";
         Cursor c = contentResolver.query(uri, projection, null, null, order);
         if (c!=null && c.moveToLast()) {
@@ -50,8 +58,7 @@ public class Thread implements MessageThread<Text>, Serializable {
 
     @Override
     public int getUnreadCount() {
-        // TODO: getUnreadCount()
-        return 0;
+        return mUnreadCount;
     }
 
     @Override

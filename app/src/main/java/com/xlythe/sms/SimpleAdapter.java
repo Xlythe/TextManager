@@ -126,15 +126,15 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             String time = "";
             String address = "";
             Uri uri = null;
-            int unread = 1; //TODO: getUnread()
+            int unread = 0;
             int color = mContext.getColor(R.color.colorPrimary);
 
             if (data.getLatestMessage()!=null) {
                 body = data.getLatestMessage().getBody();
-                time = data.getLatestMessage().getTimestamp()+"";
                 time = DateFormatter.getFormattedDate(data.getLatestMessage());
                 address = data.getLatestMessage().getSender().getDisplayName()+"";
                 uri = ((Contact)data.getLatestMessage().getSender()).getPhotoUri();
+                unread = data.getUnreadCount();
                 color = ColorUtils.getColor(Long.parseLong(data.getId()));
             }
             SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
