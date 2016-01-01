@@ -41,8 +41,6 @@ public class Text implements Message, Parcelable {
     private Contact mSender;
     private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
-
-
     private Text() {}
 
     protected Text(Context context, Cursor cursor) {
@@ -198,19 +196,15 @@ public class Text implements Message, Parcelable {
 
     private void buildContact(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
-        //final String[] projection;
         Uri uri;
 
         if (android.os.Build.VERSION.SDK_INT >= 5) {
             uri = Uri.parse("content://com.android.contacts/phone_lookup");
-            //projection = new String[] { "display_name" };
         }
         else {
             uri = Uri.parse("content://contacts/phones/filter");
-            //projection = new String[] { "name" };
         }
 
-        //String s = ((Contact)text.getRecipient()).getNumber();
         uri = Uri.withAppendedPath(uri, Uri.encode(mAddress));
         Cursor c = contentResolver.query(uri, null, null, null, null);
         mSender = new Contact(c, mAddress);

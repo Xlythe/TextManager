@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -119,19 +120,26 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         if (holder instanceof SimpleViewHolder) {
             Thread data = (Thread) mData.get(position);
-            SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
+            String body = "";
+            String time = "";
+            String address = "";
+            Uri uri = null;
             if (data.getLatestMessage()!=null) {
-                simpleHolder.message.setText(data.getLatestMessage().getBody());
-                simpleHolder.date.setText(data.getLatestMessage().getTimestamp()+"");
+                body = data.getLatestMessage().getBody();
+                time = data.getLatestMessage().getTimestamp()+"";
+                address = data.getLatestMessage().getSender().getDisplayName()+"";
+                uri = ((Contact)data.getLatestMessage().getSender()).getPhotoUri();
             }
+            SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
+            simpleHolder.message.setText(body);
+            simpleHolder.date.setText(time);
             simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
             int unread=0; //TODO: getUnread()
             int color=mContext.getColor(R.color.colorPrimary); //TODO: color
-            Bitmap drawable=null; //TODO: drawable
 
             if (unread > 0) {
-                simpleHolder.title.setText("address");
+                simpleHolder.title.setText(address);
                 simpleHolder.unread.setVisibility(View.VISIBLE);
                 simpleHolder.unread.setText(unread + " new");
                 simpleHolder.unread.setTextColor(color);
@@ -142,9 +150,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
                 simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             } else {
-                if(data.getLatestMessage()!=null) {
-                    simpleHolder.title.setText(data.getLatestMessage().getSender().getDisplayName());
-                }
+                simpleHolder.title.setText(address);
                 simpleHolder.unread.setVisibility(View.GONE);
                 simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
                 simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
@@ -157,11 +163,11 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             if (selectMode()) {
                 simpleHolder.profile.setImageResource(android.R.color.transparent);
             } else {
-                if ("address"!=null) {
+                if (!address.equals("")) {
                     ProfileDrawable border = new ProfileDrawable(mContext,
-                            "address".charAt(0),
+                            address.charAt(0),
                             color,
-                            drawable);
+                            uri);
                     simpleHolder.profile.setImageDrawable(border);
                 }
             }

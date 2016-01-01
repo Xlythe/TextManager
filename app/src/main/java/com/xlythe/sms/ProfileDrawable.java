@@ -15,7 +15,13 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.util.TypedValue;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Created by Niko on 12/22/15.
@@ -27,15 +33,15 @@ public class ProfileDrawable extends Drawable {
     Context mContext;
     char mInitial;
     int mColor;
-    Bitmap mBitmap;
+    Uri mUri;
     float px;
     float sp;
 
-    public ProfileDrawable(Context context, char initial, int color, Bitmap bitmap) {
+    public ProfileDrawable(Context context, char initial, int color, Uri uri) {
         mContext = context;
         mInitial = initial;
         mColor = color;
-        mBitmap = bitmap;
+        mUri = uri;
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
@@ -67,12 +73,18 @@ public class ProfileDrawable extends Drawable {
         mPaint.setColor(mColor);
         canvas.drawPath(mPath, mPaint);
         mPaint.setColor(mContext.getResources().getColor(R.color.text));
-        if(mBitmap!=null){
-            mPaint.setColor(Color.WHITE);
-            canvas.drawBitmap(mBitmap,0,0,mPaint);
-            return;
+        if(mUri!=null){
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), mUri);
+                bitmap = Bitmap.createScaledBitmap(bitmap, (int) px, (int) px, false);
+                mPaint.setColor(Color.WHITE);
+                canvas.drawBitmap(bitmap,0,0,mPaint);
+                return;
+            } catch (IOException ioe){
+                Log.d("Profile image","io");
+            }
         }
-        if (!(mInitial+"").equals("(")) {
+        if (Character.isLetter(mInitial)) {
             mPaint.setTextSize(sp);
             mPaint.setTextAlign(Paint.Align.CENTER);
 
