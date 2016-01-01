@@ -43,7 +43,7 @@ public class Thread implements MessageThread<Text>, Serializable {
         final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
         final String order = "normalized_date ASC";
         Cursor c = contentResolver.query(uri, projection, null, null, order);
-        if (c!=null && c.moveToFirst()) {
+        if (c!=null && c.moveToLast()) {
             mText = new Text(context, c);
             c.close();
         }

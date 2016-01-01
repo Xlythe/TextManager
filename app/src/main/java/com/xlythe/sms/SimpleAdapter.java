@@ -119,8 +119,10 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         if (holder instanceof SimpleViewHolder) {
             Thread data = (Thread) mData.get(position);
             SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
-            simpleHolder.message.setText("body");
-            simpleHolder.date.setText("date");
+            if (data.getLatestMessage()!=null) {
+                simpleHolder.message.setText(data.getLatestMessage().getBody());
+                simpleHolder.date.setText(data.getLatestMessage().getTimestamp()+"");
+            }
             simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
 
             int unread=0; //TODO: getUnread()
