@@ -1,24 +1,12 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.BaseColumns;
-import android.provider.Telephony;
-import android.text.TextUtils;
-import android.util.Log;
-
-import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * An SMS conversation
@@ -31,8 +19,8 @@ public class Thread implements MessageThread<Text>, Serializable {
     Text mText;
 
     protected Thread(Context context, Cursor cursor) {
-        mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms.Conversations.THREAD_ID));
-        mCount = 0;//cursor.getInt(cursor.getColumnIndexOrThrow(Telephony.Sms.Conversations.MESSAGE_COUNT));
+        mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
+        mCount = 0;
         mUnreadCount = 0;
         buildLastMessage(context, mThreadId);
     }
@@ -56,11 +44,13 @@ public class Thread implements MessageThread<Text>, Serializable {
 
     @Override
     public int getCount() {
+        // TODO: getCount()
         return 0;
     }
 
     @Override
     public int getUnreadCount() {
+        // TODO: getUnreadCount()
         return 0;
     }
 

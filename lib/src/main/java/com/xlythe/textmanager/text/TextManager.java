@@ -77,8 +77,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private boolean mAlreadySending;
     private final Set<MessageObserver> mObservers = new HashSet<>();
 
-    //private final Map<Long, List<Text>> mTexts = new HashMap<>();
-
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
             sTextManager = new TextManager(context);
@@ -118,7 +116,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } while (c.moveToNext());
         }
         c.close();
-        //Collections.sort(threads);
         return threads;
     }
 
@@ -153,7 +150,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } while (c.moveToNext());
         }
         c.close();
-        //Collections.sort(messages);
         return messages;
     }
 

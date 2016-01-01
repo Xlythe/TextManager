@@ -1,9 +1,8 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -12,11 +11,9 @@ import android.provider.Telephony;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.User;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Either an sms or an mms
@@ -41,6 +38,7 @@ public class Text implements Message, Parcelable {
     private boolean mIncoming;
     private boolean mIsMms = false;
     private Uri mAttachment;
+    private Contact mSender;
     private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
 
@@ -60,6 +58,7 @@ public class Text implements Message, Parcelable {
         else {
             Log.w("TelephonyProvider", "Unknown Message Type");
         }
+        buildContact(context);
     }
 
     private String getMessageType(Cursor cursor) {
@@ -197,8 +196,24 @@ public class Text implements Message, Parcelable {
         }
     }
 
-    public boolean isIncoming() {
-        return mIncoming;
+    private void buildContact(Context context) {
+        ContentResolver contentResolver = context.getContentResolver();
+        //final String[] projection;
+        Uri uri;
+
+        if (android.os.Build.VERSION.SDK_INT >= 5) {
+            uri = Uri.parse("content://com.android.contacts/phone_lookup");
+            //projection = new String[] { "display_name" };
+        }
+        else {
+            uri = Uri.parse("content://contacts/phones/filter");
+            //projection = new String[] { "name" };
+        }
+
+        //String s = ((Contact)text.getRecipient()).getNumber();
+        uri = Uri.withAppendedPath(uri, Uri.encode(mAddress));
+        Cursor c = contentResolver.query(uri, null, null, null, null);
+        mSender = new Contact(c, mAddress);
     }
 
     protected boolean isMms() {
@@ -232,16 +247,18 @@ public class Text implements Message, Parcelable {
 
     @Override
     public User getSender() {
-        return null;
+        return mSender;
     }
 
     @Override
     public User getRecipient() {
+        //TODO: getRecipient()
         return null;
     }
 
     @Override
     public Status getStatus() {
+        //TODO: getStatus()
         return null;
     }
 

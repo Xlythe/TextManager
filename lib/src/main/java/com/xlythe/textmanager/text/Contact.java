@@ -34,7 +34,6 @@ public class Contact implements User {
     private String mCustomRingtone;
 
     protected Contact(Cursor c, String address) {
-        //TODO: can probably use number instead of address
         mAddress = address;
         if(c.moveToFirst()) {
             mId = c.getString(c.getColumnIndex("_id"));
@@ -63,12 +62,11 @@ public class Contact implements User {
     //TODO: add more methods from the contacts app
 
     public String getNumber() {
-        //TODO: check is hasNumber()
-        return mNumber;
+        return mNumber!=null ? mNumber : mAddress;
     }
 
     public String getDisplayName() {
-        return hasName() ? mDisplayName : mAddress;
+        return hasName() ? mDisplayName : getNumber();
     }
 
     public boolean hasName() {

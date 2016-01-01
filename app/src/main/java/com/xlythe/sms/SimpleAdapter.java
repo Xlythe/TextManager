@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Thread;
 
 import java.util.ArrayList;
@@ -141,7 +142,9 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
                 simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             } else {
-                simpleHolder.title.setText("address");
+                if(data.getLatestMessage()!=null) {
+                    simpleHolder.title.setText(data.getLatestMessage().getSender().getDisplayName());
+                }
                 simpleHolder.unread.setVisibility(View.GONE);
                 simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
                 simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
