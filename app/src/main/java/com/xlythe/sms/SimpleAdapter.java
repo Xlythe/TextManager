@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Thread;
 
@@ -124,19 +126,21 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             String time = "";
             String address = "";
             Uri uri = null;
+            int unread=0; //TODO: getUnread()
+            int color=mContext.getColor(R.color.colorPrimary);
+
             if (data.getLatestMessage()!=null) {
                 body = data.getLatestMessage().getBody();
                 time = data.getLatestMessage().getTimestamp()+"";
+                time = DateFormatter.getFormattedDate(data.getLatestMessage());
                 address = data.getLatestMessage().getSender().getDisplayName()+"";
                 uri = ((Contact)data.getLatestMessage().getSender()).getPhotoUri();
+                color = ColorUtils.getColor(Long.parseLong(data.getId()));
             }
             SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
             simpleHolder.message.setText(body);
             simpleHolder.date.setText(time);
             simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
-
-            int unread=0; //TODO: getUnread()
-            int color=mContext.getColor(R.color.colorPrimary); //TODO: color
 
             if (unread > 0) {
                 simpleHolder.title.setText(address);

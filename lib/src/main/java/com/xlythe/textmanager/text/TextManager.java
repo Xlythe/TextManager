@@ -491,41 +491,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         getContext().getContentResolver().insert(uri, values);
     }
 
-//    public Cursor getContactCursor(Text text) {
-//        ContentResolver contentResolver = getContext().getContentResolver();
-//        final String[] projection;
-//        Uri uri;
-//
-//        if (android.os.Build.VERSION.SDK_INT >= 5) {
-//            uri = Uri.parse("content://com.android.contacts/phone_lookup");
-//            projection = new String[] { "display_name" };
-//        }
-//        else {
-//            uri = Uri.parse("content://contacts/phones/filter");
-//            projection = new String[] { "name" };
-//        }
-//
-//        String s = ((Contact)text.getRecipient()).getNumber();
-//        uri = Uri.withAppendedPath(uri, Uri.encode(((Contact)text.getRecipient()).getNumber()));
-//        return contentResolver.query(uri, null, null, null, null);
-//    }
-//
-//    public Cursor getContactCursor(Thread textThread) {
-//        ContentResolver contentResolver = getContext().getContentResolver();
-//        Uri uri = Uri.parse("content://com.android.contacts/phone_lookup");
-//        uri = Uri.withAppendedPath(uri, Uri.encode(((Contact)textThread.getRecipient()).getNumber()));
-//        return contentResolver.query(uri, null, null, null, null);
-//    }
-
-//    public Contact getSender(Text text) {
-//        return new Contact(getContactCursor(text), text.getAddress());
-//    }
-
-//    public Contact getSender(Thread textThread) {
-//        String address = textThread.getRecipient();
-//        return new Contact(getContactCursor(textThread), address);
-//    }
-
     private class TextObserver extends ContentObserver {
         TextObserver(Handler handler) {
             super(handler);
