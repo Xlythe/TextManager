@@ -255,7 +255,12 @@ public class Text implements Message, Parcelable {
         mIncoming = in.readByte() != 0;
         mIsMms = in.readByte() != 0;
         mAttachment = Uri.parse(in.readString());
-        in.readTypedList(mAttachments, Attachment.CREATOR);
+        int size = in.readInt();
+        for(int i=0; i<size; i++){
+            //Type.values()[in.readInt()];
+            mAttachments.add((Attachment)in.readParcelable(Attachment.class.getClassLoader()));
+        }
+        //in.readTypedList(mAttachments, Attachment.CREATOR);
     }
 
     public int describeContents() {
@@ -272,7 +277,14 @@ public class Text implements Message, Parcelable {
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeString(mAttachment.toString());
-        out.writeTypedList(mAttachments);
+
+        // Test
+        out.writeInt(mAttachments.size());
+        for(int i=0; i<mAttachments.size(); i++){
+            //out.writeValue(mAttachments.get(0).getType().ordinal());
+            out.writeParcelable(mAttachments.get(0), flags);
+        }
+        //out.writeTypedList(mAttachments);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {

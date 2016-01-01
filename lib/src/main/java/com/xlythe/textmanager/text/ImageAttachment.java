@@ -8,7 +8,7 @@ import android.os.Parcelable;
 /**
  * Created by Niko on 12/30/15.
  */
-public class ImageAttachment extends Attachment {
+public final class ImageAttachment extends Attachment {
     Bitmap mBitmap;
 
     public ImageAttachment(Bitmap bitmap){
