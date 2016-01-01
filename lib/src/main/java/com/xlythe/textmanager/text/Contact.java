@@ -7,10 +7,14 @@ import android.net.Uri;
 
 import com.xlythe.textmanager.User;
 
+import java.io.Serializable;
+
 /**
  * Represents a phone number.
  */
-public class Contact implements User {
+
+//TODO: parcelable
+public class Contact implements User, Serializable {
 
     private String mAddress;
     private String mId;

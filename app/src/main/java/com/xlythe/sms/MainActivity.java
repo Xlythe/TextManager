@@ -11,6 +11,7 @@ import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -74,6 +75,11 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
     public void onItemClicked(int position) {
         if (mActionMode != null) {
             toggleSelection(position);
+        } else {
+            Log.d("List","I was pressed!");
+            Intent i = new Intent(getBaseContext(), MessageActivity.class);
+            i.putExtra(MessageActivity.EXTRA_THREAD, mManager.getThreads().get(position));
+            startActivity(i);
         }
     }
 

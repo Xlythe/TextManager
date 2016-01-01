@@ -13,12 +13,15 @@ import android.util.Log;
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Either an sms or an mms
  */
-public class Text implements Message, Parcelable {
+
+//TODO: parcelable
+public class Text implements Message, Serializable {
     private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Mock.Telephony.Mms.Part.CONTENT_TYPE,

@@ -12,6 +12,7 @@ import java.io.Serializable;
 /**
  * An SMS conversation
  */
+//TODO: parcelable
 public class Thread implements MessageThread<Text>, Serializable {
 
     long mThreadId;
@@ -33,7 +34,7 @@ public class Thread implements MessageThread<Text>, Serializable {
         c.close();
     }
 
-    public void buildLastMessage(Context context) {
+    private void buildLastMessage(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
         final String[] projection = TextManager.PROJECTION;
         final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ mThreadId);
