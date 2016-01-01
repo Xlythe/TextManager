@@ -20,7 +20,7 @@
         android:hint="To"/>
     <View style="@style/Divider"/>
     <EditText
-        android:id="@+id/description"
+        android:id="@+id/message"
         android:padding="16dp"
         android:gravity="top"
         android:inputType="textCapSentences|textMultiLine"
@@ -29,5 +29,5 @@
         android:textColorHint="#6B000000"
         android:textSize="16sp"
         android:background="@android:color/transparent"
-        android:hint="Description"/>
+        android:hint="Message"/>
 </LinearLayout>

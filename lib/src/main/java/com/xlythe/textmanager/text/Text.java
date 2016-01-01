@@ -39,6 +39,7 @@ public class Text implements Message, Parcelable {
     private boolean mIsMms = false;
     private Uri mAttachment;
     private Contact mSender;
+    private Contact mRecipient;
     private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
     private Text() {}
@@ -251,8 +252,11 @@ public class Text implements Message, Parcelable {
 
     @Override
     public Contact getRecipient() {
-        //TODO: getRecipient()
-        return null;
+        if (mRecipient == null) {
+            return new Contact(mAddress);
+        } else {
+            return mRecipient;
+        }
     }
 
     @Override
@@ -315,13 +319,19 @@ public class Text implements Message, Parcelable {
 
     public static class Builder {
         private String mMessage;
-        private String mRecipient;
+        private Contact mRecipient;
+        private String mAddress;
         private ArrayList<Attachment> mAttachments = new ArrayList<>();
 
         public Builder() {
         }
 
-        public Builder recipient(String recipient) {
+        public Builder recipient(String address) {
+            mAddress = address;
+            return this;
+        }
+
+        public Builder recipient(Contact recipient) {
             mRecipient = recipient;
             return this;
         }
@@ -339,7 +349,8 @@ public class Text implements Message, Parcelable {
         public Text build() {
             Text text = new Text();
             text.mBody = mMessage;
-            text.mAddress = mRecipient;
+            text.mAddress = mAddress;
+            text.mRecipient = mRecipient;
             if(mAttachments.size()>0){
                 text.mIsMms = true;
                 text.mAttachments.addAll(mAttachments);

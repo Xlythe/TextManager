@@ -93,9 +93,11 @@ public class ManagerUtils {
             }
         }, new IntentFilter(SMS_DELIVERED));
 
+        String address = text.getRecipient().getNumber();
+
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(text.getRecipient().getNumber(), null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
+            sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         }
         else {
             Log.e("HI", "should log something!!!!!!!!");
@@ -111,12 +113,12 @@ public class ManagerUtils {
             }
 
             //TODO: Add support for generic media
-            sendMediaMessage(context, text.getRecipient().getNumber(), "no subject", text.getBody(), bitmaps, sentPendingIntent, deliveredPendingIntent);
+            sendMediaMessage(context, address, "no subject", text.getBody(), bitmaps, sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
         Uri uri = Uri.parse(Mock.Telephony.Sms.Sent.CONTENT_URI);
-        values.put(Mock.Telephony.Sms.ADDRESS, text.getRecipient().getNumber());
+        values.put(Mock.Telephony.Sms.ADDRESS, address);
         values.put(Mock.Telephony.Sms.BODY, text.getBody());
         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
         context.getContentResolver().insert(uri, values);

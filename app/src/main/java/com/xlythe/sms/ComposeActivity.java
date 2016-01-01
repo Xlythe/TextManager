@@ -3,6 +3,8 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,10 +16,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
+
 public class ComposeActivity extends AppCompatActivity {
 
     private TextView mContacts;
+    private TextView mMessage;
     private Activity mActivity;
+    private TextManager mManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +34,9 @@ public class ComposeActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        mManager = TextManager.getInstance(getBaseContext());
         mContacts = (TextView) findViewById(R.id.contacts);
+        mMessage = (TextView) findViewById(R.id.message);
         mActivity = this;
 
         mContacts.setOnClickListener(new View.OnClickListener() {
@@ -58,9 +67,13 @@ public class ComposeActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_send) {
-            Snackbar.make(findViewById(R.id.toolbar), "Send message", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
+        if (id == R.id.action_send && mMessage.getText() != null && mContacts.getText() != null) {
+            mManager.send(new Text.Builder()
+                            .message(mMessage.getText().toString())
+                            .recipient(mContacts.getText().toString())
+                            .build()
+            );
+            finish();
             return true;
         }
 
