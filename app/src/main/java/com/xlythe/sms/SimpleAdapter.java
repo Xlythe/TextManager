@@ -133,7 +133,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
                 body = data.getLatestMessage().getBody();
                 time = DateFormatter.getFormattedDate(data.getLatestMessage());
                 address = data.getLatestMessage().getSender().getDisplayName()+"";
-                uri = ((Contact)data.getLatestMessage().getSender()).getPhotoUri();
+                uri = data.getLatestMessage().getSender().getPhotoUri();
                 unread = data.getUnreadCount();
                 color = ColorUtils.getColor(Long.parseLong(data.getId()));
             }

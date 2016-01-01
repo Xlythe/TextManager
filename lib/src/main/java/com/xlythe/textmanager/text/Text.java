@@ -245,12 +245,12 @@ public class Text implements Message, Parcelable {
     }
 
     @Override
-    public User getSender() {
+    public Contact getSender() {
         return mSender;
     }
 
     @Override
-    public User getRecipient() {
+    public Contact getRecipient() {
         //TODO: getRecipient()
         return null;
     }
