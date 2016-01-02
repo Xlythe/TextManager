@@ -1,10 +1,15 @@
 package com.xlythe.textmanager.text;
 
+import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
+import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Patterns;
 
@@ -20,68 +25,190 @@ public class Mock {
     public static final class Telephony {
         private Telephony() {}
 
-        public static final class Sms {
-            public static final String DATE;
-            public static final String DATE_SENT;
-            public static final String ADDRESS;
-            public static final String BODY;
-            public static final String TYPE;
+        public static final class Sms extends TextBasedSmsColumns implements BaseColumns {
+            private Sms() {}
+
+            public static Cursor query(ContentResolver cr, String[] projection) {
+                return cr.query(CONTENT_URI, projection, null, null, DEFAULT_SORT_ORDER);
+            }
+
+            public static Cursor query(ContentResolver cr, String[] projection, String where, String orderBy) {
+                return cr.query(CONTENT_URI, projection, where, null, orderBy == null ? DEFAULT_SORT_ORDER : orderBy);
+            }
+
+            public static final Uri CONTENT_URI;
             public static final String DEFAULT_SORT_ORDER;
 
             static {
                 if (android.os.Build.VERSION.SDK_INT >= 19) {
-                    DATE = android.provider.Telephony.Sms.DATE;
-                    DATE_SENT = android.provider.Telephony.Sms.DATE_SENT;
-                    ADDRESS = android.provider.Telephony.Sms.ADDRESS;
-                    BODY = android.provider.Telephony.Sms.BODY;
-                    TYPE = android.provider.Telephony.Sms.TYPE;
+                    CONTENT_URI = android.provider.Telephony.Sms.CONTENT_URI;
                     DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.DEFAULT_SORT_ORDER;
                 } else {
-                    DATE = "date";
-                    DATE_SENT = "date_sent";
-                    ADDRESS = "address";
-                    BODY = "body";
-                    TYPE = "type";
+                    CONTENT_URI = Uri.parse("content://sms");
                     DEFAULT_SORT_ORDER = "date DESC";
                 }
             }
 
-            public static final class Sent {
+            public static boolean isOutgoingFolder(int messageType) {
+                return  (messageType == MESSAGE_TYPE_FAILED)
+                        || (messageType == MESSAGE_TYPE_OUTBOX)
+                        || (messageType == MESSAGE_TYPE_SENT)
+                        || (messageType == MESSAGE_TYPE_QUEUED);
+            }
+
+            public static final class Inbox extends TextBasedSmsColumns implements BaseColumns {
+                private Inbox() {}
+
                 public static final Uri CONTENT_URI;
-                public static final String STATUS;
-                public static final int STATUS_COMPLETE;
-                public static final int STATUS_FAILED;
-                public static final int STATUS_PENDING;
+                public static final String DEFAULT_SORT_ORDER;
+
+                static {
+                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                        CONTENT_URI = android.provider.Telephony.Sms.Inbox.CONTENT_URI;
+                        DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Inbox.DEFAULT_SORT_ORDER;
+                    } else {
+                        CONTENT_URI = Uri.parse("content://sms/inbox");
+                        DEFAULT_SORT_ORDER = "date DESC";
+                    }
+                }
+            }
+
+            public static final class Sent extends TextBasedSmsColumns implements BaseColumns {
+                private Sent() {}
+
+                public static final Uri CONTENT_URI;
+                public static final String DEFAULT_SORT_ORDER;
 
                 static {
                     if (android.os.Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Sent.CONTENT_URI;
-                        STATUS = android.provider.Telephony.Sms.Sent.STATUS;
-                        STATUS_COMPLETE = android.provider.Telephony.Sms.Sent.STATUS_COMPLETE;
-                        STATUS_FAILED = android.provider.Telephony.Sms.Sent.STATUS_FAILED;
-                        STATUS_PENDING = android.provider.Telephony.Sms.Sent.STATUS_PENDING;
+                        DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Sent.DEFAULT_SORT_ORDER;
                     } else {
                         CONTENT_URI = Uri.parse("content://sms/sent");
-                        STATUS = "status";
-                        STATUS_COMPLETE = 0;
-                        STATUS_FAILED = 64;
-                        STATUS_PENDING = 32;
+                        DEFAULT_SORT_ORDER = "date DESC";
                     }
                 }
-
             }
 
-            public static final class Conversations {
-                public static final String THREAD_ID;
-                public static final String DATE;
+            public static final class Draft extends TextBasedSmsColumns implements BaseColumns {
+                private Draft() {}
+
+                public static final Uri CONTENT_URI;
+                public static final String DEFAULT_SORT_ORDER;
 
                 static {
                     if (android.os.Build.VERSION.SDK_INT >= 19) {
-                        THREAD_ID = android.provider.Telephony.Sms.Conversations.THREAD_ID;
-                        DATE = android.provider.Telephony.Sms.Conversations.DATE;
+                        CONTENT_URI = android.provider.Telephony.Sms.Draft.CONTENT_URI;
+                        DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Draft.DEFAULT_SORT_ORDER;
                     } else {
-                        THREAD_ID = "thread_id";
-                        DATE = "date";
+                        CONTENT_URI = Uri.parse("content://sms/draft");
+                        DEFAULT_SORT_ORDER = "date DESC";
+                    }
+                }
+            }
+
+            public static final class Outbox extends TextBasedSmsColumns implements BaseColumns {
+                private Outbox() {}
+
+                public static final Uri CONTENT_URI;
+                public static final String DEFAULT_SORT_ORDER;
+
+                static {
+                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                        CONTENT_URI = android.provider.Telephony.Sms.Outbox.CONTENT_URI;
+                        DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Outbox.DEFAULT_SORT_ORDER;
+                    } else {
+                        CONTENT_URI = Uri.parse("content://sms/outbox");
+                        DEFAULT_SORT_ORDER = "date DESC";
+                    }
+                }
+            }
+
+            public static final class Conversations extends TextBasedSmsColumns implements BaseColumns {
+                private Conversations() {}
+
+                public static final Uri CONTENT_URI;
+                public static final String DEFAULT_SORT_ORDER;
+                public static final String SNIPPET;
+                public static final String MESSAGE_COUNT;
+
+                static {
+                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                        CONTENT_URI = android.provider.Telephony.Sms.Conversations.CONTENT_URI;
+                        DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Conversations.DEFAULT_SORT_ORDER;
+                        SNIPPET = android.provider.Telephony.Sms.Conversations.SNIPPET;
+                        MESSAGE_COUNT = android.provider.Telephony.Sms.Conversations.MESSAGE_COUNT;
+                    } else {
+                        CONTENT_URI = Uri.parse("content://sms/conversations");
+                        DEFAULT_SORT_ORDER = "date DESC";
+                        SNIPPET = "snippet";
+                        MESSAGE_COUNT = "msg_count";
+                    }
+                }
+            }
+
+            public static final class Intents {
+                private Intents() {}
+
+                public static final int RESULT_SMS_HANDLED;
+                public static final int RESULT_SMS_GENERIC_ERROR;
+                public static final int RESULT_SMS_OUT_OF_MEMORY;
+                public static final int RESULT_SMS_UNSUPPORTED;
+                public static final int RESULT_SMS_DUPLICATED;
+
+                public static final String ACTION_CHANGE_DEFAULT;
+                public static final String EXTRA_PACKAGE_NAME;
+                public static final String SMS_DELIVER_ACTION;
+                public static final String SMS_RECEIVED_ACTION;
+                public static final String DATA_SMS_RECEIVED_ACTION;
+                public static final String WAP_PUSH_DELIVER_ACTION;
+                public static final String WAP_PUSH_RECEIVED_ACTION;
+                public static final String SMS_CB_RECEIVED_ACTION;
+                public static final String SMS_EMERGENCY_CB_RECEIVED_ACTION;
+                public static final String SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION;
+                public static final String SIM_FULL_ACTION;
+                public static final String SMS_REJECTED_ACTION;
+                public static final String MMS_DOWNLOADED_ACTION = "android.provider.Telephony.MMS_DOWNLOADED"; // hidden
+
+                static {
+                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                        RESULT_SMS_HANDLED = android.provider.Telephony.Sms.Intents.RESULT_SMS_HANDLED;
+                        RESULT_SMS_GENERIC_ERROR = android.provider.Telephony.Sms.Intents.RESULT_SMS_GENERIC_ERROR;
+                        RESULT_SMS_OUT_OF_MEMORY = android.provider.Telephony.Sms.Intents.RESULT_SMS_OUT_OF_MEMORY;
+                        RESULT_SMS_UNSUPPORTED = android.provider.Telephony.Sms.Intents.RESULT_SMS_UNSUPPORTED;
+                        RESULT_SMS_DUPLICATED = android.provider.Telephony.Sms.Intents.RESULT_SMS_DUPLICATED;
+
+                        ACTION_CHANGE_DEFAULT = android.provider.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT;
+                        EXTRA_PACKAGE_NAME = android.provider.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME;
+                        SMS_DELIVER_ACTION = android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
+                        SMS_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
+                        DATA_SMS_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.DATA_SMS_RECEIVED_ACTION;
+                        WAP_PUSH_DELIVER_ACTION = android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
+                        WAP_PUSH_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION;
+                        SMS_CB_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_CB_RECEIVED_ACTION;
+                        SMS_EMERGENCY_CB_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_EMERGENCY_CB_RECEIVED_ACTION;
+                        SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION;
+                        SIM_FULL_ACTION = android.provider.Telephony.Sms.Intents.SIM_FULL_ACTION;
+                        SMS_REJECTED_ACTION = android.provider.Telephony.Sms.Intents.SMS_REJECTED_ACTION;
+                    } else {
+                        RESULT_SMS_HANDLED = 1;
+                        RESULT_SMS_GENERIC_ERROR = 2;
+                        RESULT_SMS_OUT_OF_MEMORY = 3;
+                        RESULT_SMS_UNSUPPORTED = 4;
+                        RESULT_SMS_DUPLICATED = 5;
+
+                        ACTION_CHANGE_DEFAULT = "android.provider.Telephony.ACTION_CHANGE_DEFAULT";
+                        EXTRA_PACKAGE_NAME = "package";
+                        SMS_DELIVER_ACTION = "android.provider.Telephony.SMS_DELIVER";
+                        SMS_RECEIVED_ACTION = "android.provider.Telephony.SMS_RECEIVED";
+                        DATA_SMS_RECEIVED_ACTION = "android.intent.action.DATA_SMS_RECEIVED";
+                        WAP_PUSH_DELIVER_ACTION = "android.provider.Telephony.WAP_PUSH_DELIVER";
+                        WAP_PUSH_RECEIVED_ACTION = "android.provider.Telephony.WAP_PUSH_RECEIVED";
+                        SMS_CB_RECEIVED_ACTION = "android.provider.Telephony.SMS_CB_RECEIVED";
+                        SMS_EMERGENCY_CB_RECEIVED_ACTION = "android.provider.Telephony.SMS_EMERGENCY_CB_RECEIVED";
+                        SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION = "android.provider.Telephony.SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED";
+                        SIM_FULL_ACTION = "android.provider.Telephony.SIM_FULL";
+                        SMS_REJECTED_ACTION = "android.provider.Telephony.SMS_REJECTED";
                     }
                 }
             }
@@ -657,7 +784,7 @@ public class Mock {
             }
         }
 
-        public static final class TextBasedSmsColumns {
+        public static class TextBasedSmsColumns {
             private TextBasedSmsColumns() {}
 
             public static final int MESSAGE_TYPE_ALL;
