@@ -16,7 +16,6 @@ import java.io.Serializable;
 //TODO: parcelable
 public class Contact implements User, Serializable {
 
-    private String mAddress;
     private String mId;
     private String mType;
     private String mTimesContacted;
@@ -37,8 +36,7 @@ public class Contact implements User, Serializable {
     private String mInDefaultDirectory;
     private String mCustomRingtone;
 
-    protected Contact(Cursor c, String address) {
-        mAddress = address;
+    protected Contact(Cursor c) {
         mId = c.getString(c.getColumnIndex("_id"));
         mType = c.getString(c.getColumnIndex("type"));
         mTimesContacted = c.getString(c.getColumnIndex("times_contacted"));
@@ -61,13 +59,13 @@ public class Contact implements User, Serializable {
     }
 
     protected Contact(String address) {
-        mAddress = address;
+        mNumber = address;
     }
 
     //TODO: add more methods from the contacts app
 
     public String getNumber() {
-        return mNumber!=null ? mNumber : mAddress;
+        return mNumber;
     }
 
     public String getDisplayName() {

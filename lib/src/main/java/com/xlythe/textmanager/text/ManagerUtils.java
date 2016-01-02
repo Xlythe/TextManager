@@ -50,7 +50,7 @@ public class ManagerUtils {
             @Override
             public void onReceive(Context context, Intent intent) {
                 ContentValues values = new ContentValues();
-                Uri uri = Uri.parse(Mock.Telephony.Sms.Sent.CONTENT_URI);
+                Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
                 Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
@@ -117,7 +117,7 @@ public class ManagerUtils {
         }
 
         ContentValues values = new ContentValues();
-        Uri uri = Uri.parse(Mock.Telephony.Sms.Sent.CONTENT_URI);
+        Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
         values.put(Mock.Telephony.Sms.ADDRESS, address);
         values.put(Mock.Telephony.Sms.BODY, text.getBody());
         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
