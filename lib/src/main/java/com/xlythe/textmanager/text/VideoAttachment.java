@@ -13,6 +13,10 @@ public final class VideoAttachment extends Attachment {
         super(in);
     }
 
+    public VideoAttachment(String uri){
+        super(Type.VIDEO, uri);
+    }
+
     public int describeContents() {
         return 0;
     }

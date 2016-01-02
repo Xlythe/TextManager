@@ -5,6 +5,7 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,8 +17,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.VideoAttachment;
+
+import java.io.File;
 
 public class ComposeActivity extends AppCompatActivity {
 
@@ -71,6 +76,7 @@ public class ComposeActivity extends AppCompatActivity {
             mManager.send(new Text.Builder()
                             .message(mMessage.getText().toString())
                             .recipient(mContacts.getText().toString())
+                            .attach(new VideoAttachment("/sdcard/DCIM/Camera/VID_20151128_014919.mp4"))
                             .build()
             );
             finish();

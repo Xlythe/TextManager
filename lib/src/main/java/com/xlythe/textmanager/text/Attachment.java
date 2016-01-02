@@ -13,16 +13,22 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
     }
 
     private Type mType;
+    private String mUri;
 
     public Type getType(){
         return mType;
     }
 
-    public Uri getUri(){
-        return null;
+    public String getUri(){
+        return mUri;
     }
 
     public Attachment(Type type) {
+        mType = type;
+    }
+
+    public Attachment(Type type, String uri) {
+        mUri = uri;
         mType = type;
     }
 

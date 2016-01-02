@@ -13,6 +13,7 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -30,9 +31,13 @@ import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by Niko on 1/1/16.
@@ -101,19 +106,9 @@ public class ManagerUtils {
         }
         else {
             Log.e("HI", "should log something!!!!!!!!");
-            ArrayList<Bitmap> bitmaps = new ArrayList<>();
-            for(Attachment a: text.getAttachments()){
-                Attachment.Type type = a.getType();
-                switch(type) {
-                    case IMAGE:
-                        bitmaps.add(((ImageAttachment) a).getBitmap());
-                        break;
-                }
+            List<Attachment> attachment = text.getAttachments();
 
-            }
-
-            //TODO: Add support for generic media
-            sendMediaMessage(context, address, "no subject", text.getBody(), bitmaps, sentPendingIntent, deliveredPendingIntent);
+            sendMediaMessage(context, address, "no subject", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
@@ -128,7 +123,7 @@ public class ManagerUtils {
                                         final String address,
                                         final String subject,
                                         final String body,
-                                        final ArrayList<Bitmap> attachments,
+                                        final List<Attachment> attachments,
                                         PendingIntent sentPendingIntent,
                                         PendingIntent deliveredPendingIntent) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -148,20 +143,53 @@ public class ManagerUtils {
                         ConnectivityManager.setProcessDefaultNetwork(network);
                         ArrayList<MMSPart> data = new ArrayList<>();
 
-                        for (int i = 0; i < attachments.size(); i++) {
-                            // turn bitmap into byte array to be stored
-                            byte[] imageBytes = bitmapToByteArray(attachments.get(i));
+                        int i = 0;
+                        MMSPart part;
+                        for(Attachment a: attachments){
+                            Attachment.Type type = a.getType();
+                            switch(type) {
+                                case IMAGE:
+                                    byte[] imageBytes = bitmapToByteArray(((ImageAttachment) a).getBitmap());
+                                    part = new MMSPart();
+                                    part.MimeType = "image/jpeg";
+                                    part.Name = "image" + i;
+                                    part.Data = imageBytes;
+                                    data.add(part);
+                                    break;
+                                case VIDEO:
+                                    try {
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        FileInputStream fis = new FileInputStream(new File(a.getUri()));
 
-                            MMSPart part = new MMSPart();
-                            part.MimeType = "image/jpeg";
-                            part.Name = "image" + i;
-                            part.Data = imageBytes;
-                            data.add(part);
+                                        byte[] buf = new byte[1024];
+                                        int n;
+                                        while (-1 != (n = fis.read(buf)))
+                                            baos.write(buf, 0, n);
+
+                                        byte[] videoBytes = baos.toByteArray();
+
+                                        part = new MMSPart();
+                                        part.MimeType = "video/mpeg";
+                                        part.Name = "video" + i;
+                                        part.Data = videoBytes;
+                                        data.add(part);
+                                    } catch (FileNotFoundException fnfe){
+                                        Log.d("Send video","File not found");
+                                        fnfe.printStackTrace();
+                                    } catch (IOException ioe){
+
+                                    }
+                                    break;
+                                case VOICE:
+                                    //TODO: Voice support
+                                    break;
+                            }
+                            i++;
                         }
 
                         if (!body.isEmpty()) {
                             // add text to the end of the part and send
-                            MMSPart part = new MMSPart();
+                            part = new MMSPart();
                             part.Name = "text";
                             part.MimeType = "text/plain";
                             part.Data = body.getBytes();
