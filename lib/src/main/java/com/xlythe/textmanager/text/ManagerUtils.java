@@ -108,7 +108,7 @@ public class ManagerUtils {
             Log.e("HI", "should log something!!!!!!!!");
             List<Attachment> attachment = text.getAttachments();
 
-            sendMediaMessage(context, address, "no subject", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
+            sendMediaMessage(context, address, " ", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
