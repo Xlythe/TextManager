@@ -1,15 +1,9 @@
 package com.xlythe.textmanager.text;
 
-import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.provider.Telephony;
-import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Patterns;
 
@@ -17,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by Niko on 12/30/15.
+ * Fakes the Telephony constants
  */
 public class Mock {
     private Mock() {}
