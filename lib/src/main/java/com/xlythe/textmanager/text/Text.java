@@ -159,6 +159,10 @@ public class Text implements Message, Serializable {
         return mIsMms;
     }
 
+    public boolean isIncoming(){
+        return mIncoming;
+    }
+
     @Override
     public String getId() {
         return Long.toString(mId);

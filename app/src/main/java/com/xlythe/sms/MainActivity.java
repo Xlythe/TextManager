@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
-        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mAdapter = new SimpleAdapter(this, mManager.getThreads(), headers);

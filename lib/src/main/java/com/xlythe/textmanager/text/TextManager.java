@@ -182,14 +182,22 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Cursor getMessagesCursor(String threadId) {
         ContentResolver contentResolver = mContext.getContentResolver();
         final String[] projection = PROJECTION;
-        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI + threadId);
+        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
         final String order = "normalized_date ASC";
         return contentResolver.query(uri, projection, null, null, order);
     }
 
     @Override
     public List<Text> getMessages(Thread thread) {
-        return null;
+        List<Text> messages = new ArrayList<>();
+        Cursor c = getMessagesCursor(thread.getId());
+        if (c.moveToFirst()) {
+            do {
+                messages.add(new Text(mContext, c));
+            } while (c.moveToNext());
+        }
+        c.close();
+        return messages;
     }
 
     @Override

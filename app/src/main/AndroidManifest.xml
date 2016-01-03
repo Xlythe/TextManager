@@ -136,7 +136,7 @@
             android:name=".MessageActivity"
             android:label="@string/title_activity_message"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar.compose" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
