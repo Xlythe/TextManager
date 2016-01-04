@@ -44,7 +44,7 @@ public class Text implements Message, Serializable {
     private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
-    private Uri mAttachment;
+    private String mAttachment;
     private Contact mSender;
     private Contact mRecipient;
     private ArrayList<Attachment> mAttachments = new ArrayList<>();
@@ -163,7 +163,7 @@ public class Text implements Message, Serializable {
                 if (contentType.matches("image/.*")) {
                     // Find any part that is an image attachment
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId);
+                    mAttachment = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId) +"";
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
@@ -258,57 +258,57 @@ public class Text implements Message, Serializable {
         return null;
     }
 
-    private Text(Parcel in) {
-        mId = in.readLong();
-        mThreadId = in.readLong();
-        mDate = in.readLong();
-        mMmsId = in.readLong();
-        mAddress = in.readString();
-        mBody = in.readString();
-        mIncoming = in.readByte() != 0;
-        mIsMms = in.readByte() != 0;
-        mAttachment = Uri.parse(in.readString());
-        int size = in.readInt();
-        for(int i=0; i<size; i++){
-            //Type.values()[in.readInt()];
-            mAttachments.add((Attachment)in.readParcelable(Attachment.class.getClassLoader()));
-        }
-        //in.readTypedList(mAttachments, Attachment.CREATOR);
-    }
-
-    public int describeContents() {
-        return 0;
-    }
-
-    public void writeToParcel(Parcel out, int flags) {
-        out.writeLong(mId);
-        out.writeLong(mThreadId);
-        out.writeLong(mDate);
-        out.writeLong(mMmsId);
-        out.writeString(mAddress);
-        out.writeString(mBody);
-        out.writeByte((byte) (mIncoming ? 1 : 0));
-        out.writeByte((byte) (mIsMms ? 1 : 0));
-        out.writeString(mAttachment.toString());
-
-        // Test
-        out.writeInt(mAttachments.size());
-        for(int i=0; i<mAttachments.size(); i++){
-            //out.writeValue(mAttachments.get(0).getType().ordinal());
-            out.writeParcelable(mAttachments.get(0), flags);
-        }
-        //out.writeTypedList(mAttachments);
-    }
-
-    public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
-        public Text createFromParcel(Parcel in) {
-            return new Text(in);
-        }
-
-        public Text[] newArray(int size) {
-            return new Text[size];
-        }
-    };
+//    private Text(Parcel in) {
+//        mId = in.readLong();
+//        mThreadId = in.readLong();
+//        mDate = in.readLong();
+//        mMmsId = in.readLong();
+//        mAddress = in.readString();
+//        mBody = in.readString();
+//        mIncoming = in.readByte() != 0;
+//        mIsMms = in.readByte() != 0;
+//        mAttachment = Uri.parse(in.readString());
+//        int size = in.readInt();
+//        for(int i=0; i<size; i++){
+//            //Type.values()[in.readInt()];
+//            mAttachments.add((Attachment)in.readParcelable(Attachment.class.getClassLoader()));
+//        }
+//        //in.readTypedList(mAttachments, Attachment.CREATOR);
+//    }
+//
+//    public int describeContents() {
+//        return 0;
+//    }
+//
+//    public void writeToParcel(Parcel out, int flags) {
+//        out.writeLong(mId);
+//        out.writeLong(mThreadId);
+//        out.writeLong(mDate);
+//        out.writeLong(mMmsId);
+//        out.writeString(mAddress);
+//        out.writeString(mBody);
+//        out.writeByte((byte) (mIncoming ? 1 : 0));
+//        out.writeByte((byte) (mIsMms ? 1 : 0));
+//        out.writeString(mAttachment.toString());
+//
+//        // Test
+//        out.writeInt(mAttachments.size());
+//        for(int i=0; i<mAttachments.size(); i++){
+//            //out.writeValue(mAttachments.get(0).getType().ordinal());
+//            out.writeParcelable(mAttachments.get(0), flags);
+//        }
+//        //out.writeTypedList(mAttachments);
+//    }
+//
+//    public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
+//        public Text createFromParcel(Parcel in) {
+//            return new Text(in);
+//        }
+//
+//        public Text[] newArray(int size) {
+//            return new Text[size];
+//        }
+//    };
 
     public static class Builder {
         private String mMessage;

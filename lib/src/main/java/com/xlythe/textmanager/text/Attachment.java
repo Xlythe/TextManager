@@ -4,10 +4,13 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
+
 /**
  * Created by Niko on 12/29/15.
  */
-public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
+//TODO: parcelable
+public abstract class Attachment implements com.xlythe.textmanager.Attachment, Serializable{
     enum Type {
         IMAGE, VIDEO, VOICE
     }
