@@ -16,6 +16,7 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -233,8 +234,8 @@ public class ManagerUtils {
             sendRequest.setSubject(new EncodedStringValue(subject));
         }
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
-        //TODO: add number
-        sendRequest.setFrom(new EncodedStringValue("2163138473"));
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        sendRequest.setFrom(new EncodedStringValue(manager.getLine1Number()));
         final PduBody pduBody = new PduBody();
         // assign parts to the pdu body which contains sending data
         long size = 0;
