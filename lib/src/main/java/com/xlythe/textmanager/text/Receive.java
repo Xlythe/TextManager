@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
@@ -52,6 +54,8 @@ public class Receive {
      * @return byte array pdu
      * @throws IOException
      */
+    // TODO: Add Backwards compatibility
+    @SuppressLint("NewApi")
     protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -91,7 +95,8 @@ public class Receive {
                                     apnParameters.getProxyPort());
                             callback.onSuccess(data);
                         } catch (IOException ioe){
-
+                            Log.e("MMS","download failed due to network");
+                            callback.onFail();
                         }
                         connectivityManager.unregisterNetworkCallback(this);
                     }
@@ -102,6 +107,7 @@ public class Receive {
 
     public interface DataCallback{
         void onSuccess(byte[] result);
+        void onFail();
     }
 
     /**

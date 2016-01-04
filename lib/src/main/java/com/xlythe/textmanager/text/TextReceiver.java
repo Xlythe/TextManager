@@ -89,16 +89,18 @@ public abstract class TextReceiver extends BroadcastReceiver {
             final PduParser parser = new PduParser(pushData, true);
             GenericPdu pdu = parser.parse();
 
-            if (null == pdu) {
+            if (pdu == null) {
                 Log.e(TAG, "Invalid PUSH data");
                 return null;
             }
             PduPersister p = PduPersister.getPduPersister(mContext);
             Uri uri = null;
             try {
-                uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, false, true, null);
+                // this might need to be false, changing it to true though so it doesnt create empty threads
+                uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
             } catch (MmsException e) {
-
+                Log.e("Text Receiver","persisting pdu failed");
+                e.printStackTrace();
             }
 
             Receive.getPdu(uri, mContext, new Receive.DataCallback(){
@@ -118,6 +120,8 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 // mms
                             }
                             for (int i = 0; i < partsNum; i++) {
+                                // Send text over to the notification
+                                // only needs to decode a bitmap because cant show video in notifications
                                 PduPart part = body.getPart(i);
                                 byte[] bitmapdata = part.getData();
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
@@ -141,8 +145,14 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
-
+                        Log.e("MMS","unable to persist message");
+                        onFail();
                     }
+                }
+
+                @Override
+                public void onFail(){
+                    // this maybe useful
                 }
             });
             wl.release();

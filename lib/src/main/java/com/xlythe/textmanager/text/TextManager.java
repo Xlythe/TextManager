@@ -229,7 +229,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Cursor getThreadsCursor() {
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-        final String order = Mock.Telephony.Sms.DEFAULT_SORT_ORDER;
+        final String order = "normalized_date DESC";
         return contentResolver.query(uri, null, null, null, order);
     }
 

@@ -8,12 +8,16 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
+import android.provider.Telephony;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Either an sms or an mms
@@ -37,6 +41,7 @@ public class Text implements Message, Serializable {
     private long mMmsId;
     private String mAddress;
     private String mBody;
+    private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
     private Uri mAttachment;
@@ -47,6 +52,8 @@ public class Text implements Message, Serializable {
     private Text() {}
 
     protected Text(Context context, Cursor cursor) {
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        mDeviceNumber = manager.getLine1Number();
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             mIsMms = false;
@@ -92,6 +99,49 @@ public class Text implements Message, Serializable {
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mIncoming = isIncomingMessage(data, false);
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
+        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/addr");
+
+        // Query the address information for this message
+        Cursor addr = context.getContentResolver().query(
+                addressUri,
+                null,
+                null,
+                null,
+                null
+        );
+        HashSet<String> recipients = new HashSet<>();
+        while (addr.moveToNext()) {
+            String address;
+            if (android.os.Build.VERSION.SDK_INT >= 19) {
+                address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+            } else {
+                address = addr.getString(addr.getColumnIndex("address"));
+            }
+
+            // Don't add our own number to the displayed list
+            if(mDeviceNumber.contains("-")
+                    || mDeviceNumber.contains("(")
+                    || mDeviceNumber.contains(")")
+                    || mDeviceNumber.contains("+")){
+                Log.d("number not formatted", mDeviceNumber + "");
+                mDeviceNumber = mDeviceNumber.replaceAll("\\-", "");
+                mDeviceNumber = mDeviceNumber.replaceAll("\\+", "");
+                mDeviceNumber = mDeviceNumber.replaceAll("\\(","");
+                mDeviceNumber = mDeviceNumber.replaceAll("\\)","");
+                mDeviceNumber = mDeviceNumber.replaceAll(" ","");
+                Log.d("result", mDeviceNumber+"");
+            }
+            if (mDeviceNumber.length() > 10){
+                Log.d("number not formatted", mDeviceNumber + "");
+                mDeviceNumber = mDeviceNumber.substring(mDeviceNumber.length()-10, mDeviceNumber.length());
+                Log.d("result", mDeviceNumber + "");
+            }
+            if (mDeviceNumber == null || !address.contains(mDeviceNumber)) {
+                recipients.add(address);
+            }
+        }
+        mAddress = TextUtils.join(", ", recipients);
+        addr.close();
 
         if (mIsMms && mAttachment == null) {
             // Query all the MMS parts associated with this message

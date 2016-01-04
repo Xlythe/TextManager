@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -119,6 +120,8 @@ public class ManagerUtils {
         context.getContentResolver().insert(uri, values);
     }
 
+    // TODO: Add backwards compatibility
+    @SuppressLint("NewApi")
     public static void sendMediaMessage(final Context context,
                                         final String address,
                                         final String subject,

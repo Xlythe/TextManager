@@ -23,7 +23,8 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getSender().getDisplayName())
+                        // TODO: change back
+                        .setContentTitle(text.getRecipient().getDisplayName())
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
@@ -36,16 +37,16 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         inboxStyle.addLine(text.getBody());
         builder.setStyle(inboxStyle);
 
-        Intent resultIntent = new Intent(context, ManagerActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(ManagerActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
+//        Intent resultIntent = new Intent(context, com.xlythe.sms.ManagerActivity.class);
+//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+//        stackBuilder.addParentStack(com.xlythe.sms.ManagerActivity.class);
+//        stackBuilder.addNextIntent(resultIntent);
+//        PendingIntent resultPendingIntent =
+//                stackBuilder.getPendingIntent(
+//                        0,
+//                        PendingIntent.FLAG_UPDATE_CURRENT
+//                );
+//        builder.setContentIntent(resultPendingIntent);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(12345, builder.build());
