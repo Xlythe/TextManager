@@ -2,6 +2,7 @@ package com.xlythe.textmanager.text;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -16,6 +17,10 @@ public final class ImageAttachment extends Attachment {
     public ImageAttachment(Bitmap bitmap){
         super(Type.IMAGE);
         mBitmap = bitmap;
+    }
+
+    public ImageAttachment(String uri){
+        super(Type.IMAGE, uri);
     }
 
     public Bitmap getBitmap(){

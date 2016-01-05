@@ -1,11 +1,19 @@
 package com.xlythe.sms;
 
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.Attachment;
+import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 
 import java.util.List;
@@ -27,84 +35,114 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_MIDDLE_LEFT = 5;
     private static final int TYPE_BOTTOM_LEFT = 6;
     private static final int TYPE_SINGLE_LEFT = 7;
+    private static final int TYPE_ATTACHMENT = 8;
+    private static final int TYPE_FAILED = 9;
 
-    // Provide a reference to the views for each data item
-    // Complex data items may need more than one view per item, and
-    // you provide access to all the views for a data item in a view holder
-    public static class TopRightViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mTextView;
+        public ViewHolder(View v) {
+            super(v);
+            mTextView = (TextView) v.findViewById(R.id.message);
+        }
+        public void setText(String text){
+            mTextView.setText(text);
+        }
+    }
+
+    public static abstract class LeftHolder extends ViewHolder {
+        public LeftHolder(View v) {
+            super(v);
+        }
+        public void setColor(int color){
+            mTextView.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        }
+    }
+
+    public static class TopRightViewHolder extends ViewHolder {
         public TopRightViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class MiddleRightViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class MiddleRightViewHolder extends ViewHolder {
         public MiddleRightViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class BottomRightViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class BottomRightViewHolder extends ViewHolder {
         public BottomRightViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class SingleRightViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class SingleRightViewHolder extends ViewHolder {
         public SingleRightViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class TopLeftViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class TopLeftViewHolder extends LeftHolder {
         public TopLeftViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class MiddleLeftViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class MiddleLeftViewHolder extends LeftHolder {
         public MiddleLeftViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class BottomLeftViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class BottomLeftViewHolder extends LeftHolder {
         public BottomLeftViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
         }
     }
 
-    public static class SingleLeftViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView mTextView;
+    public static class SingleLeftViewHolder extends LeftHolder {
         public SingleLeftViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.message);
+        }
+    }
+
+    public static class AttachmentHolder extends RecyclerView.ViewHolder {
+        ImageView mImageView;
+        public AttachmentHolder(View v) {
+            super(v);
+            mImageView = (ImageView) v.findViewById(R.id.image);
+        }
+        public void setImage(Text text){
+            mImageView.setImageURI(Uri.parse(text.getAttachment().getUri()));
+        }
+    }
+
+    public static class FailedHolder extends LeftHolder implements View.OnClickListener {
+        private ClickListener mListener;
+
+        public FailedHolder(View v, ClickListener listener) {
+            super(v);
+            mListener = listener;
+            v.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mListener != null) {
+                mListener.onItemClicked(getAdapterPosition());
+            }
+        }
+
+        public interface ClickListener {
+            void onItemClicked(int position);
         }
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public MessageAdapter(List<Text> texts) {
+
+    private FailedHolder.ClickListener mClickListener;
+    public MessageAdapter(Context context, List<Text> texts) {
+        mClickListener = (FailedHolder.ClickListener) context;
         mTexts = texts;
     }
 
@@ -136,6 +174,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         } else if (viewType == TYPE_SINGLE_LEFT) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
             return new SingleLeftViewHolder(v);
+        } else if (viewType == TYPE_ATTACHMENT) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.attachment, parent, false);
+            return new AttachmentHolder(v);
+        } else if (viewType == TYPE_FAILED) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
+            return new FailedHolder(v, mClickListener);
         }
         return null;
     }
@@ -143,6 +187,13 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemViewType(int position) {
         Text text = mTexts.get(position);
+
+        if (text.isMms()){
+            if (text.getAttachment() != null) {
+                return TYPE_ATTACHMENT;
+            }
+            return TYPE_FAILED;
+        }
 
         // Get the date of the current, previous and next message.
         long dateCurrent = text.getTimestamp();
@@ -194,33 +245,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
-        if (holder instanceof TopRightViewHolder) {
-            TopRightViewHolder trvh = (TopRightViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof MiddleRightViewHolder) {
-            MiddleRightViewHolder trvh = (MiddleRightViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof BottomRightViewHolder) {
-            BottomRightViewHolder trvh = (BottomRightViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof SingleRightViewHolder) {
-            SingleRightViewHolder trvh = (SingleRightViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof TopLeftViewHolder) {
-            TopLeftViewHolder trvh = (TopLeftViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof MiddleLeftViewHolder) {
-            MiddleLeftViewHolder trvh = (MiddleLeftViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof BottomLeftViewHolder) {
-            BottomLeftViewHolder trvh = (BottomLeftViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
-        } else if (holder instanceof SingleLeftViewHolder) {
-            SingleLeftViewHolder trvh = (SingleLeftViewHolder) holder;
-            trvh.mTextView.setText(mTexts.get(position).getBody());
+        if (holder instanceof ViewHolder) {
+            ((ViewHolder) holder).setText(mTexts.get(position).getBody());
+            if (holder instanceof FailedHolder) {
+                ((LeftHolder) holder).setColor(Color.BLUE);
+                ((LeftHolder) holder).setText("New attachment to download");
+            }
+            if (holder instanceof LeftHolder) {
+                ((LeftHolder) holder).setColor(Color.BLUE);
+            }
+        } else if (holder instanceof AttachmentHolder) {
+            ((AttachmentHolder) holder).setImage(mTexts.get(position));
         }
+
+
 
     }
 

@@ -18,6 +18,7 @@ import com.xlythe.textmanager.Message;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Either an sms or an mms
@@ -44,7 +45,7 @@ public class Text implements Message, Serializable {
     private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
-    private String mAttachment;
+    private Attachment mAttachment;
     private Contact mSender;
     private Contact mRecipient;
     private ArrayList<Attachment> mAttachments = new ArrayList<>();
@@ -163,7 +164,7 @@ public class Text implements Message, Serializable {
                 if (contentType.matches("image/.*")) {
                     // Find any part that is an image attachment
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId) +"";
+                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId) +"");
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
@@ -205,7 +206,7 @@ public class Text implements Message, Serializable {
         }
     }
 
-    protected boolean isMms() {
+    public boolean isMms() {
         return mIsMms;
     }
 
@@ -234,7 +235,11 @@ public class Text implements Message, Serializable {
     }
 
     @Override
-    public ArrayList<Attachment> getAttachments() {
+    public Attachment getAttachment() {
+        return mAttachment;
+    }
+
+    public List<Attachment> getAttachments() {
         return mAttachments;
     }
 

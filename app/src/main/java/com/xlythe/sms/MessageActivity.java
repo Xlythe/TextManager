@@ -5,16 +5,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 
+import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
-public class MessageActivity extends AppCompatActivity {
+import java.util.List;
+
+public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedHolder.ClickListener {
     public static final String EXTRA_THREAD = "thread";
     private Thread mThread;
     private MessageAdapter mAdapter;
     private TextManager mManager;
     private RecyclerView mRecyclerView;
+    private List<Text> mTexts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,11 +34,17 @@ public class MessageActivity extends AppCompatActivity {
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mAdapter = new MessageAdapter(mManager.getMessages(mThread));
+        mTexts = mManager.getMessages(mThread);
+        mAdapter = new MessageAdapter(this, mTexts);
 
         mRecyclerView.setAdapter(mAdapter);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    @Override
+    public void onItemClicked(int position) {
+        Log.d("redownload","should do something");
+        mManager.downloadAttachment(mTexts.get(position));
+    }
 }

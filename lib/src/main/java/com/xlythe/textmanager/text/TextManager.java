@@ -5,13 +5,24 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.provider.BaseColumns;
+import android.provider.Telephony;
+import android.util.Log;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.exception.MmsException;
+import com.xlythe.textmanager.text.pdu.PduBody;
+import com.xlythe.textmanager.text.pdu.PduParser;
+import com.xlythe.textmanager.text.pdu.PduPart;
+import com.xlythe.textmanager.text.pdu.PduPersister;
+import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,6 +67,42 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private TextManager(Context context) {
         mContext = context;
         context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
+    }
+
+
+    public void downloadAttachment(Text text){
+        if (text.isMms()) {
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            wl.acquire();
+            Uri uri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, text.getId());
+            Receive.getPdu(uri, mContext, new Receive.DataCallback() {
+                @Override
+                public void onSuccess(byte[] result) {
+                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+
+                    PduPersister persister = PduPersister.getPduPersister(mContext);
+                    Uri msgUri;
+                    try {
+                        msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+
+                        // Use local time instead of PDU time
+                        ContentValues values = new ContentValues(1);
+                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        mContext.getContentResolver().update(msgUri, values, null, null);
+                    } catch (MmsException e) {
+                        Log.e("MMS", "unable to persist message");
+                        onFail();
+                    }
+                }
+
+                @Override
+                public void onFail() {
+                    // this maybe useful
+                }
+            });
+            wl.release();
+        }
     }
 
 

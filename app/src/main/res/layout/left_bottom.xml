@@ -4,8 +4,19 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:background="#00695c"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="4dp"
+        android:padding="16dp"
+        android:layout_gravity="start"
+        android:background="@drawable/left_bottom"
         android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_marginTop="8dp"
+        android:layout_gravity="start"
+        android:text="now"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
