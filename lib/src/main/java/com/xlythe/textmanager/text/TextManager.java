@@ -75,7 +75,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
-            Uri uri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, text.getId());
+            final Uri uri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, text.getId());
             Receive.getPdu(uri, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
@@ -84,7 +84,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     PduPersister persister = PduPersister.getPduPersister(mContext);
                     Uri msgUri;
                     try {
-                        msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                        msgUri = persister.persist(retrieveConf, uri, true, true, null);
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);

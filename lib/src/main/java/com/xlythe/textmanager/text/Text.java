@@ -94,6 +94,23 @@ public class Text implements Message, Serializable {
         mIncoming = isIncomingMessage(data, true);
     }
 
+    private String reformat(String number){
+        if(number.contains("-")
+                || number.contains("(")
+                || number.contains(")")
+                || number.contains("+")){
+            number = number.replaceAll("\\-", "");
+            number = number.replaceAll("\\+", "");
+            number = number.replaceAll("\\(","");
+            number = number.replaceAll("\\)","");
+            number = number.replaceAll(" ","");
+        }
+        if (number.length() > 10){
+            number = number.substring(number.length()-10, number.length());
+        }
+        return number;
+    }
+
     private void parseMmsMessage(Cursor data, Context context) {
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
@@ -120,23 +137,8 @@ public class Text implements Message, Serializable {
             }
 
             // Don't add our own number to the displayed list
-            if(mDeviceNumber.contains("-")
-                    || mDeviceNumber.contains("(")
-                    || mDeviceNumber.contains(")")
-                    || mDeviceNumber.contains("+")){
-                Log.d("number not formatted", mDeviceNumber + "");
-                mDeviceNumber = mDeviceNumber.replaceAll("\\-", "");
-                mDeviceNumber = mDeviceNumber.replaceAll("\\+", "");
-                mDeviceNumber = mDeviceNumber.replaceAll("\\(","");
-                mDeviceNumber = mDeviceNumber.replaceAll("\\)","");
-                mDeviceNumber = mDeviceNumber.replaceAll(" ","");
-                Log.d("result", mDeviceNumber+"");
-            }
-            if (mDeviceNumber.length() > 10){
-                Log.d("number not formatted", mDeviceNumber + "");
-                mDeviceNumber = mDeviceNumber.substring(mDeviceNumber.length()-10, mDeviceNumber.length());
-                Log.d("result", mDeviceNumber + "");
-            }
+            mDeviceNumber = reformat(mDeviceNumber);
+            
             if (mDeviceNumber == null || !address.contains(mDeviceNumber)) {
                 recipients.add(address);
             }
