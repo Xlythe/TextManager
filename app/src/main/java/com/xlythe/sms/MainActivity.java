@@ -1,7 +1,6 @@
 package com.xlythe.sms;
 
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -17,16 +16,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.Thread;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener {
     private RecyclerView mRecyclerView;
     private SimpleAdapter mAdapter;
     private TextManager mManager;
+    private List<Thread> mThreads;
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
     private AppBarLayout mAppbar;
+
+    private static final long ONE_MINUTE = 60 * 1000;
+    private static final long ONE_HOUR = 60 * ONE_MINUTE;
+    private static final long ONE_DAY = 24 * ONE_HOUR;
+    private static final long ONE_WEEK = 7 * ONE_DAY;
+    private static final long ONE_MONTH = 4 * ONE_WEEK;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,19 +45,40 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
         mManager = TextManager.getInstance(getBaseContext());
+        mThreads = mManager.getThreads();
 
         ArrayList<Section> headers = new ArrayList<>();
-//        headers.add(new Section(0+headers.size(),"Today"));
-//        headers.add(new Section(2+headers.size(),"Yesterday"));
-//        headers.add(new Section(7+headers.size(),"November"));
-//        headers.add(new Section(list.size()+headers.size(),""));
+
+        Section section = new Section(0, "");
+        for (int i = 0; i < mThreads.size(); i++) {
+            long date = mThreads.get(i).getLatestMessage().getTimestamp();
+            long time = System.currentTimeMillis() - date;
+            if (time < ONE_DAY && !section.mTitle.equals("Today")) {
+                section = new Section(i+headers.size(),"Today");
+                headers.add(section);
+                // TODO: think of a better way for headers
+                mThreads.add(mThreads.get(0));
+            } else if (time > ONE_DAY && time < 2 * ONE_DAY && !section.mTitle.equals("Yesterday")) {
+                section = new Section(i+headers.size(),"Yesterday");
+                headers.add(section);
+                mThreads.add(mThreads.get(0));
+            } else if (time > 2 * ONE_DAY && time < ONE_WEEK && !section.mTitle.equals("This week")) {
+                section = new Section(i+headers.size(),"This week");
+                headers.add(section);
+                mThreads.add(mThreads.get(0));
+            } else if (time > ONE_WEEK && time < ONE_MONTH && !section.mTitle.equals("This month")) {
+                section = new Section(i+headers.size(),"This month");
+                headers.add(section);
+                mThreads.add(mThreads.get(0));
+            }
+        }
 
         //Your RecyclerView
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
-        mAdapter = new SimpleAdapter(this, mManager.getThreads(), headers);
+        mAdapter = new SimpleAdapter(this, mThreads, headers);
 
         mRecyclerView.setAdapter(mAdapter);
 
@@ -76,9 +105,8 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         if (mActionMode != null) {
             toggleSelection(position);
         } else {
-            Log.d("List","I was pressed!");
             Intent i = new Intent(getBaseContext(), MessageActivity.class);
-            i.putExtra(MessageActivity.EXTRA_THREAD, mManager.getThreads().get(position));
+            i.putExtra(MessageActivity.EXTRA_THREAD, mThreads.get(position));
             startActivity(i);
         }
     }
