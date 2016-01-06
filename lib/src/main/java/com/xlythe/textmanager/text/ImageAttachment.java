@@ -19,7 +19,7 @@ public final class ImageAttachment extends Attachment {
         mBitmap = bitmap;
     }
 
-    public ImageAttachment(String uri){
+    public ImageAttachment(Uri uri){
         super(Type.IMAGE, uri);
     }
 

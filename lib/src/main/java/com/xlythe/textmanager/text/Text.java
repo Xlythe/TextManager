@@ -94,21 +94,17 @@ public class Text implements Message, Serializable {
         mIncoming = isIncomingMessage(data, true);
     }
 
-    private String reformat(String number){
-        if(number.contains("-")
-                || number.contains("(")
-                || number.contains(")")
-                || number.contains("+")){
-            number = number.replaceAll("\\-", "");
-            number = number.replaceAll("\\+", "");
-            number = number.replaceAll("\\(","");
-            number = number.replaceAll("\\)","");
-            number = number.replaceAll(" ","");
+    private String cleanNumber(String number){
+        String clean = "";
+        for (int i = 0; i < number.length(); i++) {
+            if (Character.isDigit(number.charAt(i))) {
+                clean += number.charAt(i);
+            }
         }
-        if (number.length() > 10){
-            number = number.substring(number.length()-10, number.length());
+        if (clean.length() > 10){
+            clean = clean.substring(clean.length()-10, clean.length());
         }
-        return number;
+        return clean;
     }
 
     private void parseMmsMessage(Cursor data, Context context) {
@@ -137,7 +133,7 @@ public class Text implements Message, Serializable {
             }
 
             // Don't add our own number to the displayed list
-            mDeviceNumber = reformat(mDeviceNumber);
+            mDeviceNumber = cleanNumber(mDeviceNumber);
             
             if (mDeviceNumber == null || !address.contains(mDeviceNumber)) {
                 recipients.add(address);
@@ -166,7 +162,7 @@ public class Text implements Message, Serializable {
                 if (contentType.matches("image/.*")) {
                     // Find any part that is an image attachment
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId) +"");
+                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));

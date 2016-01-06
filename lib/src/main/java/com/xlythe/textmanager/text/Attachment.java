@@ -9,20 +9,19 @@ import java.io.Serializable;
 /**
  * Created by Niko on 12/29/15.
  */
-//TODO: parcelable
-public abstract class Attachment implements com.xlythe.textmanager.Attachment, Serializable{
+public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     enum Type {
         IMAGE, VIDEO, VOICE
     }
 
     private Type mType;
-    private String mUri;
+    private Uri mUri;
 
     public Type getType(){
         return mType;
     }
 
-    public String getUri(){
+    public Uri getUri(){
         return mUri;
     }
 
@@ -30,16 +29,18 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, S
         mType = type;
     }
 
-    public Attachment(Type type, String uri) {
+    public Attachment(Type type, Uri uri) {
         mUri = uri;
         mType = type;
     }
 
     protected Attachment(Parcel in) {
-        // mType = in.read...., mUri = in.read....
+        mType = Type.values()[in.readInt()];
+        mUri = Uri.parse(in.readString());
     }
 
     public void writeToParcel(Parcel out, int flags) {
-        // out.writeValue(mType); out.writeValue(mUri);
+        out.writeValue(mType.ordinal());
+        out.writeString(mUri.toString());
     }
 }

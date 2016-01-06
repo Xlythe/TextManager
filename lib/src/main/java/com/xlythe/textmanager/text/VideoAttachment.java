@@ -2,6 +2,7 @@ package com.xlythe.textmanager.text;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -15,7 +16,7 @@ public final class VideoAttachment extends Attachment {
         super(in);
     }
 
-    public VideoAttachment(String uri){
+    public VideoAttachment(Uri uri){
         super(Type.VIDEO, uri);
     }
 

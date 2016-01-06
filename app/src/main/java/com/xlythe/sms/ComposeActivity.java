@@ -76,7 +76,7 @@ public class ComposeActivity extends AppCompatActivity {
             mManager.send(new Text.Builder()
                             .message(mMessage.getText().toString())
                             .recipient(mContacts.getText().toString())
-                            .attach(new VideoAttachment("/sdcard/DCIM/Camera/VID_20151128_014919.mp4"))
+                            //.attach(new VideoAttachment("/sdcard/DCIM/Camera/VID_20151128_014919.mp4"))
                             .build()
             );
             finish();

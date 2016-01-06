@@ -113,7 +113,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             mImageView = (ImageView) v.findViewById(R.id.image);
         }
         public void setImage(Text text){
-            mImageView.setImageURI(Uri.parse(text.getAttachment().getUri()));
+            mImageView.setImageURI(text.getAttachment().getUri());
         }
     }
 

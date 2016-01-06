@@ -163,7 +163,7 @@ public class ManagerUtils {
                                 case VIDEO:
                                     try {
                                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                        FileInputStream fis = new FileInputStream(new File(a.getUri()));
+                                        FileInputStream fis = new FileInputStream(new File(a.getUri().getPath()));
 
                                         byte[] buf = new byte[1024];
                                         int n;
