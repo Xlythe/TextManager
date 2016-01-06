@@ -52,7 +52,8 @@ public class Text implements Message, Parcelable {
 
     private Text() {}
 
-    protected Text(Context context, Cursor cursor) {
+    // This was public for cursors, let me know if I should make it protected again
+    public Text(Context context, Cursor cursor) {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
         String type = getMessageType(cursor);

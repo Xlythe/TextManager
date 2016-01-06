@@ -1,5 +1,6 @@
 package com.xlythe.sms;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,7 +20,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private MessageAdapter mAdapter;
     private TextManager mManager;
     private RecyclerView mRecyclerView;
-    private List<Text> mTexts;
+//    private List<Text> mTexts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +35,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mTexts = mManager.getMessages(mThread);
-        mAdapter = new MessageAdapter(this, mTexts);
+//        mTexts = mManager.getMessages(mThread);
+//        mAdapter = new MessageAdapter(this, mTexts);
+
+        Cursor c = mManager.getMessagesCursor(mThread.getId());
+        mAdapter = new MessageAdapter(this, c);
 
         mRecyclerView.setAdapter(mAdapter);
 
@@ -45,6 +49,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     @Override
     public void onItemClicked(int position) {
         Log.d("redownload","should do something");
-        mManager.downloadAttachment(mTexts.get(position));
+        //mManager.downloadAttachment(mTexts.get(position));
     }
 }

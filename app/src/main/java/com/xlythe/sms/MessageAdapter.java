@@ -1,9 +1,11 @@
 package com.xlythe.sms;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,17 +14,22 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
 import com.xlythe.textmanager.Attachment;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Niko on 1/2/16.
  */
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<Text> mTexts;
+    private List<Text> mTexts = new ArrayList<>();
+    private Cursor mCursor;
+    private Context mContext;
+    private RunQueue mRq;
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
@@ -37,6 +44,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_SINGLE_LEFT = 7;
     private static final int TYPE_ATTACHMENT = 8;
     private static final int TYPE_FAILED = 9;
+
+    private static final int PRE_LOAD_MESSAGE_COUNT = 10;
+    private static final int LOAD_IN_BACKGROUND_COUNT = 50;
 
     public static abstract class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mTextView;
@@ -112,8 +122,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             super(v);
             mImageView = (ImageView) v.findViewById(R.id.image);
         }
-        public void setImage(Text text){
-            mImageView.setImageURI(text.getAttachment().getUri());
+        public void setImage(Context context, Text text) {
+            Picasso.with(context).load(text.getAttachment().getUri()).into(mImageView);
         }
     }
 
@@ -139,11 +149,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-
     private FailedHolder.ClickListener mClickListener;
-    public MessageAdapter(Context context, List<Text> texts) {
+
+    public MessageAdapter(Context context, Cursor cursor) {
         mClickListener = (FailedHolder.ClickListener) context;
-        mTexts = texts;
+        mCursor = cursor;
+        mContext = context;
     }
 
     // Create new views (invoked by the layout manager)
@@ -186,7 +197,35 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        Text text = mTexts.get(position);
+        Text text;
+        if (mTexts.size() <= position) {
+            for (int i = 0; i < PRE_LOAD_MESSAGE_COUNT && i < mCursor.getCount(); i++) {
+                mCursor.moveToPosition(position + i);
+                text = new Text(mContext, mCursor);
+                mTexts.add(text);
+            }
+        }
+
+        Runnable runnable = new Runnable() {
+            public void run() {
+                for (int i = 0; i < LOAD_IN_BACKGROUND_COUNT && mTexts.size() < mCursor.getCount(); i++) {
+                    mCursor.moveToPosition(mTexts.size());
+                    Text text = new Text(mContext, mCursor);
+                    mTexts.add(text);
+                }
+
+            }
+        };
+
+        if (mRq == null) {
+            mRq = new RunQueue();
+            for (int i = 0; i < mCursor.getCount() / LOAD_IN_BACKGROUND_COUNT; i++) {
+                mRq.queue(runnable);
+            }
+            new Thread(mRq).start();
+        }
+
+        text = mTexts.get(position);
 
         if (text.isMms()){
             if (text.getAttachment() != null) {
@@ -207,13 +246,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         // Check if previous message exists, then get the date and sender.
         if (position != 0) {
-            Text nextText = mTexts.get(position - 1);
-            datePrevious = nextText.getTimestamp();
-            userPrevious = nextText.isIncoming();
+            Text prevText = mTexts.get(position - 1);
+            datePrevious = prevText.getTimestamp();
+            userPrevious = prevText.isIncoming();
         }
 
         // Check if next message exists, then get the date and sender.
-        if (position != mTexts.size()-1) {
+        if (!mCursor.isLast()) {
+            if (mTexts.size() <= position + 1) {
+                for (int i = 1; i < PRE_LOAD_MESSAGE_COUNT && !mCursor.isLast(); i++) {
+                    mCursor.moveToPosition(position + i);
+                    text = new Text(mContext, mCursor);
+                    mTexts.add(text);
+                }
+            }
             Text nextText = mTexts.get(position + 1);
             dateNext = nextText.getTimestamp();
             userNext = nextText.isIncoming();
@@ -242,11 +288,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        Text text = mTexts.get(position);
+
         if (holder instanceof ViewHolder) {
-            ((ViewHolder) holder).setText(mTexts.get(position).getBody());
+            ((ViewHolder) holder).setText(text.getBody());
             if (holder instanceof FailedHolder) {
                 ((LeftHolder) holder).setColor(Color.BLUE);
                 ((LeftHolder) holder).setText("New attachment to download");
@@ -255,16 +302,31 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 ((LeftHolder) holder).setColor(Color.BLUE);
             }
         } else if (holder instanceof AttachmentHolder) {
-            ((AttachmentHolder) holder).setImage(mTexts.get(position));
+            ((AttachmentHolder) holder).setImage(mContext, text);
         }
-
-
-
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mTexts.size();
+        return mCursor.getCount();
+    }
+
+    public static class RunQueue implements Runnable {
+        private List<Runnable>  list = new ArrayList<>();
+
+        public void queue(Runnable task) {
+            list.add(task);
+        }
+
+        public void run() {
+            while(list.size() > 0)
+            {
+                Runnable task = list.get(0);
+
+                list.remove(0);
+                task.run();
+            }
+        }
     }
 }
