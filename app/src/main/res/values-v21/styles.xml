@@ -11,8 +11,7 @@
         <item name="android:windowEnterTransition">@transition/window_slide</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.compose.edit">
+    <style name="AppTheme.NoActionBar.Compose.Edit">
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
-        <!--<item name="android:windowDrawsSystemBarBackgrounds">false</item>-->
     </style>
 </resources>

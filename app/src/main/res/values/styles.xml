@@ -21,15 +21,15 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.main">
+    <style name="AppTheme.NoActionBar.Main">
         <item name="android:windowBackground">@color/colorBackground</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.compose">
+    <style name="AppTheme.NoActionBar.Compose">
         <item name="android:windowBackground">@color/colorCompose</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.compose.edit">
+    <style name="AppTheme.NoActionBar.Compose.Edit">
     </style>
 
     <style name="Divider">

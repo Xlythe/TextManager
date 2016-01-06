@@ -55,7 +55,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar.main" >
+            android:theme="@style/AppTheme.NoActionBar.Main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -65,7 +65,7 @@
         </activity>
         <activity
             android:name=".EditTextActivity"
-            android:theme="@style/AppTheme.NoActionBar.compose.edit"
+            android:theme="@style/AppTheme.NoActionBar.Compose.Edit"
             android:windowSoftInputMode="stateVisible|adjustNothing" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -76,7 +76,7 @@
         <activity
             android:name=".ComposeActivity"
             android:label="@string/compose"
-            android:theme="@style/AppTheme.NoActionBar.compose" >
+            android:theme="@style/AppTheme.NoActionBar.Compose" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
@@ -136,7 +136,7 @@
             android:name=".MessageActivity"
             android:label="@string/title_activity_message"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar.compose" >
+            android:theme="@style/AppTheme.NoActionBar.Compose" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />

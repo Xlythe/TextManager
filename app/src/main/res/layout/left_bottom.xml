@@ -4,6 +4,8 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:layout_marginLeft="40dp"
+        android:layout_marginStart="40dp"
         android:textColor="@android:color/white"
         android:layout_marginTop="4dp"
         android:padding="16dp"
