@@ -29,7 +29,7 @@ public final class VideoAttachment extends Attachment {
         super.writeToParcel(out, flags);
     }
 
-    public static final Parcelable.Creator<Attachment> CREATOR = new Parcelable.Creator<Attachment>() {
+    public static final Parcelable.Creator<VideoAttachment> CREATOR = new Parcelable.Creator<VideoAttachment>() {
         public VideoAttachment createFromParcel(Parcel in) {
             return new VideoAttachment(in);
         }

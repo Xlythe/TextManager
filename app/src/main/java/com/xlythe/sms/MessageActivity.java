@@ -28,7 +28,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         mManager = TextManager.getInstance(getBaseContext());
-        mThread = (Thread) getIntent().getSerializableExtra(EXTRA_THREAD);
+        mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
         getSupportActionBar().setTitle(mThread.getLatestMessage().getSender().getDisplayName());
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);

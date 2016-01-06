@@ -17,6 +17,7 @@ import com.xlythe.textmanager.Message;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -24,8 +25,7 @@ import java.util.List;
  * Either an sms or an mms
  */
 
-//TODO: parcelable
-public class Text implements Message, Serializable {
+public class Text implements Message, Parcelable {
     private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Mock.Telephony.Mms.Part.CONTENT_TYPE,
@@ -261,57 +261,58 @@ public class Text implements Message, Serializable {
         return null;
     }
 
-//    private Text(Parcel in) {
-//        mId = in.readLong();
-//        mThreadId = in.readLong();
-//        mDate = in.readLong();
-//        mMmsId = in.readLong();
-//        mAddress = in.readString();
-//        mBody = in.readString();
-//        mIncoming = in.readByte() != 0;
-//        mIsMms = in.readByte() != 0;
-//        mAttachment = Uri.parse(in.readString());
+    private Text(Parcel in) {
+        mId = in.readLong();
+        mThreadId = in.readLong();
+        mDate = in.readLong();
+        mMmsId = in.readLong();
+        mAddress = in.readString();
+        mBody = in.readString();
+        mDeviceNumber = in.readString();
+        mIncoming = in.readByte() != 0;
+        mIsMms = in.readByte() != 0;
+        mSender = in.readParcelable(Contact.class.getClassLoader());
+        mRecipient = in.readParcelable(Contact.class.getClassLoader());
+        // TODO: Attachment may not be functioning properly, needs further testing
+        mAttachment = in.readParcelable(Attachment.class.getClassLoader());
 //        int size = in.readInt();
 //        for(int i=0; i<size; i++){
-//            //Type.values()[in.readInt()];
-//            mAttachments.add((Attachment)in.readParcelable(Attachment.class.getClassLoader()));
+//            mAttachments.add((Attachment)in.readParcelable(ImageAttachment.class.getClassLoader()));
 //        }
-//        //in.readTypedList(mAttachments, Attachment.CREATOR);
-//    }
-//
-//    public int describeContents() {
-//        return 0;
-//    }
-//
-//    public void writeToParcel(Parcel out, int flags) {
-//        out.writeLong(mId);
-//        out.writeLong(mThreadId);
-//        out.writeLong(mDate);
-//        out.writeLong(mMmsId);
-//        out.writeString(mAddress);
-//        out.writeString(mBody);
-//        out.writeByte((byte) (mIncoming ? 1 : 0));
-//        out.writeByte((byte) (mIsMms ? 1 : 0));
-//        out.writeString(mAttachment.toString());
-//
-//        // Test
+    }
+
+    public int describeContents() {
+        return 0;
+    }
+
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeLong(mId);
+        out.writeLong(mThreadId);
+        out.writeLong(mDate);
+        out.writeLong(mMmsId);
+        out.writeString(mAddress);
+        out.writeString(mBody);
+        out.writeString(mDeviceNumber);
+        out.writeByte((byte) (mIncoming ? 1 : 0));
+        out.writeByte((byte) (mIsMms ? 1 : 0));
+        out.writeParcelable(mSender, flags);
+        out.writeParcelable(mRecipient, flags);
+        out.writeParcelable(mAttachment, flags);
 //        out.writeInt(mAttachments.size());
 //        for(int i=0; i<mAttachments.size(); i++){
-//            //out.writeValue(mAttachments.get(0).getType().ordinal());
 //            out.writeParcelable(mAttachments.get(0), flags);
 //        }
-//        //out.writeTypedList(mAttachments);
-//    }
-//
-//    public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
-//        public Text createFromParcel(Parcel in) {
-//            return new Text(in);
-//        }
-//
-//        public Text[] newArray(int size) {
-//            return new Text[size];
-//        }
-//    };
+    }
+
+    public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
+        public Text createFromParcel(Parcel in) {
+            return new Text(in);
+        }
+
+        public Text[] newArray(int size) {
+            return new Text[size];
+        }
+    };
 
     public static class Builder {
         private String mMessage;

@@ -22,13 +22,13 @@ public class VoiceAttachment extends Attachment {
         super.writeToParcel(out, flags);
     }
 
-    public static final Parcelable.Creator<Attachment> CREATOR = new Parcelable.Creator<Attachment>() {
+    public static final Parcelable.Creator<VoiceAttachment> CREATOR = new Parcelable.Creator<VoiceAttachment>() {
         public VoiceAttachment createFromParcel(Parcel in) {
             return new VoiceAttachment(in);
         }
 
-        public VideoAttachment[] newArray(int size) {
-            return new VideoAttachment[size];
+        public VoiceAttachment[] newArray(int size) {
+            return new VoiceAttachment[size];
         }
     };
 }

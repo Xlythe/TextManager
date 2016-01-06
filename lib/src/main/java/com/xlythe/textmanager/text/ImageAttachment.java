@@ -46,7 +46,7 @@ public final class ImageAttachment extends Attachment {
         out.writeValue(mBitmap);
     }
 
-    public static final Parcelable.Creator<Attachment> CREATOR = new Parcelable.Creator<Attachment>() {
+    public static final Parcelable.Creator<ImageAttachment> CREATOR = new Parcelable.Creator<ImageAttachment>() {
         public ImageAttachment createFromParcel(Parcel in) {
             return new ImageAttachment(in);
         }
