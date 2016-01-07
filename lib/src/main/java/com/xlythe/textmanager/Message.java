@@ -6,7 +6,7 @@ import com.xlythe.textmanager.text.Status;
 import java.util.List;
 
 /**
- * Represents a message. May contain data like images, voice, or just raw bytes.
+ * Represents a message. May contain attachments like images, voice.
  */
 public interface Message {
     String getId();
@@ -15,6 +15,6 @@ public interface Message {
     long getTimestamp();
     User getSender();
     User getRecipient();
-    Attachment getAttachment();
+    List<Attachment> getAttachments();
     Status getStatus(); // Status.Sending, Status.Sent, Status.Failed, Status.Read, Status.Unread
 }

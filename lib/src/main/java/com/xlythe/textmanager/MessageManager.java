@@ -8,35 +8,99 @@ import java.util.List;
  * A generic interface for managing messages
  */
 public interface MessageManager<M extends Message, T extends MessageThread, U extends User> {
-    List<M> getMessages(String threadId);
-    Cursor getMessagesCursor(String threadId);
+
+    /**
+     * Returns all messages for the given thread
+     * */
     List<M> getMessages(T thread);
-    Cursor getMessagesCursor(T thread);
-    M getMessage(String messageId);
 
+    /**
+     * Returns all messages for the given thread
+     * */
+    void getMessages(T thread, MessageCallback<List<M>> callback);
+
+    /**
+     * Returns a message cursor for the given thread
+     * */
+    Cursor getMessageCursor(T thread);
+
+    /**
+     * Returns a message given an id
+     * */
+    M getMessage(String id);
+
+    /**
+     * Returns a message given an id
+     * */
+    void getMessage(String id, MessageCallback<M> callback);
+
+    /**
+     * Return all threads
+     * */
     List<T> getThreads();
-    Cursor getThreadsCursor();
-    T getThread(String threadId);
 
-    void deleteMessage(String messageId);
-    void deleteMessages(String... messageIds);
-    void deleteMessage(M message);
-    void deleteMessages(M... messages);
+    /**
+     * Return all threads
+     * */
+    void getThreads(MessageCallback<List<T>> callback);
 
-    void deleteThread(String threadId);
-    void deleteThreads(String... threadIds);
-    void deleteThread(T thread);
-    void deleteThreads(T... threads);
+    /**
+     * Returns a thread cursor
+     * */
+    Cursor getThreadCursor();
 
-    void MarkMessageAsRead(String messageId);
-    void MarkMessagesAsRead(String... messageId);
-    void MarkMessageAsRead(M message);
-    void MarkMessagesAsRead(M... message);
+    /**
+     * Returns a thread given an id
+     * */
+    T getThread(String id);
 
-    void MarkThreadAsRead(String threadId);
-    void MarkThreadsAsRead(String... threadId);
-    void MarkThreadAsRead(T thread);
-    void MarkThreadsAsRead(T... thread);
+    /**
+     * Returns a thread given an id
+     * */
+    void getThread(String threadId, MessageCallback<T> callback);
 
+    /**
+     * Deletes a message
+     * */
+    void delete(M message);
+
+    /**
+     * Deletes a thread
+     * */
+    void delete(T thread);
+
+    /**
+     * Marks a message as read
+     * */
+    void markAsRead(M message);
+
+    /**
+     * Marks all messages in a thread as read
+     * */
+    void markAsRead(T thread);
+
+    /**
+     * Sends a message
+     * */
     void send(M message);
+
+    /**
+     * Return all messages containing the text.
+     * */
+    List<M> search(String text);
+
+    /**
+     * Return all messages containing the text.
+     * */
+    void search(String text, MessageCallback<List<M>> callback);
+
+    /**
+     * Register an observer to get callbacks every time messages are added, deleted, or changed.
+     * */
+    void registerObserver(MessageObserver observer);
+
+    /**
+     * Remove a registered observer
+     * */
+    void unregisterObserver(MessageObserver observer);
 }

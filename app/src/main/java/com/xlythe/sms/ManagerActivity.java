@@ -73,7 +73,7 @@ public class ManagerActivity extends Activity {
         super.onResume();
 
         final String myPackageName = getPackageName();
-        if (!Telephony.Sms.getDefaultSmsPackage(this).equals(myPackageName)) {
+        if (!Telephony.Sms.getDefaultSmsPackage(this).equals(myPackageName)) { // TODO Not backwards compatible. Also, show a popup or banner first...
             Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
             intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName);
             startActivity(intent);

@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -15,17 +16,14 @@ import android.util.Log;
 
 import com.xlythe.textmanager.Message;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 /**
  * Either an sms or an mms
  */
-
-public class Text implements Message, Parcelable {
+public final class Text implements Message, Parcelable {
     private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Mock.Telephony.Mms.Part.CONTENT_TYPE,
@@ -45,15 +43,14 @@ public class Text implements Message, Parcelable {
     private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
-    private Attachment mAttachment;
     private Contact mSender;
     private Contact mRecipient;
-    private ArrayList<Attachment> mAttachments = new ArrayList<>();
+    private final List<Attachment> mAttachments = new ArrayList<>();
 
     private Text() {}
 
     // This was public for cursors, let me know if I should make it protected again
-    public Text(Context context, Cursor cursor) {
+    protected Text(Context context, Cursor cursor) {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
         String type = getMessageType(cursor);
@@ -80,8 +77,7 @@ public class Text implements Message, Parcelable {
             } else {
                 return TYPE_SMS;
             }
-        }
-        else {
+        } else {
             return cursor.getString(typeIndex);
         }
     }
@@ -114,7 +110,7 @@ public class Text implements Message, Parcelable {
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mIncoming = isIncomingMessage(data, false);
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
-        Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, mId + "/addr");
+        Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
 
         // Query the address information for this message
         Cursor addr = context.getContentResolver().query(
@@ -143,7 +139,7 @@ public class Text implements Message, Parcelable {
         mAddress = TextUtils.join(", ", recipients);
         addr.close();
 
-        if (mIsMms && mAttachment == null) {
+        if (mIsMms) {
             // Query all the MMS parts associated with this message
             Uri messageUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/part");
             Cursor inner = context.getContentResolver().query(
@@ -163,7 +159,7 @@ public class Text implements Message, Parcelable {
                 if (contentType.matches("image/.*")) {
                     // Find any part that is an image attachment
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
+                    mAttachments.add(new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
@@ -234,10 +230,6 @@ public class Text implements Message, Parcelable {
     }
 
     @Override
-    public Attachment getAttachment() {
-        return mAttachment;
-    }
-
     public List<Attachment> getAttachments() {
         return mAttachments;
     }
@@ -274,12 +266,21 @@ public class Text implements Message, Parcelable {
         mIsMms = in.readByte() != 0;
         mSender = in.readParcelable(Contact.class.getClassLoader());
         mRecipient = in.readParcelable(Contact.class.getClassLoader());
-        // TODO: Attachment may not be functioning properly, needs further testing
-        mAttachment = in.readParcelable(Attachment.class.getClassLoader());
-//        int size = in.readInt();
-//        for(int i=0; i<size; i++){
-//            mAttachments.add((Attachment)in.readParcelable(ImageAttachment.class.getClassLoader()));
-//        }
+        int attachmentSize = in.readInt();
+        for (int i = 0; i < attachmentSize; i++) {
+            Attachment.Type type = Attachment.Type.values()[in.readInt()];
+            switch (type) {
+                case IMAGE:
+                    mAttachments.add(new ImageAttachment(in));
+                    break;
+                case VIDEO:
+                    mAttachments.add(new VideoAttachment(in));
+                    break;
+                case VOICE:
+                    mAttachments.add(new VoiceAttachment(in));
+                    break;
+            }
+        }
     }
 
     public int describeContents() {
@@ -298,11 +299,11 @@ public class Text implements Message, Parcelable {
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeParcelable(mSender, flags);
         out.writeParcelable(mRecipient, flags);
-        out.writeParcelable(mAttachment, flags);
-//        out.writeInt(mAttachments.size());
-//        for(int i=0; i<mAttachments.size(); i++){
-//            out.writeParcelable(mAttachments.get(0), flags);
-//        }
+        out.writeInt(mAttachments.size());
+        for (int i = 0; i < mAttachments.size(); i++){
+            out.writeInt(mAttachments.get(i).getType().ordinal());
+            out.writeParcelable(mAttachments.get(i), flags);
+        }
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
@@ -315,14 +316,26 @@ public class Text implements Message, Parcelable {
         }
     };
 
+    public static class TextCursor extends CursorWrapper {
+        private final Context mContext;
+
+        public TextCursor(Context context, android.database.Cursor cursor) {
+            super(cursor);
+            mContext = context.getApplicationContext();
+        }
+
+        public Text getText() {
+            return new Text(mContext, this);
+        }
+    }
+
     public static class Builder {
         private String mMessage;
         private Contact mRecipient;
         private String mAddress;
-        private ArrayList<Attachment> mAttachments = new ArrayList<>();
+        private final List<Attachment> mAttachments = new ArrayList<>();
 
-        public Builder() {
-        }
+        public Builder() {}
 
         public Builder recipient(String address) {
             mAddress = address;
@@ -349,7 +362,7 @@ public class Text implements Message, Parcelable {
             text.mBody = mMessage;
             text.mAddress = mAddress;
             text.mRecipient = mRecipient;
-            if(mAttachments.size()>0){
+            if (mAttachments.size() > 0) {
                 text.mIsMms = true;
                 text.mAttachments.addAll(mAttachments);
             }

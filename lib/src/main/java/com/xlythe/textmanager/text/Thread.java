@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -96,4 +97,17 @@ public class Thread implements MessageThread<Text>, Parcelable {
             return new Thread[size];
         }
     };
+
+    public static class ThreadCursor extends CursorWrapper {
+        private final Context mContext;
+
+        public ThreadCursor(Context context, android.database.Cursor cursor) {
+            super(cursor);
+            mContext = context.getApplicationContext();
+        }
+
+        public Thread getThread() {
+            return new Thread(mContext, this);
+        }
+    }
 }

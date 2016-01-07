@@ -12,7 +12,7 @@ import java.io.Serializable;
  * Created by Niko on 12/30/15.
  */
 public final class VideoAttachment extends Attachment {
-    private VideoAttachment(Parcel in) {
+    protected VideoAttachment(Parcel in) {
         super(in);
     }
 

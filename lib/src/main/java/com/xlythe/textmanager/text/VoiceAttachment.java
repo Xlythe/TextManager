@@ -9,7 +9,7 @@ import java.io.Serializable;
  * Created by Niko on 12/30/15.
  */
 public class VoiceAttachment extends Attachment {
-    private VoiceAttachment(Parcel in) {
+    protected VoiceAttachment(Parcel in) {
         super(in);
     }
 

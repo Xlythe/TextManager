@@ -1,11 +1,8 @@
 package com.xlythe.sms;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.net.Uri;
-import android.os.Handler;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,46 +12,66 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.xlythe.textmanager.Attachment;
-import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.LinkedList;
 
-/**
- * Created by Niko on 1/2/16.
- */
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<Text> mTexts = new ArrayList<>();
-    private Cursor mCursor;
+    private static final String TAG = MessageAdapter.class.getSimpleName();
+    private static final boolean DEBUG = true;
+    private static final int CACHE_SIZE = 50;
+
+    private Text.TextCursor mCursor;
     private Context mContext;
-    private RunQueue mRq;
+    private FailedHolder.ClickListener mClickListener;
+    private final SimpleLruCache<Text> mTextLruCache = new SimpleLruCache<>(CACHE_SIZE);
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
 
-    private static final int TYPE_TOP_RIGHT = 0;
+    private static final int TYPE_TOP_RIGHT    = 0;
     private static final int TYPE_MIDDLE_RIGHT = 1;
     private static final int TYPE_BOTTOM_RIGHT = 2;
     private static final int TYPE_SINGLE_RIGHT = 3;
-    private static final int TYPE_TOP_LEFT = 4;
-    private static final int TYPE_MIDDLE_LEFT = 5;
-    private static final int TYPE_BOTTOM_LEFT = 6;
-    private static final int TYPE_SINGLE_LEFT = 7;
-    private static final int TYPE_ATTACHMENT = 8;
-    private static final int TYPE_FAILED = 9;
+    private static final int TYPE_TOP_LEFT     = 4;
+    private static final int TYPE_MIDDLE_LEFT  = 5;
+    private static final int TYPE_BOTTOM_LEFT  = 6;
+    private static final int TYPE_SINGLE_LEFT  = 7;
+    private static final int TYPE_ATTACHMENT   = 8;
+    private static final int TYPE_FAILED       = 9;
 
-    private static final int LOAD_IN_BACKGROUND_COUNT = 50;
+    public static abstract class TextViewHolder extends RecyclerView.ViewHolder {
+        private Text mText;
 
-    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+        public TextViewHolder(View v) {
+            super(v);
+        }
+
+        public void setText(Text text) {
+            mText = text;
+        }
+
+        public Text getText() {
+            return mText;
+        }
+    }
+
+    public static abstract class ViewHolder extends TextViewHolder {
         public TextView mTextView;
+
         public ViewHolder(View v) {
             super(v);
             mTextView = (TextView) v.findViewById(R.id.message);
         }
-        public void setText(String text){
-            mTextView.setText(text);
+
+        public void setText(Text text) {
+            super.setText(text);
+            setText(text.getBody());
+        }
+
+        public void setText(String body) {
+            mTextView.setText(body);
         }
     }
 
@@ -62,7 +79,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         public LeftHolder(View v) {
             super(v);
         }
-        public void setColor(int color){
+
+        @Override
+        public void setText(Text text) {
+            super.setText(text);
+            setColor(Color.BLUE);
+        }
+
+        public void setColor(int color) {
             mTextView.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
         }
     }
@@ -115,14 +139,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static class AttachmentHolder extends RecyclerView.ViewHolder {
+    public static class AttachmentHolder extends TextViewHolder {
         ImageView mImageView;
+
         public AttachmentHolder(View v) {
             super(v);
             mImageView = (ImageView) v.findViewById(R.id.image);
         }
+
         public void setImage(Context context, Text text) {
-            Picasso.with(context).load(text.getAttachment().getUri()).into(mImageView);
+            Picasso.with(context).load(text.getAttachments().get(0).getUri()).into(mImageView);
         }
     }
 
@@ -136,30 +162,36 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         @Override
+        public void setText(Text text) {
+            super.setText(text);
+            setColor(Color.BLUE);
+            setText("New attachment to download");
+        }
+
+        @Override
         public void onClick(View v) {
             if (mListener != null) {
-                mListener.onItemClicked(getAdapterPosition());
+                mListener.onItemClicked(getText());
             }
         }
 
         public interface ClickListener {
-            void onItemClicked(int position);
+            void onItemClicked(Text text);
         }
     }
 
-    // Provide a suitable constructor (depends on the kind of dataset)
-    private FailedHolder.ClickListener mClickListener;
-
-    public MessageAdapter(Context context, Cursor cursor) {
-        mClickListener = (FailedHolder.ClickListener) context;
+    public MessageAdapter(Context context, Text.TextCursor cursor) {
         mCursor = cursor;
         mContext = context;
+    }
+
+    public void setOnClickListener(FailedHolder.ClickListener onClickListener) {
+        mClickListener = onClickListener;
     }
 
     // Create new views (invoked by the layout manager)
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
         if (viewType == TYPE_TOP_RIGHT) {
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_top, parent, false);
             return new TopRightViewHolder(v);
@@ -196,35 +228,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        Text text;
-        if (mTexts.size() <= position) {
-            mCursor.moveToPosition(position);
-            text = new Text(mContext, mCursor);
-            mTexts.add(text);
+        Text text = getText(position);
+
+        Text prevText = null;
+        if (position > 0) {
+            prevText = getText(position - 1);
         }
 
-        Runnable runnable = new Runnable() {
-            public void run() {
-                for (int i = 0; i < LOAD_IN_BACKGROUND_COUNT && mTexts.size() < mCursor.getCount(); i++) {
-                    mCursor.moveToPosition(mTexts.size());
-                    Text text = new Text(mContext, mCursor);
-                    mTexts.add(text);
-                }
-            }
-        };
-
-        if (mRq == null) {
-            mRq = new RunQueue();
-            for (int i = 0; i < mCursor.getCount() / LOAD_IN_BACKGROUND_COUNT; i++) {
-                mRq.queue(runnable);
-            }
-            new Thread(mRq).start();
+        Text nextText = null;
+        if (position + 1 < mCursor.getCount()) {
+            nextText = getText(position + 1);
         }
 
-        text = mTexts.get(position);
-
-        if (text.isMms()){
-            if (text.getAttachment() != null) {
+        if (text.isMms()) {
+            if (!text.getAttachments().isEmpty()) {
                 return TYPE_ATTACHMENT;
             }
             return TYPE_FAILED;
@@ -241,20 +258,13 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         boolean userNext = !text.isIncoming();
 
         // Check if previous message exists, then get the date and sender.
-        if (position != 0) {
-            Text prevText = mTexts.get(position - 1);
+        if (prevText != null) {
             datePrevious = prevText.getTimestamp();
             userPrevious = prevText.isIncoming();
         }
 
         // Check if next message exists, then get the date and sender.
-        if (position < mCursor.getCount() - 1) {
-            if (mTexts.size() <= position + 1) {
-                mCursor.moveToPosition(position + 1);
-                text = new Text(mContext, mCursor);
-                mTexts.add(text);
-            }
-            Text nextText = mTexts.get(position + 1);
+        if (nextText != null) {
             dateNext = nextText.getTimestamp();
             userNext = nextText.isIncoming();
         }
@@ -263,64 +273,96 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         boolean largePC = dateCurrent - datePrevious > SPLIT_DURATION;
         boolean largeCN = dateNext - dateCurrent > SPLIT_DURATION;
 
+        if (DEBUG) {
+            Log.d(TAG, String.format(
+                    "userCurrent=%s, userPrevious=%s, userNext=%s," +
+                    "dateCurrent=%s, datePrevious=%s, dateNext=%s," +
+                    "largePC=%s, largeCN=%s",
+                    userCurrent, userPrevious, userNext,
+                    dateCurrent, datePrevious, dateNext,
+                    largePC, largeCN));
+        }
+
         if (!userCurrent && (userPrevious || largePC) && (!userNext && !largeCN)) {
             return TYPE_TOP_RIGHT;
-        } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)){
+        } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)) {
             return TYPE_MIDDLE_RIGHT;
-        } else if (!userCurrent && (!userPrevious && !largePC)){
+        } else if (!userCurrent && (!userPrevious && !largePC)) {
             return TYPE_BOTTOM_RIGHT;
         } else if (!userCurrent) {
             return TYPE_SINGLE_RIGHT;
         } else if ((!userPrevious || largePC) && (userNext && !largeCN)) {
             return TYPE_TOP_LEFT;
-        } else if ((userPrevious && !largePC) && (userNext && !largeCN)){
+        } else if ((userPrevious && !largePC) && (userNext && !largeCN)) {
             return TYPE_MIDDLE_LEFT;
-        } else if (userPrevious && !largePC){
+        } else if (userPrevious && !largePC) {
             return TYPE_BOTTOM_LEFT;
         } else {
             return TYPE_SINGLE_LEFT;
         }
     }
 
-    @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        Text text = mTexts.get(position);
-
-        if (holder instanceof ViewHolder) {
-            ((ViewHolder) holder).setText(text.getBody());
-            if (holder instanceof FailedHolder) {
-                ((LeftHolder) holder).setColor(Color.BLUE);
-                ((LeftHolder) holder).setText("New attachment to download");
-            }
-            if (holder instanceof LeftHolder) {
-                ((LeftHolder) holder).setColor(Color.BLUE);
-            }
-        } else if (holder instanceof AttachmentHolder) {
-            ((AttachmentHolder) holder).setImage(mContext, text);
+    private Text getText(int position) {
+        Text text = mTextLruCache.get(position);
+        if (text == null) {
+            mCursor.moveToPosition(position);
+            text = mCursor.getText();
+            mTextLruCache.add(position, text);
         }
+        return text;
     }
 
-    // Return the size of your dataset (invoked by the layout manager)
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        ((TextViewHolder) holder).setText(getText(position));
+    }
+
     @Override
     public int getItemCount() {
         return mCursor.getCount();
     }
 
-    public static class RunQueue implements Runnable {
-        private List<Runnable>  list = new ArrayList<>();
+    private static class SimpleLruCache<T> {
+        private final int mSize;
+        private final LinkedList<T> mStack = new LinkedList<>();
+        private final HashMap<Integer, T> mMap;
+        private final HashMap<T, Integer> mReversedMap;
 
-        public void queue(Runnable task) {
-            list.add(task);
+        SimpleLruCache(int size) {
+            mSize = size;
+            mMap = new HashMap<>(mSize);
+            mReversedMap = new HashMap<>(mSize);
         }
 
-        public void run() {
-            while(list.size() > 0)
-            {
-                Runnable task = list.get(0);
-
-                list.remove(0);
-                task.run();
+        void add(int pos, T obj) {
+            // Check for dups
+            if (mStack.contains(obj)) {
+                return;
             }
+
+            // If the stack has grown too large, start trimming it
+            if (mStack.size() == mSize) {
+                T oldText = mStack.removeFirst();
+                int oldPos = mReversedMap.remove(oldText);
+                mMap.remove(oldPos);
+            }
+
+            // Add the new object to the cache
+            mStack.add(obj);
+            mMap.put(pos, obj);
+            mReversedMap.put(obj, pos);
+        }
+
+        T get(int pos) {
+            T obj = mMap.get(pos);
+
+            // Move this object to the back of the stack
+            if (obj != null) {
+                mStack.remove(obj);
+                mStack.add(obj);
+            }
+
+            return obj;
         }
     }
 }

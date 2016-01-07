@@ -5,22 +5,17 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
-import android.provider.Telephony;
 import android.util.Log;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.exception.MmsException;
-import com.xlythe.textmanager.text.pdu.PduBody;
 import com.xlythe.textmanager.text.pdu.PduParser;
-import com.xlythe.textmanager.text.pdu.PduPart;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
@@ -66,16 +61,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private TextManager(Context context) {
         mContext = context;
-        context.getContentResolver().registerContentObserver(Uri.parse("content://mms-sms/conversations/"), true, new TextObserver(new Handler()));
+        context.getContentResolver().registerContentObserver(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, true, new TextObserver(new Handler()));
     }
-
 
     public void downloadAttachment(Text text){
         if (text.isMms()) {
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
-            final Uri uri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, text.getId());
+            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId());
             Receive.getPdu(uri, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
@@ -88,7 +82,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
-                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
                         Log.e("MMS", "unable to persist message");
@@ -104,32 +98,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             wl.release();
         }
     }
-
-
-
-    public void getThreads(final MessageCallback<List<Thread>> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
-            @Override
-            public void run() {
-                // getThreads is a long running operation
-                final List<Thread> threads = getThreads();
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(threads);
-                    }
-                });
-            }
-        }.start();
-    }
-
-    public void getMessages(final long threadId, final MessageCallback<List<Text>> callback) {
+    @Override
+    public void getMessages(final Thread thread, final MessageCallback<List<Text>> callback) {
         // Create a handler so we call back on the same thread we were called on
         final Handler handler = new Handler();
 
@@ -138,7 +108,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             @Override
             public void run() {
                 // getMessages is a long running operation
-                final List<Text> threads = getMessages(Long.toString(threadId));
+                final List<Text> threads = getMessages(thread);
 
                 // Return the list in the callback
                 handler.post(new Runnable() {
@@ -160,7 +130,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public List<Text> search(String text) {
-        return new LinkedList<>();
+        return new LinkedList<>(); // TODO
     }
 
     public void search(final String text, final MessageCallback<List<Text>> callback) {
@@ -203,44 +173,18 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-
-
     @Override
     public void send(final Text text) {
         ManagerUtils.send(mContext, text);
     }
 
-
-
-    @Override
-    public List<Text> getMessages(String threadId) {
-        List<Text> messages = new ArrayList<>();
-        Cursor c = getMessagesCursor(threadId);
-        if (c.moveToFirst()) {
-            do {
-                messages.add(new Text(mContext, c));
-            } while (c.moveToNext());
-        }
-        c.close();
-        return messages;
-    }
-
-    @Override
-    public Cursor getMessagesCursor(String threadId) {
-        ContentResolver contentResolver = mContext.getContentResolver();
-        final String[] projection = PROJECTION;
-        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
-        final String order = "normalized_date ASC";
-        return contentResolver.query(uri, projection, null, null, order);
-    }
-
     @Override
     public List<Text> getMessages(Thread thread) {
         List<Text> messages = new ArrayList<>();
-        Cursor c = getMessagesCursor(thread.getId());
+        Text.TextCursor c = getMessageCursor(thread);
         if (c.moveToFirst()) {
             do {
-                messages.add(new Text(mContext, c));
+                messages.add(c.getText());
             } while (c.moveToNext());
         }
         c.close();
@@ -248,21 +192,69 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public Cursor getMessagesCursor(Thread thread) {
-        return null;
+    public Text.TextCursor getMessageCursor(Thread thread) {
+        ContentResolver contentResolver = mContext.getContentResolver();
+        final String[] projection = PROJECTION;
+        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ thread.getId());
+        final String order = "normalized_date ASC";
+        return new Text.TextCursor(mContext, contentResolver.query(uri, projection, null, null, order));
+    }
+
+    @Override
+    public void getMessage(final String id, final MessageCallback<Text> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getMessage is a long running operation
+                final Text text = getMessage(id);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(text);
+                    }
+                });
+            }
+        }.start();
     }
 
     @Override
     public Text getMessage(String messageId) {
-        return null;
+        return null; // TODO
     }
 
+    @Override
+    public void getThreads(final MessageCallback<List<Thread>> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
 
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getThreads is a long running operation
+                final List<Thread> threads = getThreads();
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(threads);
+                    }
+                });
+            }
+        }.start();
+    }
 
     @Override
     public List<Thread> getThreads() {
         List<Thread> threads = new ArrayList<>();
-        Cursor c = getThreadsCursor();
+        Cursor c = getThreadCursor();
         if (c.moveToFirst()) {
             do {
                 threads.add(new Thread(mContext, c));
@@ -273,7 +265,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public Cursor getThreadsCursor() {
+    public Cursor getThreadCursor() {
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
         final String order = "normalized_date DESC";
@@ -281,125 +273,63 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
+    public void getThread(final String id, final MessageCallback<Thread> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getThread is a long running operation
+                final Thread thread = getThread(id);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(thread);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    @Override
     public Thread getThread(String threadId) {
-        return null;
-    }
-
-
-
-    @Override
-    public void deleteMessage(String messageId) {
-
+        return null; // TODO
     }
 
     @Override
-    public void deleteMessages(String... messageIds) {
-
+    public void delete(Text message) {
+        String clause = String.format("%s = %s",
+                Mock.Telephony.Sms._ID, message.getId());
+        mContext.getContentResolver().delete(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
     }
 
     @Override
-    public void deleteMessage(Text message) {
-        String clausole = "_ID = ";
-        clausole = clausole + message.getId();
-        Uri uri = Uri.parse("content://mms-sms/conversations/" + message.getThreadId());
-        mContext.getContentResolver().delete(uri, clausole, null);
+    public void delete(Thread thread) {
+        String clause = String.format("%s = %s",
+                Mock.Telephony.Sms.THREAD_ID, thread.getId());
+        mContext.getContentResolver().delete(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
     }
 
     @Override
-    public void deleteMessages(Text... messages) {
-        String clausole = "";
-        for (int i=0; i<messages.length; i++) {
-            if(messages.length==i+1){
-                clausole = clausole + "_ID = " + messages[i].getId();
-            }
-            else {
-                clausole = clausole + "_ID = " + messages[i].getId() + " OR ";
-            }
-        }
-        Uri uri = Uri.parse("content://mms-sms/conversations/" + messages[0].getThreadId());
-        mContext.getContentResolver().delete(uri, clausole, null);
-    }
-
-
-
-    @Override
-    public void deleteThread(String threadId) {
-
-    }
-
-    @Override
-    public void deleteThreads(String... threadIds) {
-
-    }
-
-    @Override
-    public void deleteThread(Thread thread) {
-        String clausole = "_ID = ";
-        clausole = clausole + thread.getId();
-        Uri uri = Uri.parse("content://mms-sms/conversations/");
-        mContext.getContentResolver().delete(uri, clausole, null);
-    }
-
-    @Override
-    public void deleteThreads(Thread... threads) {
-        String clausole = "";
-        for (int i=0; i<threads.length; i++) {
-            if(threads.length==i+1){
-                clausole = clausole + "_ID = " + threads[i].getId();
-            }
-            else {
-                clausole = clausole + "_ID = " + threads[i].getId() + " OR ";
-            }
-        }
-        Uri uri = Uri.parse("content://mms-sms/conversations/");
-        mContext.getContentResolver().delete(uri, clausole, null);
-    }
-
-
-
-    @Override
-    public void MarkMessageAsRead(String messageId) {
-
-    }
-
-    @Override
-    public void MarkMessagesAsRead(String... messageId) {
-
-    }
-
-    @Override
-    public void MarkMessageAsRead(Text message) {
-
-    }
-
-    @Override
-    public void MarkMessagesAsRead(Text... message) {
-
-    }
-
-
-
-    @Override
-    public void MarkThreadAsRead(String threadId) {
-
-    }
-
-    @Override
-    public void MarkThreadsAsRead(String... threadId) {
-
-    }
-
-    @Override
-    public void MarkThreadAsRead(Thread thread) {
+    public void markAsRead(Text message) {
         ContentValues values = new ContentValues();
-        values.put("read", true);
-        Uri uri =Uri.parse("content://mms-sms/conversations/");
-        String clausole = "thread_id=" + thread.getId() + " AND read=0";
-        mContext.getContentResolver().update(uri, values, clausole, null);
+        values.put(Mock.Telephony.Sms.READ, true);
+        String clause = String.format("%s = %s",
+                Mock.Telephony.Sms._ID, message.getId());
+        mContext.getContentResolver().update(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
     }
 
     @Override
-    public void MarkThreadsAsRead(Thread... thread) {
-
+    public void markAsRead(Thread thread) {
+        ContentValues values = new ContentValues();
+        values.put(Mock.Telephony.Sms.READ, true);
+        String clause = String.format("%s = %s AND %s = %s",
+                Mock.Telephony.Sms.THREAD_ID, thread.getId(),
+                Mock.Telephony.Sms.READ, 0);
+        mContext.getContentResolver().update(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
     }
 }

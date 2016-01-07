@@ -31,7 +31,7 @@ public final class ImageAttachment extends Attachment {
         return null;
     }
 
-    private ImageAttachment(Parcel in) {
+    protected ImageAttachment(Parcel in) {
         super(in);
         mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
     }
