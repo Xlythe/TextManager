@@ -45,7 +45,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_ATTACHMENT = 8;
     private static final int TYPE_FAILED = 9;
 
-    private static final int PRE_LOAD_MESSAGE_COUNT = 10;
     private static final int LOAD_IN_BACKGROUND_COUNT = 50;
 
     public static abstract class ViewHolder extends RecyclerView.ViewHolder {
@@ -199,11 +198,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public int getItemViewType(int position) {
         Text text;
         if (mTexts.size() <= position) {
-            for (int i = 0; i < PRE_LOAD_MESSAGE_COUNT && i < mCursor.getCount(); i++) {
-                mCursor.moveToPosition(position + i);
-                text = new Text(mContext, mCursor);
-                mTexts.add(text);
-            }
+            mCursor.moveToPosition(position);
+            text = new Text(mContext, mCursor);
+            mTexts.add(text);
         }
 
         Runnable runnable = new Runnable() {
@@ -213,7 +210,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     Text text = new Text(mContext, mCursor);
                     mTexts.add(text);
                 }
-
             }
         };
 
@@ -252,13 +248,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         // Check if next message exists, then get the date and sender.
-        if (!mCursor.isLast()) {
+        if (position < mCursor.getCount() - 1) {
             if (mTexts.size() <= position + 1) {
-                for (int i = 1; i < PRE_LOAD_MESSAGE_COUNT && !mCursor.isLast(); i++) {
-                    mCursor.moveToPosition(position + i);
-                    text = new Text(mContext, mCursor);
-                    mTexts.add(text);
-                }
+                mCursor.moveToPosition(position + 1);
+                text = new Text(mContext, mCursor);
+                mTexts.add(text);
             }
             Text nextText = mTexts.get(position + 1);
             dateNext = nextText.getTimestamp();
