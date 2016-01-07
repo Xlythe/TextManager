@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.xlythe.textmanager.MessageCallback;
@@ -18,6 +19,7 @@ import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
+import com.xlythe.textmanager.text.util.SimpleLruCache;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ import java.util.Set;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
+    private static final int CACHE_SIZE = 50;
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
@@ -49,8 +52,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     };
 
     private static TextManager sTextManager;
+
     private Context mContext;
     private final Set<MessageObserver> mObservers = new HashSet<>();
+    private final SimpleLruCache<String, Contact> mContactCache = new SimpleLruCache<>(CACHE_SIZE);
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -331,5 +336,29 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 Mock.Telephony.Sms.THREAD_ID, thread.getId(),
                 Mock.Telephony.Sms.READ, 0);
         mContext.getContentResolver().update(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+    }
+
+    public Contact lookupContact(String phoneNumber) {
+        Contact contact = mContactCache.get(phoneNumber);
+        if (contact == null) {
+            ContentResolver contentResolver = mContext.getContentResolver();
+            Uri uri = Uri.withAppendedPath(
+                    ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                    Uri.encode(phoneNumber));
+
+            Cursor c = contentResolver.query(uri, null, null, null, null);
+            try {
+                if (c != null && c.moveToFirst()) {
+                    contact = new Contact(c);
+                } else {
+                    contact = new Contact(phoneNumber);
+                }
+            } finally {
+                if (c != null) c.close();
+            }
+            mContactCache.add(phoneNumber, contact);
+        }
+        return contact;
+
     }
 }

@@ -184,21 +184,7 @@ public final class Text implements Message, Parcelable {
     }
 
     private void buildContact(Context context) {
-        ContentResolver contentResolver = context.getContentResolver();
-        Uri uri = Uri.withAppendedPath(
-                ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                Uri.encode(mAddress));
-
-        Cursor c = contentResolver.query(uri, null, null, null, null);
-        try {
-            if (c != null && c.moveToFirst()) {
-                mSender = new Contact(c);
-            } else {
-                mSender = new Contact(mAddress);
-            }
-        } finally {
-            if (c != null) c.close();
-        }
+        mSender = TextManager.getInstance(context).lookupContact(mAddress);
     }
 
     public boolean isMms() {

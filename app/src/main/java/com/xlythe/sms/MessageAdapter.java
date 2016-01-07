@@ -13,9 +13,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.xlythe.textmanager.text.Text;
-
-import java.util.HashMap;
-import java.util.LinkedList;
+import com.xlythe.textmanager.text.util.SimpleLruCache;
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
@@ -25,7 +23,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private Text.TextCursor mCursor;
     private Context mContext;
     private FailedHolder.ClickListener mClickListener;
-    private final SimpleLruCache<Text> mTextLruCache = new SimpleLruCache<>(CACHE_SIZE);
+    private final SimpleLruCache<Integer, Text> mTextLruCache = new SimpleLruCache<>(CACHE_SIZE);
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
@@ -320,49 +318,5 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() {
         return mCursor.getCount();
-    }
-
-    private static class SimpleLruCache<T> {
-        private final int mSize;
-        private final LinkedList<T> mStack = new LinkedList<>();
-        private final HashMap<Integer, T> mMap;
-        private final HashMap<T, Integer> mReversedMap;
-
-        SimpleLruCache(int size) {
-            mSize = size;
-            mMap = new HashMap<>(mSize);
-            mReversedMap = new HashMap<>(mSize);
-        }
-
-        void add(int pos, T obj) {
-            // Check for dups
-            if (mStack.contains(obj)) {
-                return;
-            }
-
-            // If the stack has grown too large, start trimming it
-            if (mStack.size() == mSize) {
-                T oldText = mStack.removeFirst();
-                int oldPos = mReversedMap.remove(oldText);
-                mMap.remove(oldPos);
-            }
-
-            // Add the new object to the cache
-            mStack.add(obj);
-            mMap.put(pos, obj);
-            mReversedMap.put(obj, pos);
-        }
-
-        T get(int pos) {
-            T obj = mMap.get(pos);
-
-            // Move this object to the back of the stack
-            if (obj != null) {
-                mStack.remove(obj);
-                mStack.add(obj);
-            }
-
-            return obj;
-        }
     }
 }
