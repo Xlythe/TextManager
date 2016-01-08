@@ -10,7 +10,9 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
+import android.provider.Telephony;
 import android.util.Log;
+import android.util.LruCache;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
@@ -19,7 +21,6 @@ import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
-import com.xlythe.textmanager.text.util.SimpleLruCache;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +56,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private Context mContext;
     private final Set<MessageObserver> mObservers = new HashSet<>();
-    private final SimpleLruCache<String, Contact> mContactCache = new SimpleLruCache<>(CACHE_SIZE);
+    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
@@ -356,9 +357,24 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } finally {
                 if (c != null) c.close();
             }
-            mContactCache.add(phoneNumber, contact);
+            mContactCache.put(phoneNumber, contact);
         }
         return contact;
+    }
 
+    public String getDefaultSmsPackage() {
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            return Telephony.Sms.getDefaultSmsPackage(mContext);
+        } else {
+            return null;
+        }
+    }
+
+    public boolean isDefaultSmsPackage() {
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
+            return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());
+        } else {
+            return true;
+        }
     }
 }

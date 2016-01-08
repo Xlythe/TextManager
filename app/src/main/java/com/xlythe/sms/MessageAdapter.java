@@ -1,10 +1,10 @@
 package com.xlythe.sms;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +13,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Text;
-import com.xlythe.textmanager.text.util.SimpleLruCache;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -27,7 +25,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private Text.TextCursor mCursor;
     private Context mContext;
     private FailedHolder.ClickListener mClickListener;
-    private final SimpleLruCache<Integer, Text> mTextLruCache = new SimpleLruCache<>(CACHE_SIZE);
+    private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
@@ -323,7 +321,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (text == null) {
             mCursor.moveToPosition(position);
             text = mCursor.getText();
-            mTextLruCache.add(position, text);
+            mTextLruCache.put(position, text);
         }
         return text;
     }
@@ -339,7 +337,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 ((LeftHolder) holder).setText("New attachment to download");
             }
             if (holder instanceof LeftHolder) {
-                ((LeftHolder) holder).setColor(ColorUtils.getColor(Long.parseLong(text.getThreadId())));
+                ((LeftHolder) holder).setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
             if (holder instanceof ProfileViewHolder) {
                 ((ProfileViewHolder) holder).setText(text);

@@ -26,7 +26,7 @@ public class EditTextActivity extends AppCompatActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if(actionId== EditorInfo.IME_ACTION_DONE){
                     Intent intent = new Intent();
-                    intent.putExtra("ITEM_ID", field.getText().toString()+"");
+                    intent.putExtra("ITEM_ID", field.getText().toString());
                     setResult(result , intent);
                     finish();
                 }

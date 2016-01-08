@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
@@ -8,7 +7,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
-import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -200,6 +198,10 @@ public final class Text implements Message, Parcelable {
         return Long.toString(mId);
     }
 
+    public long getIdAsLong() {
+        return mId;
+    }
+
     @Override
     public String getBody() {
         return mBody;
@@ -213,6 +215,10 @@ public final class Text implements Message, Parcelable {
     @Override
     public String getThreadId() {
         return Long.toString(mThreadId);
+    }
+
+    public long getThreadIdAsLong() {
+        return mThreadId;
     }
 
     @Override

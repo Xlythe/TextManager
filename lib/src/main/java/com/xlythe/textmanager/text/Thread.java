@@ -54,6 +54,10 @@ public class Thread implements MessageThread<Text>, Parcelable {
         return Long.toString(mThreadId);
     }
 
+    public long getIdAsLong() {
+        return mThreadId;
+    }
+
     @Override
     public int getCount() {
         // TODO: getCount()
