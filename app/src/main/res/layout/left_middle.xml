@@ -3,16 +3,22 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <FrameLayout
+        android:id="@+id/frame"
         android:layout_marginLeft="40dp"
         android:layout_marginStart="40dp"
-        android:textColor="@android:color/white"
         android:layout_marginTop="4dp"
-        android:padding="16dp"
         android:layout_gravity="start"
-        android:background="@drawable/left_middle"
-        android:id="@+id/message"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/left_middle">
+
+        <TextView
+            style="@style/Body.Left"
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
 
 </LinearLayout>

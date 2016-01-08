@@ -1,12 +1,15 @@
 package com.xlythe.sms;
 
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.view.Window;
 
 import com.xlythe.sms.util.ColorUtils;
@@ -30,18 +33,24 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
-
-        getSupportActionBar().setTitle(mThread.getLatestMessage().getSender().getDisplayName());
+        final Drawable upArrow = getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
+        upArrow.setColorFilter(getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
+        getSupportActionBar().setHomeAsUpIndicator(upArrow);
+        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>"+
+                mThread.getLatestMessage().getSender().getDisplayName()
+                + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ColorDrawable colorDrawable = new ColorDrawable(ColorUtils.getColor(Long.parseLong(mThread.getId())));
-        getSupportActionBar().setBackgroundDrawable(colorDrawable);
 
         Window window = this.getWindow();
         window.setStatusBarColor(ColorUtils.getDarkColor(Long.parseLong(mThread.getId())));
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
+        // maybe add transcript mode, and show a notification of new messages
+        mRecyclerView.setLayoutManager(layoutManager);
 
         MessageAdapter adapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
         adapter.setOnClickListener(this);

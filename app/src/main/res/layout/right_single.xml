@@ -3,19 +3,28 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_marginTop="16dp"
-        android:padding="16dp"
+    <FrameLayout
+        android:id="@+id/frame"
         android:layout_gravity="end"
-        android:background="@drawable/right_single"
-        android:id="@+id/message"
+        android:layout_marginTop="16dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/right_single">
+
+        <TextView
+            style="@style/Body.Right"
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
 
     <TextView
-        android:layout_marginTop="8dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginEnd="16dp"
+        style="@style/Date"
         android:layout_gravity="end"
-        android:text="now"
+        android:id="@+id/date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 

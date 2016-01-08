@@ -3,13 +3,20 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <FrameLayout
+        android:id="@+id/frame"
         android:layout_marginTop="16dp"
-        android:padding="16dp"
         android:layout_gravity="end"
-        android:background="@drawable/right_top"
-        android:id="@+id/message"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/right_top">
+
+        <TextView
+            style="@style/Body.Right"
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
 
 </LinearLayout>

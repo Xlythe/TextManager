@@ -8,11 +8,13 @@ import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Text;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -59,25 +61,36 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public static abstract class ViewHolder extends TextViewHolder {
         public TextView mTextView;
+        public TextView mDate;
 
         public ViewHolder(View v) {
             super(v);
             mTextView = (TextView) v.findViewById(R.id.message);
+            mDate = (TextView) v.findViewById(R.id.date);
         }
 
         public void setText(Text text) {
             super.setText(text);
             setText(text.getBody());
+            setDateText(DateFormatter.getFormattedDate(text));
         }
 
         public void setText(String body) {
             mTextView.setText(body);
         }
+        public void setDateText(String dateText) {
+            if (mDate != null) {
+                mDate.setText(dateText);
+            }
+        }
     }
 
     public static abstract class LeftHolder extends ViewHolder {
+        public FrameLayout mFrame;
+
         public LeftHolder(View v) {
             super(v);
+            mFrame = (FrameLayout) v.findViewById(R.id.frame);
         }
 
         @Override
@@ -86,7 +99,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         public void setColor(int color) {
-            mTextView.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
         }
     }
 
@@ -331,7 +344,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         Text text = getText(position);
 
         if (holder instanceof ViewHolder) {
-            ((ViewHolder) holder).setText(text.getBody());
+            ((ViewHolder) holder).setText(text);
             if (holder instanceof FailedHolder) {
                 // this is just temporary
                 ((LeftHolder) holder).setText("New attachment to download");
@@ -340,7 +353,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 ((LeftHolder) holder).setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
             if (holder instanceof ProfileViewHolder) {
-                ((ProfileViewHolder) holder).setText(text);
+                //((ProfileViewHolder) holder).setText(text);
                 ((ProfileViewHolder) holder).setProfile(mContext);
             }
         } else if (holder instanceof AttachmentHolder) {

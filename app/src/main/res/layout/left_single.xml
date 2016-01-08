@@ -4,8 +4,10 @@
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:orientation="horizontal" android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,21 +18,28 @@
             app:civ_border_width="0dp"
             app:civ_border_color="#00ffffff"/>
 
-        <TextView
-            android:textColor="@android:color/white"
-            android:layout_marginTop="16dp"
-            android:padding="16dp"
+        <FrameLayout
+            android:id="@+id/frame"
             android:layout_gravity="start"
-            android:background="@drawable/left_single"
-            android:id="@+id/message"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:background="@drawable/left_single">
+
+            <TextView
+                style="@style/Body.Left"
+                android:id="@+id/message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </FrameLayout>
     </LinearLayout>
 
     <TextView
-        android:layout_marginTop="8dp"
+        android:layout_marginLeft="56dp"
+        android:layout_marginStart="56dp"
+        style="@style/Date"
         android:layout_gravity="start"
-        android:text="now"
+        android:id="@+id/date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
