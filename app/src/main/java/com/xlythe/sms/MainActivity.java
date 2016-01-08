@@ -1,19 +1,25 @@
 package com.xlythe.sms;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -21,14 +27,31 @@ import com.xlythe.textmanager.text.Thread;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity  implements SimpleAdapter.SimpleViewHolder.ClickListener {
-    private RecyclerView mRecyclerView;
-    private SimpleAdapter mAdapter;
+public class MainActivity extends AppCompatActivity implements SimpleAdapter.SimpleViewHolder.ClickListener {
+    private static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.READ_SMS,
+            Manifest.permission.READ_CONTACTS
+    };
+    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
+
+    private static final int TOOLBAR_SCROLL_FLAGS =
+            AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                    | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+                    | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP;
+
+    private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
+
     private TextManager mManager;
     private List<Thread> mThreads;
+
+    private AppBarLayout mAppbar;
+    private Toolbar mToolbar;
+    private FloatingActionButton mFab;
+    private RecyclerView mRecyclerView;
+    private SimpleAdapter mAdapter;
+
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
-    private AppBarLayout mAppbar;
 
     private static final long ONE_MINUTE = 60 * 1000;
     private static final long ONE_HOUR = 60 * ONE_MINUTE;
@@ -40,10 +63,37 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
         mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
+        mRecyclerView = (RecyclerView) findViewById(R.id.list);
+        mRecyclerView.setHasFixedSize(false);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
+
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(getApplicationContext(), ComposeActivity.class);
+                startActivity(i);
+            }
+        });
+
+        if (hasPermissions(REQUIRED_PERMISSIONS)) {
+            loadThreads();
+        } else if (hasRequestedPermissions()) {
+            requiredPermissionsNotGranted();
+        } else {
+            markHasRequestedPermissions();
+            ActivityCompat.requestPermissions(MainActivity.this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+        }
+    }
+
+    private void loadThreads() {
         mManager = TextManager.getInstance(getBaseContext());
         mThreads = mManager.getThreads();
 
@@ -73,23 +123,32 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
             }
         }
 
-        //Your RecyclerView
-        mRecyclerView = (RecyclerView) findViewById(R.id.list);
-        mRecyclerView.setHasFixedSize(false);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mAdapter = new SimpleAdapter(this, mThreads, headers);
-
         mRecyclerView.setAdapter(mAdapter);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
+        params.setScrollFlags(TOOLBAR_SCROLL_FLAGS);
+        mFab.setEnabled(true);
+        mRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    private void requiredPermissionsNotGranted() {
+        final View errorBox = findViewById(R.id.permission_error);
+        errorBox.setVisibility(View.VISIBLE);
+
+        Button button = (Button) errorBox.findViewById(R.id.request_permissions);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Intent i = new Intent(getApplicationContext(), ComposeActivity.class);
-                startActivity(i);
+            public void onClick(View v) {
+                errorBox.setVisibility(View.GONE);
+                ActivityCompat.requestPermissions(MainActivity.this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
             }
         });
+
+        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
+        params.setScrollFlags(0);
+        mFab.setEnabled(false);
+        mRecyclerView.setVisibility(View.GONE);
     }
 
     @Override
@@ -186,5 +245,44 @@ public class MainActivity extends AppCompatActivity  implements SimpleAdapter.Si
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
+            if (hasPermissions(REQUIRED_PERMISSIONS)) {
+                loadThreads();
+            } else {
+                requiredPermissionsNotGranted();
+            }
+        }
+    }
+
+    /**
+     * Returns true if all given permissions are available
+     * */
+    protected boolean hasPermissions(String... permissions) {
+        boolean ok = true;
+        for (String permission : permissions) {
+            ok = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
+            if (!ok) break;
+        }
+        return ok;
+    }
+
+    /**
+     * Set a flag so that we don't ask for permissions every time we're launched
+     * */
+    private void markHasRequestedPermissions() {
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_REQUEST_PERMISSIONS_FLAG, true).commit();
+    }
+
+    /**
+     * Returns true if we've already asked for permissions
+     * */
+    private boolean hasRequestedPermissions() {
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        return prefs.getBoolean(KEY_REQUEST_PERMISSIONS_FLAG, false);
     }
 }

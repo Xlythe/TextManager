@@ -125,7 +125,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         public void setProfile(Context context){
             ProfileDrawable border = new ProfileDrawable(context,
                     getText().getSender().getDisplayName().charAt(0),
-                    ColorUtils.getColor(Long.parseLong(getText().getThreadId())),
+                    ColorUtils.getColor(getText().getThreadIdAsLong()),
                     getText().getSender().getPhotoUri());
             mProfile.setImageDrawable(border);
         }

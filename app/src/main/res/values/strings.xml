@@ -11,4 +11,7 @@
     <string name="action_send">Send</string>
     <string name="action_remove">Remove</string>
     <string name="title_activity_message">MessageActivity</string>
+
+    <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
+    <string name="error_permissions_resolve">Request</string>
 </resources>
