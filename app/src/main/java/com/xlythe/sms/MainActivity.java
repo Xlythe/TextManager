@@ -128,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
         params.setScrollFlags(TOOLBAR_SCROLL_FLAGS);
+        mToolbar.setLayoutParams(params);
+
         mFab.setEnabled(true);
         mRecyclerView.setVisibility(View.VISIBLE);
     }
@@ -147,6 +149,8 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
         params.setScrollFlags(0);
+        mToolbar.setLayoutParams(params);
+
         mFab.setEnabled(false);
         mRecyclerView.setVisibility(View.GONE);
     }
