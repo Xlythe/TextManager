@@ -1,11 +1,15 @@
 package com.xlythe.sms;
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Window;
 
+import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -29,6 +33,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         getSupportActionBar().setTitle(mThread.getLatestMessage().getSender().getDisplayName());
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ColorDrawable colorDrawable = new ColorDrawable(ColorUtils.getColor(Long.parseLong(mThread.getId())));
+        getSupportActionBar().setBackgroundDrawable(colorDrawable);
+
+        Window window = this.getWindow();
+        window.setStatusBarColor(ColorUtils.getDarkColor(Long.parseLong(mThread.getId())));
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);

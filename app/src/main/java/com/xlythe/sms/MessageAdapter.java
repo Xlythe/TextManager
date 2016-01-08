@@ -12,8 +12,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.util.SimpleLruCache;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
@@ -81,7 +85,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         @Override
         public void setText(Text text) {
             super.setText(text);
-            setColor(Color.BLUE);
         }
 
         public void setColor(int color) {
@@ -113,7 +116,24 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static class TopLeftViewHolder extends LeftHolder {
+    public static abstract class ProfileViewHolder extends LeftHolder {
+        private CircleImageView mProfile;
+
+        public ProfileViewHolder(View v) {
+            super(v);
+            mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
+        }
+
+        public void setProfile(Context context){
+            ProfileDrawable border = new ProfileDrawable(context,
+                    getText().getSender().getDisplayName().charAt(0),
+                    ColorUtils.getColor(Long.parseLong(getText().getThreadId())),
+                    getText().getSender().getPhotoUri());
+            mProfile.setImageDrawable(border);
+        }
+    }
+
+    public static class TopLeftViewHolder extends ProfileViewHolder {
         public TopLeftViewHolder(View v) {
             super(v);
         }
@@ -131,7 +151,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static class SingleLeftViewHolder extends LeftHolder {
+    public static class SingleLeftViewHolder extends ProfileViewHolder {
         public SingleLeftViewHolder(View v) {
             super(v);
         }
@@ -162,8 +182,6 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         @Override
         public void setText(Text text) {
             super.setText(text);
-            setColor(Color.BLUE);
-            setText("New attachment to download");
         }
 
         @Override
@@ -312,7 +330,24 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((TextViewHolder) holder).setText(getText(position));
+        Text text = getText(position);
+
+        if (holder instanceof ViewHolder) {
+            ((ViewHolder) holder).setText(text.getBody());
+            if (holder instanceof FailedHolder) {
+                // this is just temporary
+                ((LeftHolder) holder).setText("New attachment to download");
+            }
+            if (holder instanceof LeftHolder) {
+                ((LeftHolder) holder).setColor(ColorUtils.getColor(Long.parseLong(text.getThreadId())));
+            }
+            if (holder instanceof ProfileViewHolder) {
+                ((ProfileViewHolder) holder).setText(text);
+                ((ProfileViewHolder) holder).setProfile(mContext);
+            }
+        } else if (holder instanceof AttachmentHolder) {
+            ((AttachmentHolder) holder).setImage(mContext, text);
+        }
     }
 
     @Override
