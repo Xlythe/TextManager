@@ -45,17 +45,23 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public static abstract class TextViewHolder extends RecyclerView.ViewHolder {
         private Text mText;
+        private Context mContext;
 
         public TextViewHolder(View v) {
             super(v);
         }
 
-        public void setText(Text text) {
+        public void setMessage(Context context, Text text) {
             mText = text;
+            mContext = context;
         }
 
-        public Text getText() {
+        public Text getMessage() {
             return mText;
+        }
+
+        public Context getContext() {
+            return mContext;
         }
     }
 
@@ -69,13 +75,13 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             mDate = (TextView) v.findViewById(R.id.date);
         }
 
-        public void setText(Text text) {
-            super.setText(text);
-            setText(text.getBody());
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            setBodyText(text.getBody());
             setDateText(DateFormatter.getFormattedDate(text));
         }
 
-        public void setText(String body) {
+        public void setBodyText(String body) {
             mTextView.setText(body);
         }
         public void setDateText(String dateText) {
@@ -94,8 +100,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         @Override
-        public void setText(Text text) {
-            super.setText(text);
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
         }
 
         public void setColor(int color) {
@@ -135,11 +142,17 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
         }
 
-        public void setProfile(Context context){
-            ProfileDrawable border = new ProfileDrawable(context,
-                    getText().getSender().getDisplayName().charAt(0),
-                    ColorUtils.getColor(getText().getThreadIdAsLong()),
-                    getText().getSender().getPhotoUri());
+        @Override
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            setProfile();
+        }
+
+        public void setProfile(){
+            ProfileDrawable border = new ProfileDrawable(getContext(),
+                    getMessage().getSender().getDisplayName().charAt(0),
+                    ColorUtils.getColor(getMessage().getThreadIdAsLong()),
+                    getMessage().getSender().getPhotoUri());
             mProfile.setImageDrawable(border);
         }
     }
@@ -176,8 +189,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             mImageView = (ImageView) v.findViewById(R.id.image);
         }
 
-        public void setImage(Context context, Text text) {
-            Picasso.with(context).load(text.getAttachments().get(0).getUri()).into(mImageView);
+        @Override
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            setImage();
+        }
+
+        public void setImage() {
+            Picasso.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).into(mImageView);
         }
     }
 
@@ -191,14 +210,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         @Override
-        public void setText(Text text) {
-            super.setText(text);
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
         }
 
         @Override
         public void onClick(View v) {
             if (mListener != null) {
-                mListener.onItemClicked(getText());
+                mListener.onItemClicked(getMessage());
             }
         }
 
@@ -341,24 +360,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        Text text = getText(position);
-
-        if (holder instanceof ViewHolder) {
-            ((ViewHolder) holder).setText(text);
-            if (holder instanceof FailedHolder) {
-                // this is just temporary
-                ((LeftHolder) holder).setText("New attachment to download");
-            }
-            if (holder instanceof LeftHolder) {
-                ((LeftHolder) holder).setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
-            }
-            if (holder instanceof ProfileViewHolder) {
-                //((ProfileViewHolder) holder).setText(text);
-                ((ProfileViewHolder) holder).setProfile(mContext);
-            }
-        } else if (holder instanceof AttachmentHolder) {
-            ((AttachmentHolder) holder).setImage(mContext, text);
-        }
+        ((TextViewHolder) holder).setMessage(mContext, getText(position));
     }
 
     @Override
