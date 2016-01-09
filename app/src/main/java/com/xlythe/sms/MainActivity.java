@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
     private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
 
     private TextManager mManager;
-    private List<Thread> mThreads;
+    private Thread.ThreadCursor mThreads;
 
     private AppBarLayout mAppbar;
     private Toolbar mToolbar;
@@ -95,35 +96,35 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
 
     private void loadThreads() {
         mManager = TextManager.getInstance(getBaseContext());
-        mThreads = mManager.getThreads();
+        mThreads = mManager.getThreadCursor();
 
         ArrayList<Section> headers = new ArrayList<>();
 
-        Section section = new Section(0, "");
-        for (int i = 0; i < mThreads.size(); i++) {
-            long date = mThreads.get(i).getLatestMessage().getTimestamp();
-            long time = System.currentTimeMillis() - date;
-            if (time < ONE_DAY && !section.mTitle.equals("Today")) {
-                section = new Section(i+headers.size(),"Today");
-                headers.add(section);
-                // TODO: think of a better way for headers
-                mThreads.add(mThreads.get(0));
-            } else if (time > ONE_DAY && time < 2 * ONE_DAY && !section.mTitle.equals("Yesterday")) {
-                section = new Section(i+headers.size(),"Yesterday");
-                headers.add(section);
-                mThreads.add(mThreads.get(0));
-            } else if (time > 2 * ONE_DAY && time < ONE_WEEK && !section.mTitle.equals("This week")) {
-                section = new Section(i+headers.size(),"This week");
-                headers.add(section);
-                mThreads.add(mThreads.get(0));
-            } else if (time > ONE_WEEK && time < ONE_MONTH && !section.mTitle.equals("This month")) {
-                section = new Section(i+headers.size(),"This month");
-                headers.add(section);
-                mThreads.add(mThreads.get(0));
-            }
-        }
+//        Section section = new Section(0, "");
+//        for (int i = 0; i < mThreads.size(); i++) {
+//            long date = mThreads.get(i).getLatestMessage().getTimestamp();
+//            long time = System.currentTimeMillis() - date;
+//            if (time < ONE_DAY && !section.mTitle.equals("Today")) {
+//                section = new Section(i+headers.size(),"Today");
+//                headers.add(section);
+//                // TODO: think of a better way for headers
+//                mThreads.add(mThreads.get(0));
+//            } else if (time > ONE_DAY && time < 2 * ONE_DAY && !section.mTitle.equals("Yesterday")) {
+//                section = new Section(i+headers.size(),"Yesterday");
+//                headers.add(section);
+//                mThreads.add(mThreads.get(0));
+//            } else if (time > 2 * ONE_DAY && time < ONE_WEEK && !section.mTitle.equals("This week")) {
+//                section = new Section(i+headers.size(),"This week");
+//                headers.add(section);
+//                mThreads.add(mThreads.get(0));
+//            } else if (time > ONE_WEEK && time < ONE_MONTH && !section.mTitle.equals("This month")) {
+//                section = new Section(i+headers.size(),"This month");
+//                headers.add(section);
+//                mThreads.add(mThreads.get(0));
+//            }
+//        }
 
-        mAdapter = new SimpleAdapter(this, mThreads, headers);
+        mAdapter = new SimpleAdapter(this, mThreads);
         mRecyclerView.setAdapter(mAdapter);
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
@@ -169,7 +170,8 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
             toggleSelection(position);
         } else {
             Intent i = new Intent(getBaseContext(), MessageActivity.class);
-            i.putExtra(MessageActivity.EXTRA_THREAD, mThreads.get(position));
+            mThreads.moveToPosition(position);
+            i.putExtra(MessageActivity.EXTRA_THREAD, mThreads.getThread());
             startActivity(i);
         }
     }

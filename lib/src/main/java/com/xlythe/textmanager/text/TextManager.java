@@ -271,11 +271,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public Cursor getThreadCursor() {
+    public Thread.ThreadCursor getThreadCursor() {
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
         final String order = "normalized_date DESC";
-        return contentResolver.query(uri, null, null, null, order);
+        return new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, null, null, order));
     }
 
     @Override

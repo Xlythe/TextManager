@@ -27,36 +27,33 @@ import java.util.List;
  * Created by Niko on 12/22/15.
  */
 public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
-    private static final int TYPE_HEADER = 0;
-    private static final int TYPE_ITEM = 1;
-
     private final Context mContext;
-    private List mData;
+    private Thread.ThreadCursor mCursor;
     private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
     private final int CARD_STATE_COLOR = Color.WHITE;
     private SimpleViewHolder.ClickListener mClickListener;
 
-    public SimpleAdapter(Context context, List<Thread> data, ArrayList<Section> headers) {
+    public SimpleAdapter(Context context, Thread.ThreadCursor cursor) {
         mClickListener = (SimpleViewHolder.ClickListener) context;
         mContext = context;
-        mData = data;
-        for(int i=0; i<headers.size();i++) {
-            mData.add(headers.get(i).mPosition, headers.get(i));
-        }
+        mCursor = cursor;
     }
 
     public void add(Thread s,int position) {
         position = position == -1 ? getItemCount()  : position;
-        mData.add(position, s);
+        // TODO: FIX
+        //mData.add(position, s);
         notifyItemInserted(position);
     }
 
     public void removeItem(int position) {
-        mData.remove(position);
+        // TODO: FIX
+        //mData.remove(position);
         notifyItemRemoved(position);
     }
 
     public void removeItems(List<Integer> positions) {
+        // TODO: FIX
         // Reverse-sort the list
         if (positions!=null) {
             Collections.sort(positions, new Comparator<Integer>() {
@@ -94,113 +91,93 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
     }
 
     void invalidate(){
-        for (int i=0; i<mData.size(); i++) {
+        for (int i=0; i < mCursor.getCount(); i++) {
             notifyItemChanged(i);
         }
     }
 
     private void removeRange(int positionStart, int itemCount) {
         for (int i = 0; i < itemCount; ++i) {
-            mData.remove(positionStart);
+            // TODO: FIX
+            //mData.remove(positionStart);
         }
         notifyItemRangeRemoved(positionStart, itemCount);
     }
 
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-        if (viewType == TYPE_ITEM) {
-            final View view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-            return new SimpleViewHolder(view, mClickListener);
-        } else if (viewType == TYPE_HEADER) {
-            final View view = LayoutInflater.from(mContext).inflate(R.layout.section, parent, false);
-            return new SimpleViewHolderHeader(view);
-        }
-        return null;
+        final View view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+        return new SimpleViewHolder(view, mClickListener);
     }
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-        if (holder instanceof SimpleViewHolder) {
-            Thread data = (Thread) mData.get(position);
-            String body = "";
-            String time = "";
-            String address = "";
-            Uri uri = null;
-            int unread = 0;
-            int color = mContext.getColor(R.color.colorPrimary);
+        mCursor.moveToPosition(position);
+        Thread data = mCursor.getThread();
+        String body = "";
+        String time = "";
+        String address = "";
+        Uri uri = null;
+        int unread = 0;
+        int color = mContext.getColor(R.color.colorPrimary);
 
-            if (data.getLatestMessage()!=null) {
-                body = data.getLatestMessage().getBody();
-                time = DateFormatter.getFormattedDate(data.getLatestMessage());
-                address = data.getLatestMessage().getSender().getDisplayName()+"";
-                uri = data.getLatestMessage().getSender().getPhotoUri();
-                unread = data.getUnreadCount();
-                color = ColorUtils.getColor(Long.parseLong(data.getId()));
+        if (data.getLatestMessage()!=null) {
+            body = data.getLatestMessage().getBody();
+            time = DateFormatter.getFormattedDate(data.getLatestMessage());
+            address = data.getLatestMessage().getSender().getDisplayName()+"";
+            uri = data.getLatestMessage().getSender().getPhotoUri();
+            unread = data.getUnreadCount();
+            color = ColorUtils.getColor(Long.parseLong(data.getId()));
+        }
+        SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
+        simpleHolder.message.setText(body);
+        simpleHolder.date.setText(time);
+        simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+
+        if (unread > 0) {
+            simpleHolder.title.setText(address);
+            simpleHolder.unread.setVisibility(View.VISIBLE);
+            simpleHolder.unread.setText(unread + " new");
+            simpleHolder.unread.setTextColor(color);
+            simpleHolder.unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+            simpleHolder.unread.getBackground().setAlpha(25);
+            simpleHolder.title.setTextColor(color);
+            simpleHolder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        } else {
+            simpleHolder.title.setText(address);
+            simpleHolder.unread.setVisibility(View.GONE);
+            simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
+            simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+            simpleHolder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+            simpleHolder.date.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+        }
+
+        boolean isSelected = isSelected(position);
+
+        if (selectMode()) {
+            simpleHolder.profile.setImageResource(android.R.color.transparent);
+        } else {
+            if (!address.equals("")) {
+                ProfileDrawable border = new ProfileDrawable(mContext,
+                        address.charAt(0),
+                        color,
+                        uri);
+                simpleHolder.profile.setImageDrawable(border);
             }
-            SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
-            simpleHolder.message.setText(body);
-            simpleHolder.date.setText(time);
-            simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+        }
 
-            if (unread > 0) {
-                simpleHolder.title.setText(address);
-                simpleHolder.unread.setVisibility(View.VISIBLE);
-                simpleHolder.unread.setText(unread + " new");
-                simpleHolder.unread.setTextColor(color);
-                simpleHolder.unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
-                simpleHolder.unread.getBackground().setAlpha(25);
-                simpleHolder.title.setTextColor(color);
-                simpleHolder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-                simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-                simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            } else {
-                simpleHolder.title.setText(address);
-                simpleHolder.unread.setVisibility(View.GONE);
-                simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
-                simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-                simpleHolder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-                simpleHolder.date.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-            }
-
-            boolean isSelected = isSelected(position);
-
-            if (selectMode()) {
-                simpleHolder.profile.setImageResource(android.R.color.transparent);
-            } else {
-                if (!address.equals("")) {
-                    ProfileDrawable border = new ProfileDrawable(mContext,
-                            address.charAt(0),
-                            color,
-                            uri);
-                    simpleHolder.profile.setImageDrawable(border);
-                }
-            }
-
-            simpleHolder.profile.setActivated(isSelected);
-            if (isSelected) {
-                simpleHolder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
-            } else {
-                simpleHolder.card.setCardBackgroundColor(CARD_STATE_COLOR);
-            }
-        } else if (holder instanceof SimpleViewHolderHeader) {
-            Section data = (Section) mData.get(position);
-            SimpleViewHolderHeader header = (SimpleViewHolderHeader) holder;
-            header.title.setText(data.mTitle);
+        simpleHolder.profile.setActivated(isSelected);
+        if (isSelected) {
+            simpleHolder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
+        } else {
+            simpleHolder.card.setCardBackgroundColor(CARD_STATE_COLOR);
         }
     }
 
     @Override
     public int getItemCount() {
-        return mData.size();
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        if (mData.get(position) instanceof Section) {
-            return TYPE_HEADER;
-        }
-
-        return TYPE_ITEM;
+        return mCursor.getCount();
     }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
@@ -252,14 +229,6 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             void onProfileClicked(int position);
             void onItemClicked(int position);
             boolean onItemLongClicked(int position);
-        }
-    }
-
-    public static class SimpleViewHolderHeader extends RecyclerView.ViewHolder {
-        public final TextView title;
-        public SimpleViewHolderHeader(View itemView) {
-            super(itemView);
-            title = (TextView) itemView.findViewById(R.id.section_text);
         }
     }
 }
