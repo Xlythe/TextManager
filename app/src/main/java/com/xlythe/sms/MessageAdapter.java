@@ -44,7 +44,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_ATTACHMENT   = 8;
     private static final int TYPE_FAILED       = 9;
 
-    private final static SparseIntArray mMap = new SparseIntArray();
+    private static final SparseIntArray mMap = new SparseIntArray();
     static {
         mMap.put(TYPE_TOP_RIGHT,R.layout.right_top);
         mMap.put(TYPE_MIDDLE_RIGHT,R.layout.right_middle);
