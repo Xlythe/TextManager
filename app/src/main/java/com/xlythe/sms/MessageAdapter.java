@@ -44,6 +44,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_ATTACHMENT   = 8;
     private static final int TYPE_FAILED       = 9;
 
+    private final static SparseIntArray mMap = new SparseIntArray();
+    static {
+        mMap.put(TYPE_TOP_RIGHT,R.layout.right_top);
+        mMap.put(TYPE_MIDDLE_RIGHT,R.layout.right_middle);
+        mMap.put(TYPE_BOTTOM_RIGHT,R.layout.right_bottom);
+        mMap.put(TYPE_SINGLE_RIGHT,R.layout.right_single);
+        mMap.put(TYPE_TOP_LEFT,R.layout.left_top);
+        mMap.put(TYPE_MIDDLE_LEFT,R.layout.left_middle);
+        mMap.put(TYPE_BOTTOM_LEFT,R.layout.left_bottom);
+        mMap.put(TYPE_SINGLE_LEFT,R.layout.left_single);
+        mMap.put(TYPE_ATTACHMENT,R.layout.attachment);
+        mMap.put(TYPE_FAILED,R.layout.left_single);
+    };
+
     public static abstract class MessageViewHolder extends RecyclerView.ViewHolder {
         private Text mText;
         private Context mContext;
@@ -181,33 +195,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // Create new views (invoked by the layout manager)
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        SparseIntArray map = new SparseIntArray();
-        map.put(TYPE_TOP_RIGHT, R.layout.right_top);
-        map.put(TYPE_MIDDLE_RIGHT, R.layout.right_middle);
-        map.put(TYPE_BOTTOM_RIGHT, R.layout.right_bottom);
-        map.put(TYPE_SINGLE_RIGHT, R.layout.right_single);
-        map.put(TYPE_TOP_LEFT, R.layout.left_top);
-        map.put(TYPE_MIDDLE_LEFT, R.layout.left_middle);
-        map.put(TYPE_BOTTOM_LEFT, R.layout.left_bottom);
-        map.put(TYPE_SINGLE_LEFT, R.layout.left_single);
-        map.put(TYPE_ATTACHMENT, R.layout.attachment);
-        map.put(TYPE_FAILED, R.layout.left_single);
-
         switch(viewType) {
             case TYPE_TOP_RIGHT:
             case TYPE_MIDDLE_RIGHT:
             case TYPE_BOTTOM_RIGHT:
             case TYPE_SINGLE_RIGHT:
-                return new ViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+                return new ViewHolder(LayoutInflater.from(mContext).inflate(mMap.get(viewType), parent, false));
             case TYPE_TOP_LEFT:
             case TYPE_MIDDLE_LEFT:
             case TYPE_BOTTOM_LEFT:
             case TYPE_SINGLE_LEFT:
-                return new LeftViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+                return new LeftViewHolder(LayoutInflater.from(mContext).inflate(mMap.get(viewType), parent, false));
             case TYPE_ATTACHMENT:
-                return new AttachmentViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+                return new AttachmentViewHolder(LayoutInflater.from(mContext).inflate(mMap.get(viewType), parent, false));
             default:
-                return new FailedViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false), mClickListener);
+                return new FailedViewHolder(LayoutInflater.from(mContext).inflate(mMap.get(viewType), parent, false), mClickListener);
         }
     }
 
