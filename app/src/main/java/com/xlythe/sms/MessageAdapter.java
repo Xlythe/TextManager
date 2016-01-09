@@ -26,7 +26,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private Text.TextCursor mCursor;
     private Context mContext;
-    private FailedHolder.ClickListener mClickListener;
+    private FailedViewHolder.ClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     // Duration between considering a text to be part of the same message, or split into different messages
@@ -43,11 +43,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_ATTACHMENT   = 8;
     private static final int TYPE_FAILED       = 9;
 
-    public static abstract class TextViewHolder extends RecyclerView.ViewHolder {
+    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder {
         private Text mText;
         private Context mContext;
 
-        public TextViewHolder(View v) {
+        public MessageViewHolder(View v) {
             super(v);
         }
 
@@ -65,7 +65,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static abstract class ViewHolder extends TextViewHolder {
+    public static class ViewHolder extends MessageViewHolder {
         public TextView mTextView;
         public TextView mDate;
 
@@ -91,100 +91,42 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static abstract class LeftHolder extends ViewHolder {
+    public static class LeftViewHolder extends ViewHolder {
         public FrameLayout mFrame;
-
-        public LeftHolder(View v) {
-            super(v);
-            mFrame = (FrameLayout) v.findViewById(R.id.frame);
-        }
-
-        @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
-            setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
-        }
-
-        public void setColor(int color) {
-            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-        }
-    }
-
-    public static class TopRightViewHolder extends ViewHolder {
-        public TopRightViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class MiddleRightViewHolder extends ViewHolder {
-        public MiddleRightViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class BottomRightViewHolder extends ViewHolder {
-        public BottomRightViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class SingleRightViewHolder extends ViewHolder {
-        public SingleRightViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static abstract class ProfileViewHolder extends LeftHolder {
         private CircleImageView mProfile;
 
-        public ProfileViewHolder(View v) {
+        public LeftViewHolder(View v) {
             super(v);
+            mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
         }
 
         @Override
         public void setMessage(Context context, Text text) {
             super.setMessage(context, text);
+            setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             setProfile();
         }
 
+        public void setColor(int color) {
+            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        }
+
         public void setProfile() {
-            ProfileDrawable border = new ProfileDrawable(getContext(),
-                    getMessage().getSender().getDisplayName().charAt(0),
-                    ColorUtils.getColor(getMessage().getThreadIdAsLong()),
-                    getMessage().getSender().getPhotoUri());
-            mProfile.setImageDrawable(border);
+            if (mProfile != null) {
+                ProfileDrawable border = new ProfileDrawable(getContext(),
+                        getMessage().getSender().getDisplayName().charAt(0),
+                        ColorUtils.getColor(getMessage().getThreadIdAsLong()),
+                        getMessage().getSender().getPhotoUri());
+                mProfile.setImageDrawable(border);
+            }
         }
     }
 
-    public static class TopLeftViewHolder extends ProfileViewHolder {
-        public TopLeftViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class MiddleLeftViewHolder extends LeftHolder {
-        public MiddleLeftViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class BottomLeftViewHolder extends LeftHolder {
-        public BottomLeftViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class SingleLeftViewHolder extends ProfileViewHolder {
-        public SingleLeftViewHolder(View v) {
-            super(v);
-        }
-    }
-
-    public static class AttachmentHolder extends TextViewHolder {
+    public static class AttachmentViewHolder extends MessageViewHolder {
         ImageView mImageView;
 
-        public AttachmentHolder(View v) {
+        public AttachmentViewHolder(View v) {
             super(v);
             mImageView = (ImageView) v.findViewById(R.id.image);
         }
@@ -200,10 +142,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static class FailedHolder extends LeftHolder implements View.OnClickListener {
+    public static class FailedViewHolder extends LeftViewHolder implements View.OnClickListener {
         private ClickListener mListener;
 
-        public FailedHolder(View v, ClickListener listener) {
+        public FailedViewHolder(View v, ClickListener listener) {
             super(v);
             mListener = listener;
             v.setOnClickListener(this);
@@ -231,45 +173,49 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         mContext = context;
     }
 
-    public void setOnClickListener(FailedHolder.ClickListener onClickListener) {
+    public void setOnClickListener(FailedViewHolder.ClickListener onClickListener) {
         mClickListener = onClickListener;
     }
 
     // Create new views (invoked by the layout manager)
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if (viewType == TYPE_TOP_RIGHT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_top, parent, false);
-            return new TopRightViewHolder(v);
-        } else if (viewType == TYPE_MIDDLE_RIGHT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_middle, parent, false);
-            return new MiddleRightViewHolder(v);
-        } else if (viewType == TYPE_BOTTOM_RIGHT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_bottom, parent, false);
-            return new BottomRightViewHolder(v);
-        } else if (viewType == TYPE_SINGLE_RIGHT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_single, parent, false);
-            return new SingleRightViewHolder(v);
-        } else if (viewType == TYPE_TOP_LEFT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_top, parent, false);
-            return new TopLeftViewHolder(v);
-        } else if (viewType == TYPE_MIDDLE_LEFT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_middle, parent, false);
-            return new MiddleLeftViewHolder(v);
-        } else if (viewType == TYPE_BOTTOM_LEFT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_bottom, parent, false);
-            return new BottomLeftViewHolder(v);
-        } else if (viewType == TYPE_SINGLE_LEFT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
-            return new SingleLeftViewHolder(v);
-        } else if (viewType == TYPE_ATTACHMENT) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.attachment, parent, false);
-            return new AttachmentHolder(v);
-        } else if (viewType == TYPE_FAILED) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
-            return new FailedHolder(v, mClickListener);
+        View v;
+        if (viewType <= TYPE_SINGLE_RIGHT) {
+            if (viewType == TYPE_TOP_RIGHT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_top, parent, false);
+            } else if (viewType == TYPE_MIDDLE_RIGHT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_middle, parent, false);
+            } else if (viewType == TYPE_BOTTOM_RIGHT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_bottom, parent, false);
+            } else {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_single, parent, false);
+            }
+            return new ViewHolder(v);
         }
-        return null;
+
+        if (viewType <= TYPE_SINGLE_LEFT) {
+            if (viewType == TYPE_TOP_LEFT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_top, parent, false);
+            } else if (viewType == TYPE_MIDDLE_LEFT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_middle, parent, false);
+            } else if (viewType == TYPE_BOTTOM_LEFT) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_bottom, parent, false);
+            } else {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
+            }
+            return new LeftViewHolder(v);
+        }
+
+        if (viewType == TYPE_ATTACHMENT) {
+            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.attachment, parent, false);
+            return new AttachmentViewHolder(v);
+        }
+
+        else {
+            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
+            return new FailedViewHolder(v, mClickListener);
+        }
     }
 
     @Override
@@ -360,7 +306,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((TextViewHolder) holder).setMessage(mContext, getText(position));
+        ((MessageViewHolder) holder).setMessage(mContext, getText(position));
     }
 
     @Override

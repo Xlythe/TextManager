@@ -17,7 +17,7 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
-public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedHolder.ClickListener {
+public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedViewHolder.ClickListener {
     public static final String EXTRA_THREAD = "thread";
 
     private Thread mThread;
