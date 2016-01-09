@@ -3,19 +3,19 @@ package com.xlythe.textmanager.text;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.Serializable;
 
-/**
- * Created by Niko on 12/29/15.
- */
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     enum Type {
         IMAGE, VIDEO, VOICE
     }
 
-    private Type mType;
-    private Uri mUri;
+    private final Type mType;
+    private final Uri mUri;
 
     public Type getType(){
         return mType;
@@ -26,21 +26,55 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
     }
 
     public Attachment(Type type) {
+        mUri = Uri.EMPTY;
         mType = type;
     }
 
     public Attachment(Type type, Uri uri) {
-        mUri = uri;
         mType = type;
+        mUri = uri;
     }
 
     protected Attachment(Parcel in) {
-        mType = Type.values()[in.readInt()];
-        mUri = Uri.parse(in.readString());
+        mType = Type.valueOf(in.readString());
+
+        String uri = in.readString();
+        if (uri == null) {
+            mUri = Uri.EMPTY;
+        } else {
+            mUri = Uri.parse(uri);
+        }
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
     public void writeToParcel(Parcel out, int flags) {
-        out.writeValue(mType.ordinal());
+        out.writeString(mType.name());
         out.writeString(mUri.toString());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof Attachment) {
+            Attachment a = (Attachment) o;
+            return Utils.equals(getType(), a.getType())
+                    && Utils.equals(getUri(), a.getUri());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Utils.hashCode(getType())
+                + Utils.hashCode(getUri());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Attachment{type=%s, uri=%s}", getType(), getUri());
     }
 }

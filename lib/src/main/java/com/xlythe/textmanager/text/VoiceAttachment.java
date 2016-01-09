@@ -1,25 +1,16 @@
 package com.xlythe.textmanager.text;
 
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
+public final class VoiceAttachment extends Attachment {
+    public VoiceAttachment(Uri uri){
+        super(Type.VOICE, uri);
+    }
 
-/**
- * Created by Niko on 12/30/15.
- */
-public class VoiceAttachment extends Attachment {
-    protected VoiceAttachment(Parcel in) {
+    private VoiceAttachment(Parcel in) {
         super(in);
-    }
-
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
     }
 
     public static final Parcelable.Creator<VoiceAttachment> CREATOR = new Parcelable.Creator<VoiceAttachment>() {

@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
+import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -47,7 +48,6 @@ public final class Text implements Message, Parcelable {
 
     private Text() {}
 
-    // This was public for cursors, let me know if I should make it protected again
     protected Text(Context context, Cursor cursor) {
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mDeviceNumber = manager.getLine1Number();
@@ -62,6 +62,36 @@ public final class Text implements Message, Parcelable {
             Log.w("TelephonyProvider", "Unknown Message Type");
         }
         buildContact(context);
+    }
+
+    private Text(Parcel in) {
+        mId = in.readLong();
+        mThreadId = in.readLong();
+        mDate = in.readLong();
+        mMmsId = in.readLong();
+        mAddress = in.readString();
+        mBody = in.readString();
+        mDeviceNumber = in.readString();
+        mIncoming = in.readByte() != 0;
+        mIsMms = in.readByte() != 0;
+        mSender = in.readParcelable(Contact.class.getClassLoader());
+        mRecipient = in.readParcelable(Contact.class.getClassLoader());
+
+        int attachmentSize = in.readInt();
+        for (int i = 0; i < attachmentSize; i++) {
+            Attachment.Type type = Attachment.Type.values()[in.readInt()];
+            switch (type) {
+                case IMAGE:
+                    mAttachments.add((Attachment) in.readParcelable(ImageAttachment.class.getClassLoader()));
+                    break;
+                case VIDEO:
+                    mAttachments.add((Attachment) in.readParcelable(VideoAttachment.class.getClassLoader()));
+                    break;
+                case VOICE:
+                    mAttachments.add((Attachment) in.readParcelable(VoiceAttachment.class.getClassLoader()));
+                    break;
+            }
+        }
     }
 
     private String getMessageType(Cursor cursor) {
@@ -120,12 +150,7 @@ public final class Text implements Message, Parcelable {
         );
         HashSet<String> recipients = new HashSet<>();
         while (addr.moveToNext()) {
-            String address;
-            if (android.os.Build.VERSION.SDK_INT >= 19) {
-                address = addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
-            } else {
-                address = addr.getString(addr.getColumnIndex("address"));
-            }
+            String address = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
 
             // Don't add our own number to the displayed list
             mDeviceNumber = cleanNumber(mDeviceNumber);
@@ -246,39 +271,57 @@ public final class Text implements Message, Parcelable {
         return null;
     }
 
-    private Text(Parcel in) {
-        mId = in.readLong();
-        mThreadId = in.readLong();
-        mDate = in.readLong();
-        mMmsId = in.readLong();
-        mAddress = in.readString();
-        mBody = in.readString();
-        mDeviceNumber = in.readString();
-        mIncoming = in.readByte() != 0;
-        mIsMms = in.readByte() != 0;
-        mSender = in.readParcelable(Contact.class.getClassLoader());
-        mRecipient = in.readParcelable(Contact.class.getClassLoader());
-        int attachmentSize = in.readInt();
-        for (int i = 0; i < attachmentSize; i++) {
-            Attachment.Type type = Attachment.Type.values()[in.readInt()];
-            switch (type) {
-                case IMAGE:
-                    mAttachments.add(new ImageAttachment(in));
-                    break;
-                case VIDEO:
-                    mAttachments.add(new VideoAttachment(in));
-                    break;
-                case VOICE:
-                    mAttachments.add(new VoiceAttachment(in));
-                    break;
-            }
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof Text) {
+            Text a = (Text) o;
+            return Utils.equals(mId, a.mId)
+                    && Utils.equals(mThreadId, a.mThreadId)
+                    && Utils.equals(mDate, a.mDate)
+                    && Utils.equals(mMmsId, a.mMmsId)
+                    && Utils.equals(mAddress, a.mAddress)
+                    && Utils.equals(mBody, a.mBody)
+                    && Utils.equals(mDeviceNumber, a.mDeviceNumber)
+                    && Utils.equals(mIncoming, a.mIncoming)
+                    && Utils.equals(mIsMms, a.mIsMms)
+                    && Utils.equals(mSender, a.mSender)
+                    && Utils.equals(mRecipient, a.mRecipient)
+                    && Utils.equals(mAttachments, a.mAttachments);
         }
+        return false;
     }
 
+    @Override
+    public int hashCode() {
+        return Utils.hashCode(mId)
+                + Utils.hashCode(mThreadId)
+                + Utils.hashCode(mDate)
+                + Utils.hashCode(mMmsId)
+                + Utils.hashCode(mAddress)
+                + Utils.hashCode(mBody)
+                + Utils.hashCode(mDeviceNumber)
+                + Utils.hashCode(mIncoming)
+                + Utils.hashCode(mIsMms)
+                + Utils.hashCode(mSender)
+                + Utils.hashCode(mRecipient)
+                + Utils.hashCode(mAttachments);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s," +
+                        "device_number=%s, incoming=%s, is_mms=%s, sender=%s, recipient=%s," +
+                        "attachments=%s}",
+                mId, mThreadId, mDate, mMmsId, mAddress, mBody, mDeviceNumber, mIncoming, mIsMms,
+                mSender, mRecipient, mAttachments);
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
 
+    @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeLong(mId);
         out.writeLong(mThreadId);
@@ -289,8 +332,8 @@ public final class Text implements Message, Parcelable {
         out.writeString(mDeviceNumber);
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
-        out.writeParcelable(mSender, flags);
-        out.writeParcelable(mRecipient, flags);
+        out.writeParcelable(mSender, Utils.describeContents(mSender));
+        out.writeParcelable(mRecipient, Utils.describeContents(mRecipient));
         out.writeInt(mAttachments.size());
         for (int i = 0; i < mAttachments.size(); i++){
             out.writeInt(mAttachments.get(i).getType().ordinal());

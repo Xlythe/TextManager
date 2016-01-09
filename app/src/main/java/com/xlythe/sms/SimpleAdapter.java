@@ -39,7 +39,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         mCursor = cursor;
     }
 
-    public void add(Thread s,int position) {
+    public void add(Thread s, int position) {
         position = position == -1 ? getItemCount()  : position;
         // TODO: FIX
         //mData.add(position, s);

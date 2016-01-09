@@ -1,32 +1,16 @@
 package com.xlythe.textmanager.text;
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
-
-/**
- * Created by Niko on 12/30/15.
- */
 public final class VideoAttachment extends Attachment {
-    protected VideoAttachment(Parcel in) {
-        super(in);
-    }
-
     public VideoAttachment(Uri uri){
         super(Type.VIDEO, uri);
     }
 
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel out, int flags) {
-        super.writeToParcel(out, flags);
+    private VideoAttachment(Parcel in) {
+        super(in);
     }
 
     public static final Parcelable.Creator<VideoAttachment> CREATOR = new Parcelable.Creator<VideoAttachment>() {

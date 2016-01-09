@@ -6,11 +6,10 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.xlythe.textmanager.text.util.Utils;
+
 import java.io.Serializable;
 
-/**
- * Created by Niko on 12/30/15.
- */
 public final class ImageAttachment extends Attachment {
     Bitmap mBitmap;
 
@@ -23,6 +22,11 @@ public final class ImageAttachment extends Attachment {
         super(Type.IMAGE, uri);
     }
 
+    private ImageAttachment(Parcel in) {
+        super(in);
+        mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
+    }
+
     public Bitmap getBitmap(){
         return mBitmap;
     }
@@ -31,13 +35,30 @@ public final class ImageAttachment extends Attachment {
         return null;
     }
 
-    protected ImageAttachment(Parcel in) {
-        super(in);
-        mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof ImageAttachment) {
+            ImageAttachment a = (ImageAttachment) o;
+            return Utils.equals(getType(), a.getType())
+                    && Utils.equals(getUri(), a.getUri())
+                    && Utils.equals(getBitmap(), a.getBitmap())
+                    && Utils.equals(getDrawable(), a.getDrawable());
+        }
+        return false;
     }
 
-    public int describeContents() {
-        return 0;
+    @Override
+    public int hashCode() {
+        return Utils.hashCode(getType())
+                + Utils.hashCode(getUri())
+                + Utils.hashCode(getBitmap())
+                + Utils.hashCode(getDrawable());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("ImageAttachment{type=%s, uri=%s, bitmap=%s, drawable=%s}",
+                getType(), getUri(), getBitmap(), getDrawable());
     }
 
     @Override

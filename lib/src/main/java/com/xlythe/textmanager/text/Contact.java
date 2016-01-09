@@ -8,13 +8,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.xlythe.textmanager.User;
+import com.xlythe.textmanager.text.util.Utils;
 
 /**
  * Represents a phone number.
  */
-
-//TODO: parcelable
-public class Contact implements User, Parcelable {
+public final class Contact implements User, Parcelable {
 
     private String mNumber;
     private String mPhotoUri;
@@ -45,6 +44,13 @@ public class Contact implements User, Parcelable {
 
     protected Contact(String address) {
         mNumber = address;
+    }
+
+    private Contact(Parcel in) {
+        mNumber = in.readString();
+        mPhotoUri = in.readString();
+        mDisplayName = in.readString();
+        mPhotoThumbUri = in.readString();
     }
 
     public String getNumber() {
@@ -79,17 +85,38 @@ public class Contact implements User, Parcelable {
         return null;
     }
 
-    private Contact(Parcel in) {
-        mNumber = in.readString();
-        mPhotoUri = in.readString();
-        mDisplayName = in.readString();
-        mPhotoThumbUri = in.readString();
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof Contact) {
+            Contact a = (Contact) o;
+            return Utils.equals(mNumber, a.mNumber)
+                    && Utils.equals(mPhotoUri, a.mPhotoUri)
+                    && Utils.equals(mDisplayName, a.mDisplayName)
+                    && Utils.equals(mPhotoThumbUri, a.mPhotoThumbUri);
+        }
+        return false;
     }
 
+    @Override
+    public int hashCode() {
+        return Utils.hashCode(mNumber)
+                + Utils.hashCode(mPhotoUri)
+                + Utils.hashCode(mDisplayName)
+                + Utils.hashCode(mPhotoThumbUri);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Contact{number=%s, photo_uri=%s, display_name=%s, photo_thumb_uri=%s}",
+                mNumber, mPhotoUri, mDisplayName, mPhotoThumbUri);
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
 
+    @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeString(mNumber);
         out.writeString(mPhotoUri);
