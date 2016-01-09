@@ -9,7 +9,7 @@ import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
-import com.xlythe.sms.ManagerActivity;
+import com.xlythe.sms.MainActivity;
 import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Text;
 
@@ -17,7 +17,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
     public void onMessageReceived(Context context, Text text) {
-        Intent dismissIntent = new Intent(context, ManagerActivity.class);
+        Intent dismissIntent = new Intent(context, MainActivity.class);
         PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
 
         NotificationCompat.Builder builder =
@@ -37,16 +37,16 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         inboxStyle.addLine(text.getBody());
         builder.setStyle(inboxStyle);
 
-//        Intent resultIntent = new Intent(context, com.xlythe.sms.ManagerActivity.class);
-//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-//        stackBuilder.addParentStack(com.xlythe.sms.ManagerActivity.class);
-//        stackBuilder.addNextIntent(resultIntent);
-//        PendingIntent resultPendingIntent =
-//                stackBuilder.getPendingIntent(
-//                        0,
-//                        PendingIntent.FLAG_UPDATE_CURRENT
-//                );
-//        builder.setContentIntent(resultPendingIntent);
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        builder.setContentIntent(resultPendingIntent);
 
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(12345, builder.build());

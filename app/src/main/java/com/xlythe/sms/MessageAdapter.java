@@ -5,6 +5,7 @@ import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.LruCache;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -180,41 +181,33 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // Create new views (invoked by the layout manager)
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View v;
-        if (viewType <= TYPE_SINGLE_RIGHT) {
-            if (viewType == TYPE_TOP_RIGHT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_top, parent, false);
-            } else if (viewType == TYPE_MIDDLE_RIGHT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_middle, parent, false);
-            } else if (viewType == TYPE_BOTTOM_RIGHT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_bottom, parent, false);
-            } else {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.right_single, parent, false);
-            }
-            return new ViewHolder(v);
-        }
+        SparseIntArray map = new SparseIntArray();
+        map.put(TYPE_TOP_RIGHT, R.layout.right_top);
+        map.put(TYPE_MIDDLE_RIGHT, R.layout.right_middle);
+        map.put(TYPE_BOTTOM_RIGHT, R.layout.right_bottom);
+        map.put(TYPE_SINGLE_RIGHT, R.layout.right_single);
+        map.put(TYPE_TOP_LEFT, R.layout.left_top);
+        map.put(TYPE_MIDDLE_LEFT, R.layout.left_middle);
+        map.put(TYPE_BOTTOM_LEFT, R.layout.left_bottom);
+        map.put(TYPE_SINGLE_LEFT, R.layout.left_single);
+        map.put(TYPE_ATTACHMENT, R.layout.attachment);
+        map.put(TYPE_FAILED, R.layout.left_single);
 
-        if (viewType <= TYPE_SINGLE_LEFT) {
-            if (viewType == TYPE_TOP_LEFT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_top, parent, false);
-            } else if (viewType == TYPE_MIDDLE_LEFT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_middle, parent, false);
-            } else if (viewType == TYPE_BOTTOM_LEFT) {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_bottom, parent, false);
-            } else {
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
-            }
-            return new LeftViewHolder(v);
-        }
-
-        if (viewType == TYPE_ATTACHMENT) {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.attachment, parent, false);
-            return new AttachmentViewHolder(v);
-        }
-
-        else {
-            v = LayoutInflater.from(parent.getContext()).inflate(R.layout.left_single, parent, false);
-            return new FailedViewHolder(v, mClickListener);
+        switch(viewType) {
+            case TYPE_TOP_RIGHT:
+            case TYPE_MIDDLE_RIGHT:
+            case TYPE_BOTTOM_RIGHT:
+            case TYPE_SINGLE_RIGHT:
+                return new ViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+            case TYPE_TOP_LEFT:
+            case TYPE_MIDDLE_LEFT:
+            case TYPE_BOTTOM_LEFT:
+            case TYPE_SINGLE_LEFT:
+                return new LeftViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+            case TYPE_ATTACHMENT:
+                return new AttachmentViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false));
+            default:
+                return new FailedViewHolder(LayoutInflater.from(mContext).inflate(map.get(viewType), parent, false), mClickListener);
         }
     }
 
