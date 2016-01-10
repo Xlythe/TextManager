@@ -22,6 +22,8 @@ import android.view.MenuItem;
 import android.widget.Button;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
+import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
@@ -41,6 +43,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
 
     private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
 
+    private static final long ONE_MINUTE = 60 * 1000;
+    private static final long ONE_HOUR = 60 * ONE_MINUTE;
+    private static final long ONE_DAY = 24 * ONE_HOUR;
+    private static final long ONE_WEEK = 7 * ONE_DAY;
+    private static final long ONE_MONTH = 4 * ONE_WEEK;
+
     private TextManager mManager;
     private Thread.ThreadCursor mThreads;
 
@@ -53,16 +61,19 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
 
-    private static final long ONE_MINUTE = 60 * 1000;
-    private static final long ONE_HOUR = 60 * ONE_MINUTE;
-    private static final long ONE_DAY = 24 * ONE_HOUR;
-    private static final long ONE_WEEK = 7 * ONE_DAY;
-    private static final long ONE_MONTH = 4 * ONE_WEEK;
+    private final MessageObserver mObserver = new MessageObserver() {
+        @Override
+        public void notifyDataChanged() {
+            mAdapter.invalidateDataSet();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mManager = TextManager.getInstance(getBaseContext());
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -83,6 +94,19 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
             }
         });
 
+        if (!mManager.isDefaultSmsPackage()) {
+            Snackbar.make(findViewById(android.R.id.content), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.btn_change, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(Mock.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+                            intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+                            startActivity(intent);
+                        }
+                    })
+                    .show();
+        }
+
         if (hasPermissions(REQUIRED_PERMISSIONS)) {
             loadThreads();
         } else if (hasRequestedPermissions()) {
@@ -93,8 +117,25 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        mAdapter.getCursor().close();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mManager.registerObserver(mObserver);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mManager.unregisterObserver(mObserver);
+    }
+
     private void loadThreads() {
-        mManager = TextManager.getInstance(getBaseContext());
         mThreads = mManager.getThreadCursor();
 
         ArrayList<Section> headers = new ArrayList<>();

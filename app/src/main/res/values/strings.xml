@@ -12,6 +12,9 @@
     <string name="action_remove">Remove</string>
     <string name="title_activity_message">MessageActivity</string>
 
+    <string name="msg_not_set_as_default">Fetch is not the default SMS app</string>
+    <string name="btn_change">Change</string>
+
     <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
     <string name="error_permissions_resolve">Request</string>
 </resources>

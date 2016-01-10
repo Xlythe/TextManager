@@ -12,6 +12,7 @@ import android.view.Window;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -22,6 +23,13 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private Thread mThread;
     private TextManager mManager;
     private RecyclerView mRecyclerView;
+    private MessageAdapter mAdapter;
+    private final MessageObserver mObserver = new MessageObserver() {
+        @Override
+        public void notifyDataChanged() {
+            mAdapter.invalidateDataSet();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,16 +40,17 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
-        final Drawable upArrow = getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-        upArrow.setColorFilter(getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
+        final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
+        upArrow.setColorFilter(getResources().getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
         getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>"+
                 mThread.getLatestMessage().getSender().getDisplayName()
                 + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        Window window = this.getWindow();
-        window.setStatusBarColor(ColorUtils.getDarkColor(Long.parseLong(mThread.getId())));
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            getWindow().setStatusBarColor(ColorUtils.getDarkColor(Long.parseLong(mThread.getId())));
+        }
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
@@ -51,13 +60,37 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         // maybe add transcript mode, and show a notification of new messages
         mRecyclerView.setLayoutManager(layoutManager);
 
-        MessageAdapter adapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
-        adapter.setOnClickListener(this);
-        mRecyclerView.setAdapter(adapter);
+        mAdapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
+        mAdapter.setOnClickListener(this);
+        mRecyclerView.setAdapter(mAdapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mAdapter.getCursor().close();
+        super.onDestroy();
     }
 
     @Override
     public void onItemClicked(Text text) {
         mManager.downloadAttachment(text);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mManager.registerObserver(mObserver);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mManager.unregisterObserver(mObserver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mManager.markAsRead(mThread);
     }
 }

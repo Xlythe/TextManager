@@ -1,6 +1,7 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,13 +25,8 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
-
-    private Text.TextCursor mCursor;
-    private Context mContext;
-    private FailedViewHolder.ClickListener mClickListener;
-    private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
@@ -47,6 +43,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_FAILED       = 9;
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
+
     static {
         LAYOUT_MAP.put(TYPE_TOP_RIGHT, R.layout.right_top);
         LAYOUT_MAP.put(TYPE_MIDDLE_RIGHT,R.layout.right_middle);
@@ -59,6 +56,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         LAYOUT_MAP.put(TYPE_ATTACHMENT,R.layout.attachment);
         LAYOUT_MAP.put(TYPE_FAILED,R.layout.left_single);
     };
+
+    private Text.TextCursor mCursor;
+    private Context mContext;
+    private FailedViewHolder.ClickListener mClickListener;
+    private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     public static abstract class MessageViewHolder extends RecyclerView.ViewHolder {
         private Text mText;
@@ -309,5 +311,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() {
         return mCursor.getCount();
+    }
+
+    public void invalidateDataSet() {
+        mTextLruCache.evictAll();
+        notifyDataSetChanged();
+    }
+
+    public Cursor getCursor() {
+        return mCursor;
     }
 }

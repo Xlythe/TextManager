@@ -32,6 +32,8 @@ import java.util.Set;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
+    private static final String TAG = TextManager.class.getSimpleName();
+    private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
@@ -310,14 +312,22 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public void delete(Text message) {
         String clause = String.format("%s = %s",
                 Mock.Telephony.Sms._ID, message.getId());
-        mContext.getContentResolver().delete(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
+        int rowsDeleted = mContext.getContentResolver().delete(
+                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
+        if (DEBUG) {
+            Log.i(TAG, String.format("Deleting %s. %s rows deleted", message, rowsDeleted));
+        }
     }
 
     @Override
     public void delete(Thread thread) {
         String clause = String.format("%s = %s",
                 Mock.Telephony.Sms.THREAD_ID, thread.getId());
-        mContext.getContentResolver().delete(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
+        int rowsDeleted = mContext.getContentResolver().delete(
+                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
+        if (DEBUG) {
+            Log.i(TAG, String.format("Deleting %s. %s rows deleted", thread, rowsDeleted));
+        }
     }
 
     @Override
@@ -326,7 +336,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         values.put(Mock.Telephony.Sms.READ, true);
         String clause = String.format("%s = %s",
                 Mock.Telephony.Sms._ID, message.getId());
-        mContext.getContentResolver().update(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+        int rowsUpdated = mContext.getContentResolver().update(
+                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+        if (DEBUG) {
+            Log.i(TAG, String.format("Marking %s as read. %s rows updated", message, rowsUpdated));
+        }
     }
 
     @Override
@@ -336,7 +350,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         String clause = String.format("%s = %s AND %s = %s",
                 Mock.Telephony.Sms.THREAD_ID, thread.getId(),
                 Mock.Telephony.Sms.READ, 0);
-        mContext.getContentResolver().update(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+        int rowsUpdated = mContext.getContentResolver().update(
+                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+        if (DEBUG) {
+            Log.i(TAG, String.format("Marking %s as read. %s rows updated", thread, rowsUpdated));
+        }
     }
 
     public Contact lookupContact(String phoneNumber) {

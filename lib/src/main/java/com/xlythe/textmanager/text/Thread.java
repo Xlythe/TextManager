@@ -17,15 +17,15 @@ import java.io.Serializable;
  * An SMS conversation
  */
 public final class Thread implements MessageThread<Text>, Parcelable {
-    private long mThreadId;
-    private int mCount;
-    private int mUnreadCount;
-    private Text mText;
+    private final long mThreadId;
+    private final int mCount;
+    private final int mUnreadCount;
+    private final Text mText;
 
     protected Thread(Context context, Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
         mCount = 0;
-        buildLastMessage(context);
+        mText = new Text(context, cursor);
         String proj = String.format("%s=%s AND %s=%s",
                 Mock.Telephony.Sms.READ, 0,
                 Mock.Telephony.Sms.THREAD_ID, mThreadId);
@@ -50,18 +50,6 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         mCount = in.readInt();
         mUnreadCount = in.readInt();
         mText = in.readParcelable(Text.class.getClassLoader());
-    }
-
-    private void buildLastMessage(Context context) {
-        ContentResolver contentResolver = context.getContentResolver();
-        final String[] projection = TextManager.PROJECTION;
-        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ mThreadId);
-        final String order = "normalized_date ASC";
-        Cursor c = contentResolver.query(uri, projection, null, null, order);
-        if (c!=null && c.moveToLast()) {
-            mText = new Text(context, c);
-            c.close();
-        }
     }
 
     @Override
