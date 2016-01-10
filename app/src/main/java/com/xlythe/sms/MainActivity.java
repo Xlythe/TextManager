@@ -28,7 +28,7 @@ import com.xlythe.textmanager.text.Thread;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements ThreadAdapter.SimpleViewHolder.ClickListener {
+public class MainActivity extends AppCompatActivity implements ThreadAdapter.ThreadViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
             Manifest.permission.READ_CONTACTS
@@ -41,12 +41,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
                     | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP;
 
     private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
-
-    private static final long ONE_MINUTE = 60 * 1000;
-    private static final long ONE_HOUR = 60 * ONE_MINUTE;
-    private static final long ONE_DAY = 24 * ONE_HOUR;
-    private static final long ONE_WEEK = 7 * ONE_DAY;
-    private static final long ONE_MONTH = 4 * ONE_WEEK;
 
     private TextManager mManager;
     private Thread.ThreadCursor mThreads;
@@ -75,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
 
         mFab = (FloatingActionButton) findViewById(R.id.fab);
         mFab.setOnClickListener(new View.OnClickListener() {
@@ -105,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
             requiredPermissionsNotGranted();
         } else {
             markHasRequestedPermissions();
-            ActivityCompat.requestPermissions(MainActivity.this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
     }
 
@@ -117,34 +110,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
 
     private void loadThreads() {
         mThreads = mManager.getThreadCursor();
-
-        ArrayList<Section> headers = new ArrayList<>();
-
-//        Section section = new Section(0, "");
-//        for (int i = 0; i < mThreads.size(); i++) {
-//            long date = mThreads.get(i).getLatestMessage().getTimestamp();
-//            long time = System.currentTimeMillis() - date;
-//            if (time < ONE_DAY && !section.mTitle.equals("Today")) {
-//                section = new Section(i+headers.size(),"Today");
-//                headers.add(section);
-//                // TODO: think of a better way for headers
-//                mThreads.add(mThreads.get(0));
-//            } else if (time > ONE_DAY && time < 2 * ONE_DAY && !section.mTitle.equals("Yesterday")) {
-//                section = new Section(i+headers.size(),"Yesterday");
-//                headers.add(section);
-//                mThreads.add(mThreads.get(0));
-//            } else if (time > 2 * ONE_DAY && time < ONE_WEEK && !section.mTitle.equals("This week")) {
-//                section = new Section(i+headers.size(),"This week");
-//                headers.add(section);
-//                mThreads.add(mThreads.get(0));
-//            } else if (time > ONE_WEEK && time < ONE_MONTH && !section.mTitle.equals("This month")) {
-//                section = new Section(i+headers.size(),"This month");
-//                headers.add(section);
-//                mThreads.add(mThreads.get(0));
-//            }
-//        }
-
         mAdapter = new ThreadAdapter(this, mThreads);
+        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider, mAdapter));
         mRecyclerView.setAdapter(mAdapter);
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();

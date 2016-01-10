@@ -24,7 +24,7 @@ import com.xlythe.textmanager.text.Text;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
@@ -213,7 +213,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     // Create new views (invoked by the layout manager)
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch(viewType) {
             case TYPE_TOP_RIGHT:
             case TYPE_MIDDLE_RIGHT:
@@ -319,8 +319,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((MessageViewHolder) holder).setMessage(mContext, getText(position));
+    public void onBindViewHolder(MessageViewHolder holder, int position) {
+        holder.setMessage(mContext, getText(position));
     }
 
     @Override

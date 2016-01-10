@@ -9,10 +9,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
-/**
- * Created by Niko on 12/24/15.
- */
-public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
+import com.xlythe.sms.adapter.ThreadAdapter;
+
+public class DividerItemDecorationRes extends StickyRecyclerHeadersDecoration {
 
     private static final int[] ATTRS = new int[]{android.R.attr.listDivider};
 
@@ -21,7 +21,8 @@ public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
     /**
      * Default divider will be used
      */
-    public DividerItemDecorationRes(Context context) {
+    public DividerItemDecorationRes(Context context, ThreadAdapter adapter) {
+        super(adapter);
         final TypedArray styledAttributes = context.obtainStyledAttributes(ATTRS);
         mDivider = styledAttributes.getDrawable(0);
         styledAttributes.recycle();
@@ -30,12 +31,14 @@ public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
     /**
      * Custom divider will be used
      */
-    public DividerItemDecorationRes(Context context, int resId) {
+    public DividerItemDecorationRes(Context context, int resId, ThreadAdapter adapter) {
+        super(adapter);
         mDivider = ContextCompat.getDrawable(context, resId);
     }
 
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        super.onDrawOver(c, parent, state);
         int left = parent.getPaddingLeft();
         int right = parent.getWidth() - parent.getPaddingRight();
 
