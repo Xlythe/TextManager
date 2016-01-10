@@ -64,7 +64,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".EditTextActivity"
+            android:name=".ContactSearchActivity"
             android:theme="@style/AppTheme.NoActionBar.Compose.Edit"
             android:windowSoftInputMode="stateVisible|adjustNothing" >
             <meta-data

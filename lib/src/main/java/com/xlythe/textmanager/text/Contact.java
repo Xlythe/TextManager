@@ -1,6 +1,8 @@
 package com.xlythe.textmanager.text;
 
+import android.content.Context;
 import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -128,4 +130,14 @@ public final class Contact implements User, Parcelable {
             return new Contact[size];
         }
     };
+
+    public static class ContactCursor extends CursorWrapper {
+        public ContactCursor(Cursor cursor) {
+            super(cursor);
+        }
+
+        public Contact getContact() {
+            return new Contact(this);
+        }
+    }
 }

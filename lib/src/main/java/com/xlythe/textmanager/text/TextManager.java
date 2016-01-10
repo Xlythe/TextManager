@@ -358,6 +358,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
+    public Contact.ContactCursor getContactCursor(String partialName) {
+        ContentResolver contentResolver = mContext.getContentResolver();
+        final Uri uri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_FILTER_URI, partialName);
+        final String order = ContactsContract.Contacts.DISPLAY_NAME + " ASC";
+        return new Contact.ContactCursor(contentResolver.query(uri, null, null, null, order));
+    }
+
     public Contact lookupContact(String phoneNumber) {
         Contact contact = mContactCache.get(phoneNumber);
         if (contact == null) {
