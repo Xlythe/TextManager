@@ -337,7 +337,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         String clause = String.format("%s = %s",
                 Mock.Telephony.Sms._ID, message.getId());
         int rowsUpdated = mContext.getContentResolver().update(
-                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+                Mock.Telephony.Sms.Inbox.CONTENT_URI, values, clause, null);
         if (DEBUG) {
             Log.i(TAG, String.format("Marking %s as read. %s rows updated", message, rowsUpdated));
         }
@@ -347,11 +347,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public void markAsRead(Thread thread) {
         ContentValues values = new ContentValues();
         values.put(Mock.Telephony.Sms.READ, true);
-        String clause = String.format("%s = %s AND %s = %s",
+        String clause = String.format("%s=%s AND %s=%s",
                 Mock.Telephony.Sms.THREAD_ID, thread.getId(),
                 Mock.Telephony.Sms.READ, 0);
         int rowsUpdated = mContext.getContentResolver().update(
-                Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, values, clause, null);
+                Mock.Telephony.Sms.Inbox.CONTENT_URI, values, clause, null);
         if (DEBUG) {
             Log.i(TAG, String.format("Marking %s as read. %s rows updated", thread, rowsUpdated));
         }

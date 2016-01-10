@@ -11,6 +11,7 @@ import android.text.Html;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -22,6 +23,12 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private TextManager mManager;
     private RecyclerView mRecyclerView;
     private MessageAdapter mAdapter;
+    private final MessageObserver mMessageObserver = new MessageObserver() {
+        @Override
+        public void notifyDataChanged() {
+            invalidateAdapter();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,15 +59,25 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         // maybe add transcript mode, and show a notification of new messages
         mRecyclerView.setLayoutManager(layoutManager);
 
-        mAdapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
-        mAdapter.setOnClickListener(this);
-        mRecyclerView.setAdapter(mAdapter);
+        invalidateAdapter();
+
+        mManager.registerObserver(mMessageObserver);
     }
 
     @Override
     protected void onDestroy() {
-        mAdapter.getCursor().close();
+        mAdapter.destroy();
+        mManager.unregisterObserver(mMessageObserver);
         super.onDestroy();
+    }
+
+    private void invalidateAdapter() {
+        if (mAdapter != null) {
+            mAdapter.destroy();
+        }
+        mAdapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
+        mAdapter.setOnClickListener(this);
+        mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override

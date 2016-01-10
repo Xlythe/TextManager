@@ -20,7 +20,9 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -172,11 +174,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
-        }
-
-        @Override
         public void onClick(View v) {
             if (mListener != null) {
                 mListener.onItemClicked(getMessage());
@@ -191,20 +188,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     public MessageAdapter(Context context, Text.TextCursor cursor) {
         mCursor = cursor;
         mContext = context;
-
-        mCursor.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                invalidateDataSet();
-            }
-
-            @Override
-            public void onInvalidated() {
-                super.onInvalidated();
-                invalidateDataSet();
-            }
-        });
     }
 
     public void setOnClickListener(FailedViewHolder.ClickListener onClickListener) {
@@ -214,21 +197,22 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     // Create new views (invoked by the layout manager)
     @Override
     public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View layout = LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false);
         switch(viewType) {
             case TYPE_TOP_RIGHT:
             case TYPE_MIDDLE_RIGHT:
             case TYPE_BOTTOM_RIGHT:
             case TYPE_SINGLE_RIGHT:
-                return new ViewHolder(LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false));
+                return new ViewHolder(layout);
             case TYPE_TOP_LEFT:
             case TYPE_MIDDLE_LEFT:
             case TYPE_BOTTOM_LEFT:
             case TYPE_SINGLE_LEFT:
-                return new LeftViewHolder(LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false));
+                return new LeftViewHolder(layout);
             case TYPE_ATTACHMENT:
-                return new AttachmentViewHolder(LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false));
+                return new AttachmentViewHolder(layout);
             default:
-                return new FailedViewHolder(LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false), mClickListener);
+                return new FailedViewHolder(layout, mClickListener);
         }
     }
 
@@ -328,12 +312,13 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         return mCursor.getCount();
     }
 
-    private void invalidateDataSet() {
-        mTextLruCache.evictAll();
-        notifyDataSetChanged();
-    }
-
     public Cursor getCursor() {
         return mCursor;
+    }
+
+    public void destroy() {
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
     }
 }

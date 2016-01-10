@@ -22,11 +22,10 @@ import android.view.MenuItem;
 import android.widget.Button;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
+import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
-
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.ThreadViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
@@ -49,7 +48,14 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private RecyclerView mRecyclerView;
+    private RecyclerView.ItemDecoration mItemDecoration;
     private ThreadAdapter mAdapter;
+    private final MessageObserver mMessageObserver = new MessageObserver() {
+        @Override
+        public void notifyDataChanged() {
+            invalidateAdapter();
+        }
+    };
 
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
@@ -104,15 +110,28 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
 
     @Override
     protected void onDestroy() {
-        mAdapter.getCursor().close();
+        mManager.unregisterObserver(mMessageObserver);
+        mAdapter.destroy();
         super.onDestroy();
     }
 
-    private void loadThreads() {
+    private void invalidateAdapter() {
+        if (mAdapter != null) {
+            mAdapter.destroy();
+        }
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
-        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider, mAdapter));
+
+        mRecyclerView.removeItemDecoration(mItemDecoration);
+        mItemDecoration = new DividerItemDecorationRes(this, R.drawable.divider, mAdapter);
+        mRecyclerView.addItemDecoration(mItemDecoration);
+
         mRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void loadThreads() {
+        mManager.registerObserver(mMessageObserver);
+        invalidateAdapter();
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
         params.setScrollFlags(TOOLBAR_SCROLL_FLAGS);

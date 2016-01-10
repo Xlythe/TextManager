@@ -2,7 +2,6 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
@@ -18,13 +17,11 @@ import android.widget.TextView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
-import com.xlythe.sms.Section;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -51,33 +48,20 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         mClickListener = (ThreadViewHolder.ClickListener) context;
         mContext = context;
         mCursor = cursor;
-
-        mCursor.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                invalidateDataSet();
-            }
-
-            @Override
-            public void onInvalidated() {
-                super.onInvalidated();
-                invalidateDataSet();
-            }
-        });
-    }
-
-    private void invalidateDataSet() {
-        mThreadLruCache.evictAll();
-        notifyDataSetChanged();
     }
 
     public Cursor getCursor() {
         return mCursor;
     }
 
+    public void destroy() {
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+    }
+
     public void add(Thread s, int position) {
-        position = position == -1 ? getItemCount()  : position;
+        position = position == -1 ? getItemCount() : position;
         // TODO: FIX
         //mData.add(position, s);
         notifyItemInserted(position);
@@ -303,7 +287,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         }
         // eg 022015
         SimpleDateFormat formatter = new SimpleDateFormat("MMyyyy");
-        return Integer.parseInt(formatter.format(date)) << 4;
+        return Integer.parseInt(formatter.format(date)) << 3;
     }
 
     @Override
