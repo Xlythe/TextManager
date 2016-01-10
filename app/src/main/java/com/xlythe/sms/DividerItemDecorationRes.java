@@ -9,10 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
-import com.xlythe.sms.adapter.ThreadAdapter;
-
-public class DividerItemDecorationRes extends StickyRecyclerHeadersDecoration {
+public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
 
     private static final int[] ATTRS = new int[]{android.R.attr.listDivider};
 
@@ -21,8 +18,7 @@ public class DividerItemDecorationRes extends StickyRecyclerHeadersDecoration {
     /**
      * Default divider will be used
      */
-    public DividerItemDecorationRes(Context context, ThreadAdapter adapter) {
-        super(adapter);
+    public DividerItemDecorationRes(Context context) {
         final TypedArray styledAttributes = context.obtainStyledAttributes(ATTRS);
         mDivider = styledAttributes.getDrawable(0);
         styledAttributes.recycle();
@@ -31,8 +27,7 @@ public class DividerItemDecorationRes extends StickyRecyclerHeadersDecoration {
     /**
      * Custom divider will be used
      */
-    public DividerItemDecorationRes(Context context, int resId, ThreadAdapter adapter) {
-        super(adapter);
+    public DividerItemDecorationRes(Context context, int resId) {
         mDivider = ContextCompat.getDrawable(context, resId);
     }
 

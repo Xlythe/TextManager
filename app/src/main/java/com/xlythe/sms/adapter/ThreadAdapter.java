@@ -61,6 +61,16 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         }
     }
 
+    public void swapCursor(Thread.ThreadCursor cursor) {
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+
+        mCursor = cursor;
+        mThreadLruCache.evictAll();
+        notifyDataSetChanged();
+    }
+
     public void add(Thread s, int position) {
         position = position == -1 ? getItemCount() : position;
         // TODO: FIX

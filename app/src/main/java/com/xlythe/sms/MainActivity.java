@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
@@ -48,12 +49,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private RecyclerView mRecyclerView;
-    private RecyclerView.ItemDecoration mItemDecoration;
     private ThreadAdapter mAdapter;
     private final MessageObserver mMessageObserver = new MessageObserver() {
         @Override
         public void notifyDataChanged() {
-            invalidateAdapter();
+            mThreads = mManager.getThreadCursor();
+            mAdapter.swapCursor(mThreads);
         }
     };
 
@@ -115,23 +116,13 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         super.onDestroy();
     }
 
-    private void invalidateAdapter() {
-        if (mAdapter != null) {
-            mAdapter.destroy();
-        }
-        mThreads = mManager.getThreadCursor();
-        mAdapter = new ThreadAdapter(this, mThreads);
-
-        mRecyclerView.removeItemDecoration(mItemDecoration);
-        mItemDecoration = new DividerItemDecorationRes(this, R.drawable.divider, mAdapter);
-        mRecyclerView.addItemDecoration(mItemDecoration);
-
-        mRecyclerView.setAdapter(mAdapter);
-    }
-
     private void loadThreads() {
         mManager.registerObserver(mMessageObserver);
-        invalidateAdapter();
+        mThreads = mManager.getThreadCursor();
+        mAdapter = new ThreadAdapter(this, mThreads);
+        mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
+        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
+        mRecyclerView.setAdapter(mAdapter);
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
         params.setScrollFlags(TOOLBAR_SCROLL_FLAGS);

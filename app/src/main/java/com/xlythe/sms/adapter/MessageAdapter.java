@@ -321,4 +321,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             mCursor.close();
         }
     }
+
+    public void swapCursor(Text.TextCursor cursor) {
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+
+        mCursor = cursor;
+        mTextLruCache.evictAll();
+        notifyDataSetChanged();
+    }
 }

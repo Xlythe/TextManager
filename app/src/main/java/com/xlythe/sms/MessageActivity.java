@@ -8,6 +8,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
@@ -26,7 +27,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private final MessageObserver mMessageObserver = new MessageObserver() {
         @Override
         public void notifyDataChanged() {
-            invalidateAdapter();
+            mAdapter.swapCursor(mManager.getMessageCursor(mThread));
+            mManager.markAsRead(mThread);
         }
     };
 
@@ -59,7 +61,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         // maybe add transcript mode, and show a notification of new messages
         mRecyclerView.setLayoutManager(layoutManager);
 
-        invalidateAdapter();
+        mAdapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
+        mAdapter.setOnClickListener(this);
+        mRecyclerView.setAdapter(mAdapter);
 
         mManager.registerObserver(mMessageObserver);
     }
@@ -69,15 +73,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mAdapter.destroy();
         mManager.unregisterObserver(mMessageObserver);
         super.onDestroy();
-    }
-
-    private void invalidateAdapter() {
-        if (mAdapter != null) {
-            mAdapter.destroy();
-        }
-        mAdapter = new MessageAdapter(this, mManager.getMessageCursor(mThread));
-        mAdapter.setOnClickListener(this);
-        mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override
