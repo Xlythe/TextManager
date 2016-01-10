@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.adapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -7,9 +7,6 @@ import android.util.SparseBooleanArray;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Niko on 12/24/15.
- */
 public abstract class SelectableAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
     private SparseBooleanArray mSelectedItems = new SparseBooleanArray();
 

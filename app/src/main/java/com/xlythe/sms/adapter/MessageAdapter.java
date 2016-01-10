@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.graphics.PorterDuff;
@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.xlythe.sms.ProfileDrawable;
+import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Text;
@@ -46,7 +48,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
     static {
-        LAYOUT_MAP.put(TYPE_TOP_RIGHT,R.layout.right_top);
+        LAYOUT_MAP.put(TYPE_TOP_RIGHT, R.layout.right_top);
         LAYOUT_MAP.put(TYPE_MIDDLE_RIGHT,R.layout.right_middle);
         LAYOUT_MAP.put(TYPE_BOTTOM_RIGHT,R.layout.right_bottom);
         LAYOUT_MAP.put(TYPE_SINGLE_RIGHT,R.layout.right_single);

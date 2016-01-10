@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -22,13 +21,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
+import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SimpleAdapter.SimpleViewHolder.ClickListener {
+public class MainActivity extends AppCompatActivity implements ThreadAdapter.SimpleViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
             Manifest.permission.READ_CONTACTS
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private RecyclerView mRecyclerView;
-    private SimpleAdapter mAdapter;
+    private ThreadAdapter mAdapter;
 
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
@@ -124,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements SimpleAdapter.Sim
 //            }
 //        }
 
-        mAdapter = new SimpleAdapter(this, mThreads);
+        mAdapter = new ThreadAdapter(this, mThreads);
         mRecyclerView.setAdapter(mAdapter);
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();

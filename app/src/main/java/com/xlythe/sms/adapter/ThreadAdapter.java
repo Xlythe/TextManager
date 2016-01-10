@@ -1,39 +1,42 @@
-package com.xlythe.sms;
+package com.xlythe.sms.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.xlythe.sms.ProfileDrawable;
+import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
-import com.xlythe.textmanager.text.Contact;
+import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Created by Niko on 12/22/15.
- */
-public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
+public class ThreadAdapter extends SelectableAdapter<RecyclerView.ViewHolder> {
+    private static final Typeface TYPEFACE_NORMAL = Typeface.create("sans-serif-regular", Typeface.NORMAL);
+    private static final Typeface TYPEFACE_BOLD = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+    private static final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
+    private static final int CARD_STATE_COLOR = Color.WHITE;
+    private static final int CACHE_SIZE = 50;
+
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
-    private final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
-    private final int CARD_STATE_COLOR = Color.WHITE;
     private SimpleViewHolder.ClickListener mClickListener;
+    private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
 
-    public SimpleAdapter(Context context, Thread.ThreadCursor cursor) {
+    public ThreadAdapter(Context context, Thread.ThreadCursor cursor) {
         mClickListener = (SimpleViewHolder.ClickListener) context;
         mContext = context;
         mCursor = cursor;
@@ -111,14 +114,13 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-        mCursor.moveToPosition(position);
-        Thread data = mCursor.getThread();
+        Thread data = getThread(position);
         String body = "";
         String time = "";
         String address = "";
         Uri uri = null;
         int unread = 0;
-        int color = mContext.getColor(R.color.colorPrimary);
+        int color = mContext.getResources().getColor(R.color.colorPrimary);
 
         if (data.getLatestMessage()!=null) {
             body = data.getLatestMessage().getBody();
@@ -131,7 +133,7 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         SimpleViewHolder simpleHolder = (SimpleViewHolder) holder;
         simpleHolder.message.setText(body);
         simpleHolder.date.setText(time);
-        simpleHolder.profile.setBackground(mContext.getDrawable(R.drawable.selector));
+        simpleHolder.profile.setBackgroundResource(R.drawable.selector);
 
         if (unread > 0) {
             simpleHolder.title.setText(address);
@@ -141,16 +143,16 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
             simpleHolder.unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
             simpleHolder.unread.getBackground().setAlpha(25);
             simpleHolder.title.setTextColor(color);
-            simpleHolder.title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            simpleHolder.message.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            simpleHolder.date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            simpleHolder.title.setTypeface(TYPEFACE_BOLD);
+            simpleHolder.message.setTypeface(TYPEFACE_BOLD);
+            simpleHolder.date.setTypeface(TYPEFACE_BOLD);
         } else {
             simpleHolder.title.setText(address);
             simpleHolder.unread.setVisibility(View.GONE);
-            simpleHolder.title.setTextColor(mContext.getColor(R.color.headerText));
-            simpleHolder.title.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-            simpleHolder.message.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
-            simpleHolder.date.setTypeface(Typeface.create("sans-serif-regular", Typeface.NORMAL));
+            simpleHolder.title.setTextColor(mContext.getResources().getColor(R.color.headerText));
+            simpleHolder.title.setTypeface(TYPEFACE_NORMAL);
+            simpleHolder.message.setTypeface(TYPEFACE_NORMAL);
+            simpleHolder.date.setTypeface(TYPEFACE_NORMAL);
         }
 
         boolean isSelected = isSelected(position);
@@ -173,6 +175,16 @@ public class SimpleAdapter extends SelectableAdapter<RecyclerView.ViewHolder>{
         } else {
             simpleHolder.card.setCardBackgroundColor(CARD_STATE_COLOR);
         }
+    }
+
+    private Thread getThread(int position) {
+        Thread thread = mThreadLruCache.get(position);
+        if (thread == null) {
+            mCursor.moveToPosition(position);
+            thread = mCursor.getThread();
+            mThreadLruCache.put(position, thread);
+        }
+        return thread;
     }
 
     @Override

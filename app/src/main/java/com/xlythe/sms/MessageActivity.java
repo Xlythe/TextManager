@@ -1,8 +1,6 @@
 package com.xlythe.sms;
 
-import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,6 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.view.Window;
 
+import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
