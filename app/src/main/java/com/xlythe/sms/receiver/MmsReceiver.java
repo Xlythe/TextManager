@@ -29,6 +29,7 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
+                        .setDefaults(Notification.DEFAULT_SOUND)
                         .setPriority(Notification.PRIORITY_HIGH)
                         .setCategory(Notification.CATEGORY_MESSAGE)
                         .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
