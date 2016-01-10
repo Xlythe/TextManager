@@ -22,7 +22,6 @@ import android.view.MenuItem;
 import android.widget.Button;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
-import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -60,13 +59,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
 
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
-
-    private final MessageObserver mObserver = new MessageObserver() {
-        @Override
-        public void notifyDataChanged() {
-            mAdapter.invalidateDataSet();
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,18 +113,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Sim
     protected void onDestroy() {
         mAdapter.getCursor().close();
         super.onDestroy();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mManager.registerObserver(mObserver);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mManager.unregisterObserver(mObserver);
     }
 
     private void loadThreads() {

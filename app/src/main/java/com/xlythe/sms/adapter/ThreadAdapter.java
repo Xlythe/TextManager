@@ -2,6 +2,7 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
@@ -43,9 +44,23 @@ public class ThreadAdapter extends SelectableAdapter<RecyclerView.ViewHolder> {
         mClickListener = (SimpleViewHolder.ClickListener) context;
         mContext = context;
         mCursor = cursor;
+
+        mCursor.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                invalidateDataSet();
+            }
+
+            @Override
+            public void onInvalidated() {
+                super.onInvalidated();
+                invalidateDataSet();
+            }
+        });
     }
 
-    public void invalidateDataSet() {
+    private void invalidateDataSet() {
         mThreadLruCache.evictAll();
         notifyDataSetChanged();
     }

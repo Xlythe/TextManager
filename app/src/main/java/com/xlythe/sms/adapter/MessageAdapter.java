@@ -2,6 +2,7 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -190,6 +191,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public MessageAdapter(Context context, Text.TextCursor cursor) {
         mCursor = cursor;
         mContext = context;
+
+        mCursor.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                invalidateDataSet();
+            }
+
+            @Override
+            public void onInvalidated() {
+                super.onInvalidated();
+                invalidateDataSet();
+            }
+        });
     }
 
     public void setOnClickListener(FailedViewHolder.ClickListener onClickListener) {
@@ -313,7 +328,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return mCursor.getCount();
     }
 
-    public void invalidateDataSet() {
+    private void invalidateDataSet() {
         mTextLruCache.evictAll();
         notifyDataSetChanged();
     }

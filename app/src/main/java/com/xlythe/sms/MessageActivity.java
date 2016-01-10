@@ -8,11 +8,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.view.Window;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -24,12 +22,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private TextManager mManager;
     private RecyclerView mRecyclerView;
     private MessageAdapter mAdapter;
-    private final MessageObserver mObserver = new MessageObserver() {
-        @Override
-        public void notifyDataChanged() {
-            mAdapter.invalidateDataSet();
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,18 +66,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     @Override
     public void onItemClicked(Text text) {
         mManager.downloadAttachment(text);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mManager.registerObserver(mObserver);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mManager.unregisterObserver(mObserver);
     }
 
     @Override
