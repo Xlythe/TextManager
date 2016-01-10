@@ -19,6 +19,7 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
@@ -140,12 +141,16 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         int unread = 0;
         int color = mContext.getResources().getColor(R.color.colorPrimary);
 
-        if (data.getLatestMessage()!=null) {
+        if (data.getLatestMessage() != null) {
             body = data.getLatestMessage().getBody();
             time = DateFormatter.getFormattedDate(data.getLatestMessage());
             address = data.getLatestMessage().getSender().getDisplayName()+"";
             uri = data.getLatestMessage().getSender().getPhotoUri();
-            unread = data.getUnreadCount();
+            if (!data.hasLoadedUnreadCount()) {
+                unread = data.getUnreadCount(mContext);
+            } else {
+                unread = data.getUnreadCount();
+            }
             color = ColorUtils.getColor(Long.parseLong(data.getId()));
         }
         holder.message.setText(body);

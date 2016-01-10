@@ -26,9 +26,6 @@ import com.xlythe.textmanager.text.pdu.RetrieveConf;
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
 
-/**
- * Created by Niko on 12/16/15.
- */
 public abstract class TextReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
 
@@ -43,8 +40,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS PushReceiver");
             wl.acquire(5000);
             new ReceivePushTask(context).execute(intent);
-        }
-        else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
+        } else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
             final Bundle bundle = intent.getExtras();
 
             if (bundle != null) {
@@ -58,9 +54,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
                     String number = currentMessage.getDisplayOriginatingAddress();
                     String message = currentMessage.getDisplayMessageBody();
-                    onMessageReceived(context, new Text.Builder()
+                    onMessageReceived(context, new Text.Builder(context)
                             .message(message)
-                            .recipient(number)
+                            .sender(number)
                             .build());
 
                 }
@@ -97,7 +93,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Uri uri = null;
             try {
                 // this might need to be false, changing it to true though so it doesnt create empty threads
-                uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
             } catch (MmsException e) {
                 Log.e("Text Receiver","persisting pdu failed");
                 e.printStackTrace();
@@ -126,9 +122,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 byte[] bitmapdata = part.getData();
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
                                 ImageAttachment image = new ImageAttachment(bitmap);
-                                onMessageReceived(mContext, new Text.Builder()
-                                        .message("")
-                                        .recipient("")
+                                onMessageReceived(mContext, new Text.Builder(mContext)
                                         .attach(image)
                                         .build());
                             }
@@ -138,7 +132,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     PduPersister persister = PduPersister.getPduPersister(mContext);
                     Uri msgUri;
                     try {
-                        msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                        msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);

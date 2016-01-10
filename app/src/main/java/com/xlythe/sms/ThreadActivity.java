@@ -125,7 +125,7 @@ public class ThreadActivity extends FragmentActivity {
                 TextManager manager = TextManager.getInstance(getBaseContext());
                 String message = mMessage.getText().toString();
                 if (!message.isEmpty()){
-                    manager.send(new Text.Builder()
+                    manager.send(new Text.Builder(getApplicationContext())
                                     .message(message)
                                     .recipient(mNumber)
                                     .build()

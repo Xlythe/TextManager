@@ -5,34 +5,29 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * An SMS conversation
  */
 public final class Thread implements MessageThread<Text>, Parcelable {
     private final long mThreadId;
-    private final int mCount;
-    private final int mUnreadCount;
+    private int mCount = -1; // Lazy loading
+    private int mUnreadCount = -1; // Lazy loading
     private final Text mText;
 
     protected Thread(Context context, Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
-        mCount = 0;
         mText = new Text(context, cursor);
-        String proj = String.format("%s=%s AND %s=%s",
-                Mock.Telephony.Sms.READ, 0,
-                Mock.Telephony.Sms.THREAD_ID, mThreadId);
-        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-        Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
-        mUnreadCount = c.getCount();
-        c.close();
     }
 
     /**
@@ -63,12 +58,71 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     @Override
     public int getCount() {
+        if (mCount == -1) {
+            throw new IllegalStateException("getCount() is an expensive call. " +
+                    "Call getCount(Context) first to load the count.");
+        }
         return mCount;
     }
 
+    public int getCount(Context context) {
+        String proj = String.format("%s=%s",
+                Mock.Telephony.Sms.THREAD_ID, mThreadId);
+        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+        Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
+        mCount = c.getCount();
+        c.close();
+        return getCount();
+    }
+
     @Override
-    public int getUnreadCount() {
+    public synchronized int getUnreadCount() {
+        if (mUnreadCount == -1) {
+            throw new IllegalStateException("getUnreadCount() is an expensive call. " +
+                    "Call getUnreadCount(Context) first to load the count.");
+        }
         return mUnreadCount;
+    }
+
+    private synchronized void setUnreadCount(int count) {
+        mUnreadCount = count;
+    }
+
+    public int getUnreadCount(Context context) {
+        String proj = String.format("%s=%s AND %s=%s",
+                Mock.Telephony.Sms.THREAD_ID, mThreadId,
+                Mock.Telephony.Sms.READ, 0);
+        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+        Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
+        setUnreadCount(c.getCount());
+        c.close();
+        return getUnreadCount();
+    }
+
+    public void getUnreadCount(final Context context, final MessageCallback<Integer> callback) {
+        // Create a handler so we call back on the same thread we were called on
+        final Handler handler = new Handler();
+
+        // Then start a background thread
+        new java.lang.Thread() {
+            @Override
+            public void run() {
+                // getThreads is a long running operation
+                final int count = getUnreadCount(context);
+
+                // Return the list in the callback
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(count);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    public boolean hasLoadedUnreadCount() {
+        return mUnreadCount != -1;
     }
 
     @Override

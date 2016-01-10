@@ -105,11 +105,8 @@ public class ManagerUtils {
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
             sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
-        }
-        else {
-            Log.e("HI", "should log something!!!!!!!!");
+        } else {
             List<Attachment> attachment = text.getAttachments();
-
             sendMediaMessage(context, address, " ", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
         }
 

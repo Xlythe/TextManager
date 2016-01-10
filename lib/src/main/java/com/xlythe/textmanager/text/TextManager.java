@@ -11,6 +11,7 @@ import android.os.PowerManager;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.LruCache;
 
@@ -364,6 +365,32 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Uri uri = Uri.withAppendedPath(
                     ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                     Uri.encode(phoneNumber));
+
+            Cursor c = contentResolver.query(uri, null, null, null, null);
+            try {
+                if (c != null && c.moveToFirst()) {
+                    contact = new Contact(c);
+                } else {
+                    contact = new Contact(phoneNumber);
+                }
+            } finally {
+                if (c != null) c.close();
+            }
+            mContactCache.put(phoneNumber, contact);
+        }
+        return contact;
+    }
+
+    public Contact getSelf() {
+        TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        String phoneNumber = manager.getLine1Number();
+
+        Contact contact = mContactCache.get(phoneNumber);
+        if (contact == null) {
+            ContentResolver contentResolver = mContext.getContentResolver();
+            Uri uri = Uri.withAppendedPath(
+                    ContactsContract.Profile.CONTENT_URI,
+                    ContactsContract.Contacts.Data.CONTENT_DIRECTORY);
 
             Cursor c = contentResolver.query(uri, null, null, null, null);
             try {

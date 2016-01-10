@@ -61,7 +61,8 @@ public final class Text implements Message, Parcelable {
         } else {
             Log.w("TelephonyProvider", "Unknown Message Type");
         }
-        buildContact(context);
+        mSender = TextManager.getInstance(context).lookupContact(mAddress);
+        mRecipient = TextManager.getInstance(context).getSelf();
     }
 
     private Text(Parcel in) {
@@ -141,13 +142,7 @@ public final class Text implements Message, Parcelable {
         Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
 
         // Query the address information for this message
-        Cursor addr = context.getContentResolver().query(
-                addressUri,
-                null,
-                null,
-                null,
-                null
-        );
+        Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
         HashSet<String> recipients = new HashSet<>();
         while (addr.moveToNext()) {
             String address = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
@@ -206,10 +201,6 @@ public final class Text implements Message, Parcelable {
         }
     }
 
-    private void buildContact(Context context) {
-        mSender = TextManager.getInstance(context).lookupContact(mAddress);
-    }
-
     public boolean isMms() {
         return mIsMms;
     }
@@ -258,11 +249,7 @@ public final class Text implements Message, Parcelable {
 
     @Override
     public Contact getRecipient() {
-        if (mRecipient == null) {
-            return new Contact(mAddress);
-        } else {
-            return mRecipient;
-        }
+        return mRecipient;
     }
 
     @Override
@@ -365,15 +352,25 @@ public final class Text implements Message, Parcelable {
     }
 
     public static class Builder {
+        private final Context mContext;
         private String mMessage;
+        private Contact mSender;
         private Contact mRecipient;
         private String mAddress;
         private final List<Attachment> mAttachments = new ArrayList<>();
 
-        public Builder() {}
+        public Builder(Context context) {
+            mContext = context;
+        }
+
+        Builder sender(String address) {
+            mSender = TextManager.getInstance(mContext).lookupContact(address);
+            return this;
+        }
 
         public Builder recipient(String address) {
             mAddress = address;
+            mRecipient = TextManager.getInstance(mContext).lookupContact(address);
             return this;
         }
 
@@ -396,6 +393,7 @@ public final class Text implements Message, Parcelable {
             Text text = new Text();
             text.mBody = mMessage;
             text.mAddress = mAddress;
+            text.mSender = mSender;
             text.mRecipient = mRecipient;
             if (mAttachments.size() > 0) {
                 text.mIsMms = true;

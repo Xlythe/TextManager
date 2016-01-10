@@ -25,7 +25,7 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                 new NotificationCompat.Builder(context)
                         .setLargeIcon(((ImageAttachment) text.getAttachments().get(0)).getBitmap())
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getRecipient().getDisplayName())
+                        .setContentTitle(text.getSender().getDisplayName())
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)

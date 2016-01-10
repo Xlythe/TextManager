@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 
 import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
@@ -15,35 +16,29 @@ import com.xlythe.textmanager.text.util.Utils;
  */
 public final class Contact implements User, Parcelable {
 
-    private String mNumber;
-    private String mPhotoUri;
-    private String mDisplayName;
-    private String mPhotoThumbUri;
+    private final String mNumber;
+    private final String mDisplayName;
+    private final String mPhotoUri;
+    private final String mPhotoThumbUri;
 
     protected Contact(Cursor c) {
-//        mId = c.getString(c.getColumnIndex("_id"));
-//        mType = c.getString(c.getColumnIndex("type"));
-//        mTimesContacted = c.getString(c.getColumnIndex("times_contacted"));
-        mNumber = c.getString(c.getColumnIndex("number"));
-        mPhotoUri = c.getString(c.getColumnIndex("photo_uri"));
-//        mSendToVoicemail = c.getString(c.getColumnIndex("send_to_voicemail"));
-//        mLookup = c.getString(c.getColumnIndex("lookup"));
-        mDisplayName = c.getString(c.getColumnIndex("display_name"));
-//        mLastTimeContacted = c.getString(c.getColumnIndex("last_time_contacted"));
-//        mHasPhoneNumber = c.getString(c.getColumnIndex("has_phone_number"));
-//        mInVisibleGroup = c.getString(c.getColumnIndex("in_visible_group"));
-//        mPhotoFileId = c.getString(c.getColumnIndex("photo_file_id"));
-//        mLabel = c.getString(c.getColumnIndex("label"));
-//        mStarred = c.getString(c.getColumnIndex("starred"));
-//        mNormalizedNumber = c.getString(c.getColumnIndex("normalized_number"));
-        mPhotoThumbUri = c.getString(c.getColumnIndex("photo_thumb_uri"));
-//        mPhotoId = c.getString(c.getColumnIndex("photo_id"));
-//        mInDefaultDirectory = c.getString(c.getColumnIndex("in_default_directory"));
-//        mCustomRingtone = c.getString(c.getColumnIndex("custom_ringtone"));
+        // Number may not exist, so check first
+        int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
+        if (column != -1) {
+            mNumber = c.getString(c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER));
+        } else {
+            mNumber = "";
+        }
+        mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
+        mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
+        mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
     protected Contact(String address) {
         mNumber = address;
+        mDisplayName = null;
+        mPhotoUri = null;
+        mPhotoThumbUri = null;
     }
 
     private Contact(Parcel in) {

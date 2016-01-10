@@ -23,11 +23,11 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
-                        // TODO: change back
-                        .setContentTitle(text.getRecipient().getDisplayName())
+                        .setContentTitle(text.getSender().getDisplayName())
                         .setContentText(text.getBody())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
+                        .setDefaults(Notification.DEFAULT_SOUND)
                         .setPriority(Notification.PRIORITY_HIGH)
                         .setCategory(Notification.CATEGORY_MESSAGE)
                         .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
@@ -48,7 +48,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                 );
         builder.setContentIntent(resultPendingIntent);
 
-        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(12345, builder.build());
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(12345, builder.build());
     }
 }

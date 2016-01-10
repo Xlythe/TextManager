@@ -8,10 +8,8 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-/**
- * Created by Niko on 12/26/15.
- */
 public class EditTextActivity extends AppCompatActivity {
+    public static final String EXTRA_ITEM_ID = "ITEM_ID";
     int result = 0;
 
     @Override
@@ -26,7 +24,7 @@ public class EditTextActivity extends AppCompatActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if(actionId== EditorInfo.IME_ACTION_DONE){
                     Intent intent = new Intent();
-                    intent.putExtra("ITEM_ID", field.getText().toString());
+                    intent.putExtra(EXTRA_ITEM_ID, field.getText().toString());
                     setResult(result , intent);
                     finish();
                 }

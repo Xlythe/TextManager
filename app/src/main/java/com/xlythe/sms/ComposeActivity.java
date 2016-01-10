@@ -25,6 +25,7 @@ import com.xlythe.textmanager.text.VideoAttachment;
 import java.io.File;
 
 public class ComposeActivity extends AppCompatActivity {
+    private static final int REQUEST_CODE_CONTACT = 10001;
 
     private TextView mContacts;
     private TextView mMessage;
@@ -48,22 +49,28 @@ public class ComposeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), EditTextActivity.class);
-                ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
-                        Pair.create((View) mContacts, "edit_text"));
-                startActivityForResult(intent, 0, options.toBundle());
+                if (android.os.Build.VERSION.SDK_INT >= 21) {
+                    ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
+                            Pair.create((View) mContacts, "edit_text"));
+                    startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());
+                } else {
+                    startActivityForResult(intent, REQUEST_CODE_CONTACT);
+                }
             }
         });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-        ((TextView) mContacts.findViewById(R.id.contacts)).setText(intent.getStringExtra("ITEM_ID"));
+        if (requestCode == REQUEST_CODE_CONTACT) {
+            ((TextView) mContacts.findViewById(R.id.contacts)).setText(intent.getStringExtra(EditTextActivity.EXTRA_ITEM_ID));
+        } else {
+            super.onActivityResult(requestCode, resultCode, intent);
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_compose, menu);
         return true;
     }
@@ -73,10 +80,9 @@ public class ComposeActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_send && mMessage.getText() != null && mContacts.getText() != null) {
-            mManager.send(new Text.Builder()
+            mManager.send(new Text.Builder(this)
                             .message(mMessage.getText().toString())
                             .recipient(mContacts.getText().toString())
-                            //.attach(new VideoAttachment("/sdcard/DCIM/Camera/VID_20151128_014919.mp4"))
                             .build()
             );
             finish();
