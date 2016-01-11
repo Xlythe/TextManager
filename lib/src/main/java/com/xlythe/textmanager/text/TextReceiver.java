@@ -123,11 +123,13 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 byte[] bitmapdata = part.getData();
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
                                 ImageAttachment image = new ImageAttachment(bitmap);
-                                onMessageReceived(mContext, new Text.Builder(mContext)
-                                        .sender("")
-                                        .attach(image)
-                                        .build());
-                                Log.d("pushData", "after notification");
+                                try {
+                                    onMessageReceived(mContext, new Text.Builder(mContext)
+                                            .attach(image)
+                                            .build());
+                                }catch (Exception e) {
+                                    Log.d("Text Receicer", "notifications crashed");
+                                }
                             }
                         }
                     }

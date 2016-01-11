@@ -25,7 +25,7 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                 new NotificationCompat.Builder(context)
                         .setLargeIcon(((ImageAttachment) text.getAttachments().get(0)).getBitmap())
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getSender().getDisplayName())
+                        .setContentTitle("")
                         .setContentText("")
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
@@ -35,8 +35,8 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
                         .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
 
         NotificationCompat.BigPictureStyle notiStyle = new NotificationCompat.BigPictureStyle();
-        notiStyle.setBigContentTitle(text.getRecipient().getDisplayName());
-        notiStyle.setSummaryText(text.getBody());
+        notiStyle.setBigContentTitle("");
+        notiStyle.setSummaryText("");
         notiStyle.bigPicture(((ImageAttachment) text.getAttachments().get(0)).getBitmap());
         builder.setStyle(notiStyle);
 
