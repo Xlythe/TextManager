@@ -156,7 +156,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             super(view);
         }
 
-        public void setThread(Context context, Thread thread) {
+        public void setThread(Context context, Thread thread, boolean isSelected, boolean selectMode) {
             mThread = thread;
             mContext = context;
         }
@@ -197,12 +197,12 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         }
 
         @Override
-        public void setThread(Context context, Thread thread){
-            super.setThread(context, thread);
-            createView();
+        public void setThread(Context context, Thread thread, boolean isSelected, boolean selectMode) {
+            super.setThread(context, thread, isSelected, selectMode);
+            createView(isSelected, selectMode);
         }
 
-        public void createView() {
+        public void createView(boolean isSelected, boolean selectMode) {
             String body = "";
             String time = "";
             String address = "";
@@ -252,11 +252,9 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
                 date.setTypeface(TYPEFACE_NORMAL);
             }
 
-//            boolean isSelected = isSelected(getAdapterPosition());
-//
-//            if (selectMode()) {
-//                profile.setImageResource(android.R.color.transparent);
-//            } else {
+            if (selectMode) {
+                profile.setImageResource(android.R.color.transparent);
+            } else {
                 if (!address.equals("")) {
                     ProfileDrawable border = new ProfileDrawable(getContext(),
                             address.charAt(0),
@@ -264,14 +262,14 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
                             uri);
                     profile.setImageDrawable(border);
                 }
-//            }
-//
-//            profile.setActivated(isSelected);
-//            if (isSelected) {
-//                card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
-//            } else {
-//                card.setCardBackgroundColor(CARD_STATE_COLOR);
-//            }
+            }
+
+            profile.setActivated(isSelected);
+            if (isSelected) {
+                card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
+            } else {
+                card.setCardBackgroundColor(CARD_STATE_COLOR);
+            }
         }
 
         @Override
@@ -308,7 +306,10 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        holder.setThread(mContext, getThread(position));
+        boolean isSelected = isSelected(position);
+        boolean selectMode = selectMode();
+
+        holder.setThread(mContext, getThread(position), isSelected, selectMode);
     }
 
     @Override
