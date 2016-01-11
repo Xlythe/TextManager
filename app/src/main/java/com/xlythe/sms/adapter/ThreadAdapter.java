@@ -9,17 +9,16 @@ import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
@@ -27,18 +26,30 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
-    private static final Typeface TYPEFACE_NORMAL = Typeface.create("sans-serif-regular", Typeface.NORMAL);
-    private static final Typeface TYPEFACE_BOLD = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> {
+    private static final Typeface TYPEFACE_NORMAL    = Typeface.create("sans-serif-regular", Typeface.NORMAL);
+    private static final Typeface TYPEFACE_BOLD      = Typeface.create("sans-serif-medium", Typeface.NORMAL);
     private static final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
-    private static final int CARD_STATE_COLOR = Color.WHITE;
+    private static final int CARD_STATE_COLOR        = Color.WHITE;
+
     private static final int CACHE_SIZE = 50;
 
     private static final long ONE_MINUTE = 60 * 1000;
-    private static final long ONE_HOUR = 60 * ONE_MINUTE;
-    private static final long ONE_DAY = 24 * ONE_HOUR;
-    private static final long ONE_WEEK = 7 * ONE_DAY;
-    private static final long ONE_MONTH = 4 * ONE_WEEK;
+    private static final long ONE_HOUR   = 60 * ONE_MINUTE;
+    private static final long ONE_DAY    = 24 * ONE_HOUR;
+    private static final long ONE_WEEK   =  7 * ONE_DAY;
+    private static final long ONE_MONTH  =  4 * ONE_WEEK;
+
+    private static final int TYPE_TEXT       = 0;
+    private static final int TYPE_ATTACHMENT = 1;
+    private static final int TYPE_HEADER     = 2;
+
+    private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
+
+    static {
+        LAYOUT_MAP.put(TYPE_TEXT, R.layout.list_item);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT, R.layout.list_item_attachment);
+    }
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
@@ -136,95 +147,29 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         notifyItemRangeRemoved(positionStart, itemCount);
     }
 
-    public ThreadViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        final View view = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-        return new ThreadViewHolder(view, mClickListener);
-    }
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+        private Thread mThread;
+        private Context mContext;
 
-    @Override
-    public void onBindViewHolder(final ThreadViewHolder holder, final int position) {
-        Thread data = getThread(position);
-        String body = "";
-        String time = "";
-        String address = "";
-        Uri uri = null;
-        int unread = 0;
-        int color = mContext.getResources().getColor(R.color.colorPrimary);
-
-        if (data.getLatestMessage() != null) {
-            body = data.getLatestMessage().getBody();
-            time = DateFormatter.getFormattedDate(data.getLatestMessage());
-            address = data.getLatestMessage().getSender().getDisplayName()+"";
-            uri = data.getLatestMessage().getSender().getPhotoUri();
-            if (!data.hasLoadedUnreadCount()) {
-                unread = data.getUnreadCount(mContext);
-            } else {
-                unread = data.getUnreadCount();
-            }
-            color = ColorUtils.getColor(Long.parseLong(data.getId()));
-        }
-        holder.message.setText(body);
-        holder.date.setText(time);
-        holder.profile.setBackgroundResource(R.drawable.selector);
-
-        if (unread > 0) {
-            holder.title.setText(address);
-            holder.unread.setVisibility(View.VISIBLE);
-            holder.unread.setText(unread + " new");
-            holder.unread.setTextColor(color);
-            holder.unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
-            holder.unread.getBackground().setAlpha(25);
-            holder.title.setTextColor(color);
-            holder.title.setTypeface(TYPEFACE_BOLD);
-            holder.message.setTypeface(TYPEFACE_BOLD);
-            holder.date.setTypeface(TYPEFACE_BOLD);
-        } else {
-            holder.title.setText(address);
-            holder.unread.setVisibility(View.GONE);
-            holder.title.setTextColor(mContext.getResources().getColor(R.color.headerText));
-            holder.title.setTypeface(TYPEFACE_NORMAL);
-            holder.message.setTypeface(TYPEFACE_NORMAL);
-            holder.date.setTypeface(TYPEFACE_NORMAL);
+        public ViewHolder(View view) {
+            super(view);
         }
 
-        boolean isSelected = isSelected(position);
-
-        if (selectMode()) {
-            holder.profile.setImageResource(android.R.color.transparent);
-        } else {
-            if (!address.equals("")) {
-                ProfileDrawable border = new ProfileDrawable(mContext,
-                        address.charAt(0),
-                        color,
-                        uri);
-                holder.profile.setImageDrawable(border);
-            }
+        public void setThread(Context context, Thread thread) {
+            mThread = thread;
+            mContext = context;
         }
 
-        holder.profile.setActivated(isSelected);
-        if (isSelected) {
-            holder.card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
-        } else {
-            holder.card.setCardBackgroundColor(CARD_STATE_COLOR);
+        public Thread getThread() {
+            return mThread;
+        }
+
+        public Context getContext() {
+            return mContext;
         }
     }
 
-    private Thread getThread(int position) {
-        Thread thread = mThreadLruCache.get(position);
-        if (thread == null) {
-            mCursor.moveToPosition(position);
-            thread = mCursor.getThread();
-            mThreadLruCache.put(position, thread);
-        }
-        return thread;
-    }
-
-    @Override
-    public int getItemCount() {
-        return mCursor.getCount();
-    }
-
-    public static class ThreadViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
+    public static class ThreadViewHolder extends ViewHolder implements View.OnClickListener,
             View.OnLongClickListener {
         public final TextView title;
         public final TextView unread;
@@ -251,12 +196,84 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         }
 
         @Override
+        public void setThread(Context context, Thread thread){
+            super.setThread(context, thread);
+            createView();
+        }
+
+        public void createView() {
+            String body = "";
+            String time = "";
+            String address = "";
+            Uri uri = null;
+            int unreadCount = 0;
+            int color = getContext().getResources().getColor(R.color.colorPrimary);
+
+            if (getThread().getLatestMessage() != null) {
+                body = getThread().getLatestMessage().getBody();
+                time = DateFormatter.getFormattedDate(getThread().getLatestMessage());
+                address = getThread().getLatestMessage().getSender().getDisplayName()+"";
+                uri = getThread().getLatestMessage().getSender().getPhotoUri();
+                if (!getThread().hasLoadedUnreadCount()) {
+                    unreadCount = getThread().getUnreadCount(getContext());
+                } else {
+                    unreadCount = getThread().getUnreadCount();
+                }
+                color = ColorUtils.getColor(Long.parseLong(getThread().getId()));
+            }
+            message.setText(body);
+            date.setText(time);
+            profile.setBackgroundResource(R.drawable.selector);
+
+            if (unreadCount > 0) {
+                title.setText(address);
+                unread.setVisibility(View.VISIBLE);
+                unread.setText(unread + " new");
+                unread.setTextColor(color);
+                unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
+                unread.getBackground().setAlpha(25);
+                title.setTextColor(color);
+                title.setTypeface(TYPEFACE_BOLD);
+                message.setTypeface(TYPEFACE_BOLD);
+                date.setTypeface(TYPEFACE_BOLD);
+            } else {
+                title.setText(address);
+                unread.setVisibility(View.GONE);
+                title.setTextColor(getContext().getResources().getColor(R.color.headerText));
+                title.setTypeface(TYPEFACE_NORMAL);
+                message.setTypeface(TYPEFACE_NORMAL);
+                date.setTypeface(TYPEFACE_NORMAL);
+            }
+
+//            boolean isSelected = isSelected(getAdapterPosition());
+//
+//            if (selectMode()) {
+//                profile.setImageResource(android.R.color.transparent);
+//            } else {
+                if (!address.equals("")) {
+                    ProfileDrawable border = new ProfileDrawable(getContext(),
+                            address.charAt(0),
+                            color,
+                            uri);
+                    profile.setImageDrawable(border);
+                }
+//            }
+//
+//            profile.setActivated(isSelected);
+//            if (isSelected) {
+//                card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
+//            } else {
+//                card.setCardBackgroundColor(CARD_STATE_COLOR);
+//            }
+        }
+
+        @Override
         public void onClick(View v) {
             if (mListener != null) {
                 if (v instanceof de.hdodenhof.circleimageview.CircleImageView) {
                     mListener.onProfileClicked(getAdapterPosition());
                 } else {
-                    mListener.onItemClicked(getAdapterPosition());
+                    mListener.onItemClicked(getAdapterPosition(), title.getText().toString());
                 }
             }
         }
@@ -272,9 +289,42 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
 
         public interface ClickListener {
             void onProfileClicked(int position);
-            void onItemClicked(int position);
+            void onItemClicked(int position, String thread);
             boolean onItemLongClicked(int position);
         }
+    }
+
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View layout = LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false);
+        return new ThreadViewHolder(layout, mClickListener);
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, final int position) {
+        holder.setThread(mContext, getThread(position));
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (getThread(position).getLatestMessage().isMms()) {
+            return TYPE_ATTACHMENT;
+        }
+        return TYPE_TEXT;
+    }
+
+    private Thread getThread(int position) {
+        Thread thread = mThreadLruCache.get(position);
+        if (thread == null) {
+            mCursor.moveToPosition(position);
+            thread = mCursor.getThread();
+            mThreadLruCache.put(position, thread);
+        }
+        return thread;
+    }
+
+    @Override
+    public int getItemCount() {
+        return mCursor.getCount();
     }
 
     public static class SectionViewHolder extends RecyclerView.ViewHolder {
@@ -286,7 +336,6 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         }
     }
 
-    @Override
     public long getHeaderId(int position) {
         Thread thread = getThread(position);
         long date = thread.getLatestMessage().getTimestamp();
@@ -305,13 +354,11 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ThreadViewHol
         return Integer.parseInt(formatter.format(date)) << 3;
     }
 
-    @Override
     public SectionViewHolder onCreateHeaderViewHolder(ViewGroup parent) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.section, parent, false);
         return new SectionViewHolder(view);
     }
 
-    @Override
     public void onBindHeaderViewHolder(SectionViewHolder holder, int position) {
         String title = "";
 

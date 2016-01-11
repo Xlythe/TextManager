@@ -16,12 +16,12 @@ import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
-        mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
+        //mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);
 
@@ -162,7 +162,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onItemClicked(int position) {
+    public void onItemClicked(int position, String thread) {
+        Log.d("Thread", thread);
+        Log.d("Position", position + "");
         if (mActionMode != null) {
             toggleSelection(position);
         } else {

@@ -49,16 +49,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     static {
         LAYOUT_MAP.put(TYPE_TOP_RIGHT, R.layout.right_top);
-        LAYOUT_MAP.put(TYPE_MIDDLE_RIGHT,R.layout.right_middle);
-        LAYOUT_MAP.put(TYPE_BOTTOM_RIGHT,R.layout.right_bottom);
-        LAYOUT_MAP.put(TYPE_SINGLE_RIGHT,R.layout.right_single);
-        LAYOUT_MAP.put(TYPE_TOP_LEFT,R.layout.left_top);
-        LAYOUT_MAP.put(TYPE_MIDDLE_LEFT,R.layout.left_middle);
-        LAYOUT_MAP.put(TYPE_BOTTOM_LEFT,R.layout.left_bottom);
-        LAYOUT_MAP.put(TYPE_SINGLE_LEFT,R.layout.left_single);
-        LAYOUT_MAP.put(TYPE_ATTACHMENT,R.layout.attachment);
-        LAYOUT_MAP.put(TYPE_FAILED,R.layout.left_single);
-    };
+        LAYOUT_MAP.put(TYPE_MIDDLE_RIGHT, R.layout.right_middle);
+        LAYOUT_MAP.put(TYPE_BOTTOM_RIGHT, R.layout.right_bottom);
+        LAYOUT_MAP.put(TYPE_SINGLE_RIGHT, R.layout.right_single);
+        LAYOUT_MAP.put(TYPE_TOP_LEFT, R.layout.left_top);
+        LAYOUT_MAP.put(TYPE_MIDDLE_LEFT, R.layout.left_middle);
+        LAYOUT_MAP.put(TYPE_BOTTOM_LEFT, R.layout.left_bottom);
+        LAYOUT_MAP.put(TYPE_SINGLE_LEFT, R.layout.left_single);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT, R.layout.attachment);
+        LAYOUT_MAP.put(TYPE_FAILED, R.layout.left_single);
+    }
 
     private Text.TextCursor mCursor;
     private Context mContext;
