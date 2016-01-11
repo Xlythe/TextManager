@@ -225,7 +225,6 @@ public final class Contact implements User, Parcelable {
     public enum Sort {
         Alphabetical(ContactsContract.Contacts.DISPLAY_NAME + " ASC"),
         FrequentlyContacted(ContactsContract.Contacts.TIMES_CONTACTED + " ASC");
-
         private final String key;
 
         Sort(String key) {

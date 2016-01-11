@@ -222,7 +222,9 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
                 }
                 color = ColorUtils.getColor(Long.parseLong(getThread().getId()));
             }
-            message.setText(body);
+            if (message != null) {
+                message.setText(body);
+            }
             date.setText(time);
             profile.setBackgroundResource(R.drawable.selector);
 
@@ -235,14 +237,18 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
                 unread.getBackground().setAlpha(25);
                 title.setTextColor(color);
                 title.setTypeface(TYPEFACE_BOLD);
-                message.setTypeface(TYPEFACE_BOLD);
+                if (message != null) {
+                    message.setTypeface(TYPEFACE_BOLD);
+                }
                 date.setTypeface(TYPEFACE_BOLD);
             } else {
                 title.setText(address);
                 unread.setVisibility(View.GONE);
                 title.setTextColor(getContext().getResources().getColor(R.color.headerText));
                 title.setTypeface(TYPEFACE_NORMAL);
-                message.setTypeface(TYPEFACE_NORMAL);
+                if (message != null) {
+                    message.setTypeface(TYPEFACE_NORMAL);
+                }
                 date.setTypeface(TYPEFACE_NORMAL);
             }
 

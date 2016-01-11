@@ -31,7 +31,9 @@ import com.xlythe.textmanager.text.Thread;
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.ThreadViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.CHANGE_NETWORK_STATE,
+            Manifest.permission.WRITE_SETTINGS
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
 
@@ -87,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         });
 
         if (!mManager.isDefaultSmsPackage()) {
-            Snackbar.make(findViewById(android.R.id.content), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
+            Snackbar.make(findViewById(R.id.list), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
                     .setAction(R.string.btn_change, new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -120,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
-        //mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new HeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);

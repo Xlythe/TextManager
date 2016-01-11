@@ -374,10 +374,10 @@ public final class Text implements Message, Parcelable {
             return this;
         }
 
-        public Builder recipient(Contact recipient) {
-            mRecipient = recipient;
-            return this;
-        }
+//        public Builder recipient(Contact recipient) {
+//            mRecipient = recipient;
+//            return this;
+//        }
 
         public Builder attach(Attachment attachment) {
             mAttachments.add(attachment);

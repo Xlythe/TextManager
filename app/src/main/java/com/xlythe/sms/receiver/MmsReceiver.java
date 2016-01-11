@@ -40,7 +40,6 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         notiStyle.bigPicture(((ImageAttachment) text.getAttachments().get(0)).getBitmap());
         builder.setStyle(notiStyle);
 
-
         Intent resultIntent = new Intent(context, MainActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MainActivity.class);

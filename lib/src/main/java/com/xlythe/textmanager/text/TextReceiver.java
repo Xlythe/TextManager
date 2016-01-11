@@ -116,6 +116,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 // mms
                             }
                             for (int i = 0; i < partsNum; i++) {
+                                Log.d("pushData", "before notification");
                                 // Send text over to the notification
                                 // only needs to decode a bitmap because cant show video in notifications
                                 PduPart part = body.getPart(i);
@@ -125,6 +126,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 onMessageReceived(mContext, new Text.Builder(mContext)
                                         .attach(image)
                                         .build());
+                                Log.d("pushData", "after notification");
                             }
                         }
                     }
