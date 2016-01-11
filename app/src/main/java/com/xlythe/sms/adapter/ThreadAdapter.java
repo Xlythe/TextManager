@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
@@ -174,6 +175,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         public final TextView unread;
         public final TextView message;
         public final TextView date;
+        public final RoundedImageView attachment;
         public final CardView card;
         public final de.hdodenhof.circleimageview.CircleImageView profile;
         private ClickListener mListener;
@@ -184,6 +186,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             unread = (TextView) view.findViewById(R.id.unread);
             message = (TextView) view.findViewById(R.id.message);
             date = (TextView) view.findViewById(R.id.date);
+            attachment = (RoundedImageView) view.findViewById(R.id.attachment);
             card = (CardView) view.findViewById(R.id.card);
             profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
 
@@ -225,6 +228,10 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             }
             date.setText(time);
             profile.setBackgroundResource(R.drawable.selector);
+
+            if (attachment != null) {
+                attachment.setImageURI(getThread().getLatestMessage().getAttachments().get(0).getUri());
+            }
 
             if (unreadCount > 0) {
                 title.setText(address);
