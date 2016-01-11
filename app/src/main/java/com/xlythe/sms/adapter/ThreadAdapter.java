@@ -19,7 +19,6 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;

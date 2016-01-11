@@ -21,7 +21,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
-import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
@@ -120,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
-        mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
+        mRecyclerView.addItemDecoration(new HeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);
 
