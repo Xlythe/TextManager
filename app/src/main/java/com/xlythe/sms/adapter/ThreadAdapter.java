@@ -28,22 +28,20 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
-    private static final Typeface TYPEFACE_NORMAL    = Typeface.create("sans-serif-regular", Typeface.NORMAL);
-    private static final Typeface TYPEFACE_BOLD      = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+    private static final Typeface TYPEFACE_NORMAL = Typeface.create("sans-serif-regular", Typeface.NORMAL);
+    private static final Typeface TYPEFACE_BOLD = Typeface.create("sans-serif-medium", Typeface.NORMAL);
     private static final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
-    private static final int CARD_STATE_COLOR        = Color.WHITE;
-
+    private static final int CARD_STATE_COLOR = Color.WHITE;
     private static final int CACHE_SIZE = 50;
 
     private static final long ONE_MINUTE = 60 * 1000;
-    private static final long ONE_HOUR   = 60 * ONE_MINUTE;
-    private static final long ONE_DAY    = 24 * ONE_HOUR;
-    private static final long ONE_WEEK   =  7 * ONE_DAY;
-    private static final long ONE_MONTH  =  4 * ONE_WEEK;
+    private static final long ONE_HOUR = 60 * ONE_MINUTE;
+    private static final long ONE_DAY = 24 * ONE_HOUR;
+    private static final long ONE_WEEK = 7 * ONE_DAY;
+    private static final long ONE_MONTH = 4 * ONE_WEEK;
 
-    private static final int TYPE_TEXT       = 0;
+    private static final int TYPE_TEXT = 0;
     private static final int TYPE_ATTACHMENT = 1;
-    private static final int TYPE_HEADER     = 2;
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
 
