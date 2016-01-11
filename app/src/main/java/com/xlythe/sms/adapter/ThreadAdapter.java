@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
@@ -26,7 +27,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> {
+public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
     private static final Typeface TYPEFACE_NORMAL    = Typeface.create("sans-serif-regular", Typeface.NORMAL);
     private static final Typeface TYPEFACE_BOLD      = Typeface.create("sans-serif-medium", Typeface.NORMAL);
     private static final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);

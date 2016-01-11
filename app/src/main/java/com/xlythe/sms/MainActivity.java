@@ -121,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
         //mRecyclerView.addItemDecoration(new StickyRecyclerHeadersDecoration(mAdapter));
+        mRecyclerView.addItemDecoration(new HeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);
 
