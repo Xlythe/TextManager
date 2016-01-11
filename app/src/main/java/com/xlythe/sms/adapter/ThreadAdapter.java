@@ -231,7 +231,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             if (unreadCount > 0) {
                 title.setText(address);
                 unread.setVisibility(View.VISIBLE);
-                unread.setText(unread + " new");
+                unread.setText(unreadCount + " new");
                 unread.setTextColor(color);
                 unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 unread.getBackground().setAlpha(25);

@@ -124,6 +124,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
                                 ImageAttachment image = new ImageAttachment(bitmap);
                                 onMessageReceived(mContext, new Text.Builder(mContext)
+                                        .sender("")
                                         .attach(image)
                                         .build());
                                 Log.d("pushData", "after notification");

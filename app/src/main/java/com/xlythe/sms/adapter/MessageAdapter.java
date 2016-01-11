@@ -174,6 +174,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         @Override
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            mTextView.setText("New attachment to download");
+        }
+
+        @Override
         public void onClick(View v) {
             if (mListener != null) {
                 mListener.onItemClicked(getMessage());

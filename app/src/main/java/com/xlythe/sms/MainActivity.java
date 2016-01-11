@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -31,11 +33,10 @@ import com.xlythe.textmanager.text.Thread;
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.ThreadViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.CHANGE_NETWORK_STATE,
-            Manifest.permission.WRITE_SETTINGS
+            Manifest.permission.READ_CONTACTS
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
+    private static final int REQUEST_CODE_WRITE_SETTINGS = 1001;
 
     private static final int TOOLBAR_SCROLL_FLAGS =
             AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
@@ -109,7 +110,14 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
             markHasRequestedPermissions();
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
+
+        if (android.os.Build.VERSION.SDK_INT >= 23 && !Settings.System.canWrite(this)) {
+            startActivityForResult(
+                    new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
+                    REQUEST_CODE_WRITE_SETTINGS);
+        }
     }
+
 
     @Override
     protected void onDestroy() {
