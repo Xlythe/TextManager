@@ -25,9 +25,23 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     private int mUnreadCount = -1; // Lazy loading
     private final Text mText;
 
+    // Thread id isn't always different so need to change it here only
+    // Maybe just change the conversations thread id but that would be confusing
+    private static final String THREAD_ID;
+    static {
+        if(android.os.Build.MANUFACTURER.equals("samsung") && android.os.Build.VERSION.SDK_INT < 19) {
+            THREAD_ID = "_id";
+        } else {
+            THREAD_ID = Mock.Telephony.Sms.Conversations.THREAD_ID;
+        }
+    }
+
     protected Thread(Context context, Cursor cursor) {
-        mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
-        mText = new Text(context, cursor);
+        mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
+        Cursor textCursor = TextManager.getInstance(context).getMessageCursor(Long.toString(mThreadId));
+        textCursor.moveToLast();
+        mText = new Text(context, textCursor);
+        //mText = new Text(context, cursor);
     }
 
     /**
@@ -66,8 +80,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     }
 
     public int getCount(Context context) {
-        String proj = String.format("%s=%s",
-                Mock.Telephony.Sms.THREAD_ID, mThreadId);
+        String proj = String.format("%s=%s", THREAD_ID, mThreadId);
         Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
         Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
         mCount = c.getCount();
@@ -90,7 +103,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     public int getUnreadCount(Context context) {
         String proj = String.format("%s=%s AND %s=%s",
-                Mock.Telephony.Sms.THREAD_ID, mThreadId,
+                THREAD_ID, mThreadId,
                 Mock.Telephony.Sms.READ, 0);
         Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
         Cursor c = context.getContentResolver().query(uri, null, proj, null, null);

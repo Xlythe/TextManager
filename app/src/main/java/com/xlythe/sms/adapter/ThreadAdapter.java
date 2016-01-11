@@ -230,7 +230,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             date.setText(time);
             profile.setBackgroundResource(R.drawable.selector);
 
-            if (attachment != null) {
+            if (attachment != null && getThread().getLatestMessage().getAttachments().size() > 0) {
                 Picasso.with(getContext()).load(getThread().getLatestMessage().getAttachments().get(0).getUri()).into(attachment);
             }
 

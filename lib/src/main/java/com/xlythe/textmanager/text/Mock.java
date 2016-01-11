@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 
 import java.util.regex.Matcher;
@@ -703,9 +704,14 @@ public class Mock {
                     ERR_TYPE_SMS_PROTO_PERMANENT  = android.provider.Telephony.MmsSms.ERR_TYPE_SMS_PROTO_PERMANENT;
                     ERR_TYPE_MMS_PROTO_PERMANENT  = android.provider.Telephony.MmsSms.ERR_TYPE_MMS_PROTO_PERMANENT;
                 } else {
+                    if(android.os.Build.MANUFACTURER.equals("samsung")) {
+                        CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations/?simple=true");
+                    } else {
+                        CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations");
+                    }
+
                     TYPE_DISCRIMINATOR_COLUMN = "transport_type";
                     CONTENT_URI = Uri.parse("content://mms-sms/");
-                    CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations");
                     CONTENT_FILTER_BYPHONE_URI = Uri.parse("content://mms-sms/messages/byphone");
                     CONTENT_UNDELIVERED_URI = Uri.parse("content://mms-sms/undelivered");
                     CONTENT_DRAFT_URI = Uri.parse("content://mms-sms/draft");

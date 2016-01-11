@@ -202,10 +202,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public Text.TextCursor getMessageCursor(Thread thread) {
+        return getMessageCursor(thread.getId());
+    }
+
+    public Text.TextCursor getMessageCursor(String threadId) {
         ContentResolver contentResolver = mContext.getContentResolver();
         final String[] projection = PROJECTION;
-        final Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ thread.getId());
-        final String order = "normalized_date ASC";
+        Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
+        String order = "normalized_date ASC";
+        if (android.os.Build.MANUFACTURER.equals("samsung")) {
+            uri = Uri.parse("content://mms-sms/conversations/"+ threadId);
+        }
         return new Text.TextCursor(mContext, contentResolver.query(uri, projection, null, null, order));
     }
 
@@ -277,7 +284,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Thread.ThreadCursor getThreadCursor() {
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-        final String order = "normalized_date DESC";
+        String order = "normalized_date DESC";
+        if (android.os.Build.MANUFACTURER.equals("samsung")) {
+            order = "date DESC";
+        }
         return new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, null, null, order));
     }
 
