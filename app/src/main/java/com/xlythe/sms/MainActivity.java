@@ -172,9 +172,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onItemClicked(int position, String thread) {
-        Log.d("Thread", thread);
-        Log.d("Position", position + "");
+    public void onItemClicked(int position) {
         if (mActionMode != null) {
             toggleSelection(position);
         } else {

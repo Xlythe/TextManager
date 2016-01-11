@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.makeramen.roundedimageview.RoundedImageView;
+import com.squareup.picasso.Picasso;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
@@ -230,7 +231,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             profile.setBackgroundResource(R.drawable.selector);
 
             if (attachment != null) {
-                attachment.setImageURI(getThread().getLatestMessage().getAttachments().get(0).getUri());
+                Picasso.with(getContext()).load(getThread().getLatestMessage().getAttachments().get(0).getUri()).into(attachment);
             }
 
             if (unreadCount > 0) {
@@ -283,7 +284,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
                 if (v instanceof de.hdodenhof.circleimageview.CircleImageView) {
                     mListener.onProfileClicked(getAdapterPosition());
                 } else {
-                    mListener.onItemClicked(getAdapterPosition(), title.getText().toString());
+                    mListener.onItemClicked(getAdapterPosition());
                 }
             }
         }
@@ -299,7 +300,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
         public interface ClickListener {
             void onProfileClicked(int position);
-            void onItemClicked(int position, String thread);
+            void onItemClicked(int position);
             boolean onItemLongClicked(int position);
         }
     }
