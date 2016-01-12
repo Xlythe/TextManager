@@ -13,4 +13,5 @@
     <color name="titleText">#212121</color>
     <color name="statusgrey">#b3b3b3</color>
     <color name="icon_color">#757575</color>
+    <color name="loading">#eeeeee</color>
 </resources>

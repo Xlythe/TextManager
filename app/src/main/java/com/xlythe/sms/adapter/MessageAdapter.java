@@ -15,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.makeramen.roundedimageview.RoundedImageView;
 import com.squareup.picasso.Picasso;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
@@ -34,16 +35,33 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
 
-    private static final int TYPE_TOP_RIGHT    = 0;
-    private static final int TYPE_MIDDLE_RIGHT = 1;
-    private static final int TYPE_BOTTOM_RIGHT = 2;
-    private static final int TYPE_SINGLE_RIGHT = 3;
-    private static final int TYPE_TOP_LEFT     = 4;
-    private static final int TYPE_MIDDLE_LEFT  = 5;
-    private static final int TYPE_BOTTOM_LEFT  = 6;
-    private static final int TYPE_SINGLE_LEFT  = 7;
-    private static final int TYPE_ATTACHMENT   = 8;
-    private static final int TYPE_FAILED       = 9;
+    private static final int TYPE_TOP_RIGHT                 = 0;
+    private static final int TYPE_MIDDLE_RIGHT              = 1;
+    private static final int TYPE_BOTTOM_RIGHT              = 2;
+    private static final int TYPE_SINGLE_RIGHT              = 3;
+    private static final int TYPE_TOP_LEFT                  = 4;
+    private static final int TYPE_MIDDLE_LEFT               = 5;
+    private static final int TYPE_BOTTOM_LEFT               = 6;
+    private static final int TYPE_SINGLE_LEFT               = 7;
+    private static final int TYPE_ATTACHMENT_TOP_LEFT       = 8;
+    private static final int TYPE_ATTACHMENT_MIDDLE_LEFT    = 9;
+    private static final int TYPE_ATTACHMENT_BOTTOM_LEFT    = 10;
+    private static final int TYPE_ATTACHMENT_TOP_RIGHT      = 11;
+    private static final int TYPE_ATTACHMENT_MIDDLE_RIGHT   = 12;
+    private static final int TYPE_ATTACHMENT_BOTTOM_RIGHT   = 13;
+    private static final int TYPE_FAILED_TOP_LEFT           = 14;
+    private static final int TYPE_FAILED_MIDDLE_LEFT        = 15;
+    private static final int TYPE_FAILED_BOTTOM_LEFT        = 16;
+    private static final int TYPE_FAILED_SINGLE_LEFT        = 16;
+
+    // TODO:
+    // need to account for group messages, they'll show up as failed
+    // as long with messages with a subject, video, and audio
+    // These should not ever happen, but they'll stay for now
+    private static final int TYPE_FAILED_TOP_RIGHT          = 17;
+    private static final int TYPE_FAILED_MIDDLE_RIGHT       = 18;
+    private static final int TYPE_FAILED_BOTTOM_RIGHT       = 19;
+    private static final int TYPE_FAILED_SINGLE_RIGHT       = 20;
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
 
@@ -56,8 +74,20 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         LAYOUT_MAP.put(TYPE_MIDDLE_LEFT, R.layout.left_middle);
         LAYOUT_MAP.put(TYPE_BOTTOM_LEFT, R.layout.left_bottom);
         LAYOUT_MAP.put(TYPE_SINGLE_LEFT, R.layout.left_single);
-        LAYOUT_MAP.put(TYPE_ATTACHMENT, R.layout.attachment);
-        LAYOUT_MAP.put(TYPE_FAILED, R.layout.left_single);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_TOP_LEFT, R.layout.left_attachment_top);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_MIDDLE_LEFT, R.layout.left_attachment_middle);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_BOTTOM_LEFT, R.layout.left_attachment_bottom);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_TOP_RIGHT, R.layout.right_attachment_top);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_MIDDLE_RIGHT, R.layout.right_attachment_middle);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_BOTTOM_RIGHT, R.layout.right_attachment_bottom);
+        LAYOUT_MAP.put(TYPE_FAILED_TOP_LEFT, R.layout.left_top);
+        LAYOUT_MAP.put(TYPE_FAILED_MIDDLE_LEFT, R.layout.left_middle);
+        LAYOUT_MAP.put(TYPE_FAILED_BOTTOM_LEFT, R.layout.left_bottom);
+        LAYOUT_MAP.put(TYPE_FAILED_SINGLE_LEFT, R.layout.left_single);
+        LAYOUT_MAP.put(TYPE_FAILED_TOP_RIGHT, R.layout.right_top);
+        LAYOUT_MAP.put(TYPE_FAILED_MIDDLE_RIGHT, R.layout.right_middle);
+        LAYOUT_MAP.put(TYPE_FAILED_BOTTOM_RIGHT, R.layout.right_bottom);
+        LAYOUT_MAP.put(TYPE_FAILED_SINGLE_RIGHT, R.layout.right_single);
     }
 
     private Text.TextCursor mCursor;
@@ -146,11 +176,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     public static class AttachmentViewHolder extends MessageViewHolder {
-        ImageView mImageView;
+        RoundedImageView mImageView;
 
         public AttachmentViewHolder(View v) {
             super(v);
-            mImageView = (ImageView) v.findViewById(R.id.image);
+            mImageView = (RoundedImageView) v.findViewById(R.id.image);
         }
 
         @Override
@@ -160,7 +190,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         public void setImage() {
-            Picasso.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).into(mImageView);
+            Picasso.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).placeholder(R.color.loading).into(mImageView);
         }
     }
 
@@ -215,8 +245,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             case TYPE_BOTTOM_LEFT:
             case TYPE_SINGLE_LEFT:
                 return new LeftViewHolder(layout);
-            case TYPE_ATTACHMENT:
+            case TYPE_ATTACHMENT_TOP_LEFT:
+            case TYPE_ATTACHMENT_MIDDLE_LEFT:
+            case TYPE_ATTACHMENT_BOTTOM_LEFT:
+            case TYPE_ATTACHMENT_TOP_RIGHT:
+            case TYPE_ATTACHMENT_MIDDLE_RIGHT:
+            case TYPE_ATTACHMENT_BOTTOM_RIGHT:
                 return new AttachmentViewHolder(layout);
+            case TYPE_FAILED_TOP_LEFT:
+            case TYPE_FAILED_MIDDLE_LEFT:
+            case TYPE_FAILED_BOTTOM_LEFT:
             default:
                 return new FailedViewHolder(layout, mClickListener);
         }
@@ -234,13 +272,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         Text nextText = null;
         if (position + 1 < mCursor.getCount()) {
             nextText = getText(position + 1);
-        }
-
-        if (text.isMms()) {
-            if (!text.getAttachments().isEmpty()) {
-                return TYPE_ATTACHMENT;
-            }
-            return TYPE_FAILED;
         }
 
         // Get the date of the current, previous and next message.
@@ -279,21 +310,71 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                     largePC, largeCN));
         }
 
+
+
         if (!userCurrent && (userPrevious || largePC) && (!userNext && !largeCN)) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_TOP_RIGHT;
+                }
+                return TYPE_FAILED_TOP_RIGHT;
+            }
             return TYPE_TOP_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_MIDDLE_RIGHT;
+                }
+                return TYPE_FAILED_MIDDLE_RIGHT;
+            }
             return TYPE_MIDDLE_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC)) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_BOTTOM_RIGHT;
+                }
+                return TYPE_FAILED_BOTTOM_RIGHT;
+            }
             return TYPE_BOTTOM_RIGHT;
         } else if (!userCurrent) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_TOP_RIGHT;
+                }
+                return TYPE_FAILED_SINGLE_RIGHT;
+            }
             return TYPE_SINGLE_RIGHT;
         } else if ((!userPrevious || largePC) && (userNext && !largeCN)) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_TOP_LEFT;
+                }
+                return TYPE_FAILED_TOP_LEFT;
+            }
             return TYPE_TOP_LEFT;
         } else if ((userPrevious && !largePC) && (userNext && !largeCN)) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_MIDDLE_LEFT;
+                }
+                return TYPE_FAILED_MIDDLE_LEFT;
+            }
             return TYPE_MIDDLE_LEFT;
         } else if (userPrevious && !largePC) {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_BOTTOM_LEFT;
+                }
+                return TYPE_FAILED_BOTTOM_LEFT;
+            }
             return TYPE_BOTTOM_LEFT;
         } else {
+            if (text.isMms()) {
+                if (!text.getAttachments().isEmpty()) {
+                    return TYPE_ATTACHMENT_TOP_LEFT;
+                }
+                return TYPE_FAILED_SINGLE_LEFT;
+            }
             return TYPE_SINGLE_LEFT;
         }
     }
