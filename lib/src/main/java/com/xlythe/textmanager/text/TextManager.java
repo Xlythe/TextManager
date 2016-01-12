@@ -208,11 +208,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Text.TextCursor getMessageCursor(String threadId) {
         ContentResolver contentResolver = mContext.getContentResolver();
         final String[] projection = PROJECTION;
-        Uri uri = Uri.parse(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI +"/"+ threadId);
+        Uri uri = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
         String order = "normalized_date ASC";
-        if (android.os.Build.MANUFACTURER.equals("samsung")) {
-            uri = Uri.parse("content://mms-sms/conversations/"+ threadId);
-        }
         return new Text.TextCursor(mContext, contentResolver.query(uri, projection, null, null, order));
     }
 
@@ -283,10 +280,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     @Override
     public Thread.ThreadCursor getThreadCursor() {
         ContentResolver contentResolver = mContext.getContentResolver();
-        final Uri uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-        String order = "normalized_date DESC";
-        if (android.os.Build.MANUFACTURER.equals("samsung")) {
+        final Uri uri;
+        final String order;
+        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
             order = "date DESC";
+        } else {
+            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+            order = "normalized_date DESC";
         }
         return new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, null, null, order));
     }

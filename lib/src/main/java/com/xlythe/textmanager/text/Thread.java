@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.BaseColumns;
 
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
@@ -29,8 +30,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     // Maybe just change the conversations thread id but that would be confusing
     private static final String THREAD_ID;
     static {
-        if(android.os.Build.MANUFACTURER.equals("samsung") && android.os.Build.VERSION.SDK_INT < 19) {
-            THREAD_ID = "_id";
+        if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+            THREAD_ID = BaseColumns._ID;
         } else {
             THREAD_ID = Mock.Telephony.Sms.Conversations.THREAD_ID;
         }
@@ -41,7 +42,6 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         Cursor textCursor = TextManager.getInstance(context).getMessageCursor(Long.toString(mThreadId));
         textCursor.moveToLast();
         mText = new Text(context, textCursor);
-        //mText = new Text(context, cursor);
     }
 
     /**

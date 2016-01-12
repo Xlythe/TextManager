@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
  * Fakes the Telephony constants
  */
 public class Mock {
+    public static final String MANUFACTURER_SAMSUNG = "samsung";
+
     private Mock() {}
 
     public static final class Telephony {
@@ -704,12 +706,7 @@ public class Mock {
                     ERR_TYPE_SMS_PROTO_PERMANENT  = android.provider.Telephony.MmsSms.ERR_TYPE_SMS_PROTO_PERMANENT;
                     ERR_TYPE_MMS_PROTO_PERMANENT  = android.provider.Telephony.MmsSms.ERR_TYPE_MMS_PROTO_PERMANENT;
                 } else {
-                    if(android.os.Build.MANUFACTURER.equals("samsung")) {
-                        CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations/?simple=true");
-                    } else {
-                        CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations");
-                    }
-
+                    CONTENT_CONVERSATIONS_URI = Uri.parse("content://mms-sms/conversations");
                     TYPE_DISCRIMINATOR_COLUMN = "transport_type";
                     CONTENT_URI = Uri.parse("content://mms-sms/");
                     CONTENT_FILTER_BYPHONE_URI = Uri.parse("content://mms-sms/messages/byphone");
