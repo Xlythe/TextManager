@@ -1,9 +1,16 @@
 package com.xlythe.sms.adapter;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
+import android.media.MediaMetadataRetriever;
+import android.media.ThumbnailUtils;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.LruCache;
@@ -21,9 +28,12 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.VideoAttachment;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -92,20 +102,34 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     private Text.TextCursor mCursor;
     private Context mContext;
-    private FailedViewHolder.ClickListener mClickListener;
+    private MessageViewHolder.ClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
-    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder {
+    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private Text mText;
         private Context mContext;
+        private ClickListener mListener;
 
-        public MessageViewHolder(View v) {
+        public MessageViewHolder(View v, ClickListener listener) {
             super(v);
+            mListener = listener;
+            v.setOnClickListener(this);
         }
 
         public void setMessage(Context context, Text text) {
             mText = text;
             mContext = context;
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mListener != null) {
+                mListener.onItemClicked(getMessage());
+            }
+        }
+
+        public interface ClickListener {
+            void onItemClicked(Text text);
         }
 
         public Text getMessage() {
@@ -121,8 +145,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         public TextView mTextView;
         public TextView mDate;
 
-        public ViewHolder(View v) {
-            super(v);
+        public ViewHolder(View v, ClickListener listener) {
+            super(v, listener);
             mTextView = (TextView) v.findViewById(R.id.message);
             mDate = (TextView) v.findViewById(R.id.date);
         }
@@ -147,8 +171,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         public FrameLayout mFrame;
         private CircleImageView mProfile;
 
-        public LeftViewHolder(View v) {
-            super(v);
+        public LeftViewHolder(View v, ClickListener listener) {
+            super(v, listener);
             mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
         }
@@ -176,10 +200,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     public static class AttachmentViewHolder extends MessageViewHolder {
-        RoundedImageView mImageView;
+        private RoundedImageView mImageView;
 
-        public AttachmentViewHolder(View v) {
-            super(v);
+        public AttachmentViewHolder(View v, ClickListener listener) {
+            super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
         }
 
@@ -194,30 +218,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
     }
 
-    public static class FailedViewHolder extends LeftViewHolder implements View.OnClickListener {
-        private ClickListener mListener;
+    public static class FailedViewHolder extends LeftViewHolder {
 
         public FailedViewHolder(View v, ClickListener listener) {
-            super(v);
-            mListener = listener;
-            v.setOnClickListener(this);
+            super(v, listener);
         }
 
         @Override
         public void setMessage(Context context, Text text) {
             super.setMessage(context, text);
             mTextView.setText("New attachment to download");
-        }
-
-        @Override
-        public void onClick(View v) {
-            if (mListener != null) {
-                mListener.onItemClicked(getMessage());
-            }
-        }
-
-        public interface ClickListener {
-            void onItemClicked(Text text);
         }
     }
 
@@ -226,7 +236,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         mContext = context;
     }
 
-    public void setOnClickListener(FailedViewHolder.ClickListener onClickListener) {
+    public void setOnClickListener(MessageViewHolder.ClickListener onClickListener) {
         mClickListener = onClickListener;
     }
 
@@ -239,19 +249,19 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             case TYPE_MIDDLE_RIGHT:
             case TYPE_BOTTOM_RIGHT:
             case TYPE_SINGLE_RIGHT:
-                return new ViewHolder(layout);
+                return new ViewHolder(layout, mClickListener);
             case TYPE_TOP_LEFT:
             case TYPE_MIDDLE_LEFT:
             case TYPE_BOTTOM_LEFT:
             case TYPE_SINGLE_LEFT:
-                return new LeftViewHolder(layout);
+                return new LeftViewHolder(layout, mClickListener);
             case TYPE_ATTACHMENT_TOP_LEFT:
             case TYPE_ATTACHMENT_MIDDLE_LEFT:
             case TYPE_ATTACHMENT_BOTTOM_LEFT:
             case TYPE_ATTACHMENT_TOP_RIGHT:
             case TYPE_ATTACHMENT_MIDDLE_RIGHT:
             case TYPE_ATTACHMENT_BOTTOM_RIGHT:
-                return new AttachmentViewHolder(layout);
+                return new AttachmentViewHolder(layout, mClickListener);
             case TYPE_FAILED_TOP_LEFT:
             case TYPE_FAILED_MIDDLE_LEFT:
             case TYPE_FAILED_BOTTOM_LEFT:

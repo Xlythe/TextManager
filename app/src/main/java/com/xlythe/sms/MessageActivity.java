@@ -1,5 +1,6 @@
 package com.xlythe.sms;
 
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -18,6 +19,9 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
 public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedViewHolder.ClickListener {
+    private static final String TAG = TextManager.class.getSimpleName();
+    private static final boolean DEBUG = true;
+
     public static final String EXTRA_THREAD = "thread";
 
     private Thread mThread;
@@ -77,12 +81,30 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     @Override
     public void onItemClicked(Text text) {
-        mManager.downloadAttachment(text);
+        if (text.isMms()) {
+            if (!text.getAttachments().isEmpty()) {
+                log("Open attachment");
+                Intent i = new Intent(getBaseContext(), MediaActivity.class);
+                i.putExtra(MediaActivity.EXTRA_TEXT, text);
+                startActivity(i);
+                return;
+            }
+            log("Re-download attachment");
+            mManager.downloadAttachment(text);
+            return;
+        }
+        log("Do nothing");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         mManager.markAsRead(mThread);
+    }
+
+    public void log(String message){
+        if (DEBUG) {
+            Log.d(TAG, message);
+        }
     }
 }

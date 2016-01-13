@@ -143,6 +143,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
         </activity>
+        <activity android:name=".MediaActivity" >
+        </activity>
     </application>
 
 </manifest>

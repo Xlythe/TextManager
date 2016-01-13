@@ -181,6 +181,9 @@ public final class Text implements Message, Parcelable {
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
+                } else if (contentType.matches("video/.*")) {
+                    long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
+                    mAttachments.add(new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
                 }
             }
             inner.close();
