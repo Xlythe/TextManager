@@ -1,16 +1,8 @@
 package com.xlythe.sms.adapter;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DataSetObserver;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
-import android.media.MediaMetadataRetriever;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.LruCache;
@@ -19,21 +11,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
-import com.squareup.picasso.Picasso;
+
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
-import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
-import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.VideoAttachment;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -214,7 +202,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         public void setImage() {
-            Picasso.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).placeholder(R.color.loading).into(mImageView);
+            Glide.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).diskCacheStrategy(DiskCacheStrategy.NONE).dontAnimate().placeholder(R.color.loading).into(mImageView);
         }
     }
 
