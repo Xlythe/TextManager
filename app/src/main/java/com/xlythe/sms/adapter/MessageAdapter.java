@@ -202,7 +202,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         public void setImage() {
-            Glide.with(getContext()).load(getMessage().getAttachments().get(0).getUri()).diskCacheStrategy(DiskCacheStrategy.NONE).dontAnimate().placeholder(R.color.loading).into(mImageView);
+            Glide.with(getContext())
+                    .load(getMessage().getAttachments().get(0).getUri())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .dontAnimate()
+                    .placeholder(R.color.loading)
+                    .into(mImageView);
         }
     }
 
