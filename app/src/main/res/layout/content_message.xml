@@ -11,6 +11,66 @@
         android:padding="16dp"
         android:clipToPadding="false"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_weight="1"
+        android:layout_height="0dp"/>
+    <View
+        style="@style/Divider"/>
+    <LinearLayout
+        android:paddingTop="6dp"
+        android:paddingBottom="8dp"
+        android:background="@android:color/white"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="75dp">
+        <EditText
+            android:id="@+id/edit_text"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:textSize="13sp"
+            android:inputType="textAutoCorrect"
+            android:hint="Type a message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:gravity="bottom"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:tint="#bdbdbd"
+                android:src="@drawable/photo"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:tint="#bdbdbd"
+                android:src="@drawable/camera"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:tint="#bdbdbd"
+                android:src="@drawable/face"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:tint="#bdbdbd"
+                android:src="@drawable/mic"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <ImageView
+                android:id="@+id/send"
+                android:tint="#eeeeee"
+                android:src="@drawable/ic_send"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
 

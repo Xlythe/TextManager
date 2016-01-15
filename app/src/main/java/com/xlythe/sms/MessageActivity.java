@@ -10,6 +10,9 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.util.ColorUtils;
@@ -24,6 +27,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     public static final String EXTRA_THREAD = "thread";
 
+    private EditText mEditText;
+    private ImageView mImageView;
     private Thread mThread;
     private TextManager mManager;
     private RecyclerView mRecyclerView;
@@ -42,6 +47,20 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         setContentView(R.layout.activity_message);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mEditText = (EditText) findViewById(R.id.edit_text);
+        mImageView = (ImageView) findViewById(R.id.send);
+
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mManager.send(new Text.Builder(getBaseContext())
+                                .message(mEditText.getText().toString())
+                                .recipient(mThread.getLatestMessage().getSender().getNumber())
+                                .build()
+                );
+            }
+        });
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
