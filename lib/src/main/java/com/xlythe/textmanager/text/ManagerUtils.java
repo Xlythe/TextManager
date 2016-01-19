@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -14,7 +13,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -41,9 +39,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * Created by Niko on 1/1/16.
- */
 public class ManagerUtils {
     public static void send(Context context, final Text text){
         String SMS_SENT = "SMS_SENT";
@@ -107,7 +102,7 @@ public class ManagerUtils {
             sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         } else {
             List<Attachment> attachment = text.getAttachments();
-            sendMediaMessage(context, address, " ", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
+            sendMediaMessage(context, address, "", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
         }
 
         ContentValues values = new ContentValues();
@@ -118,8 +113,6 @@ public class ManagerUtils {
         context.getContentResolver().insert(uri, values);
     }
 
-    // TODO: Add backwards compatibility
-    @SuppressLint("NewApi")
     public static void sendMediaMessage(final Context context,
                                         final String address,
                                         final String subject,
