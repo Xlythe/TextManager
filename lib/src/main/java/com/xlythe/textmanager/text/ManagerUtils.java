@@ -40,6 +40,8 @@ import java.util.Calendar;
 import java.util.List;
 
 public class ManagerUtils {
+    private static final String TAG = ManagerUtils.class.getSimpleName();
+
     public static void send(Context context, final Text text){
         String SMS_SENT = "SMS_SENT";
         String SMS_DELIVERED = "SMS_DELIVERED";
@@ -168,7 +170,7 @@ public class ManagerUtils {
                                         part.Data = videoBytes;
                                         data.add(part);
                                     } catch (FileNotFoundException fnfe){
-                                        Log.d("Send video","File not found");
+                                        Log.d(TAG,"File not found");
                                         fnfe.printStackTrace();
                                     } catch (IOException ioe){
 
@@ -200,8 +202,8 @@ public class ManagerUtils {
                                     apnParameters.isProxySet(),
                                     apnParameters.getProxyAddress(),
                                     apnParameters.getProxyPort());
-                        } catch (IOException ioe) {
-                            Log.d("in", "failed");
+                        } catch (IOException e) {
+                            Log.e(TAG, "Failed to connect to the MMS server", e);
                         }
                         connectivityManager.unregisterNetworkCallback(this);
                     }
@@ -215,7 +217,7 @@ public class ManagerUtils {
         // create send request addresses
         for (int i = 0; i < recipients.length; i++) {
             final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipients[i]);
-            Log.d("send", recipients[i] + "");
+            Log.d(TAG, recipients[i]);
             if (phoneNumbers != null && phoneNumbers.length > 0) {
                 sendRequest.addTo(phoneNumbers[0]);
             }
@@ -254,7 +256,7 @@ public class ManagerUtils {
         smilPart.setData(out.toByteArray());
         pduBody.addPart(0, smilPart);
         sendRequest.setBody(pduBody);
-        Log.d("send", "setting message size to " + size + " bytes");
+        Log.d(TAG, "setting message size to " + size + " bytes");
         sendRequest.setMessageSize(size);
         // create byte array which will actually be sent
         final PduComposer composer = new PduComposer(context, sendRequest);
@@ -265,7 +267,7 @@ public class ManagerUtils {
 
     public static byte[] bitmapToByteArray(Bitmap image) {
         if (image == null) {
-            Log.v("Message", "image is null, returning byte array of size 0");
+            Log.v(TAG, "image is null, returning byte array of size 0");
             return new byte[0];
         }
 
