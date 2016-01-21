@@ -1,9 +1,11 @@
 package com.xlythe.sms;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -11,10 +13,16 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.xlythe.sms.adapter.MessageAdapter;
+import com.xlythe.sms.fragment.CameraFragment;
+import com.xlythe.sms.fragment.FaceFragment;
+import com.xlythe.sms.fragment.MicFragment;
+import com.xlythe.sms.fragment.PhotoFragment;
+import com.xlythe.sms.fragment.ScreenSlidePageFragment;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
@@ -27,8 +35,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     public static final String EXTRA_THREAD = "thread";
 
+    private View mAttachView;
     private EditText mEditText;
-    private ImageView mImageView;
+    private ImageView mSendButton;
     private Thread mThread;
     private TextManager mManager;
     private RecyclerView mRecyclerView;
@@ -48,10 +57,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mAttachView = findViewById(R.id.fragment_container);
         mEditText = (EditText) findViewById(R.id.edit_text);
-        mImageView = (ImageView) findViewById(R.id.send);
+        mSendButton = (ImageView) findViewById(R.id.send);
 
-        mImageView.setOnClickListener(new View.OnClickListener() {
+        mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mManager.send(new Text.Builder(getBaseContext())
@@ -59,6 +69,16 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                                 .recipient(mThread.getLatestMessage().getSender().getNumber())
                                 .build()
                 );
+            }
+        });
+
+        mEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(hasFocus) {
+                    Log.d("MessageActivity", "dismiss attachview");
+                    mAttachView.setVisibility(View.GONE);
+                }
             }
         });
 
@@ -89,6 +109,35 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mRecyclerView.setAdapter(mAdapter);
 
         mManager.registerObserver(mMessageObserver);
+    }
+
+    public void attachClick(View view){
+        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
+        mEditText.clearFocus();
+        if (mAttachView.getVisibility() == View.GONE)
+            mAttachView.setVisibility(View.VISIBLE);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        switch (view.getId()){
+            case R.id.photo:
+                transaction.replace(R.id.fragment_container, new ScreenSlidePageFragment()).commit();
+                log("photo");
+                break;
+            case R.id.camera:
+                transaction.replace(R.id.fragment_container, new CameraFragment()).commit();
+                log("camera");
+                break;
+            case R.id.sticker:
+                transaction.replace(R.id.fragment_container, new FaceFragment()).commit();
+                log("sticker");
+                break;
+            case R.id.mic:
+                transaction.replace(R.id.fragment_container, new MicFragment()).commit();
+                log("mic");
+                break;
+        }
     }
 
     @Override

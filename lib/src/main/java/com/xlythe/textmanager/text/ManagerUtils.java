@@ -20,9 +20,11 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduBody;
 import com.xlythe.textmanager.text.pdu.PduComposer;
 import com.xlythe.textmanager.text.pdu.PduPart;
+import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.SendReq;
 import com.xlythe.textmanager.text.smil.SmilHelper;
 import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
@@ -105,17 +107,16 @@ public class ManagerUtils {
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
             sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
+            ContentValues values = new ContentValues();
+            Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
+            values.put(Mock.Telephony.Sms.ADDRESS, address);
+            values.put(Mock.Telephony.Sms.BODY, text.getBody());
+            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
+            context.getContentResolver().insert(uri, values);
         } else {
             List<Attachment> attachment = text.getAttachments();
             sendMediaMessage(context, address, " ", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
         }
-
-        ContentValues values = new ContentValues();
-        Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
-        values.put(Mock.Telephony.Sms.ADDRESS, address);
-        values.put(Mock.Telephony.Sms.BODY, text.getBody());
-        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-        context.getContentResolver().insert(uri, values);
     }
 
     // TODO: Add backwards compatibility
@@ -160,7 +161,8 @@ public class ManagerUtils {
                                 case VIDEO:
                                     try {
                                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                        FileInputStream fis = new FileInputStream(new File(a.getUri().getPath()));
+                                        FileInputStream fis = new FileInputStream(new File(a.getUri().toString()));
+                                        Log.d("ManagerUtils", a.getUri().getPath() +"");
 
                                         byte[] buf = new byte[1024];
                                         int n;
@@ -188,7 +190,7 @@ public class ManagerUtils {
                             i++;
                         }
 
-                        if (!body.isEmpty()) {
+                        if (body != null && !body.isEmpty()) {
                             // add text to the end of the part and send
                             part = new MMSPart();
                             part.Name = "text";
@@ -263,6 +265,14 @@ public class ManagerUtils {
         sendRequest.setBody(pduBody);
         Log.d("send", "setting message size to " + size + " bytes");
         sendRequest.setMessageSize(size);
+
+        PduPersister p = PduPersister.getPduPersister(context);
+        try {
+            p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
+        } catch (MmsException e) {
+            Log.e("ManagerUtils", "persisting pdu failed");
+            e.printStackTrace();
+        }
         // create byte array which will actually be sent
         final PduComposer composer = new PduComposer(context, sendRequest);
         final byte[] bytesToSend;
