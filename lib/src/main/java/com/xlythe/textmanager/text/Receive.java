@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -26,11 +25,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by Niko on 5/19/15.
- */
 public class Receive {
-
     // Email Address Pattern.
     private static final Pattern EMAIL_ADDRESS_PATTERN = Pattern.compile(
             "[a-zA-Z0-9\\+\\.\\_\\%\\-]{1,256}" + "\\@" + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
@@ -41,8 +36,8 @@ public class Receive {
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
 
     private static final String[] PROJECTION = new String[] {
-            Telephony.Mms.CONTENT_LOCATION,
-            Telephony.Mms.LOCKED
+            Mock.Telephony.Mms.CONTENT_LOCATION,
+            Mock.Telephony.Mms.LOCKED
     };
 
     private static final int COLUMN_CONTENT_LOCATION = 0;
@@ -54,8 +49,6 @@ public class Receive {
      * @return byte array pdu
      * @throws IOException
      */
-    // TODO: Add Backwards compatibility
-    @SuppressLint("NewApi")
     protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -65,44 +58,40 @@ public class Receive {
         builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
 
         final NetworkRequest networkRequest = builder.build();
-        new java.lang.Thread(new Runnable() {
-            public void run() {
-                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(Network network) {
-                        super.onAvailable(network);
-                        ConnectivityManager.setProcessDefaultNetwork(network);
-                        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
+        connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(Network network) {
+                super.onAvailable(network);
+                ConnectivityManager.setProcessDefaultNetwork(network);
+                Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
 
-                        String url = "";
+                String url = "";
 
-                        if (cursor != null) {
-                            try {
-                                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                                }
-                            } finally {
-                                cursor.close();
-                            }
+                if (cursor != null) {
+                    try {
+                        if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
+                            url = cursor.getString(COLUMN_CONTENT_LOCATION);
                         }
-                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-                        try {
-                            byte[] data = HttpUtils.httpConnection(
-                                    context, -1L,
-                                    url, null, HttpUtils.HTTP_GET_METHOD,
-                                    apnParameters.isProxySet(),
-                                    apnParameters.getProxyAddress(),
-                                    apnParameters.getProxyPort());
-                            callback.onSuccess(data);
-                        } catch (IOException ioe){
-                            Log.e("MMS","download failed due to network");
-                            callback.onFail();
-                        }
-                        connectivityManager.unregisterNetworkCallback(this);
+                    } finally {
+                        cursor.close();
                     }
-                });
+                }
+                ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+                try {
+                    byte[] data = HttpUtils.httpConnection(
+                            context, -1L,
+                            url, null, HttpUtils.HTTP_GET_METHOD,
+                            apnParameters.isProxySet(),
+                            apnParameters.getProxyAddress(),
+                            apnParameters.getProxyPort());
+                    callback.onSuccess(data);
+                } catch (IOException ioe){
+                    Log.e("MMS","download failed due to network");
+                    callback.onFail();
+                }
+                connectivityManager.unregisterNetworkCallback(this);
             }
-        }).start();
+        });
     }
 
     public interface DataCallback{

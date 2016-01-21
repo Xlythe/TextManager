@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -14,7 +13,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -43,10 +41,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * Created by Niko on 1/1/16.
- */
 public class ManagerUtils {
+    private static final String TAG = ManagerUtils.class.getSimpleName();
+
     public static void send(Context context, final Text text){
         String SMS_SENT = "SMS_SENT";
         String SMS_DELIVERED = "SMS_DELIVERED";
@@ -119,8 +116,6 @@ public class ManagerUtils {
         }
     }
 
-    // TODO: Add backwards compatibility
-    @SuppressLint("NewApi")
     public static void sendMediaMessage(final Context context,
                                         final String address,
                                         final String subject,
@@ -177,7 +172,7 @@ public class ManagerUtils {
                                         part.Data = videoBytes;
                                         data.add(part);
                                     } catch (FileNotFoundException fnfe){
-                                        Log.d("Send video","File not found");
+                                        Log.d(TAG,"File not found");
                                         fnfe.printStackTrace();
                                     } catch (IOException ioe){
 
@@ -209,8 +204,8 @@ public class ManagerUtils {
                                     apnParameters.isProxySet(),
                                     apnParameters.getProxyAddress(),
                                     apnParameters.getProxyPort());
-                        } catch (IOException ioe) {
-                            Log.d("in", "failed");
+                        } catch (IOException e) {
+                            Log.e(TAG, "Failed to connect to the MMS server", e);
                         }
                         connectivityManager.unregisterNetworkCallback(this);
                     }
@@ -224,7 +219,7 @@ public class ManagerUtils {
         // create send request addresses
         for (int i = 0; i < recipients.length; i++) {
             final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipients[i]);
-            Log.d("send", recipients[i] + "");
+            Log.d(TAG, recipients[i]);
             if (phoneNumbers != null && phoneNumbers.length > 0) {
                 sendRequest.addTo(phoneNumbers[0]);
             }
@@ -263,7 +258,7 @@ public class ManagerUtils {
         smilPart.setData(out.toByteArray());
         pduBody.addPart(0, smilPart);
         sendRequest.setBody(pduBody);
-        Log.d("send", "setting message size to " + size + " bytes");
+        Log.d(TAG, "setting message size to " + size + " bytes");
         sendRequest.setMessageSize(size);
 
         PduPersister p = PduPersister.getPduPersister(context);
@@ -282,7 +277,7 @@ public class ManagerUtils {
 
     public static byte[] bitmapToByteArray(Bitmap image) {
         if (image == null) {
-            Log.v("Message", "image is null, returning byte array of size 0");
+            Log.v(TAG, "image is null, returning byte array of size 0");
             return new byte[0];
         }
 
