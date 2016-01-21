@@ -36,7 +36,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private static final boolean DEBUG = true;
 
     public static final String EXTRA_THREAD = "thread";
-    private boolean mSendable;
     private View mAttachView;
     private EditText mEditText;
     private ImageView mSendButton;
@@ -66,39 +65,30 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mSendable) {
-                    mManager.send(new Text.Builder(getBaseContext())
-                                    .message(mEditText.getText().toString())
-                                    .recipient(mThread.getLatestMessage().getSender().getNumber())
-                                    .build()
-                    );
-                    mEditText.setText("");
-                    setSendable(false);
-                }
+                mManager.send(new Text.Builder(getBaseContext())
+                                .message(mEditText.getText().toString())
+                                .recipient(mThread.getLatestMessage().getSender().getNumber())
+                                .build()
+                );
+                mEditText.setText("");
+                setSendable(false);
             }
         });
 
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                log("before:" + s + ", " + start + ", " + "" + count + ", " + after);
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                log("on:" + s + ", " + start + ", " + "" + before + ", " + count);
                 // Thought I could use count, but it resets to 1 when you add a space
                 // so ends up being zero when you delete the space
-                if (s.length() > 0) {
-                    setSendable(true);
-                } else {
-                    setSendable(false);
-                }
+                setSendable(s.length() > 0);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                log("after:" + s.toString());
             }
         });
 
@@ -106,7 +96,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if(hasFocus) {
-                    Log.d("MessageActivity", "dismiss attachview");
                     mAttachView.setVisibility(View.GONE);
                 }
             }
@@ -139,10 +128,23 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mRecyclerView.setAdapter(mAdapter);
 
         mManager.registerObserver(mMessageObserver);
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState > 0) {
+                    InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
+                    mEditText.clearFocus();
+                    mAttachView.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     public void setSendable(boolean sendable){
-        mSendable = sendable;
+        mSendButton.setEnabled(sendable);
         if (sendable) {
             mSendButton.setColorFilter(ColorUtils.getColor(Long.parseLong(mThread.getId())), PorterDuff.Mode.SRC_ATOP);
         } else {
@@ -201,6 +203,14 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             return;
         }
         log("Do nothing");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mAttachView.getVisibility() == View.VISIBLE)
+            mAttachView.setVisibility(View.GONE);
+        else
+            super.onBackPressed();
     }
 
     @Override
