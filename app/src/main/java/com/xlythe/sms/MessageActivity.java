@@ -10,7 +10,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.Html;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -34,7 +36,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private static final boolean DEBUG = true;
 
     public static final String EXTRA_THREAD = "thread";
-
+    private boolean mSendable;
     private View mAttachView;
     private EditText mEditText;
     private ImageView mSendButton;
@@ -64,11 +66,39 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mManager.send(new Text.Builder(getBaseContext())
-                                .message(mEditText.getText().toString())
-                                .recipient(mThread.getLatestMessage().getSender().getNumber())
-                                .build()
-                );
+                if (mSendable) {
+                    mManager.send(new Text.Builder(getBaseContext())
+                                    .message(mEditText.getText().toString())
+                                    .recipient(mThread.getLatestMessage().getSender().getNumber())
+                                    .build()
+                    );
+                    mEditText.setText("");
+                    setSendable(false);
+                }
+            }
+        });
+
+        mEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                log("before:" + s + ", " + start + ", " + "" + count + ", " + after);
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                log("on:" + s + ", " + start + ", " + "" + before + ", " + count);
+                // Thought I could use count, but it resets to 1 when you add a space
+                // so ends up being zero when you delete the space
+                if (s.length() > 0) {
+                    setSendable(true);
+                } else {
+                    setSendable(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                log("after:" + s.toString());
             }
         });
 
@@ -109,6 +139,15 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mRecyclerView.setAdapter(mAdapter);
 
         mManager.registerObserver(mMessageObserver);
+    }
+
+    public void setSendable(boolean sendable){
+        mSendable = sendable;
+        if (sendable) {
+            mSendButton.setColorFilter(ColorUtils.getColor(Long.parseLong(mThread.getId())), PorterDuff.Mode.SRC_ATOP);
+        } else {
+            mSendButton.clearColorFilter();
+        }
     }
 
     public void attachClick(View view){

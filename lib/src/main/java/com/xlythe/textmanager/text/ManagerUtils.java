@@ -60,7 +60,6 @@ public class ManagerUtils {
             public void onReceive(Context context, Intent intent) {
                 ContentValues values = new ContentValues();
                 Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
-                Uri.withAppendedPath(uri, Uri.encode(text.getId()));
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
@@ -83,7 +82,7 @@ public class ManagerUtils {
                         Toast.makeText(context, "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
                         break;
                 }
-                context.getContentResolver().insert(uri, values);
+                context.getContentResolver().update(uri, values, null, null);
             }
         }, new IntentFilter(SMS_SENT));
 
@@ -115,7 +114,8 @@ public class ManagerUtils {
             context.getContentResolver().insert(uri, values);
         } else {
             List<Attachment> attachment = text.getAttachments();
-            sendMediaMessage(context, address, " ", text.getBody(), attachment, sentPendingIntent, deliveredPendingIntent);
+            // TODO: add intents for mms
+            sendMediaMessage(context, address, " ", text.getBody(), attachment, null, null);
         }
     }
 
