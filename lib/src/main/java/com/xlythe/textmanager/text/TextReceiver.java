@@ -92,7 +92,6 @@ public abstract class TextReceiver extends BroadcastReceiver {
             PduPersister p = PduPersister.getPduPersister(mContext);
             Uri uri = null;
             try {
-                // this might need to be false, changing it to true though so it doesnt create empty threads
                 uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
             } catch (MmsException e) {
                 Log.e("Text Receiver","persisting pdu failed");
