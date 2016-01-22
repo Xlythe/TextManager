@@ -65,35 +65,37 @@ public class ScreenSlidePageFragment extends Fragment {
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                c.moveToPosition(position);
-                String mediaId = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns._ID));
-                String data = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns.DATA));
-                int type = c.getInt(c.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE));
-                Uri content = MediaStore.Files.getContentUri("external");
-                Attachment attachment;
-                Uri uri;
-                try {
-                    switch (type) {
-                        case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-                            // TODO: must be a bitmap for sending
-                            // TODO: I probably need to add a to bitmap from uri in image attachment...
-                            uri = Uri.withAppendedPath(content, mediaId);
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), uri);
-                            attachment = new ImageAttachment(bitmap);
-                            break;
-                        default:
-                            uri = Uri.parse(data);
-                            attachment = new VideoAttachment(uri);
-                            break;
-                    }
-                    TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
-                                    .recipient("2163138473")
-                                    .attach(attachment)
-                                    .build()
-                    );
-                } catch (IOException ioe) {
-                    Log.d("photo fragment", "failed to find image: " + mediaId);
-                }
+                view.setElevation(16);
+                // THIS IS JUST A QUICK TEST IM GOING TO UNCOMMENT IT!!!
+//                c.moveToPosition(position);
+//                String mediaId = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns._ID));
+//                String data = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns.DATA));
+//                int type = c.getInt(c.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE));
+//                Uri content = MediaStore.Files.getContentUri("external");
+//                Attachment attachment;
+//                Uri uri;
+//                try {
+//                    switch (type) {
+//                        case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+//                            // TODO: must be a bitmap for sending
+//                            // TODO: I probably need to add a to bitmap from uri in image attachment...
+//                            uri = Uri.withAppendedPath(content, mediaId);
+//                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), uri);
+//                            attachment = new ImageAttachment(bitmap);
+//                            break;
+//                        default:
+//                            uri = Uri.parse(data);
+//                            attachment = new VideoAttachment(uri);
+//                            break;
+//                    }
+//                    TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+//                                    .recipient("2163138473")
+//                                    .attach(attachment)
+//                                    .build()
+//                    );
+//                } catch (IOException ioe) {
+//                    Log.d("photo fragment", "failed to find image: " + mediaId);
+//                }
             }
         });
 

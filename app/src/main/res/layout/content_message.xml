@@ -95,7 +95,7 @@
         <FrameLayout
             android:id="@+id/fragment_container"
             android:visibility="gone"
-            android:background="#faa0a0"
+            android:background="#ffffff"
             android:layout_width="match_parent"
             android:layout_height="250dp"/>
     </LinearLayout>

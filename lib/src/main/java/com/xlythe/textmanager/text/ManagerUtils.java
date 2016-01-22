@@ -80,6 +80,7 @@ public class ManagerUtils {
                         break;
                 }
                 context.getContentResolver().update(uri, values, null, null);
+                context.unregisterReceiver(this);
             }
         }, new IntentFilter(SMS_SENT));
 
@@ -95,6 +96,7 @@ public class ManagerUtils {
                         Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
                         break;
                 }
+                context.unregisterReceiver(this);
             }
         }, new IntentFilter(SMS_DELIVERED));
 
