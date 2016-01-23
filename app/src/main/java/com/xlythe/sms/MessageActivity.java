@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -200,6 +201,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     }
 
     public void hideAttachview(){
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Fragment()).commit();
         mAttachView.setVisibility(View.GONE);
         // Add removal of color (could be annoying)
         // need to remove color when attachment is sent
