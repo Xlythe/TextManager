@@ -12,6 +12,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AnticipateInterpolator;
+import android.view.animation.AnticipateOvershootInterpolator;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.support.v4.app.Fragment;
 
@@ -73,20 +78,24 @@ public class AttachmentAdapter extends SelectableAdapter<AttachmentAdapter.ViewH
             mButtonShape.setScaleY(0);
             if (selectMode && isSelected) {
                 Log.d(TAG, "selected");
-                mImage.setColorFilter(Color.argb(102, 0, 0, 0), PorterDuff.Mode.SRC_ATOP);
+                mImage.animate().alpha(1f).setDuration(300).start();
                 mButton.setVisibility(View.VISIBLE);
                 mButtonShape.setVisibility(View.VISIBLE);
                 mButton.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 mButton.animate().scaleX(1).scaleY(1).setDuration(100).start();
                 mButtonShape.animate().scaleX(1).scaleY(1).setDuration(100).start();
-                mImage.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).start();
+                mImage.animate().scaleX(1.2f).scaleY(1.2f).setDuration(400).setInterpolator(new AnticipateOvershootInterpolator(1,2)).start();
             } else {
                 Log.d(TAG, "not selected");
-                mImage.clearColorFilter();
+                if (selectMode) {
+                    mImage.animate().alpha(0.4f).setDuration(300).start();
+                } else {
+                    mImage.animate().alpha(1f).setDuration(300).start();
+                }
                 mButton.setVisibility(View.GONE);
                 mButtonShape.setVisibility(View.GONE);
                 mButton.clearColorFilter();
-                mImage.animate().scaleX(1).scaleY(1).setDuration(100).start();
+                mImage.animate().scaleX(1).scaleY(1).setDuration(100).setInterpolator(new AccelerateInterpolator()).start();
             }
         }
 
