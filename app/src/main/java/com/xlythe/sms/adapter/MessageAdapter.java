@@ -51,15 +51,17 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     private static final int TYPE_FAILED_MIDDLE_LEFT        = 15;
     private static final int TYPE_FAILED_BOTTOM_LEFT        = 16;
     private static final int TYPE_FAILED_SINGLE_LEFT        = 16;
+    private static final int TYPE_ATTACHMENT_SINGLE_LEFT    = 17;
+    private static final int TYPE_ATTACHMENT_SINGLE_RIGHT   = 18;
 
     // TODO:
     // need to account for group messages, they'll show up as failed
     // as long with messages with a subject, video, and audio
     // These should not ever happen, but they'll stay for now
-    private static final int TYPE_FAILED_TOP_RIGHT          = 17;
-    private static final int TYPE_FAILED_MIDDLE_RIGHT       = 18;
-    private static final int TYPE_FAILED_BOTTOM_RIGHT       = 19;
-    private static final int TYPE_FAILED_SINGLE_RIGHT       = 20;
+    private static final int TYPE_FAILED_TOP_RIGHT          = 19;
+    private static final int TYPE_FAILED_MIDDLE_RIGHT       = 20;
+    private static final int TYPE_FAILED_BOTTOM_RIGHT       = 21;
+    private static final int TYPE_FAILED_SINGLE_RIGHT       = 22;
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
 
@@ -75,9 +77,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         LAYOUT_MAP.put(TYPE_ATTACHMENT_TOP_LEFT, R.layout.left_attachment_top);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_MIDDLE_LEFT, R.layout.left_attachment_middle);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_BOTTOM_LEFT, R.layout.left_attachment_bottom);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_SINGLE_LEFT, R.layout.left_attachment_single);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_TOP_RIGHT, R.layout.right_attachment_top);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_MIDDLE_RIGHT, R.layout.right_attachment_middle);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_BOTTOM_RIGHT, R.layout.right_attachment_bottom);
+        LAYOUT_MAP.put(TYPE_ATTACHMENT_SINGLE_RIGHT, R.layout.right_attachment_single);
         LAYOUT_MAP.put(TYPE_FAILED_TOP_LEFT, R.layout.left_top);
         LAYOUT_MAP.put(TYPE_FAILED_MIDDLE_LEFT, R.layout.left_middle);
         LAYOUT_MAP.put(TYPE_FAILED_BOTTOM_LEFT, R.layout.left_bottom);
@@ -97,16 +101,25 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         private Text mText;
         private Context mContext;
         private ClickListener mListener;
+        public TextView mDate;
 
         public MessageViewHolder(View v, ClickListener listener) {
             super(v);
             mListener = listener;
             v.setOnClickListener(this);
+            mDate = (TextView) v.findViewById(R.id.date);
         }
 
         public void setMessage(Context context, Text text) {
             mText = text;
             mContext = context;
+            setDateText(DateFormatter.getFormattedDate(text));
+        }
+
+        public void setDateText(String dateText) {
+            if (mDate != null) {
+                mDate.setText(dateText);
+            }
         }
 
         @Override
@@ -131,27 +144,19 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     public static class ViewHolder extends MessageViewHolder {
         public TextView mTextView;
-        public TextView mDate;
 
         public ViewHolder(View v, ClickListener listener) {
             super(v, listener);
             mTextView = (TextView) v.findViewById(R.id.message);
-            mDate = (TextView) v.findViewById(R.id.date);
         }
 
         public void setMessage(Context context, Text text) {
             super.setMessage(context, text);
             setBodyText(text.getBody());
-            setDateText(DateFormatter.getFormattedDate(text));
         }
 
         public void setBodyText(String body) {
             mTextView.setText(body);
-        }
-        public void setDateText(String dateText) {
-            if (mDate != null) {
-                mDate.setText(dateText);
-            }
         }
     }
 
@@ -211,6 +216,31 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
     }
 
+    public static class LeftAttachmentViewHolder extends AttachmentViewHolder {
+        private CircleImageView mProfile;
+
+        public LeftAttachmentViewHolder(View v, ClickListener listener) {
+            super(v, listener);
+            mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
+        }
+
+        @Override
+        public void setMessage(Context context, Text text) {
+            super.setMessage(context, text);
+            setProfile();
+        }
+
+        public void setProfile() {
+            if (mProfile != null) {
+                ProfileDrawable border = new ProfileDrawable(getContext(),
+                        getMessage().getSender().getDisplayName().charAt(0),
+                        ColorUtils.getColor(getMessage().getThreadIdAsLong()),
+                        getMessage().getSender().getPhotoUri());
+                mProfile.setImageDrawable(border);
+            }
+        }
+    }
+
     public static class FailedViewHolder extends LeftViewHolder {
 
         public FailedViewHolder(View v, ClickListener listener) {
@@ -251,9 +281,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             case TYPE_ATTACHMENT_TOP_LEFT:
             case TYPE_ATTACHMENT_MIDDLE_LEFT:
             case TYPE_ATTACHMENT_BOTTOM_LEFT:
+            case TYPE_ATTACHMENT_SINGLE_LEFT:
+                return new LeftAttachmentViewHolder(layout, mClickListener);
             case TYPE_ATTACHMENT_TOP_RIGHT:
             case TYPE_ATTACHMENT_MIDDLE_RIGHT:
             case TYPE_ATTACHMENT_BOTTOM_RIGHT:
+            case TYPE_ATTACHMENT_SINGLE_RIGHT:
                 return new AttachmentViewHolder(layout, mClickListener);
             case TYPE_FAILED_TOP_LEFT:
             case TYPE_FAILED_MIDDLE_LEFT:
@@ -342,7 +375,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         } else if (!userCurrent) {
             if (text.isMms()) {
                 if (!text.getAttachments().isEmpty()) {
-                    return TYPE_ATTACHMENT_TOP_RIGHT;
+                    return TYPE_ATTACHMENT_SINGLE_RIGHT;
                 }
                 return TYPE_FAILED_SINGLE_RIGHT;
             }
@@ -374,7 +407,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         } else {
             if (text.isMms()) {
                 if (!text.getAttachments().isEmpty()) {
-                    return TYPE_ATTACHMENT_TOP_LEFT;
+                    return TYPE_ATTACHMENT_SINGLE_LEFT;
                 }
                 return TYPE_FAILED_SINGLE_LEFT;
             }
