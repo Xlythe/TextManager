@@ -3,6 +3,7 @@ package com.xlythe.sms;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -15,9 +16,14 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.xlythe.sms.adapter.MessageAdapter;
@@ -27,6 +33,7 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.fragment.PhotoFragment;
 import com.xlythe.sms.fragment.ScreenSlidePageFragment;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -35,10 +42,16 @@ import com.xlythe.textmanager.text.Thread;
 public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedViewHolder.ClickListener {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
-
     public static final String EXTRA_THREAD = "thread";
+
+    // Keyboard hack
+    private int mScreenSize;
+    private int mKeyboardSize;
+    private boolean mAdjustNothing;
+    private boolean mKeyboardOpen;
+
     private View mAttachView;
-    private EditText mEditText;
+    private ExtendedEditText mEditText;
     private ImageView mSendButton;
     private Thread mThread;
     private TextManager mManager;
@@ -59,8 +72,31 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        final Window rootWindow = getWindow();
+        final View root = rootWindow.getDecorView().findViewById(android.R.id.content);
+        root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            public void onGlobalLayout() {
+                Rect r = new Rect();
+                View view = rootWindow.getDecorView();
+                view.getWindowVisibleDisplayFrame(r);
+                log("old size: " + mScreenSize + ", new size: " + r.bottom);
+                if (mScreenSize != 0 && mScreenSize != r.bottom){
+                    mKeyboardSize = mScreenSize - r.bottom;
+                    log("keyboard: " + mKeyboardSize);
+                    mAttachView.getLayoutParams().height = mKeyboardSize;
+                    rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+                    if (mKeyboardOpen) {
+                        mAttachView.setVisibility(View.VISIBLE);
+                    }
+                    mAdjustNothing = true;
+                } else {
+                    mScreenSize = r.bottom;
+                }
+            }
+        });
+
         mAttachView = findViewById(R.id.fragment_container);
-        mEditText = (EditText) findViewById(R.id.edit_text);
+        mEditText = (ExtendedEditText) findViewById(R.id.edit_text);
         mSendButton = (ImageView) findViewById(R.id.send);
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
@@ -73,6 +109,15 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 );
                 mEditText.setText("");
                 setSendable(false);
+            }
+        });
+
+        mEditText.setOnDismissKeyboardListener(new ExtendedEditText.OnDismissKeyboardListener() {
+            @Override
+            public void onDismissed() {
+                log("back");
+                mEditText.clearFocus();
+                hideAttachview();
             }
         });
 
@@ -96,8 +141,14 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                log("focus: " + hasFocus);
+                mKeyboardOpen = hasFocus;
                 if(hasFocus) {
-                    mAttachView.setVisibility(View.GONE);
+                    if (!mAdjustNothing) {
+                        hideAttachview();
+                    } else {
+                        mAttachView.setVisibility(View.VISIBLE);
+                    }
                 }
             }
         });
@@ -138,10 +189,16 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                     InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
                     mEditText.clearFocus();
-                    mAttachView.setVisibility(View.GONE);
+                    hideAttachview();
                 }
             }
         });
+    }
+
+    public void hideAttachview(){
+        mAttachView.setVisibility(View.GONE);
+        // Add removal of color (could be annoying)
+        // need to remove color when attachment is sent
     }
 
     public void setSendable(boolean sendable){
@@ -164,9 +221,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         switch (view.getId()){
             case R.id.photo:
+                int color = ColorUtils.getColor(mThread.getIdAsLong());
+                ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 ScreenSlidePageFragment frag = new ScreenSlidePageFragment();
                 Bundle args = new Bundle();
-                args.putInt("color", ColorUtils.getColor(mThread.getIdAsLong()));
+                args.putInt("color", color);
                 frag.setArguments(args);
                 transaction.replace(R.id.fragment_container, frag).commit();
                 log("photo");
@@ -212,10 +271,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     @Override
     public void onBackPressed() {
-        if (mAttachView.getVisibility() == View.VISIBLE)
-            mAttachView.setVisibility(View.GONE);
-        else
+        if (mAttachView.getVisibility() == View.VISIBLE) {
+            hideAttachview();
+        } else {
             super.onBackPressed();
+        }
     }
 
     @Override
