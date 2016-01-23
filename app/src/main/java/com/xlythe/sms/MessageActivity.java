@@ -74,6 +74,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         final Window rootWindow = getWindow();
         final View root = rootWindow.getDecorView().findViewById(android.R.id.content);
+
+        // Seems redundant to set as ADJUST_NOTHING in manifest and then immediately to ADJUST_RESIZE
+        // but it seems that the input gets reset to a default on keyboard dismissal if not set otherwise.
+        rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             public void onGlobalLayout() {
                 Rect r = new Rect();
