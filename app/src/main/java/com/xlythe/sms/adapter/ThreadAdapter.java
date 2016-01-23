@@ -15,8 +15,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
-import com.squareup.picasso.Picasso;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
@@ -231,7 +232,12 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             profile.setBackgroundResource(R.drawable.selector);
 
             if (attachment != null && getThread().getLatestMessage().getAttachments().size() > 0) {
-                Picasso.with(getContext()).load(getThread().getLatestMessage().getAttachments().get(0).getUri()).into(attachment);
+                Glide.with(getContext())
+                        .load(getThread().getLatestMessage().getAttachments().get(0).getUri())
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .dontAnimate()
+                        .placeholder(R.color.loading)
+                        .into(attachment);
             }
 
             if (unreadCount > 0) {

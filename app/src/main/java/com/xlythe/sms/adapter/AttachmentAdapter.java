@@ -84,7 +84,7 @@ public class AttachmentAdapter extends SelectableAdapter<AttachmentAdapter.ViewH
                 mButton.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 mButton.animate().scaleX(1).scaleY(1).setDuration(100).start();
                 mButtonShape.animate().scaleX(1).scaleY(1).setDuration(100).start();
-                mImage.animate().scaleX(1.2f).scaleY(1.2f).setDuration(400).setInterpolator(new AnticipateOvershootInterpolator(1,2)).start();
+                mImage.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300).setInterpolator(new AnticipateOvershootInterpolator(1,2)).start();
             } else {
                 Log.d(TAG, "not selected");
                 if (selectMode) {
