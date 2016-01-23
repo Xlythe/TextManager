@@ -9,6 +9,7 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -36,6 +37,7 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
 
     private int mColor;
     private Cursor mCursor;
+    private String mRecipient;
     private AttachmentAdapter mAdapter;
     private ViewGroup mContainer;
 
@@ -45,6 +47,7 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_screen_slide_page, container, false);
 
         mColor = getArguments().getInt("color");
+        mRecipient = getArguments().getString("recipient");
 
         String[] projection = {
                 MediaStore.Files.FileColumns._ID,
@@ -127,12 +130,12 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
                             break;
                     }
                     TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
-                                    .recipient("2163138473")
+                                    .recipient(mRecipient)
                                     .attach(attachment)
                                     .build()
                     );
                 } catch (IOException ioe) {
-                    Log.d("photo fragment", "failed to find image: " + mediaId);
+                    Log.d(TAG, "failed to find image: " + mediaId);
                 }
                 mContainer.setVisibility(View.GONE);
             }

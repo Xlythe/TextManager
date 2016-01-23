@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.provider.MediaStore;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -66,22 +67,26 @@ public class AttachmentAdapter extends SelectableAdapter<AttachmentAdapter.ViewH
                     .placeholder(R.color.loading)
                     .into(mImage);
 
+            mButton.setScaleX(0);
+            mButton.setScaleY(0);
+            mButtonShape.setScaleX(0);
+            mButtonShape.setScaleY(0);
             if (selectMode && isSelected) {
                 Log.d(TAG, "selected");
                 mImage.setColorFilter(Color.argb(102, 0, 0, 0), PorterDuff.Mode.SRC_ATOP);
                 mButton.setVisibility(View.VISIBLE);
                 mButtonShape.setVisibility(View.VISIBLE);
                 mButton.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-                mImage.setScaleX(0.9f);
-                mImage.setScaleY(0.9f);
+                mButton.animate().scaleX(1).scaleY(1).setDuration(100).start();
+                mButtonShape.animate().scaleX(1).scaleY(1).setDuration(100).start();
+                mImage.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).start();
             } else {
                 Log.d(TAG, "not selected");
                 mImage.clearColorFilter();
                 mButton.setVisibility(View.GONE);
                 mButtonShape.setVisibility(View.GONE);
                 mButton.clearColorFilter();
-                mImage.setScaleX(1);
-                mImage.setScaleY(1);
+                mImage.animate().scaleX(1).scaleY(1).setDuration(100).start();
             }
         }
 

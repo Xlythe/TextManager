@@ -231,7 +231,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 ScreenSlidePageFragment frag = new ScreenSlidePageFragment();
                 Bundle args = new Bundle();
+                // TODO: just send the whole thread or text?
                 args.putInt("color", color);
+                args.putString("recipient", mThread.getLatestMessage().getSender().getNumber());
                 frag.setArguments(args);
                 transaction.replace(R.id.fragment_container, frag).commit();
                 log("photo");
