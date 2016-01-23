@@ -16,6 +16,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.AnticipateOvershootInterpolator;
 import android.view.animation.BounceInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.support.v4.app.Fragment;
@@ -78,19 +79,19 @@ public class AttachmentAdapter extends SelectableAdapter<AttachmentAdapter.ViewH
             mButtonShape.setScaleY(0);
             if (selectMode && isSelected) {
                 Log.d(TAG, "selected");
-                mImage.animate().alpha(1f).setDuration(300).start();
+                mImage.animate().alpha(1f).setDuration(100).setInterpolator(new DecelerateInterpolator()).start();
                 mButton.setVisibility(View.VISIBLE);
                 mButtonShape.setVisibility(View.VISIBLE);
                 mButton.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 mButton.animate().scaleX(1).scaleY(1).setDuration(100).start();
                 mButtonShape.animate().scaleX(1).scaleY(1).setDuration(100).start();
-                mImage.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300).setInterpolator(new AnticipateOvershootInterpolator(1,2)).start();
+                mImage.animate().scaleX(1.3f).scaleY(1.3f).setDuration(300).setInterpolator(new OvershootInterpolator(2)).start();
             } else {
                 Log.d(TAG, "not selected");
                 if (selectMode) {
-                    mImage.animate().alpha(0.4f).setDuration(300).start();
+                    mImage.animate().alpha(0.4f).setDuration(100).setInterpolator(new DecelerateInterpolator()).start();
                 } else {
-                    mImage.animate().alpha(1f).setDuration(300).start();
+                    mImage.animate().alpha(1f).setDuration(100).setInterpolator(new DecelerateInterpolator()).start();
                 }
                 mButton.setVisibility(View.GONE);
                 mButtonShape.setVisibility(View.GONE);
