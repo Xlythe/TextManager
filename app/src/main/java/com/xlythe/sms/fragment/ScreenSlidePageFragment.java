@@ -1,25 +1,28 @@
 package com.xlythe.sms.fragment;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.GridView;
-import android.widget.ScrollView;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
 
-import com.xlythe.sms.MessageActivity;
+import com.xlythe.sms.DividerItemDecoration;
 import com.xlythe.sms.R;
-import com.xlythe.sms.ThreadActivity;
-import com.xlythe.sms.adapter.CursorImageAdapter;
+import com.xlythe.sms.adapter.AttachmentAdapter;
+import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
@@ -28,10 +31,20 @@ import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.IOException;
 
-public class ScreenSlidePageFragment extends Fragment {
+public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapter.ViewHolder.ClickListener {
+    private static final String TAG = ScreenSlidePageFragment.class.getSimpleName();
+
+    private int mColor;
+    private Cursor mCursor;
+    private AttachmentAdapter mAdapter;
+    private ViewGroup mContainer;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mContainer = container;
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_screen_slide_page, container, false);
+
+        mColor = getArguments().getInt("color");
 
         String[] projection = {
                 MediaStore.Files.FileColumns._ID,
@@ -57,48 +70,72 @@ public class ScreenSlidePageFragment extends Fragment {
                 MediaStore.Files.FileColumns.DATE_ADDED + " DESC"
         );
 
-        final Cursor c = cursorLoader.loadInBackground();
+        mCursor = cursorLoader.loadInBackground();
+        mAdapter = new AttachmentAdapter(this, getContext(), mCursor, mColor);
 
-        GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
-        gridview.setAdapter(new CursorImageAdapter(getActivity(), c));
+        RecyclerView attachments = (RecyclerView) rootView.findViewById(R.id.attachments);
+        attachments.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        attachments.addItemDecoration(new DividerItemDecoration(getResources().getDrawable(R.drawable.divider_attach)));
+        attachments.setAdapter(mAdapter);
 
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        attachments.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                view.setElevation(16);
-                // THIS IS JUST A QUICK TEST IM GOING TO UNCOMMENT IT!!!
-//                c.moveToPosition(position);
-//                String mediaId = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns._ID));
-//                String data = c.getString(c.getColumnIndex(MediaStore.Files.FileColumns.DATA));
-//                int type = c.getInt(c.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE));
-//                Uri content = MediaStore.Files.getContentUri("external");
-//                Attachment attachment;
-//                Uri uri;
-//                try {
-//                    switch (type) {
-//                        case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-//                            // TODO: must be a bitmap for sending
-//                            // TODO: I probably need to add a to bitmap from uri in image attachment...
-//                            uri = Uri.withAppendedPath(content, mediaId);
-//                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), uri);
-//                            attachment = new ImageAttachment(bitmap);
-//                            break;
-//                        default:
-//                            uri = Uri.parse(data);
-//                            attachment = new VideoAttachment(uri);
-//                            break;
-//                    }
-//                    TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
-//                                    .recipient("2163138473")
-//                                    .attach(attachment)
-//                                    .build()
-//                    );
-//                } catch (IOException ioe) {
-//                    Log.d("photo fragment", "failed to find image: " + mediaId);
-//                }
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState > 0) {
+                    mAdapter.clearSelection();
+                    mAdapter.notifyDataSetChanged();
+                }
             }
         });
 
         return rootView;
+    }
+
+    @Override
+    public void onItemClicked(final int position, ImageView button) {
+        Log.d(TAG, "pressed");
+        if (mAdapter.isSelected(position)) {
+            mAdapter.toggleSelection(position);
+        } else {
+            mAdapter.clearSelection();
+            mAdapter.toggleSelection(position);
+        }
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "send");
+                mCursor.moveToPosition(position);
+                String mediaId = mCursor.getString(mCursor.getColumnIndex(MediaStore.Files.FileColumns._ID));
+                String data = mCursor.getString(mCursor.getColumnIndex(MediaStore.Files.FileColumns.DATA));
+                int type = mCursor.getInt(mCursor.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE));
+                Uri content = MediaStore.Files.getContentUri("external");
+                Attachment attachment;
+                Uri uri;
+                try {
+                    switch (type) {
+                        case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+                            // TODO: must be a bitmap for sending
+                            // TODO: I probably need to add a to bitmap from uri in image attachment...
+                            uri = Uri.withAppendedPath(content, mediaId);
+                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), uri);
+                            attachment = new ImageAttachment(bitmap);
+                            break;
+                        default:
+                            uri = Uri.parse(data);
+                            attachment = new VideoAttachment(uri);
+                            break;
+                    }
+                    TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+                                    .recipient("2163138473")
+                                    .attach(attachment)
+                                    .build()
+                    );
+                } catch (IOException ioe) {
+                    Log.d("photo fragment", "failed to find image: " + mediaId);
+                }
+                mContainer.setVisibility(View.GONE);
+            }
+        });
     }
 }

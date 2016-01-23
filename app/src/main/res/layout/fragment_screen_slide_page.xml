@@ -4,21 +4,25 @@
     android:layout_width="match_parent"
     android:orientation="vertical"
     android:layout_height="match_parent" >
-    <ScrollView
-        android:id="@+id/scroll_view"
+    <!--<ScrollView-->
+        <!--android:id="@+id/scroll_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:padding="8dp"-->
+        <!--android:fillViewport="true">-->
+    <!--<GridView-->
+        <!--android:id="@+id/gridview"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:columnWidth="90dp"-->
+        <!--android:numColumns="auto_fit"-->
+        <!--android:verticalSpacing="8dp"-->
+        <!--android:horizontalSpacing="8dp"-->
+        <!--android:stretchMode="columnWidth"-->
+        <!--android:gravity="center"/>-->
+    <!--</ScrollView>-->
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/attachments"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp"
-        android:fillViewport="true">
-    <GridView
-        android:id="@+id/gridview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:columnWidth="90dp"
-        android:numColumns="auto_fit"
-        android:verticalSpacing="8dp"
-        android:horizontalSpacing="8dp"
-        android:stretchMode="columnWidth"
-        android:gravity="center"/>
-    </ScrollView>
+        android:layout_height="match_parent"/>
 </LinearLayout>

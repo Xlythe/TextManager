@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -106,13 +107,13 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
         upArrow.setColorFilter(getResources().getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
-        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>"+
+        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" +
                 mThread.getLatestMessage().getSender().getDisplayName()
                 + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
-            getWindow().setStatusBarColor(ColorUtils.getDarkColor(Long.parseLong(mThread.getId())));
+            getWindow().setStatusBarColor(ColorUtils.getDarkColor(mThread.getIdAsLong()));
         }
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
@@ -163,7 +164,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         switch (view.getId()){
             case R.id.photo:
-                transaction.replace(R.id.fragment_container, new ScreenSlidePageFragment()).commit();
+                ScreenSlidePageFragment frag = new ScreenSlidePageFragment();
+                Bundle args = new Bundle();
+                args.putInt("color", ColorUtils.getColor(mThread.getIdAsLong()));
+                frag.setArguments(args);
+                transaction.replace(R.id.fragment_container, frag).commit();
                 log("photo");
                 break;
             case R.id.camera:

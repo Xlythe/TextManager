@@ -51,58 +51,58 @@ public class ManagerUtils {
         PendingIntent sentPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
-        // For when the SMS has been sent
-        context.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                ContentValues values = new ContentValues();
-                Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
-                switch (getResultCode()) {
-                    case Activity.RESULT_OK:
-                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-                        Toast.makeText(context, "SMS sent successfully", Toast.LENGTH_SHORT).show();
-                        break;
-                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                        Toast.makeText(context, "Generic failure cause", Toast.LENGTH_SHORT).show();
-                        break;
-                    case SmsManager.RESULT_ERROR_NO_SERVICE:
-                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                        Toast.makeText(context, "Service is currently unavailable", Toast.LENGTH_SHORT).show();
-                        break;
-                    case SmsManager.RESULT_ERROR_NULL_PDU:
-                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                        Toast.makeText(context, "No pdu provided", Toast.LENGTH_SHORT).show();
-                        break;
-                    case SmsManager.RESULT_ERROR_RADIO_OFF:
-                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                        Toast.makeText(context, "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
-                        break;
-                }
-                context.getContentResolver().update(uri, values, null, null);
-                context.unregisterReceiver(this);
-            }
-        }, new IntentFilter(SMS_SENT));
-
-        // For when the SMS has been delivered
-        context.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                switch (getResultCode()) {
-                    case Activity.RESULT_OK:
-                        Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show();
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
-                        break;
-                }
-                context.unregisterReceiver(this);
-            }
-        }, new IntentFilter(SMS_DELIVERED));
-
         String address = text.getRecipient().getNumber();
 
         if (!text.isMms()) {
+            // For when the SMS has been sent
+            context.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    ContentValues values = new ContentValues();
+                    Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
+                    switch (getResultCode()) {
+                        case Activity.RESULT_OK:
+                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+                            Toast.makeText(context, "SMS sent successfully", Toast.LENGTH_SHORT).show();
+                            break;
+                        case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                            Toast.makeText(context, "Generic failure cause", Toast.LENGTH_SHORT).show();
+                            break;
+                        case SmsManager.RESULT_ERROR_NO_SERVICE:
+                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                            Toast.makeText(context, "Service is currently unavailable", Toast.LENGTH_SHORT).show();
+                            break;
+                        case SmsManager.RESULT_ERROR_NULL_PDU:
+                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                            Toast.makeText(context, "No pdu provided", Toast.LENGTH_SHORT).show();
+                            break;
+                        case SmsManager.RESULT_ERROR_RADIO_OFF:
+                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                            Toast.makeText(context, "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                    context.getContentResolver().update(uri, values, null, null);
+                    context.unregisterReceiver(this);
+                }
+            }, new IntentFilter(SMS_SENT));
+
+            // For when the SMS has been delivered
+            context.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    switch (getResultCode()) {
+                        case Activity.RESULT_OK:
+                            Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show();
+                            break;
+                        case Activity.RESULT_CANCELED:
+                            Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                    context.unregisterReceiver(this);
+                }
+            }, new IntentFilter(SMS_DELIVERED));
+
             SmsManager sms = SmsManager.getDefault();
             sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
             ContentValues values = new ContentValues();
