@@ -264,9 +264,6 @@ public class PduPart {
      * Get Content-Location value.
      *
      * @return the value
-     *     return PduPart.disposition[0] instead of <Octet 128> (Form-data).
-     *     return PduPart.disposition[1] instead of <Octet 129> (Attachment).
-     *     return PduPart.disposition[2] instead of <Octet 130> (Inline).
      */
     public byte[] getContentLocation() {
         return (byte[]) mPartHeader.get(P_CONTENT_LOCATION);
@@ -274,9 +271,6 @@ public class PduPart {
 
     /**
      * Set Content-Disposition value.
-     * Use PduPart.disposition[0] instead of <Octet 128> (Form-data).
-     * Use PduPart.disposition[1] instead of <Octet 129> (Attachment).
-     * Use PduPart.disposition[2] instead of <Octet 130> (Inline).
      *
      * @param contentDisposition the value
      * @throws NullPointerException if the value is null.

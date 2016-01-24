@@ -44,10 +44,6 @@ public class Receive {
 
     /**
      * HTTP request to the MMSC database
-     * @param uri
-     * @param context
-     * @return byte array pdu
-     * @throws IOException
      */
     protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);

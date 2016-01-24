@@ -24,7 +24,6 @@ import android.provider.BaseColumns;
 /**
  * The Download Manager
  *
- * @pending
  */
 public final class Downloads {
     private Downloads() {}
@@ -36,7 +35,6 @@ public final class Downloads {
      * content provider.
      * The constants URI ... STATUS are the names of columns in the downloads table.
      *
-     * @hide
      */
     public static final class Impl implements BaseColumns {
         private Impl() {}
@@ -129,15 +127,11 @@ public final class Downloads {
 
         /**
          * The name of the column containing the URI of the data being downloaded.
-         * <P>Type: TEXT</P>
-         * <P>Owner can Init/Read</P>
          */
         public static final String COLUMN_URI = "uri";
 
         /**
          * The name of the column containing application-specific data.
-         * <P>Type: TEXT</P>
-         * <P>Owner can Init/Read/Write</P>
          */
         public static final String COLUMN_APP_DATA = "entity";
 
@@ -149,8 +143,6 @@ public final class Downloads {
          * it can't guarantee that the download has completed (e.g. when doing
          * a byte-range request without an ETag, or when it can't determine
          * whether a download fully completed).
-         * <P>Type: BOOLEAN</P>
-         * <P>Owner can Init</P>
          */
         public static final String COLUMN_NO_INTEGRITY = "no_integrity";
 
@@ -711,14 +703,12 @@ public final class Downloads {
 
         /**
          *
-         * @hide
          * @deprecated since behavior now uses
          *             {@link #STATUS_WAITING_FOR_NETWORK}
          */
         @Deprecated
         public static final int STATUS_BLOCKED = 498;
 
-        /** {@hide} */
         public static String statusToString(int status) {
             switch (status) {
                 case STATUS_PENDING: return "PENDING";

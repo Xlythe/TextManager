@@ -25,7 +25,6 @@ public class CharacterSets {
      * IANA assigned MIB enum numbers.
      *
      * From wap-230-wsp-20010705-a.pdf
-     * Any-charset = <Octet 128>
      * Equivalent to the special RFC2616 charset value "*"
      */
     public static final int ANY_CHARSET = 0x00;

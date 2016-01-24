@@ -825,12 +825,9 @@ public class PduPersister {
     }
     /**
      * This method expects uri in the following format
-     *     content://media/<table_name>/<row_index> (or)
      *     file://sdcard/test.mp4
      *     http://test.com/test.mp4
      *
-     * Here <table_name> shall be "video" or "audio" or "images"
-     * <row_index> the index of the content in given table
      */
     static public String convertUriToPath(Context context, Uri uri) {
         String path = null;
@@ -880,7 +877,6 @@ public class PduPersister {
      *
      * @param uri The PDU which need to be updated.
      * @param sendReq New headers.
-     * @throws MmsException Bad URI or updating failed.
      */
     public void updateHeaders(Uri uri, SendReq sendReq) {
         synchronized(PDU_CACHE_INSTANCE) {
