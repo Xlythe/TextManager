@@ -7,7 +7,7 @@ Our goal is to make sending SMS and MMS easier on the Android OS.
 Download
 --------
 
-Download [the latest JAR][2] or grab via Gradle:
+grab via Gradle:
 ```groovy
 repositories {
   maven {
