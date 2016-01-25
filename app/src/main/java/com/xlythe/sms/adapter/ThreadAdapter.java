@@ -195,6 +195,9 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             mListener = listener;
 
             profile.setOnClickListener(this);
+            if (attachment != null) {
+                attachment.setOnClickListener(this);
+            }
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
         }
@@ -289,6 +292,8 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             if (mListener != null) {
                 if (v instanceof de.hdodenhof.circleimageview.CircleImageView) {
                     mListener.onProfileClicked(getAdapterPosition());
+                } else if (v instanceof RoundedImageView){
+                    mListener.onAttachmentClicked(getAdapterPosition());
                 } else {
                     mListener.onItemClicked(getAdapterPosition());
                 }
@@ -306,6 +311,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
         public interface ClickListener {
             void onProfileClicked(int position);
+            void onAttachmentClicked(int position);
             void onItemClicked(int position);
             boolean onItemLongClicked(int position);
         }

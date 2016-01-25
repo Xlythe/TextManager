@@ -26,6 +26,7 @@ import android.widget.Button;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
+import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
@@ -169,6 +170,17 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
         toggleSelection(position);
+    }
+
+    @Override
+    public void onAttachmentClicked(int position) {
+        mThreads.moveToPosition(position);
+        Text text = mThreads.getThread().getLatestMessage();
+        if (!text.getAttachments().isEmpty()) {
+            Intent i = new Intent(getBaseContext(), MediaActivity.class);
+            i.putExtra(MediaActivity.EXTRA_TEXT, text);
+            startActivity(i);
+        }
     }
 
     @Override

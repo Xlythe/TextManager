@@ -31,7 +31,7 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:textSize="13sp"
-            android:inputType="textAutoCorrect"
+            android:inputType="textAutoCorrect|textCapSentences"
             android:textColorHint="#9e9e9e"
             android:hint="Type a message"
             android:layout_width="match_parent"
