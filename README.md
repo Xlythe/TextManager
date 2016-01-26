@@ -7,12 +7,6 @@ Our goal is to make sending SMS and MMS easier on the Android OS.
 Download
 --------
 ```groovy
-repositories {
-  maven {
-    url 'https://dl.bintray.com/bourdakos1/maven'
-  }
-}
-
 dependencies {
   compile 'com.xlythe:android-text-manager:0.0.1'
 }
