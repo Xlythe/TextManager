@@ -290,12 +290,12 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         @Override
         public void onClick(View v) {
             if (mListener != null) {
-                if (v instanceof de.hdodenhof.circleimageview.CircleImageView) {
+                if (v.equals(profile)) {
                     mListener.onProfileClicked(getAdapterPosition());
-                } else if (v instanceof RoundedImageView){
-                    mListener.onAttachmentClicked(getAdapterPosition());
+                } else if (v.equals(attachment)){
+                    mListener.onAttachmentClicked(getThread());
                 } else {
-                    mListener.onItemClicked(getAdapterPosition());
+                    mListener.onItemClicked(getAdapterPosition(), getThread());
                 }
             }
         }
@@ -311,8 +311,8 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
         public interface ClickListener {
             void onProfileClicked(int position);
-            void onAttachmentClicked(int position);
-            void onItemClicked(int position);
+            void onAttachmentClicked(Thread thread);
+            void onItemClicked(int position, Thread thread);
             boolean onItemLongClicked(int position);
         }
     }

@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         public void notifyDataChanged() {
             mThreads = mManager.getThreadCursor();
             mAdapter.swapCursor(mThreads);
+            mAdapter.increment();
         }
     };
 
@@ -173,9 +174,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onAttachmentClicked(int position) {
-        mThreads.moveToPosition(position);
-        Text text = mThreads.getThread().getLatestMessage();
+    public void onAttachmentClicked(Thread thread) {
+        Text text = thread.getLatestMessage();
         if (!text.getAttachments().isEmpty()) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
             i.putExtra(MediaActivity.EXTRA_TEXT, text);
@@ -184,13 +184,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onItemClicked(int position) {
+    public void onItemClicked(int position, Thread thread) {
         if (mActionMode != null) {
             toggleSelection(position);
         } else {
             Intent i = new Intent(getBaseContext(), MessageActivity.class);
-            mThreads.moveToPosition(position);
-            i.putExtra(MessageActivity.EXTRA_THREAD, mThreads.getThread());
+            i.putExtra(MessageActivity.EXTRA_THREAD, thread);
             startActivity(i);
         }
     }
