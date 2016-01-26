@@ -6,13 +6,13 @@
     android:layout_height="match_parent">
 
     <FrameLayout
+        android:layout_marginTop="4dp"
+        android:layout_marginLeft="48dp"
+        android:layout_marginStart="48dp"
+        android:layout_gravity="start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <com.makeramen.roundedimageview.RoundedImageView
-            android:layout_marginTop="4dp"
-            android:layout_marginLeft="48dp"
-            android:layout_marginStart="48dp"
-            android:layout_gravity="start"
             android:id="@+id/image"
             android:scaleType="centerCrop"
             android:layout_width="240dp"

@@ -13,6 +13,7 @@ import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -23,6 +24,7 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
@@ -62,10 +64,6 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         mClickListener = (ThreadViewHolder.ClickListener) context;
         mContext = context;
         mCursor = cursor;
-    }
-
-    public Cursor getCursor() {
-        return mCursor;
     }
 
     public void destroy() {
@@ -178,6 +176,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         public final TextView message;
         public final TextView date;
         public final RoundedImageView attachment;
+        public final ImageView videoLabel;
         public final CardView card;
         public final de.hdodenhof.circleimageview.CircleImageView profile;
         private ClickListener mListener;
@@ -189,6 +188,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             message = (TextView) view.findViewById(R.id.message);
             date = (TextView) view.findViewById(R.id.date);
             attachment = (RoundedImageView) view.findViewById(R.id.attachment);
+            videoLabel = (ImageView) view.findViewById(R.id.video_label);
             card = (CardView) view.findViewById(R.id.card);
             profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
 
@@ -235,6 +235,11 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             profile.setBackgroundResource(R.drawable.selector);
 
             if (attachment != null && getThread().getLatestMessage().getAttachments().size() > 0) {
+                if (getThread().getLatestMessage().getAttachments().get(0).getType() == Attachment.Type.VIDEO) {
+                    videoLabel.setVisibility(View.VISIBLE);
+                } else {
+                    videoLabel.setVisibility(View.GONE);
+                }
                 Glide.with(getContext())
                         .load(getThread().getLatestMessage().getAttachments().get(0).getUri())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)

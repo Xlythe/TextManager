@@ -78,7 +78,7 @@ public class ProfileDrawable extends Drawable {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), mUri);
                 bitmap = Bitmap.createScaledBitmap(bitmap, (int) px, (int) px, false);
                 mPaint.setColor(Color.WHITE);
-                canvas.drawBitmap(bitmap,0,0,mPaint);
+                canvas.drawBitmap(bitmap, 0, 0, mPaint);
                 return;
             } catch (IOException ioe){
                 Log.d("Profile image","io");
