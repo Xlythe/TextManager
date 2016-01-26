@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         public void notifyDataChanged() {
             mThreads = mManager.getThreadCursor();
             mAdapter.swapCursor(mThreads);
-            mAdapter.increment();
         }
     };
 
@@ -166,11 +165,11 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onProfileClicked(int position) {
+    public void onProfileClicked(Thread thread) {
         if (mActionMode == null) {
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
-        toggleSelection(position);
+        toggleSelection((int) thread.getIdAsLong());
     }
 
     @Override
@@ -184,9 +183,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public void onItemClicked(int position, Thread thread) {
+    public void onItemClicked(Thread thread) {
         if (mActionMode != null) {
-            toggleSelection(position);
+            toggleSelection((int) thread.getIdAsLong());
         } else {
             Intent i = new Intent(getBaseContext(), MessageActivity.class);
             i.putExtra(MessageActivity.EXTRA_THREAD, thread);
@@ -195,11 +194,11 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     }
 
     @Override
-    public boolean onItemLongClicked(int position) {
+    public boolean onItemLongClicked(Thread thread) {
         if (mActionMode == null) {
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
-        toggleSelection(position);
+        toggleSelection((int) thread.getIdAsLong());
         return true;
     }
 

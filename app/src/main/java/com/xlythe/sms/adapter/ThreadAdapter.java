@@ -291,11 +291,11 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         public void onClick(View v) {
             if (mListener != null) {
                 if (v.equals(profile)) {
-                    mListener.onProfileClicked(getAdapterPosition());
+                    mListener.onProfileClicked(getThread());
                 } else if (v.equals(attachment)){
                     mListener.onAttachmentClicked(getThread());
                 } else {
-                    mListener.onItemClicked(getAdapterPosition(), getThread());
+                    mListener.onItemClicked(getThread());
                 }
             }
         }
@@ -303,17 +303,17 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         @Override
         public boolean onLongClick(View v) {
             if (mListener != null) {
-                return mListener.onItemLongClicked(getAdapterPosition());
+                return mListener.onItemLongClicked(getThread());
             }
 
             return false;
         }
 
         public interface ClickListener {
-            void onProfileClicked(int position);
+            void onProfileClicked(Thread thread);
             void onAttachmentClicked(Thread thread);
-            void onItemClicked(int position, Thread thread);
-            boolean onItemLongClicked(int position);
+            void onItemClicked(Thread thread);
+            boolean onItemLongClicked(Thread thread);
         }
     }
 
@@ -324,7 +324,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        boolean isSelected = isSelected(position);
+        boolean isSelected = isSelected((int) getThread(position).getIdAsLong());
         boolean selectMode = selectMode();
 
         holder.setThread(mContext, getThread(position), isSelected, selectMode);

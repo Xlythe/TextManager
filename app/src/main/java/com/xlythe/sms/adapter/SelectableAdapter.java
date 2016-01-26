@@ -31,15 +31,6 @@ public abstract class SelectableAdapter<VH extends RecyclerView.ViewHolder> exte
         mSelectedItems.clear();
     }
 
-    public void increment(){
-        SparseBooleanArray newArray = new SparseBooleanArray();
-        for (int i = 0; i < mSelectedItems.size(); i++) {
-            newArray.put(i+1, mSelectedItems.get(i));
-        }
-        mSelectedItems.clear();
-        mSelectedItems = newArray;
-    }
-
     public int getSelectedItemCount() {
         return mSelectedItems.size();
     }

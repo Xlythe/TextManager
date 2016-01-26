@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -21,6 +22,7 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Text;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -194,10 +196,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     public static class AttachmentViewHolder extends MessageViewHolder {
         private RoundedImageView mImageView;
+        private ImageView mVideoLabel;
 
         public AttachmentViewHolder(View v, ClickListener listener) {
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
+            mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
         }
 
         @Override
@@ -207,6 +211,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         public void setImage() {
+            if (getMessage().getAttachments().get(0).getType() == Attachment.Type.VIDEO){
+                mVideoLabel.setVisibility(View.VISIBLE);
+            } else {
+                mVideoLabel.setVisibility(View.GONE);
+            }
             Glide.with(getContext())
                     .load(getMessage().getAttachments().get(0).getUri())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
