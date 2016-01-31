@@ -115,28 +115,21 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
                 Uri content = MediaStore.Files.getContentUri("external");
                 Attachment attachment;
                 Uri uri;
-                try {
-                    switch (type) {
-                        case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-                            // TODO: must be a bitmap for sending
-                            // TODO: I probably need to add a to bitmap from uri in image attachment...
-                            uri = Uri.withAppendedPath(content, mediaId);
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), uri);
-                            attachment = new ImageAttachment(bitmap);
-                            break;
-                        default:
-                            uri = Uri.parse(data);
-                            attachment = new VideoAttachment(uri);
-                            break;
-                    }
-                    TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
-                                    .recipient(mRecipient)
-                                    .attach(attachment)
-                                    .build()
-                    );
-                } catch (IOException ioe) {
-                    Log.d(TAG, "failed to find image: " + mediaId);
+                switch (type) {
+                    case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+                        uri = Uri.withAppendedPath(content, mediaId);
+                        attachment = new ImageAttachment(uri);
+                        break;
+                    default:
+                        uri = Uri.parse(data);
+                        attachment = new VideoAttachment(uri);
+                        break;
                 }
+                TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+                                .recipient(mRecipient)
+                                .attach(attachment)
+                                .build()
+                );
                 mContainer.setVisibility(View.GONE);
             }
         });

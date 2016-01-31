@@ -14,6 +14,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -113,14 +114,16 @@ public class ManagerUtils {
             values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
             context.getContentResolver().insert(uri, values);
         } else {
-            List<Attachment> attachment = text.getAttachments();
+            List<Attachment> attachments = text.getAttachments();
             // TODO: add intents for mms
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 Log.d(TAG, "API 21: " + android.os.Build.VERSION.SDK_INT);
-                sendMediaMessage(context, address, " ", text.getBody(), attachment, null, null);
+                for(Attachment a: attachments) {
+                    SmsManager.getDefault().sendMultimediaMessage(context, a.getUri(), address, null, null);
+                }
             } else {
                 Log.d(TAG, "LEGACY: " + android.os.Build.VERSION.SDK_INT);
-                sendMediaMessageLegacy(context, address, " ", text.getBody(), attachment, null, null);
+                sendMediaMessageLegacy(context, address, " ", text.getBody(), attachments, null, null);
             }
         }
     }
@@ -168,36 +171,6 @@ public class ManagerUtils {
         }
     }
 
-    public static void sendMediaMessage(final Context context,
-                                        final String address,
-                                        final String subject,
-                                        final String body,
-                                        final List<Attachment> attachments,
-                                        final PendingIntent sentPendingIntent,
-                                        final PendingIntent deliveredPendingIntent) {
-        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkRequest.Builder builder = new NetworkRequest.Builder();
-
-        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
-
-        final NetworkRequest networkRequest = builder.build();
-        new java.lang.Thread(new Runnable() {
-            public void run() {
-                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(Network network) {
-                        super.onAvailable(network);
-                        ConnectivityManager.setProcessDefaultNetwork(network);
-                        sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
-                        connectivityManager.unregisterNetworkCallback(this);
-                    }
-                });
-            }
-        }).start();
-    }
-
     public static void sendData(final Context context,
                          final String address,
                          final String subject,
@@ -211,19 +184,25 @@ public class ManagerUtils {
         MMSPart part;
         for(Attachment a: attachments){
             Attachment.Type type = a.getType();
+            Uri uri = a.getUri();
             switch(type) {
                 case IMAGE:
-                    byte[] imageBytes = bitmapToByteArray(((ImageAttachment) a).getBitmap());
-                    part = new MMSPart();
-                    part.MimeType = "image/jpeg";
-                    part.Name = "image" + i;
-                    part.Data = imageBytes;
-                    data.add(part);
+                    try {
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
+                        byte[] imageBytes = bitmapToByteArray(bitmap);
+                        part = new MMSPart();
+                        part.MimeType = "image/jpeg";
+                        part.Name = "image" + i;
+                        part.Data = imageBytes;
+                        data.add(part);
+                    } catch (IOException ioe) {
+                        Log.d(TAG, "File not found");
+                    }
                     break;
                 case VIDEO:
                     try {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        FileInputStream fis = new FileInputStream(new File(a.getUri().toString()));
+                        FileInputStream fis = new FileInputStream(new File(a.toString()));
                         Log.d("ManagerUtils", a.getUri().getPath() +"");
 
                         byte[] buf = new byte[1024];

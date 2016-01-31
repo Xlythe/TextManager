@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -89,7 +90,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Invalid PUSH data");
                 return null;
             }
-            PduPersister p = PduPersister.getPduPersister(mContext);
+            final PduPersister p = PduPersister.getPduPersister(mContext);
             Uri uri = null;
             try {
                 uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
@@ -121,7 +122,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
                                 PduPart part = body.getPart(i);
                                 byte[] bitmapdata = part.getData();
                                 Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
-                                ImageAttachment image = new ImageAttachment(bitmap);
+
+                                String path = MediaStore.Images.Media.insertImage(mContext.getContentResolver(), bitmap, "temp", null);
+
+                                ImageAttachment image = new ImageAttachment(Uri.parse(path));
                                 try {
                                     onMessageReceived(mContext, new Text.Builder(mContext)
                                             .attach(image)

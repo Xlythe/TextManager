@@ -21,9 +21,10 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         Intent dismissIntent = new Intent(context, MainActivity.class);
         PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
 
+        // TODO: FIX BITMAP SUPPORT
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
-                        .setLargeIcon(((ImageAttachment) text.getAttachments().get(0)).getBitmap())
+                        //.setLargeIcon(((ImageAttachment) text.getAttachments().get(0)).getBitmap())
                         .setSmallIcon(R.drawable.user_icon)
                         .setContentTitle("")
                         .setContentText("")
@@ -37,7 +38,7 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
         NotificationCompat.BigPictureStyle notiStyle = new NotificationCompat.BigPictureStyle();
         notiStyle.setBigContentTitle("");
         notiStyle.setSummaryText("");
-        notiStyle.bigPicture(((ImageAttachment) text.getAttachments().get(0)).getBitmap());
+        //notiStyle.bigPicture(((ImageAttachment) text.getAttachments().get(0)).getBitmap());
         builder.setStyle(notiStyle);
 
         Intent resultIntent = new Intent(context, MainActivity.class);
