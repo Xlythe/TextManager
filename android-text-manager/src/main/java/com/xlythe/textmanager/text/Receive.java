@@ -1,11 +1,15 @@
 package com.xlythe.textmanager.text;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.Telephony;
@@ -48,46 +52,82 @@ public class Receive {
     protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        NetworkRequest.Builder builder = new NetworkRequest.Builder();
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            NetworkRequest.Builder builder = new NetworkRequest.Builder();
 
-        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+            builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+            builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
 
-        final NetworkRequest networkRequest = builder.build();
-        connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network network) {
-                super.onAvailable(network);
-                ConnectivityManager.setProcessDefaultNetwork(network);
-                Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
+            final NetworkRequest networkRequest = builder.build();
+            connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    super.onAvailable(network);
+                    ConnectivityManager.setProcessDefaultNetwork(network);
+                    receive(context, uri, callback);
+                    connectivityManager.unregisterNetworkCallback(this);
+                }
+            });
+        } else {
+            final int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+            if (result != 0) {
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+                BroadcastReceiver receiver = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        String action = intent.getAction();
 
-                String url = "";
-
-                if (cursor != null) {
-                    try {
-                        if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                            url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                        if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                            return;
                         }
-                    } finally {
-                        cursor.close();
+
+                        NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+
+                        if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
+                            return;
+                        }
+
+                        if (mNetworkInfo.isConnected()) {
+                            receive(context, uri, callback);
+                            context.unregisterReceiver(this);
+                        }
                     }
-                }
-                ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-                try {
-                    byte[] data = HttpUtils.httpConnection(
-                            context, -1L,
-                            url, null, HttpUtils.HTTP_GET_METHOD,
-                            apnParameters.isProxySet(),
-                            apnParameters.getProxyAddress(),
-                            apnParameters.getProxyPort());
-                    callback.onSuccess(data);
-                } catch (IOException ioe){
-                    Log.e("MMS","download failed due to network");
-                    callback.onFail();
-                }
-                connectivityManager.unregisterNetworkCallback(this);
+                };
+                context.registerReceiver(receiver, filter);
+            } else {
+                receive(context, uri, callback);
             }
-        });
+        }
+    }
+
+    public static void receive(Context context, Uri uri, DataCallback callback){
+        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
+
+        String url = "";
+
+        if (cursor != null) {
+            try {
+                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
+                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+        try {
+            byte[] data = HttpUtils.httpConnection(
+                    context, -1L,
+                    url, null, HttpUtils.HTTP_GET_METHOD,
+                    apnParameters.isProxySet(),
+                    apnParameters.getProxyAddress(),
+                    apnParameters.getProxyPort());
+            callback.onSuccess(data);
+        } catch (IOException ioe){
+            Log.e("MMS","download failed due to network");
+            callback.onFail();
+        }
     }
 
     public interface DataCallback{
@@ -106,7 +146,7 @@ public class Receive {
 
         // Add everything but the message body
         ContentValues values = extractContentValues(sms);
-        values.put(Telephony.Sms.ERROR_CODE, error);
+        values.put(Mock.Telephony.Sms.ERROR_CODE, error);
 
         // Add the message body
         StringBuilder body = new StringBuilder();
@@ -116,20 +156,20 @@ public class Receive {
                 body.append(sms.getDisplayMessageBody());
             }
         }
-        values.put(Telephony.Sms.Inbox.BODY, replaceFormFeeds(body.toString()));
+        values.put(Mock.Telephony.Sms.Inbox.BODY, replaceFormFeeds(body.toString()));
 
         // Make sure there is a thread id.
-        Long threadId = values.getAsLong(Telephony.Sms.THREAD_ID);
-        String address = values.getAsString(Telephony.Sms.ADDRESS);
+        Long threadId = values.getAsLong(Mock.Telephony.Sms.THREAD_ID);
+        String address = values.getAsString(Mock.Telephony.Sms.ADDRESS);
 
         // If it doesn't exist, create a thread id.
         if(((threadId == null) || (threadId == 0)) && (address != null)) {
             threadId = getOrCreateThreadId(context, address);
-            values.put(Telephony.Sms.THREAD_ID, threadId);
+            values.put(Mock.Telephony.Sms.THREAD_ID, threadId);
         }
 
         // Add to content provider
-        context.getContentResolver().insert(Telephony.Sms.Inbox.CONTENT_URI, values);
+        context.getContentResolver().insert(Mock.Telephony.Sms.Inbox.CONTENT_URI, values);
     }
 
     /**
@@ -148,17 +188,17 @@ public class Receive {
      */
     private static ContentValues extractContentValues(SmsMessage sms) {
         ContentValues values = new ContentValues();
-        values.put(Telephony.Sms.Inbox.ADDRESS, sms.getDisplayOriginatingAddress());
-        values.put(Telephony.Sms.Inbox.DATE, checkDate(sms));
-        values.put(Telephony.Sms.Inbox.DATE_SENT, sms.getTimestampMillis());
-        values.put(Telephony.Sms.Inbox.PROTOCOL, sms.getProtocolIdentifier());
-        values.put(Telephony.Sms.Inbox.READ, 0);
-        values.put(Telephony.Sms.Inbox.SEEN, 0);
+        values.put(Mock.Telephony.Sms.Inbox.ADDRESS, sms.getDisplayOriginatingAddress());
+        values.put(Mock.Telephony.Sms.Inbox.DATE, checkDate(sms));
+        values.put(Mock.Telephony.Sms.Inbox.DATE_SENT, sms.getTimestampMillis());
+        values.put(Mock.Telephony.Sms.Inbox.PROTOCOL, sms.getProtocolIdentifier());
+        values.put(Mock.Telephony.Sms.Inbox.READ, 0);
+        values.put(Mock.Telephony.Sms.Inbox.SEEN, 0);
         if(sms.getPseudoSubject().length() > 0) {
-            values.put(Telephony.Sms.Inbox.SUBJECT, sms.getPseudoSubject());
+            values.put(Mock.Telephony.Sms.Inbox.SUBJECT, sms.getPseudoSubject());
         }
-        values.put(Telephony.Sms.Inbox.REPLY_PATH_PRESENT, sms.isReplyPathPresent() ? 1 : 0);
-        values.put(Telephony.Sms.Inbox.SERVICE_CENTER, sms.getServiceCenterAddress());
+        values.put(Mock.Telephony.Sms.Inbox.REPLY_PATH_PRESENT, sms.isReplyPathPresent() ? 1 : 0);
+        values.put(Mock.Telephony.Sms.Inbox.SERVICE_CENTER, sms.getServiceCenterAddress());
         return values;
     }
 

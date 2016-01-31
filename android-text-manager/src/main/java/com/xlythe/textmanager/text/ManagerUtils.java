@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.telephony.SmsManager;
@@ -114,7 +115,56 @@ public class ManagerUtils {
         } else {
             List<Attachment> attachment = text.getAttachments();
             // TODO: add intents for mms
-            sendMediaMessage(context, address, " ", text.getBody(), attachment, null, null);
+            if (android.os.Build.VERSION.SDK_INT >= 21) {
+                Log.d(TAG, "API 21: " + android.os.Build.VERSION.SDK_INT);
+                sendMediaMessage(context, address, " ", text.getBody(), attachment, null, null);
+            } else {
+                Log.d(TAG, "LEGACY: " + android.os.Build.VERSION.SDK_INT);
+                sendMediaMessageLegacy(context, address, " ", text.getBody(), attachment, null, null);
+            }
+        }
+    }
+
+    public static void sendMediaMessageLegacy(final Context context,
+                                  final String address,
+                                  final String subject,
+                                  final String body,
+                                  final List<Attachment> attachments,
+                                  final PendingIntent sentPendingIntent,
+                                  final PendingIntent deliveredPendingIntent){
+        ConnectivityManager connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+
+        if (result != 0) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    String action = intent.getAction();
+
+                    if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                        return;
+                    }
+
+                    NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+
+                    if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
+                        return;
+                    }
+
+                    if (mNetworkInfo.isConnected()) {
+                        sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+                        context.unregisterReceiver(this);
+                    }
+
+                }
+
+            };
+            context.registerReceiver(receiver, filter);
+        } else {
+            sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
         }
     }
 
@@ -123,8 +173,8 @@ public class ManagerUtils {
                                         final String subject,
                                         final String body,
                                         final List<Attachment> attachments,
-                                        PendingIntent sentPendingIntent,
-                                        PendingIntent deliveredPendingIntent) {
+                                        final PendingIntent sentPendingIntent,
+                                        final PendingIntent deliveredPendingIntent) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkRequest.Builder builder = new NetworkRequest.Builder();
@@ -140,80 +190,90 @@ public class ManagerUtils {
                     public void onAvailable(Network network) {
                         super.onAvailable(network);
                         ConnectivityManager.setProcessDefaultNetwork(network);
-                        ArrayList<MMSPart> data = new ArrayList<>();
-
-                        int i = 0;
-                        MMSPart part;
-                        for(Attachment a: attachments){
-                            Attachment.Type type = a.getType();
-                            switch(type) {
-                                case IMAGE:
-                                    byte[] imageBytes = bitmapToByteArray(((ImageAttachment) a).getBitmap());
-                                    part = new MMSPart();
-                                    part.MimeType = "image/jpeg";
-                                    part.Name = "image" + i;
-                                    part.Data = imageBytes;
-                                    data.add(part);
-                                    break;
-                                case VIDEO:
-                                    try {
-                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                        FileInputStream fis = new FileInputStream(new File(a.getUri().toString()));
-                                        Log.d("ManagerUtils", a.getUri().getPath() +"");
-
-                                        byte[] buf = new byte[1024];
-                                        int n;
-                                        while (-1 != (n = fis.read(buf)))
-                                            baos.write(buf, 0, n);
-
-                                        byte[] videoBytes = baos.toByteArray();
-
-                                        part = new MMSPart();
-                                        part.MimeType = "video/mpeg";
-                                        part.Name = "video" + i;
-                                        part.Data = videoBytes;
-                                        data.add(part);
-                                    } catch (FileNotFoundException fnfe){
-                                        Log.d(TAG,"File not found");
-                                        fnfe.printStackTrace();
-                                    } catch (IOException ioe){
-
-                                    }
-                                    break;
-                                case VOICE:
-                                    //TODO: Voice support
-                                    break;
-                            }
-                            i++;
-                        }
-
-                        if (body != null && !body.isEmpty()) {
-                            // add text to the end of the part and send
-                            part = new MMSPart();
-                            part.Name = "text";
-                            part.MimeType = "text/plain";
-                            part.Data = body.getBytes();
-                            data.add(part);
-                        }
-
-                        byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
-
-                        try {
-                            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-                            HttpUtils.httpConnection(
-                                    context, 4444L,
-                                    apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
-                                    apnParameters.isProxySet(),
-                                    apnParameters.getProxyAddress(),
-                                    apnParameters.getProxyPort());
-                        } catch (IOException e) {
-                            Log.e(TAG, "Failed to connect to the MMS server", e);
-                        }
+                        sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
                         connectivityManager.unregisterNetworkCallback(this);
                     }
                 });
             }
         }).start();
+    }
+
+    public static void sendData(final Context context,
+                         final String address,
+                         final String subject,
+                         final String body,
+                         final List<Attachment> attachments,
+                         PendingIntent sentPendingIntent,
+                         PendingIntent deliveredPendingIntent){
+        ArrayList<MMSPart> data = new ArrayList<>();
+
+        int i = 0;
+        MMSPart part;
+        for(Attachment a: attachments){
+            Attachment.Type type = a.getType();
+            switch(type) {
+                case IMAGE:
+                    byte[] imageBytes = bitmapToByteArray(((ImageAttachment) a).getBitmap());
+                    part = new MMSPart();
+                    part.MimeType = "image/jpeg";
+                    part.Name = "image" + i;
+                    part.Data = imageBytes;
+                    data.add(part);
+                    break;
+                case VIDEO:
+                    try {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        FileInputStream fis = new FileInputStream(new File(a.getUri().toString()));
+                        Log.d("ManagerUtils", a.getUri().getPath() +"");
+
+                        byte[] buf = new byte[1024];
+                        int n;
+                        while (-1 != (n = fis.read(buf)))
+                            baos.write(buf, 0, n);
+
+                        byte[] videoBytes = baos.toByteArray();
+
+                        part = new MMSPart();
+                        part.MimeType = "video/mpeg";
+                        part.Name = "video" + i;
+                        part.Data = videoBytes;
+                        data.add(part);
+                    } catch (FileNotFoundException fnfe){
+                        Log.d(TAG,"File not found");
+                        fnfe.printStackTrace();
+                    } catch (IOException ioe){
+
+                    }
+                    break;
+                case VOICE:
+                    //TODO: Voice support
+                    break;
+            }
+            i++;
+        }
+
+        if (body != null && !body.isEmpty()) {
+            // add text to the end of the part and send
+            part = new MMSPart();
+            part.Name = "text";
+            part.MimeType = "text/plain";
+            part.Data = body.getBytes();
+            data.add(part);
+        }
+
+        byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+
+        try {
+            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+            HttpUtils.httpConnection(
+                    context, 4444L,
+                    apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
+                    apnParameters.isProxySet(),
+                    apnParameters.getProxyAddress(),
+                    apnParameters.getProxyPort());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to connect to the MMS server", e);
+        }
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {

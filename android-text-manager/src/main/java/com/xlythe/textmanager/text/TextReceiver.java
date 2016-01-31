@@ -140,7 +140,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
-                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
                         Log.e("MMS","unable to persist message");
