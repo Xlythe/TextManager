@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -117,12 +118,10 @@ public class ManagerUtils {
             List<Attachment> attachments = text.getAttachments();
             // TODO: add intents for mms
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                Log.d(TAG, "API 21: " + android.os.Build.VERSION.SDK_INT);
                 for(Attachment a: attachments) {
                     SmsManager.getDefault().sendMultimediaMessage(context, a.getUri(), address, null, null);
                 }
             } else {
-                Log.d(TAG, "LEGACY: " + android.os.Build.VERSION.SDK_INT);
                 sendMediaMessageLegacy(context, address, " ", text.getBody(), attachments, null, null);
             }
         }
@@ -240,19 +239,24 @@ public class ManagerUtils {
             data.add(part);
         }
 
-        byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+        final byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
 
-        try {
-            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-            HttpUtils.httpConnection(
-                    context, 4444L,
-                    apnParameters.getMmscUrl(), pdu, HttpUtils.HTTP_POST_METHOD,
-                    apnParameters.isProxySet(),
-                    apnParameters.getProxyAddress(),
-                    apnParameters.getProxyPort());
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to connect to the MMS server", e);
-        }
+        new java.lang.Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+                    HttpUtils.httpConnection(
+                            context,4444L,
+                            apnParameters.getMmscUrl(),pdu,HttpUtils.HTTP_POST_METHOD,
+                            apnParameters.isProxySet(),
+                            apnParameters.getProxyAddress(),
+                            apnParameters.getProxyPort());
+                } catch(IOException e){
+                    Log.e(TAG, "Failed to connect to the MMS server", e);
+                }
+            }
+        }).start();
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {

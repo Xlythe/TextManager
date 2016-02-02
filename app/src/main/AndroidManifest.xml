@@ -36,6 +36,7 @@
             android:permission="android.permission.BROADCAST_SMS" >
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
 
@@ -47,6 +48,7 @@
             android:permission="android.permission.BROADCAST_WAP_PUSH" >
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
 
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>

@@ -23,16 +23,23 @@ import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPart;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
+import com.xlythe.textmanager.text.util.EncodedStringValue;
 
+import java.util.Objects;
+
+import static android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
+import static android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION;
+import static android.provider.Telephony.Sms.Intents.getMessagesFromIntent;
 
 public abstract class TextReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
+        if ((WAP_PUSH_RECEIVED_ACTION.equals(intent.getAction()) || WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()))
+                && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             Log.v(TAG, "Received PUSH Intent: " + intent);
 
             // Hold a wake lock for 5 seconds, enough to give any
@@ -42,27 +49,60 @@ public abstract class TextReceiver extends BroadcastReceiver {
             wl.acquire(5000);
             new ReceivePushTask(context).execute(intent);
         } else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
-            final Bundle bundle = intent.getExtras();
+            SmsMessage[] messages = getMessagesFromIntent(intent);
+            Receive.storeMessage(context, messages, 0);
+            buildNotification(context, intent);
+        } else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
+            buildNotification(context, intent);
+        }
+    }
 
-            if (bundle != null) {
-                final Object[] pdusObj = (Object[]) bundle.get("pdus");
-                SmsMessage[] messages = new SmsMessage[pdusObj.length];
+    public void buildNotification(Context context, Intent intent) {
+        SmsMessage[] messages = getMessagesFromIntent(intent);
+        for (SmsMessage currentMessage : messages) {
+            String number = currentMessage.getDisplayOriginatingAddress();
+            String message = currentMessage.getDisplayMessageBody();
+            onMessageReceived(context, new NotificationText(number, message, null));
+        }
+    }
 
-                for (int i = 0; i < pdusObj.length; i++) {
-                    SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
-
-                    messages[i] = currentMessage;
-
-                    String number = currentMessage.getDisplayOriginatingAddress();
-                    String message = currentMessage.getDisplayMessageBody();
-                    onMessageReceived(context, new Text.Builder(context)
-                            .message(message)
-                            .sender(number)
-                            .build());
-
+    public void buildMmsNotification(Context context, RetrieveConf retrieveConf) {
+        if (retrieveConf != null) {
+            PduBody body = retrieveConf.getBody();
+            EncodedStringValue encodedSender = retrieveConf.getFrom();
+            String sender = encodedSender.toString();
+            if (body != null) {
+                int partsNum = body.getPartsNum();
+                for (int i = 0; i < partsNum; i++) {
+                    PduPart part = body.getPart(i);
+                    byte[] bitmapdata = part.getData();
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
+                    onMessageReceived(context, new NotificationText(sender, "", bitmap));
                 }
-                Receive.storeMessage(context, messages, 0);
             }
+        }
+    }
+
+    public static class NotificationText {
+        private String mSender;
+        private String mMessage;
+        private Bitmap mBitmap;
+        protected NotificationText(String sender, String message, Bitmap bitmap) {
+            mSender = sender;
+            mMessage = message;
+            mBitmap = bitmap;
+        }
+
+        public String getSender() {
+            return mSender;
+        }
+
+        public String getMessage() {
+            return mMessage;
+        }
+
+        public Bitmap getBitmap() {
+            return mBitmap;
         }
     }
 
@@ -75,13 +115,11 @@ public abstract class TextReceiver extends BroadcastReceiver {
         @Override
         protected Void doInBackground(Intent... intents) {
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            final PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
             Intent intent = intents[0];
 
             byte[] pushData = intent.getByteArrayExtra("data");
-            String pd = new String(pushData);
-            Log.d("pushData", pd + "");
 
             final PduParser parser = new PduParser(pushData, true);
             GenericPdu pdu = parser.parse();
@@ -90,77 +128,50 @@ public abstract class TextReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Invalid PUSH data");
                 return null;
             }
-            final PduPersister p = PduPersister.getPduPersister(mContext);
-            Uri uri = null;
+
             try {
-                uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                final PduPersister persister = PduPersister.getPduPersister(mContext);
+                Uri uri;
+                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    uri = persister.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                } else {
+                    uri = Mock.Telephony.Mms.Inbox.CONTENT_URI;
+                }
+                Receive.getPdu(uri, mContext, new Receive.DataCallback() {
+                    @Override
+                    public void onSuccess(byte[] result) {
+                        RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+                        if (android.os.Build.VERSION.SDK_INT >= 19) {
+                            try {
+                                Uri msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+
+                                // Use local time instead of PDU time
+                                ContentValues values = new ContentValues(1);
+                                values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                                mContext.getContentResolver().update(msgUri, values, null, null);
+                            } catch (MmsException e) {
+                                Log.e("MMS", "unable to persist message");
+                                onFail();
+                            }
+                        }
+                        buildMmsNotification(mContext, retrieveConf);
+                        wl.release();
+                    }
+
+                    @Override
+                    public void onFail() {
+                        // this maybe useful
+                        wl.release();
+                    }
+                });
             } catch (MmsException e) {
                 Log.e("Text Receiver","persisting pdu failed");
                 e.printStackTrace();
             }
 
-            Receive.getPdu(uri, mContext, new Receive.DataCallback(){
-                @Override
-                public void onSuccess(byte[] result){
-                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
-                    if (null == retrieveConf) {
-                        Log.d("receiver", "failed");
-                    }
-                    PduBody body;
-                    if (retrieveConf != null) {
-                        body = retrieveConf.getBody();
-                        // Start saving parts if necessary.
-                        if (body != null) {
-                            int partsNum = body.getPartsNum();
-                            if (partsNum > 2) {
-                                // mms
-                            }
-                            for (int i = 0; i < partsNum; i++) {
-                                Log.d("pushData", "before notification");
-                                // Send text over to the notification
-                                // only needs to decode a bitmap because cant show video in notifications
-                                PduPart part = body.getPart(i);
-                                byte[] bitmapdata = part.getData();
-                                Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
-
-                                String path = MediaStore.Images.Media.insertImage(mContext.getContentResolver(), bitmap, "temp", null);
-
-                                ImageAttachment image = new ImageAttachment(Uri.parse(path));
-                                try {
-                                    onMessageReceived(mContext, new Text.Builder(mContext)
-                                            .attach(image)
-                                            .build());
-                                }catch (Exception e) {
-                                    Log.d("Text Receicer", "notifications crashed");
-                                }
-                            }
-                        }
-                    }
-
-                    PduPersister persister = PduPersister.getPduPersister(mContext);
-                    Uri msgUri;
-                    try {
-                        msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-
-                        // Use local time instead of PDU time
-                        ContentValues values = new ContentValues(1);
-                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                        mContext.getContentResolver().update(msgUri, values, null, null);
-                    } catch (MmsException e) {
-                        Log.e("MMS","unable to persist message");
-                        onFail();
-                    }
-                }
-
-                @Override
-                public void onFail(){
-                    // this maybe useful
-                }
-            });
-            wl.release();
             return null;
         }
     }
 
-    public abstract void onMessageReceived(Context context, Text text);
+    public abstract void onMessageReceived(Context context, NotificationText text);
 }

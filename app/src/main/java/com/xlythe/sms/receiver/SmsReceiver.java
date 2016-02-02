@@ -16,15 +16,15 @@ import com.xlythe.textmanager.text.Text;
 public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
-    public void onMessageReceived(Context context, Text text) {
+    public void onMessageReceived(Context context, NotificationText text) {
         Intent dismissIntent = new Intent(context, MainActivity.class);
         PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getSender().getDisplayName())
-                        .setContentText(text.getBody())
+                        .setContentTitle(text.getSender())
+                        .setContentText(text.getMessage())
                         .setAutoCancel(true)
                         .setLights(Color.WHITE, 500, 1500)
                         .setDefaults(Notification.DEFAULT_SOUND)
@@ -34,7 +34,7 @@ public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
         inboxStyle.setBigContentTitle("X new messages");
-        inboxStyle.addLine(text.getBody());
+        inboxStyle.addLine(text.getMessage());
         builder.setStyle(inboxStyle);
 
         Intent resultIntent = new Intent(context, MainActivity.class);

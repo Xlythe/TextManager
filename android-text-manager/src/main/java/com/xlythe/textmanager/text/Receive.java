@@ -94,39 +94,56 @@ public class Receive {
                         }
                     }
                 };
-                context.registerReceiver(receiver, filter);
+                context.getApplicationContext().registerReceiver(receiver, filter);
             } else {
                 receive(context, uri, callback);
             }
         }
     }
 
-    public static void receive(Context context, Uri uri, DataCallback callback){
+    public static void receive(final Context context, Uri uri, final DataCallback callback){
         Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
 
-        String url = "";
+        final String url;
 
         if (cursor != null) {
             try {
                 if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
                     url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                } else if ((cursor.getCount() > 1) && cursor.moveToFirst()) {
+                    Log.d("Receive", "unspecific column");
+                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                } else {
+                    Log.d("Receive", "count is not positive");
+                    url = null;
                 }
             } finally {
                 cursor.close();
             }
+        } else {
+            Log.d("Receive", "no cursor");
+            url = null;
         }
-        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-        try {
-            byte[] data = HttpUtils.httpConnection(
-                    context, -1L,
-                    url, null, HttpUtils.HTTP_GET_METHOD,
-                    apnParameters.isProxySet(),
-                    apnParameters.getProxyAddress(),
-                    apnParameters.getProxyPort());
-            callback.onSuccess(data);
-        } catch (IOException ioe){
-            Log.e("MMS","download failed due to network");
-            callback.onFail();
+
+        if (url != null) {
+            new java.lang.Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+                        byte[] data = HttpUtils.httpConnection(
+                                context, -1L,
+                                url, null, HttpUtils.HTTP_GET_METHOD,
+                                apnParameters.isProxySet(),
+                                apnParameters.getProxyAddress(),
+                                apnParameters.getProxyPort());
+                        callback.onSuccess(data);
+                    } catch (IOException ioe) {
+                        Log.e("MMS", "download failed due to network");
+                        callback.onFail();
+                    }
+                }
+            }).start();
         }
     }
 
