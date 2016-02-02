@@ -40,6 +40,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -134,8 +136,8 @@ public class ManagerUtils {
                                   final List<Attachment> attachments,
                                   final PendingIntent sentPendingIntent,
                                   final PendingIntent deliveredPendingIntent){
-        ConnectivityManager connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+        final ConnectivityManager connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
 
         if (result != 0) {
             IntentFilter filter = new IntentFilter();
@@ -143,7 +145,7 @@ public class ManagerUtils {
             BroadcastReceiver receiver = new BroadcastReceiver() {
 
                 @Override
-                public void onReceive(Context context, Intent intent) {
+                public void onReceive(final Context context, Intent intent) {
                     String action = intent.getAction();
 
                     if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
@@ -157,6 +159,29 @@ public class ManagerUtils {
                     }
 
                     if (mNetworkInfo.isConnected()) {
+                        new java.lang.Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                InetAddress inetAddress;
+                                try {
+                                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+                                    String url = "mms.msg.eng.t-mobile.com/mms/wapenc";
+                                    url = url.replaceAll("https://", "");
+                                    //String url = apnParameters.getMmscUrl();
+                                    inetAddress = InetAddress.getByName(url);
+                                } catch (UnknownHostException e) {
+                                    return;
+                                }
+                                byte[] addrBytes;
+                                int addr;
+                                addrBytes = inetAddress.getAddress();
+                                addr = ((addrBytes[3] & 0xff) << 24)
+                                        | ((addrBytes[2] & 0xff) << 16)
+                                        | ((addrBytes[1] & 0xff) << 8 )
+                                        |  (addrBytes[0] & 0xff);
+                                connectivityManager.requestRouteToHost(ConnectivityManager.TYPE_MOBILE_MMS, addr);
+                            }
+                        });
                         sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
                         context.unregisterReceiver(this);
                     }

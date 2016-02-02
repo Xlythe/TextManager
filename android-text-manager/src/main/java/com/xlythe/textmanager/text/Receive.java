@@ -63,9 +63,15 @@ public class Receive {
                 @Override
                 public void onAvailable(Network network) {
                     super.onAvailable(network);
-                    ConnectivityManager.setProcessDefaultNetwork(network);
-                    receive(context, uri, callback);
-                    connectivityManager.unregisterNetworkCallback(this);
+                    if (android.os.Build.VERSION.SDK_INT >= 21) {
+                        if (android.os.Build.VERSION.SDK_INT >= 23) {
+                            connectivityManager.bindProcessToNetwork(network);
+                        } else if (android.os.Build.VERSION.SDK_INT >= 21) {
+                            ConnectivityManager.setProcessDefaultNetwork(network);
+                        }
+                        receive(context, uri, callback);
+                        connectivityManager.unregisterNetworkCallback(this);
+                    }
                 }
             });
         } else {
