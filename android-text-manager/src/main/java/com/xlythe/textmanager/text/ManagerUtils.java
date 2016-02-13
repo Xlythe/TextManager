@@ -56,7 +56,8 @@ public class ManagerUtils {
         PendingIntent sentPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
-        String address = text.getRecipient().getNumber();
+        // TODO: Deal with this shit...
+        String address = ""; //text.getMembers().getNumber();
 
         if (!text.isMms()) {
             // For when the SMS has been sent

@@ -13,11 +13,13 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
+import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Either an sms or an mms
@@ -32,18 +34,20 @@ public final class Text implements Message, Parcelable {
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
+    private static final long TYPE_SENDER = 137;
 
     private long mId;
     private long mThreadId;
     private long mDate;
     private long mMmsId;
-    private String mAddress;
     private String mBody;
     private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
+    private String mSenderAddress;
     private Contact mSender;
-    private Contact mRecipient;
+    private HashSet<String> mMemberAddresses = new HashSet<>();
+    private HashSet<Contact> mMembers = new HashSet<>();
     private final List<Attachment> mAttachments = new ArrayList<>();
 
     private Text() {}
@@ -61,8 +65,18 @@ public final class Text implements Message, Parcelable {
         } else {
             Log.w("TelephonyProvider", "Unknown Message Type");
         }
-        mSender = TextManager.getInstance(context).lookupContact(mAddress);
-        mRecipient = TextManager.getInstance(context).getSelf();
+        for (String address : mMemberAddresses) {
+            Contact addr = TextManager.getInstance(context).lookupContact(address);
+            if (!addr.equals(TextManager.getInstance(context).getSelf())) {
+                mMembers.add(addr);
+            }
+        }
+        if (isIncoming()) {
+            mSender = TextManager.getInstance(context).lookupContact(mSenderAddress);
+        } else {
+            mSender = TextManager.getInstance(context).getSelf();
+        }
+
     }
 
     private Text(Parcel in) {
@@ -70,13 +84,17 @@ public final class Text implements Message, Parcelable {
         mThreadId = in.readLong();
         mDate = in.readLong();
         mMmsId = in.readLong();
-        mAddress = in.readString();
+        mSenderAddress = in.readString();
         mBody = in.readString();
         mDeviceNumber = in.readString();
         mIncoming = in.readByte() != 0;
         mIsMms = in.readByte() != 0;
         mSender = in.readParcelable(Contact.class.getClassLoader());
-        mRecipient = in.readParcelable(Contact.class.getClassLoader());
+
+        int membersSize = in.readInt();
+        for (int i = 0; i < membersSize; i++) {
+            mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
+        }
 
         int attachmentSize = in.readInt();
         for (int i = 0; i < attachmentSize; i++) {
@@ -112,49 +130,32 @@ public final class Text implements Message, Parcelable {
     }
 
     private void parseSmsMessage(Cursor data) {
+        mIncoming = isIncomingMessage(data, true);
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE));
-        mAddress = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+        mMemberAddresses.add(data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS)));
+        mSenderAddress = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
         mBody = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
-        mIncoming = isIncomingMessage(data, true);
-    }
-
-    private String cleanNumber(String number){
-        String clean = "";
-        for (int i = 0; i < number.length(); i++) {
-            if (Character.isDigit(number.charAt(i))) {
-                clean += number.charAt(i);
-            }
-        }
-        if (clean.length() > 10){
-            clean = clean.substring(clean.length()-10, clean.length());
-        }
-        return clean;
     }
 
     private void parseMmsMessage(Cursor data, Context context) {
+        mIncoming = isIncomingMessage(data, false);
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
-        mIncoming = isIncomingMessage(data, false);
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
         Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
 
         // Query the address information for this message
         Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
-        HashSet<String> recipients = new HashSet<>();
-        while (addr.moveToNext()) {
-            String address = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
 
-            // Don't add our own number to the displayed list
-            mDeviceNumber = cleanNumber(mDeviceNumber);
-            
-            if (mDeviceNumber == null || !address.contains(mDeviceNumber)) {
-                recipients.add(address);
+        while (addr.moveToNext()) {
+            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER){
+                mSenderAddress = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
             }
+            mMemberAddresses.add(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
         }
-        mAddress = TextUtils.join(", ", recipients);
         addr.close();
 
         if (mIsMms) {
@@ -251,8 +252,8 @@ public final class Text implements Message, Parcelable {
     }
 
     @Override
-    public Contact getRecipient() {
-        return mRecipient;
+    public HashSet<Contact> getMembers() {
+        return mMembers;
     }
 
     @Override
@@ -269,13 +270,13 @@ public final class Text implements Message, Parcelable {
                     && Utils.equals(mThreadId, a.mThreadId)
                     && Utils.equals(mDate, a.mDate)
                     && Utils.equals(mMmsId, a.mMmsId)
-                    && Utils.equals(mAddress, a.mAddress)
+                    && Utils.equals(mSenderAddress, a.mSenderAddress)
                     && Utils.equals(mBody, a.mBody)
                     && Utils.equals(mDeviceNumber, a.mDeviceNumber)
                     && Utils.equals(mIncoming, a.mIncoming)
                     && Utils.equals(mIsMms, a.mIsMms)
                     && Utils.equals(mSender, a.mSender)
-                    && Utils.equals(mRecipient, a.mRecipient)
+                    && Utils.equals(mMembers, a.mMembers)
                     && Utils.equals(mAttachments, a.mAttachments);
         }
         return false;
@@ -287,13 +288,13 @@ public final class Text implements Message, Parcelable {
                 + Utils.hashCode(mThreadId)
                 + Utils.hashCode(mDate)
                 + Utils.hashCode(mMmsId)
-                + Utils.hashCode(mAddress)
+                + Utils.hashCode(mSenderAddress)
                 + Utils.hashCode(mBody)
                 + Utils.hashCode(mDeviceNumber)
                 + Utils.hashCode(mIncoming)
                 + Utils.hashCode(mIsMms)
                 + Utils.hashCode(mSender)
-                + Utils.hashCode(mRecipient)
+                + Utils.hashCode(mMembers)
                 + Utils.hashCode(mAttachments);
     }
 
@@ -302,8 +303,8 @@ public final class Text implements Message, Parcelable {
         return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s," +
                         "device_number=%s, incoming=%s, is_mms=%s, sender=%s, recipient=%s," +
                         "attachments=%s}",
-                mId, mThreadId, mDate, mMmsId, mAddress, mBody, mDeviceNumber, mIncoming, mIsMms,
-                mSender, mRecipient, mAttachments);
+                mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mDeviceNumber, mIncoming, mIsMms,
+                mSender, mMembers, mAttachments);
     }
 
     @Override
@@ -317,13 +318,16 @@ public final class Text implements Message, Parcelable {
         out.writeLong(mThreadId);
         out.writeLong(mDate);
         out.writeLong(mMmsId);
-        out.writeString(mAddress);
+        out.writeString(mSenderAddress);
         out.writeString(mBody);
         out.writeString(mDeviceNumber);
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeParcelable(mSender, Utils.describeContents(mSender));
-        out.writeParcelable(mRecipient, Utils.describeContents(mRecipient));
+        out.writeInt(mMembers.size());
+        for (Contact member : mMembers){
+            out.writeParcelable(member, flags);
+        }
         out.writeInt(mAttachments.size());
         for (int i = 0; i < mAttachments.size(); i++){
             out.writeInt(mAttachments.get(i).getType().ordinal());
@@ -358,29 +362,18 @@ public final class Text implements Message, Parcelable {
         private final Context mContext;
         private String mMessage;
         private Contact mSender;
-        private Contact mRecipient;
-        private String mAddress;
+        private HashSet<Contact> mRecipients = new HashSet<>();
         private final List<Attachment> mAttachments = new ArrayList<>();
 
         public Builder(Context context) {
             mContext = context;
         }
 
-        Builder sender(String address) {
-            mSender = TextManager.getInstance(mContext).lookupContact(address);
-            return this;
-        }
-
         public Builder recipient(String address) {
-            mAddress = address;
-            mRecipient = TextManager.getInstance(mContext).lookupContact(address);
+            mRecipients.add(TextManager.getInstance(mContext).lookupContact(address));
+            mSender = TextManager.getInstance(mContext).getSelf();
             return this;
         }
-
-//        public Builder recipient(Contact recipient) {
-//            mRecipient = recipient;
-//            return this;
-//        }
 
         public Builder attach(Attachment attachment) {
             mAttachments.add(attachment);
@@ -395,9 +388,8 @@ public final class Text implements Message, Parcelable {
         public Text build() {
             Text text = new Text();
             text.mBody = mMessage;
-            text.mAddress = mAddress;
             text.mSender = mSender;
-            text.mRecipient = mRecipient;
+            text.mMembers.addAll(mRecipients);
             if (mAttachments.size() > 0) {
                 text.mIsMms = true;
                 text.mAttachments.addAll(mAttachments);
