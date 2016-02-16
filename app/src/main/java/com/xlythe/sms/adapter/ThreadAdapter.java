@@ -353,7 +353,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
     @Override
     public int getItemViewType(int position) {
-        if (getThread(position).getLatestMessage().isMms()) {
+        if (!getThread(position).getLatestMessage().getAttachments().isEmpty()) {
             return TYPE_ATTACHMENT;
         }
         return TYPE_TEXT;

@@ -67,7 +67,7 @@ public final class Text implements Message, Parcelable {
         }
         for (String address : mMemberAddresses) {
             Contact addr = TextManager.getInstance(context).lookupContact(address);
-            if (!addr.equals(TextManager.getInstance(context).getSelf())) {
+            if (!equal(addr.getNumber(), TextManager.getInstance(context).getSelf().getNumber())) {
                 mMembers.add(addr);
             }
         }
@@ -76,7 +76,23 @@ public final class Text implements Message, Parcelable {
         } else {
             mSender = TextManager.getInstance(context).getSelf();
         }
+    }
 
+    public boolean equal(String number1, String number2) {
+        return number1.length() >= 10
+                && number2.length() >= 10
+                &&(normalizeNumber(number1).contains(number2)
+                || normalizeNumber(number2).contains(number1));
+    }
+
+    public String normalizeNumber(String number) {
+        String clean = "";
+        for (char c: number.toCharArray()) {
+            if (Character.isDigit(c)){
+                clean += c;
+            }
+        }
+        return clean;
     }
 
     private Text(Parcel in) {

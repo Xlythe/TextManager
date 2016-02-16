@@ -57,9 +57,6 @@ public class ManagerUtils {
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
         String address = "";
-        if (text.getMembers().size() == 1) {
-            address = text.getMembers().iterator().next().getNumber();
-        }
 
         if (!text.isMms()) {
             // For when the SMS has been sent
@@ -112,6 +109,7 @@ public class ManagerUtils {
             }, new IntentFilter(SMS_DELIVERED));
 
             SmsManager sms = SmsManager.getDefault();
+            address = text.getMembers().iterator().next().getNumber();
             sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
@@ -122,17 +120,14 @@ public class ManagerUtils {
         } else {
             List<Attachment> attachments = text.getAttachments();
             // TODO: add intents for mms
-            if (text.getMembers().size() > 1) {
-                boolean isFirst = true;
-                for (Contact member : text.getMembers()) {
-                    if (!isFirst) {
-                        address += " ";
-                    }
-                    isFirst = false;
-                    address += member.getNumber();
+            boolean isFirst = true;
+            for (Contact member : text.getMembers()) {
+                if (!isFirst) {
+                    address += " ";
                 }
+                isFirst = false;
+                address += member.getNumber();
             }
-
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), attachments, null, null);
 //                for(Attachment a: attachments) {
