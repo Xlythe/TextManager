@@ -318,6 +318,8 @@ public final class Text implements Message, Parcelable {
         out.writeLong(mThreadId);
         out.writeLong(mDate);
         out.writeLong(mMmsId);
+        // TODO: can probably remove the string addresses
+        // Should probably not even be a global variable
         out.writeString(mSenderAddress);
         out.writeString(mBody);
         out.writeString(mDeviceNumber);
@@ -375,6 +377,11 @@ public final class Text implements Message, Parcelable {
             return this;
         }
 
+        public Builder recipient(Set<Contact> addresses) {
+            mRecipients.addAll(addresses);
+            return this;
+        }
+
         public Builder attach(Attachment attachment) {
             mAttachments.add(attachment);
             return this;
@@ -390,6 +397,12 @@ public final class Text implements Message, Parcelable {
             text.mBody = mMessage;
             text.mSender = mSender;
             text.mMembers.addAll(mRecipients);
+            if (mRecipients.size() > 1) {
+                text.mIsMms = true;
+                text.mMembers.addAll(mRecipients);
+            } else {
+                text.mMembers.addAll(mRecipients);
+            }
             if (mAttachments.size() > 0) {
                 text.mIsMms = true;
                 text.mAttachments.addAll(mAttachments);

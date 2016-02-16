@@ -36,6 +36,7 @@ import com.xlythe.sms.fragment.ScreenSlidePageFragment;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
@@ -109,7 +110,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             public void onClick(View v) {
                 mManager.send(new Text.Builder(getBaseContext())
                                 .message(mEditText.getText().toString())
-                                .recipient(mThread.getLatestMessage().getSender().getNumber())
+                                .recipient(mThread.getLatestMessage().getMembers())
                                 .build()
                 );
                 mEditText.setText("");
@@ -163,9 +164,17 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
         upArrow.setColorFilter(getResources().getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
-        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" +
-                mThread.getLatestMessage().getSender().getDisplayName()
-                + " </font>"));
+
+        String name = "";
+        boolean isFalse = true;
+        for (Contact member: mThread.getLatestMessage().getMembers()) {
+            if (!isFalse){
+                name += ", ";
+            }
+            isFalse = false;
+            name += member.getDisplayName();
+        }
+        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" + name + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
@@ -233,7 +242,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 Bundle args = new Bundle();
                 // TODO: just send the whole thread or text?
                 args.putInt("color", color);
-                args.putString("recipient", mThread.getLatestMessage().getSender().getNumber());
+                args.putString("recipient", mThread.getLatestMessage().getMembers().iterator().next().getNumber());
                 frag.setArguments(args);
                 transaction.replace(R.id.fragment_container, frag).commit();
                 log("photo");

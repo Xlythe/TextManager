@@ -6,8 +6,10 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -24,10 +26,14 @@ import com.xlythe.sms.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
+import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.text.Attachment;
+import com.xlythe.textmanager.text.Contact;
+import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -216,11 +222,21 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
-            if (getThread().getLatestMessage() != null) {
-                body = getThread().getLatestMessage().getBody();
-                time = DateFormatter.getFormattedDate(getThread().getLatestMessage());
-                address = getThread().getLatestMessage().getSender().getDisplayName()+"";
-                uri = getThread().getLatestMessage().getSender().getPhotoUri();
+            Text latest = getThread().getLatestMessage();
+
+            if (latest != null) {
+                body = latest.getBody();
+                time = DateFormatter.getFormattedDate(latest);
+                boolean isFirst = true;
+                for (Contact member: latest.getMembers()) {
+                    // TODO: Fix icon for group messaging
+                    if (!isFirst) {
+                        address += ", ";
+                    }
+                    isFirst = false;
+                    address += member.getDisplayName();
+                    uri = member.getPhotoUri();
+                }
                 if (!getThread().hasLoadedUnreadCount()) {
                     unreadCount = getThread().getUnreadCount(getContext());
                 } else {
@@ -234,14 +250,14 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             date.setText(time);
             profile.setBackgroundResource(R.drawable.selector);
 
-            if (attachment != null && getThread().getLatestMessage().getAttachments().size() > 0) {
-                if (getThread().getLatestMessage().getAttachments().get(0).getType() == Attachment.Type.VIDEO) {
+            if (attachment != null && latest.getAttachments().size() > 0) {
+                if (latest.getAttachments().get(0).getType() == Attachment.Type.VIDEO) {
                     videoLabel.setVisibility(View.VISIBLE);
                 } else {
                     videoLabel.setVisibility(View.GONE);
                 }
                 Glide.with(getContext())
-                        .load(getThread().getLatestMessage().getAttachments().get(0).getUri())
+                        .load(latest.getAttachments().get(0).getUri())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .dontAnimate()
                         .placeholder(R.color.loading)

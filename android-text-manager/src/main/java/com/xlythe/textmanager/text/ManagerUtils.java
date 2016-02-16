@@ -56,8 +56,10 @@ public class ManagerUtils {
         PendingIntent sentPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
-        // TODO: Deal with this shit...
-        String address = ""; //text.getMembers().getNumber();
+        String address = "";
+        if (text.getMembers().size() == 1) {
+            address = text.getMembers().iterator().next().getNumber();
+        }
 
         if (!text.isMms()) {
             // For when the SMS has been sent
@@ -120,14 +122,56 @@ public class ManagerUtils {
         } else {
             List<Attachment> attachments = text.getAttachments();
             // TODO: add intents for mms
-            if (android.os.Build.VERSION.SDK_INT >= 21) {
-                for(Attachment a: attachments) {
-                    SmsManager.getDefault().sendMultimediaMessage(context, a.getUri(), address, null, null);
+            if (text.getMembers().size() > 1) {
+                boolean isFirst = true;
+                for (Contact member : text.getMembers()) {
+                    if (!isFirst) {
+                        address += " ";
+                    }
+                    isFirst = false;
+                    address += member.getNumber();
                 }
+            }
+
+            if (android.os.Build.VERSION.SDK_INT >= 21) {
+                sendMediaMessage(context, address, " ", text.getBody(), attachments, null, null);
+//                for(Attachment a: attachments) {
+//                    SmsManager.getDefault().sendMultimediaMessage(context, a.getUri(), address, null, null);
+//                }
             } else {
                 sendMediaMessageLegacy(context, address, " ", text.getBody(), attachments, null, null);
             }
         }
+    }
+
+    public static void sendMediaMessage(final Context context,
+                                              final String address,
+                                              final String subject,
+                                              final String body,
+                                              final List<Attachment> attachments,
+                                              final PendingIntent sentPendingIntent,
+                                              final PendingIntent deliveredPendingIntent) {
+        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkRequest.Builder builder = new NetworkRequest.Builder();
+
+        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+
+        final NetworkRequest networkRequest = builder.build();
+        new java.lang.Thread(new Runnable() {
+            public void run() {
+                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        ConnectivityManager.setProcessDefaultNetwork(network);
+                        sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+                        connectivityManager.unregisterNetworkCallback(this);
+                    }
+                });
+            }
+        }).start();
     }
 
     public static void sendMediaMessageLegacy(final Context context,
@@ -294,22 +338,17 @@ public class ManagerUtils {
 
         final byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
 
-        new java.lang.Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-                    HttpUtils.httpConnection(
-                            context,4444L,
-                            apnParameters.getMmscUrl(),pdu,HttpUtils.HTTP_POST_METHOD,
-                            apnParameters.isProxySet(),
-                            apnParameters.getProxyAddress(),
-                            apnParameters.getProxyPort());
-                } catch(IOException e){
-                    Log.e(TAG, "Failed to connect to the MMS server", e);
-                }
-            }
-        }).start();
+        try {
+            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+            HttpUtils.httpConnection(
+                    context,4444L,
+                    apnParameters.getMmscUrl(),pdu,HttpUtils.HTTP_POST_METHOD,
+                    apnParameters.isProxySet(),
+                    apnParameters.getProxyAddress(),
+                    apnParameters.getProxyPort());
+        } catch(IOException e){
+            Log.e(TAG, "Failed to connect to the MMS server", e);
+        }
     }
 
     public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
