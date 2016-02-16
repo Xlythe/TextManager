@@ -44,13 +44,10 @@ public class Receive {
             Mock.Telephony.Mms.LOCKED
     };
 
-    private static final int COLUMN_CONTENT_LOCATION = 0;
-
     /**
      * HTTP request to the MMSC database
      */
-    protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
-        Log.e("TAG", "Start a data connection");
+    protected static void getPdu(final String uri, final Context context, final DataCallback callback) {
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkRequest.Builder builder = new NetworkRequest.Builder();
@@ -63,7 +60,6 @@ public class Receive {
         new java.lang.Thread(new Runnable() {
             @Override
             public void run() {
-                Log.e("TAG", "Connected");
                 connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(Network network) {
@@ -77,27 +73,12 @@ public class Receive {
         }).start();
     }
 
-    public static void receive(final Context context, Uri uri, final DataCallback callback){
-        Log.e("TAG", "Receiving");
-        Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
-
-        String url = "";
-
-        if (cursor != null) {
-            try {
-                if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                }
-            } finally {
-                cursor.close();
-            }
-        }
+    public static void receive(final Context context, String uri, final DataCallback callback){
         ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
         try {
-            Log.e("TAG", "downloading");
             byte[] data = HttpUtils.httpConnection(
                     context, -1L,
-                    url, null, HttpUtils.HTTP_GET_METHOD,
+                    uri, null, HttpUtils.HTTP_GET_METHOD,
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());

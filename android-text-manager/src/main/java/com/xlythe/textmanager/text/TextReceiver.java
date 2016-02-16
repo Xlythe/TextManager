@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.exception.MmsException;
+import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.util.ContentType;
 import com.xlythe.textmanager.text.pdu.GenericPdu;
 import com.xlythe.textmanager.text.pdu.PduBody;
@@ -123,23 +125,18 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Log.d("pushData", pd + "");
 
             final PduParser parser = new PduParser(pushData, true);
-            GenericPdu pdu = parser.parse();
+            final GenericPdu pdu = parser.parse();
+            NotificationInd notif = (NotificationInd) pdu;
 
             if (pdu == null) {
                 Log.e(TAG, "Invalid PUSH data");
                 return null;
             }
-            PduPersister p = PduPersister.getPduPersister(mContext);
-            Uri uri = null;
-            try {
-                uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-            } catch (MmsException e) {
-                Log.e(TAG, "persisting pdu failed");
-                e.printStackTrace();
-            }
 
-            Log.e(TAG, "About to receive");
-            Receive.getPdu(uri, mContext, new Receive.DataCallback() {
+            byte[] location = notif.getContentLocation();
+            String loc = new String (location);
+            Log.d(TAG, "Content location: " + loc);
+            Receive.getPdu(loc, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
                     Log.e(TAG, "Download Success");
@@ -158,12 +155,17 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         onFail();
                     }
                     buildMmsNotification(mContext, retrieveConf);
-
                 }
 
                 @Override
                 public void onFail() {
-                    // this maybe useful
+                    PduPersister p = PduPersister.getPduPersister(mContext);
+                    try {
+                        p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                    } catch (MmsException e) {
+                        Log.e(TAG, "persisting pdu failed");
+                        e.printStackTrace();
+                    }
                 }
             });
             wl.release();

@@ -1205,7 +1205,6 @@ public class PduPersister {
                     // we have to ignore it in loadRecipients.
                     if (groupMmsEnabled) {
                         loadRecipients(PduHeaders.TO, recipients, addressMap, true);
-
                         // Also load any numbers in the CC field to address group messaging
                         // compatibility issues with devices that place numbers in this field
                         // for group messages.

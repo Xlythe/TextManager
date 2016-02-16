@@ -242,6 +242,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 Bundle args = new Bundle();
                 // TODO: just send the whole thread or text?
                 args.putInt("color", color);
+                args.putParcelable("message", mThread.getLatestMessage());
                 args.putString("recipient", mThread.getLatestMessage().getMembers().iterator().next().getNumber());
                 frag.setArguments(args);
                 transaction.replace(R.id.fragment_container, frag).commit();

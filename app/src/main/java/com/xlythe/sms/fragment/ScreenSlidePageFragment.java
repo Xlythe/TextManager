@@ -38,6 +38,7 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
     private int mColor;
     private Cursor mCursor;
     private String mRecipient;
+    private Text mText;
     private AttachmentAdapter mAdapter;
     private ViewGroup mContainer;
 
@@ -47,6 +48,7 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_screen_slide_page, container, false);
 
         mColor = getArguments().getInt("color");
+        mText = getArguments().getParcelable("message");
         mRecipient = getArguments().getString("recipient");
 
         String[] projection = {
@@ -126,7 +128,7 @@ public class ScreenSlidePageFragment extends Fragment implements AttachmentAdapt
                         break;
                 }
                 TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
-                                .recipient(mRecipient)
+                                .recipient(mText.getMembers())
                                 .attach(attachment)
                                 .build()
                 );

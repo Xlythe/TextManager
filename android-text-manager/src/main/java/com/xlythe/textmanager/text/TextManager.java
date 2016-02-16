@@ -35,6 +35,7 @@ import java.util.Set;
 public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = false;
+    private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
@@ -79,7 +80,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
             final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId());
-            Receive.getPdu(uri, mContext, new Receive.DataCallback() {
+            Cursor cursor = mContext.getContentResolver().query(uri, PROJECTION, null, null, null);
+            String url = "";
+
+            if (cursor != null) {
+                try {
+                    if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
+                        url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+            Receive.getPdu(url, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
                     RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
