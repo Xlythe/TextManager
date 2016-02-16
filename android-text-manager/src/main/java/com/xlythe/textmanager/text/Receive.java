@@ -50,106 +50,61 @@ public class Receive {
      * HTTP request to the MMSC database
      */
     protected static void getPdu(final Uri uri, final Context context, final DataCallback callback) {
+        Log.e("TAG", "Start a data connection");
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
-            NetworkRequest.Builder builder = new NetworkRequest.Builder();
+        NetworkRequest.Builder builder = new NetworkRequest.Builder();
 
-            builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-            builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
+        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
 
-            final NetworkRequest networkRequest = builder.build();
-            connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                @Override
-                public void onAvailable(Network network) {
-                    super.onAvailable(network);
-                    if (android.os.Build.VERSION.SDK_INT >= 21) {
-                        if (android.os.Build.VERSION.SDK_INT >= 23) {
-                            connectivityManager.bindProcessToNetwork(network);
-                        } else if (android.os.Build.VERSION.SDK_INT >= 21) {
-                            ConnectivityManager.setProcessDefaultNetwork(network);
-                        }
+        final NetworkRequest networkRequest = builder.build();
+
+        new java.lang.Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.e("TAG", "Connected");
+                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        ConnectivityManager.setProcessDefaultNetwork(network);
                         receive(context, uri, callback);
                         connectivityManager.unregisterNetworkCallback(this);
                     }
-                }
-            });
-        } else {
-            final int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
-            if (result != 0) {
-                IntentFilter filter = new IntentFilter();
-                filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-                BroadcastReceiver receiver = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        String action = intent.getAction();
-
-                        if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                            return;
-                        }
-
-                        NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-
-                        if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
-                            return;
-                        }
-
-                        if (mNetworkInfo.isConnected()) {
-                            receive(context, uri, callback);
-                            context.unregisterReceiver(this);
-                        }
-                    }
-                };
-                context.getApplicationContext().registerReceiver(receiver, filter);
-            } else {
-                receive(context, uri, callback);
+                });
             }
-        }
+        }).start();
     }
 
     public static void receive(final Context context, Uri uri, final DataCallback callback){
+        Log.e("TAG", "Receiving");
         Cursor cursor = context.getContentResolver().query(uri, PROJECTION, null, null, null);
 
-        final String url;
+        String url = "";
 
         if (cursor != null) {
             try {
                 if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
                     url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                } else if ((cursor.getCount() > 1) && cursor.moveToFirst()) {
-                    Log.d("Receive", "unspecific column");
-                    url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                } else {
-                    Log.d("Receive", "count is not positive");
-                    url = null;
                 }
             } finally {
                 cursor.close();
             }
-        } else {
-            Log.d("Receive", "no cursor");
-            url = null;
         }
-
-        if (url != null) {
-            new java.lang.Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-                        byte[] data = HttpUtils.httpConnection(
-                                context, -1L,
-                                url, null, HttpUtils.HTTP_GET_METHOD,
-                                apnParameters.isProxySet(),
-                                apnParameters.getProxyAddress(),
-                                apnParameters.getProxyPort());
-                        callback.onSuccess(data);
-                    } catch (IOException ioe) {
-                        Log.e("MMS", "download failed due to network");
-                        callback.onFail();
-                    }
-                }
-            }).start();
+        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+        try {
+            Log.e("TAG", "downloading");
+            byte[] data = HttpUtils.httpConnection(
+                    context, -1L,
+                    url, null, HttpUtils.HTTP_GET_METHOD,
+                    apnParameters.isProxySet(),
+                    apnParameters.getProxyAddress(),
+                    apnParameters.getProxyPort());
+            callback.onSuccess(data);
+        } catch (IOException ioe){
+            Log.e("MMS","download failed due to network");
+            callback.onFail();
         }
     }
 

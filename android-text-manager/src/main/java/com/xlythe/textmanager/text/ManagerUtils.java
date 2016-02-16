@@ -130,11 +130,6 @@ public class ManagerUtils {
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), attachments, null, null);
-//                for(Attachment a: attachments) {
-//                    SmsManager.getDefault().sendMultimediaMessage(context, a.getUri(), address, null, null);
-//                }
-            } else {
-                sendMediaMessageLegacy(context, address, " ", text.getBody(), attachments, null, null);
             }
         }
     }
@@ -165,99 +160,6 @@ public class ManagerUtils {
                         connectivityManager.unregisterNetworkCallback(this);
                     }
                 });
-            }
-        }).start();
-    }
-
-    public static void sendMediaMessageLegacy(final Context context,
-                                  final String address,
-                                  final String subject,
-                                  final String body,
-                                  final List<Attachment> attachments,
-                                  final PendingIntent sentPendingIntent,
-                                  final PendingIntent deliveredPendingIntent){
-        // Let's try every type
-//        final ConnectivityManager connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-//        int result = -1;
-//        int[] apnTypes = new int[] {ConnectivityManager.TYPE_MOBILE, ConnectivityManager.TYPE_MOBILE_MMS, ConnectivityManager.TYPE_MOBILE_DUN, ConnectivityManager.TYPE_MOBILE_HIPRI, ConnectivityManager.TYPE_MOBILE_SUPL};
-//        for (int i=0; i<apnTypes.length; i++) {
-//            result = connectivityManager.startUsingNetworkFeature(apnTypes[i], "enableMMS");
-//            Log.v(TAG, "beginMmsConnectivity: result=" + result);
-//        }
-
-        final ConnectivityManager connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        context.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(final Context context, Intent intent) {
-                Log.d("ManagerUtils", "on receive");
-                String action = intent.getAction();
-
-                if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                    return;
-                }
-
-                NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-
-                if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
-                    return;
-                }
-
-                if (mNetworkInfo.isConnected()) {
-                    Log.d("ManagerUtils", "is connected: " + mNetworkInfo.getType());
-                    ManagerUtils.ensureRouteToHost(context);
-                    sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
-                    context.unregisterReceiver(this);
-                }
-            }
-        }, filter);
-        if (connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS") == 0) {
-            Log.d("ManagerUtils", "was already connected");
-            sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
-        }
-    }
-
-    public static void ensureRouteToHost(final Context context) {
-        new java.lang.Thread(new Runnable() {
-            @Override
-            public void run() {
-                ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                ApnDefaults.ApnParameters settings = ApnDefaults.getApnParameters(context);
-                InetAddress inetAddr;
-                if (settings.isProxySet()) {
-                    String proxyAddr = settings.getProxyAddress();
-                    try {
-                        inetAddr = InetAddress.getByName(proxyAddr);
-                    } catch (UnknownHostException e) {
-                        Log.d("ManagerUtils", "Cannot establish route for " + settings.getMmscUrl() + ": Unknown proxy " + proxyAddr);
-                        return;
-                    }
-                    int val = 0;
-                    for (int i = 0; i < inetAddr.getAddress().length; i++) {
-                        val <<= 8;
-                        val |= inetAddr.getAddress()[i] & 0xff;
-                    }
-                    if (!connMgr.requestRouteToHost(ConnectivityManager.TYPE_MOBILE, val)) {
-                        Log.d("ManagerUtils", "Cannot establish route to proxy " + inetAddr);
-                    }
-                } else {
-                    Uri uri = Uri.parse(settings.getMmscUrl());
-                    try {
-                        inetAddr = InetAddress.getByName(uri.getHost());
-                    } catch (UnknownHostException e) {
-                        Log.d("ManagerUtils", "Cannot establish route for " + settings.getMmscUrl() + ": Unknown host");
-                        return;
-                    }
-                    int val = 0;
-                    for (int i = 0; i < inetAddr.getAddress().length; i++) {
-                        val <<= 8;
-                        val |= inetAddr.getAddress()[i] & 0xff;
-                    }
-                    if (!connMgr.requestRouteToHost(ConnectivityManager.TYPE_MOBILE, val)) {
-                        Log.d("ManagerUtils", "Cannot establish route to " + inetAddr + " for " + settings.getMmscUrl());
-                    }
-                }
             }
         }).start();
     }

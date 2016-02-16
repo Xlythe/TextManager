@@ -38,8 +38,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if ((WAP_PUSH_RECEIVED_ACTION.equals(intent.getAction()) || WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()))
-                && ContentType.MMS_MESSAGE.equals(intent.getType())) {
+        if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             Log.v(TAG, "Received PUSH Intent: " + intent);
 
             // Hold a wake lock for 5 seconds, enough to give any
@@ -120,6 +119,8 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Intent intent = intents[0];
 
             byte[] pushData = intent.getByteArrayExtra("data");
+            String pd = new String(pushData);
+            Log.d("pushData", pd + "");
 
             final PduParser parser = new PduParser(pushData, true);
             GenericPdu pdu = parser.parse();
@@ -128,47 +129,44 @@ public abstract class TextReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Invalid PUSH data");
                 return null;
             }
-
+            PduPersister p = PduPersister.getPduPersister(mContext);
+            Uri uri = null;
             try {
-                final PduPersister persister = PduPersister.getPduPersister(mContext);
-                Uri uri;
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
-                    uri = persister.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-                } else {
-                    uri = Mock.Telephony.Mms.Inbox.CONTENT_URI;
-                }
-                Receive.getPdu(uri, mContext, new Receive.DataCallback() {
-                    @Override
-                    public void onSuccess(byte[] result) {
-                        RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
-                        if (android.os.Build.VERSION.SDK_INT >= 19) {
-                            try {
-                                Uri msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-
-                                // Use local time instead of PDU time
-                                ContentValues values = new ContentValues(1);
-                                values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                                mContext.getContentResolver().update(msgUri, values, null, null);
-                            } catch (MmsException e) {
-                                Log.e("MMS", "unable to persist message");
-                                onFail();
-                            }
-                        }
-                        buildMmsNotification(mContext, retrieveConf);
-                        wl.release();
-                    }
-
-                    @Override
-                    public void onFail() {
-                        // this maybe useful
-                        wl.release();
-                    }
-                });
+                uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
             } catch (MmsException e) {
-                Log.e("Text Receiver","persisting pdu failed");
+                Log.e(TAG, "persisting pdu failed");
                 e.printStackTrace();
             }
 
+            Log.e(TAG, "About to receive");
+            Receive.getPdu(uri, mContext, new Receive.DataCallback() {
+                @Override
+                public void onSuccess(byte[] result) {
+                    Log.e(TAG, "Download Success");
+                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+                    PduPersister persister = PduPersister.getPduPersister(mContext);
+                    Uri msgUri;
+                    try {
+                        msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+
+                        // Use local time instead of PDU time
+                        ContentValues values = new ContentValues(1);
+                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        mContext.getContentResolver().update(msgUri, values, null, null);
+                    } catch (MmsException e) {
+                        Log.e(TAG, "unable to persist message");
+                        onFail();
+                    }
+                    buildMmsNotification(mContext, retrieveConf);
+
+                }
+
+                @Override
+                public void onFail() {
+                    // this maybe useful
+                }
+            });
+            wl.release();
             return null;
         }
     }
