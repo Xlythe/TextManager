@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -63,26 +64,15 @@ public abstract class TextReceiver extends BroadcastReceiver {
         for (SmsMessage currentMessage : messages) {
             String number = currentMessage.getDisplayOriginatingAddress();
             String message = currentMessage.getDisplayMessageBody();
-            onMessageReceived(context, new NotificationText(number, message, null));
+            // TODO: try and get the real text
+            onMessageReceived(context,
+                    new Text.Builder(context)
+                    .recipient(number)
+                    .message(message)
+                    .build());
         }
     }
 
-    public void buildMmsNotification(Context context, RetrieveConf retrieveConf) {
-        if (retrieveConf != null) {
-            PduBody body = retrieveConf.getBody();
-            EncodedStringValue encodedSender = retrieveConf.getFrom();
-            String sender = encodedSender.toString();
-            if (body != null) {
-                int partsNum = body.getPartsNum();
-                for (int i = 0; i < partsNum; i++) {
-                    PduPart part = body.getPart(i);
-                    byte[] bitmapdata = part.getData();
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.length);
-                    onMessageReceived(context, new NotificationText(sender, "", bitmap));
-                }
-            }
-        }
-    }
 
     public static class NotificationText {
         private String mSender;
@@ -145,6 +135,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     Uri msgUri;
                     try {
                         msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                        Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
+                        Text text = new Text(mContext, c);
+                        onMessageReceived(mContext, text);
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
@@ -154,7 +147,6 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         Log.e(TAG, "unable to persist message");
                         onFail();
                     }
-                    buildMmsNotification(mContext, retrieveConf);
                 }
 
                 @Override
@@ -173,5 +165,5 @@ public abstract class TextReceiver extends BroadcastReceiver {
         }
     }
 
-    public abstract void onMessageReceived(Context context, NotificationText text);
+    public abstract void onMessageReceived(Context context, Text text);
 }
