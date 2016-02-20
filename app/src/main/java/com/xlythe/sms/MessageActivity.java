@@ -62,6 +62,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         }
     };
 
+    private ImageView mGalleryAttachments;
+    private ImageView mCameraAttachments;
+    private ImageView mStickerAttachments;
+    private ImageView mVoiceAttachments;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +113,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                                 .recipient(mThread.getLatestMessage().getMembers())
                                 .build()
                 );
-                mEditText.setText("");
+                mEditText.setText(null);
                 setSendable(false);
             }
         });
@@ -118,25 +123,21 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             public void onDismissed() {
                 log("back");
                 mEditText.clearFocus();
-                hideAttachview();
+                onAttachmentHidden();
             }
         });
 
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Thought I could use count, but it resets to 1 when you add a space
-                // so ends up being zero when you delete the space
                 setSendable(s.length() > 0);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
 
         mEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -145,8 +146,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 log("focus: " + hasFocus);
                 mKeyboardOpen = hasFocus;
                 if(hasFocus) {
+                    clearAttachmentSelection();
                     if (!mAdjustNothing) {
-                        hideAttachview();
+                        onAttachmentHidden();
                     } else {
                         mAttachView.setVisibility(View.VISIBLE);
                     }
@@ -161,12 +163,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
 
         String name = "";
-        boolean isFalse = true;
-        for (Contact member: mThread.getLatestMessage().getMembers()) {
-            if (!isFalse){
+        for (Contact member : mThread.getLatestMessage().getMembersExceptMe(this)) {
+            if (!name.isEmpty()){
                 name += ", ";
             }
-            isFalse = false;
             name += member.getDisplayName();
         }
         getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" + name + " </font>"));
@@ -198,17 +198,15 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                     InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
                     mEditText.clearFocus();
-                    hideAttachview();
+                    onAttachmentHidden();
                 }
             }
         });
-    }
 
-    public void hideAttachview(){
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Fragment()).commit();
-        mAttachView.setVisibility(View.GONE);
-        // Add removal of color (could be annoying)
-        // need to remove color when attachment is sent
+        mGalleryAttachments = (ImageView) findViewById(R.id.gallery);
+        mCameraAttachments = (ImageView) findViewById(R.id.camera);
+        mStickerAttachments = (ImageView) findViewById(R.id.sticker);
+        mVoiceAttachments = (ImageView) findViewById(R.id.mic);
     }
 
     public void setSendable(boolean sendable){
@@ -220,25 +218,22 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         }
     }
 
-    public void attachClick(View view){
+    public void onAttachmentClicked(View view){
         InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
         mEditText.clearFocus();
-        if (mAttachView.getVisibility() == View.GONE)
-            mAttachView.setVisibility(View.VISIBLE);
 
+        mAttachView.setVisibility(View.VISIBLE);
+        clearAttachmentSelection();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-        switch (view.getId()){
-            case R.id.photo:
+        switch (view.getId()) {
+            case R.id.gallery:
                 int color = ColorUtils.getColor(mThread.getIdAsLong());
                 ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 GalleryFragment frag = new GalleryFragment();
                 Bundle args = new Bundle();
-                // TODO: just send the whole thread or text?
-                args.putInt("color", color);
-                args.putParcelable("message", mThread.getLatestMessage());
-                args.putString("recipient", mThread.getLatestMessage().getMembers().iterator().next().getNumber());
+                args.putInt(GalleryFragment.ARG_COLOR, color);
+                args.putParcelable(GalleryFragment.ARG_MESSAGE, mThread.getLatestMessage());
                 frag.setArguments(args);
                 transaction.replace(R.id.fragment_container, frag).commit();
                 log("photo");
@@ -256,6 +251,19 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 log("mic");
                 break;
         }
+    }
+
+    public void onAttachmentHidden(){
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Fragment()).commit();
+        mAttachView.setVisibility(View.GONE);
+        clearAttachmentSelection();
+    }
+
+    private void clearAttachmentSelection() {
+        mGalleryAttachments.clearColorFilter();
+        mCameraAttachments.clearColorFilter();
+        mStickerAttachments.clearColorFilter();
+        mVoiceAttachments.clearColorFilter();
     }
 
     @Override
@@ -278,14 +286,15 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             log("Re-download attachment");
             mManager.downloadAttachment(text);
             return;
+        } else {
+            log("Do nothing");
         }
-        log("Do nothing");
     }
 
     @Override
     public void onBackPressed() {
         if (mAttachView.getVisibility() == View.VISIBLE) {
-            hideAttachview();
+            onAttachmentHidden();
         } else {
             super.onBackPressed();
         }

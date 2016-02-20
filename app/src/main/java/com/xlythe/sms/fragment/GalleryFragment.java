@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,7 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.xlythe.sms.DividerItemDecoration;
+import com.xlythe.sms.decoration.GalleryItemDecoration;
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.AttachmentAdapter;
 import com.xlythe.textmanager.text.Attachment;
@@ -76,7 +75,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
 
         mAttachments = (RecyclerView) rootView.findViewById(R.id.attachments);
         mAttachments.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        mAttachments.addItemDecoration(new DividerItemDecoration(getResources().getDrawable(R.drawable.divider_attach)));
+        mAttachments.addItemDecoration(new GalleryItemDecoration(getResources().getDrawable(R.drawable.divider_attach)));
         mAttachments.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {

@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.decoration;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
 
-public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
+public class ThreadsItemDecoration extends RecyclerView.ItemDecoration {
 
     private static final int[] ATTRS = new int[]{android.R.attr.listDivider};
 
@@ -20,7 +20,7 @@ public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
     /**
      * Default divider will be used
      */
-    public DividerItemDecorationRes(Context context) {
+    public ThreadsItemDecoration(Context context) {
         final TypedArray styledAttributes = context.obtainStyledAttributes(ATTRS);
         mDivider = styledAttributes.getDrawable(0);
         styledAttributes.recycle();
@@ -29,7 +29,7 @@ public class DividerItemDecorationRes extends RecyclerView.ItemDecoration {
     /**
      * Custom divider will be used
      */
-    public DividerItemDecorationRes(Context context, int resId) {
+    public ThreadsItemDecoration(Context context, int resId) {
         mDivider = ContextCompat.getDrawable(context, resId);
     }
 

@@ -1,15 +1,12 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.provider.ContactsContract;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -22,18 +19,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
-import com.xlythe.sms.ProfileDrawable;
+import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
-import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.drawable;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -20,12 +20,11 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.TypedValue;
 
+import com.xlythe.sms.R;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-/**
- * Created by Niko on 12/22/15.
- */
 public class ProfileDrawable extends Drawable {
     Paint mPaint;
     RectF mRect;

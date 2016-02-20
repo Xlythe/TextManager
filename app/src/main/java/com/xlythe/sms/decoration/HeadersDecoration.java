@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.decoration;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;

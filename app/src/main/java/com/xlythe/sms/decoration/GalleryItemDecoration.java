@@ -1,4 +1,4 @@
-package com.xlythe.sms;
+package com.xlythe.sms.decoration;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -10,30 +10,30 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class DividerItemDecoration extends RecyclerView.ItemDecoration {
+public class GalleryItemDecoration extends RecyclerView.ItemDecoration {
 
     private Drawable mDivider;
     private boolean mShowFirstDivider = false;
     private boolean mShowLastDivider = false;
 
 
-    public DividerItemDecoration(Context context, AttributeSet attrs) {
+    public GalleryItemDecoration(Context context, AttributeSet attrs) {
         final TypedArray a = context.obtainStyledAttributes(attrs, new int[]{android.R.attr.listDivider});
         mDivider = a.getDrawable(0);
         a.recycle();
     }
 
-    public DividerItemDecoration(Context context, AttributeSet attrs, boolean showFirstDivider, boolean showLastDivider) {
+    public GalleryItemDecoration(Context context, AttributeSet attrs, boolean showFirstDivider, boolean showLastDivider) {
         this(context, attrs);
         mShowFirstDivider = showFirstDivider;
         mShowLastDivider = showLastDivider;
     }
 
-    public DividerItemDecoration(Drawable divider) {
+    public GalleryItemDecoration(Drawable divider) {
         mDivider = divider;
     }
 
-    public DividerItemDecoration(Drawable divider, boolean showFirstDivider, boolean showLastDivider) {
+    public GalleryItemDecoration(Drawable divider, boolean showFirstDivider, boolean showLastDivider) {
         this(divider);
         mShowFirstDivider = showFirstDivider;
         mShowLastDivider = showLastDivider;
@@ -103,7 +103,7 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
             return layoutManager.getOrientation();
         } else {
             throw new IllegalStateException(
-                    "DividerItemDecoration can only be used with a LinearLayoutManager.");
+                    "GalleryItemDecoration can only be used with a LinearLayoutManager.");
         }
     }
 }

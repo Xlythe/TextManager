@@ -24,6 +24,8 @@ import android.view.MenuItem;
 import android.widget.Button;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
+import com.xlythe.sms.decoration.ThreadsItemDecoration;
+import com.xlythe.sms.decoration.HeadersDecoration;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.Text;
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
         mRecyclerView.addItemDecoration(new HeadersDecoration(mAdapter));
-        mRecyclerView.addItemDecoration(new DividerItemDecorationRes(this, R.drawable.divider));
+        mRecyclerView.addItemDecoration(new ThreadsItemDecoration(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
