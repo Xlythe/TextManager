@@ -236,7 +236,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             @Override
             public void run() {
                 // getMessage is a long running operation
-                final Text text = getMessage(id);
+                // TODO: threadId
+                final Text text = getMessage("", id);
 
                 // Return the list in the callback
                 handler.post(new Runnable() {
@@ -250,8 +251,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public Text getMessage(String messageId) {
-        return null; // TODO
+    public Text getMessage(String threadId, String messageId) {
+       // TODO: I deleted this and probably didn't need to
+        return null;
     }
 
     @Override

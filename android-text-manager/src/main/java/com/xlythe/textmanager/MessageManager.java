@@ -27,7 +27,7 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
     /**
      * Returns a message given an id
      * */
-    M getMessage(String id);
+    M getMessage(String threadId, String id);
 
     /**
      * Returns a message given an id
