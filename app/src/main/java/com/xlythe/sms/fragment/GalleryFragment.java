@@ -1,14 +1,14 @@
 package com.xlythe.sms.fragment;
 
+import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
+
 import android.Manifest;
 import android.content.CursorLoader;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -45,24 +45,12 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
-            if (hasPermissions(REQUIRED_PERMISSIONS)) {
+            if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
                 showGallery();
             } else {
                 showPermissionPrompt();
             }
         }
-    }
-
-    /**
-     * Returns true if all given permissions are available
-     * */
-    protected boolean hasPermissions(String... permissions) {
-        boolean ok = true;
-        for (String permission : permissions) {
-            ok = ContextCompat.checkSelfPermission(getContext(), permission) == PackageManager.PERMISSION_GRANTED;
-            if (!ok) break;
-        }
-        return ok;
     }
 
     @Override
@@ -100,7 +88,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
     @Override
     public void onResume() {
         super.onResume();
-        if (hasPermissions(REQUIRED_PERMISSIONS)) {
+        if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
             showGallery();
         } else {
             showPermissionPrompt();

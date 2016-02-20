@@ -222,13 +222,11 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             if (latest != null) {
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
-                boolean isFirst = true;
-                for (Contact member: latest.getMembers()) {
+                for (Contact member: latest.getMembersExceptMe(getContext())) {
                     // TODO: Fix icon for group messaging
-                    if (!isFirst) {
+                    if (!address.isEmpty()) {
                         address += ", ";
                     }
-                    isFirst = false;
                     address += member.getDisplayName();
                     uri = member.getPhotoUri();
                 }

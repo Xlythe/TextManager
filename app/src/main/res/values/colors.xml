@@ -5,13 +5,9 @@
     <color name="colorAccent">#009688</color>
     <color name="colorBackground">#ececec</color>
     <color name="colorCompose">#f5f5f5</color>
-    <color name="icon">#00acc1</color>
-    <color name="purple">#3949ab</color>
-    <color name="pink">#d81b60</color>
     <color name="text">#99ffffff</color>
     <color name="headerText">#181818</color>
     <color name="titleText">#212121</color>
-    <color name="statusgrey">#b3b3b3</color>
     <color name="icon_color">#757575</color>
     <color name="loading">#eeeeee</color>
 

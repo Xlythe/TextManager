@@ -1,59 +1,70 @@
 package com.xlythe.sms.fragment;
 
-import android.hardware.Camera;
+import android.Manifest;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import com.xlythe.sms.R;
-import com.xlythe.sms.view.CameraPreview;
 
+import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class CameraFragment extends Fragment {
+    private static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+    };
+    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
 
-    private Camera mCamera;
-    private CameraPreview mPreview;
+    private View mCamera;
+    private View mPermissionPrompt;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
+            if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
+                showCamera();
+            } else {
+                showPermissionPrompt();
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
+            showCamera();
+        } else {
+            showPermissionPrompt();
+        }
+    }
+
+    private void showCamera() {
+        mCamera.setVisibility(View.VISIBLE);
+        mPermissionPrompt.setVisibility(View.GONE);
+    }
+
+    private void showPermissionPrompt() {
+        mCamera.setVisibility(View.GONE);
+        mPermissionPrompt.setVisibility(View.VISIBLE);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_camera, container, false);
+        final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_camera, container, false);
 
-        // Create an instance of Camera
-        mCamera = getCameraInstance();
+        mCamera = rootView.findViewById(R.id.camera);
 
-        // Create our Preview view and set it as the content of our activity.
-        mPreview = new CameraPreview(getActivity(), mCamera);
-        FrameLayout preview = (FrameLayout) rootView.findViewById(R.id.camera_preview);
-        preview.addView(mPreview);
+        mPermissionPrompt = rootView.findViewById(R.id.permission_error);
+        mPermissionPrompt.findViewById(R.id.request_permissions).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+            }
+        });
 
         return rootView;
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        releaseCamera();              // release the camera immediately on pause event
-    }
-
-    private void releaseCamera(){
-        if (mCamera != null){
-            mCamera.release();        // release the camera for other applications
-            mCamera = null;
-        }
-    }
-
-    /** A safe way to get an instance of the Camera object. */
-    public static Camera getCameraInstance(){
-        Camera c = null;
-        try {
-            c = Camera.open(); // attempt to get a Camera instance
-        }
-        catch (Exception e){
-            // Camera is not available (in use or does not exist)
-        }
-        return c; // returns null if camera is unavailable
     }
 }

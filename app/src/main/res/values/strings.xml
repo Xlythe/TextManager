@@ -1,9 +1,6 @@
 <resources>
-    <string name="hello_world">Hello world!</string>
+
     <string name="action_delete">Delete</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_compose_sms">ComposeSmsActivity</string>
-    <string name="title_activity_conversation">Conversation</string>
 
     <string name="app_name">Fetch</string>
     <string name="compose">Compose</string>
@@ -18,7 +15,4 @@
     <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
     <string name="error_permissions_resolve">Request</string>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>

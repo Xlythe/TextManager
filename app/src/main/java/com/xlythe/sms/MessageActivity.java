@@ -25,7 +25,7 @@ import android.widget.ImageView;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
-import com.xlythe.sms.fragment.FaceFragment;
+import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.util.ColorUtils;
@@ -65,7 +65,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     private ImageView mGalleryAttachments;
     private ImageView mCameraAttachments;
     private ImageView mStickerAttachments;
-    private ImageView mVoiceAttachments;
+    private ImageView mMicAttachments;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -206,7 +206,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mGalleryAttachments = (ImageView) findViewById(R.id.gallery);
         mCameraAttachments = (ImageView) findViewById(R.id.camera);
         mStickerAttachments = (ImageView) findViewById(R.id.sticker);
-        mVoiceAttachments = (ImageView) findViewById(R.id.mic);
+        mMicAttachments = (ImageView) findViewById(R.id.mic);
     }
 
     public void setSendable(boolean sendable){
@@ -243,7 +243,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 log("camera");
                 break;
             case R.id.sticker:
-                transaction.replace(R.id.fragment_container, new FaceFragment()).commit();
+                transaction.replace(R.id.fragment_container, new StickerFragment()).commit();
                 log("sticker");
                 break;
             case R.id.mic:
@@ -263,7 +263,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mGalleryAttachments.clearColorFilter();
         mCameraAttachments.clearColorFilter();
         mStickerAttachments.clearColorFilter();
-        mVoiceAttachments.clearColorFilter();
+        mMicAttachments.clearColorFilter();
     }
 
     @Override

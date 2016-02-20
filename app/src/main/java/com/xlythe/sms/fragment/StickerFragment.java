@@ -9,13 +9,13 @@ import android.view.ViewGroup;
 import com.xlythe.sms.R;
 
 
-public class FaceFragment extends Fragment {
+public class StickerFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         ViewGroup rootView = (ViewGroup) inflater.inflate(
-                R.layout.fragment_face, container, false);
+                R.layout.fragment_sticker, container, false);
 
         return rootView;
     }

@@ -1,10 +1,11 @@
 package com.xlythe.sms;
 
+import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -12,7 +13,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
                     .show();
         }
 
-        if (hasPermissions(REQUIRED_PERMISSIONS)) {
+        if (hasPermissions(this, REQUIRED_PERMISSIONS)) {
             loadThreads();
         } else if (hasRequestedPermissions()) {
             requiredPermissionsNotGranted();
@@ -274,24 +274,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
-            if (hasPermissions(REQUIRED_PERMISSIONS)) {
+            if (hasPermissions(this, REQUIRED_PERMISSIONS)) {
                 loadThreads();
             } else {
                 requiredPermissionsNotGranted();
             }
         }
-    }
-
-    /**
-     * Returns true if all given permissions are available
-     * */
-    protected boolean hasPermissions(String... permissions) {
-        boolean ok = true;
-        for (String permission : permissions) {
-            ok = ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
-            if (!ok) break;
-        }
-        return ok;
     }
 
     /**
