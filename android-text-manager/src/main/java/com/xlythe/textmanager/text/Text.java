@@ -268,8 +268,14 @@ public final class Text implements Message, Parcelable {
     }
 
     @Override
-    public HashSet<Contact> getMembers() {
+    public Set<Contact> getMembers() {
         return mMembers;
+    }
+
+    public Set<Contact> getMembersExceptMe(Context context) {
+        Set<Contact> members = new HashSet<>(mMembers);
+        members.remove(TextManager.getInstance(context).getSelf());
+        return members;
     }
 
     @Override

@@ -6,7 +6,6 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -17,22 +16,18 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.FaceFragment;
+import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
-import com.xlythe.sms.fragment.PhotoFragment;
-import com.xlythe.sms.fragment.ScreenSlidePageFragment;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
@@ -238,7 +233,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             case R.id.photo:
                 int color = ColorUtils.getColor(mThread.getIdAsLong());
                 ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-                ScreenSlidePageFragment frag = new ScreenSlidePageFragment();
+                GalleryFragment frag = new GalleryFragment();
                 Bundle args = new Bundle();
                 // TODO: just send the whole thread or text?
                 args.putInt("color", color);

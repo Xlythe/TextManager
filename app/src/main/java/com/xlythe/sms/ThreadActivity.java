@@ -24,15 +24,13 @@ import android.widget.ScrollView;
 //import com.xlythe.sms.adapter.TextCursorAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.FaceFragment;
+import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.LocationFragment;
 import com.xlythe.sms.fragment.MicFragment;
-import com.xlythe.sms.fragment.ScreenSlidePageFragment;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.AttachView;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
-
-import java.util.List;
 
 
 public class ThreadActivity extends FragmentActivity {
@@ -55,7 +53,6 @@ public class ThreadActivity extends FragmentActivity {
     private PagerAdapter mPagerAdapter;
     private LinearLayout mTabBar;
 
-    //private TextCursorAdapter mTextAdapter;
     private ListView mListView;
     private ImageButton mSend;
     private EditText mMessage;
@@ -131,7 +128,7 @@ public class ThreadActivity extends FragmentActivity {
                                     .build()
                     );
                 }
-                mMessage.setText("");
+                mMessage.setText(null);
             }
         });
 
@@ -140,8 +137,7 @@ public class ThreadActivity extends FragmentActivity {
         mPager.setAdapter(mPagerAdapter);
         mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int i, float v, int i1) {
-            }
+            public void onPageScrolled(int i, float v, int i1) {}
 
             @Override
             public void onPageSelected(int i) {
@@ -185,9 +181,7 @@ public class ThreadActivity extends FragmentActivity {
             }
 
             @Override
-            public void onPageScrollStateChanged(int i) {
-
-            }
+            public void onPageScrollStateChanged(int i) {}
         });
 
         mAttachView = (AttachView) findViewById(R.id.attach_view);
@@ -243,7 +237,7 @@ public class ThreadActivity extends FragmentActivity {
     }
 
     /**
-     * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
+     * A simple pager adapter that represents 5 Fragments, in
      * sequence.
      */
     private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
@@ -256,11 +250,11 @@ public class ThreadActivity extends FragmentActivity {
             final Fragment result;
             switch (position) {
                 case 0:
-                    //result = new ScreenSlidePageFragment();
+                    //result = new GalleryFragment();
                     result = new CameraFragment();
                     break;
                 case 1:
-                    result = new ScreenSlidePageFragment();
+                    result = new GalleryFragment();
                     break;
                 case 2:
                     result = new FaceFragment();
