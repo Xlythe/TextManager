@@ -224,22 +224,27 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mEditText.clearFocus();
 
         mAttachView.setVisibility(View.VISIBLE);
+
         clearAttachmentSelection();
+        int color = ColorUtils.getColor(mThread.getIdAsLong());
+        ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        Fragment fragment;
+        Bundle args = new Bundle();
+        args.putInt(GalleryFragment.ARG_COLOR, color);
+        args.putParcelable(GalleryFragment.ARG_MESSAGE, mThread.getLatestMessage());
         switch (view.getId()) {
             case R.id.gallery:
-                int color = ColorUtils.getColor(mThread.getIdAsLong());
-                ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-                GalleryFragment frag = new GalleryFragment();
-                Bundle args = new Bundle();
-                args.putInt(GalleryFragment.ARG_COLOR, color);
-                args.putParcelable(GalleryFragment.ARG_MESSAGE, mThread.getLatestMessage());
-                frag.setArguments(args);
-                transaction.replace(R.id.fragment_container, frag).commit();
+                fragment = new GalleryFragment();
+                fragment.setArguments(args);
+                transaction.replace(R.id.fragment_container, fragment).commit();
                 log("photo");
                 break;
             case R.id.camera:
-                transaction.replace(R.id.fragment_container, new CameraFragment()).commit();
+                fragment = new CameraFragment();
+                fragment.setArguments(args);
+                transaction.replace(R.id.fragment_container, fragment).commit();
                 log("camera");
                 break;
             case R.id.sticker:

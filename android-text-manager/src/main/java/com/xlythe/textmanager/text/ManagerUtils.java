@@ -210,11 +210,8 @@ public class ManagerUtils {
                         part.Name = "video" + i;
                         part.Data = videoBytes;
                         data.add(part);
-                    } catch (FileNotFoundException fnfe){
-                        Log.d(TAG,"File not found");
-                        fnfe.printStackTrace();
-                    } catch (IOException ioe){
-
+                    } catch (IOException e){
+                        e.printStackTrace();
                     }
                     break;
                 case VOICE:

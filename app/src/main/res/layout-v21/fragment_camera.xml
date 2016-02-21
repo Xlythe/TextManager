@@ -6,7 +6,7 @@
         android:id="@+id/layout_camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <com.xlythe.sms.view.LegacyCameraView
+        <com.xlythe.sms.view.CameraView
             android:id="@+id/camera"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

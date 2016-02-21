@@ -35,8 +35,8 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
 
     private int mColor;
-    private Cursor mCursor;
     private Text mText;
+    private Cursor mCursor;
     private AttachmentAdapter mAdapter;
     private ViewGroup mContainer;
     private RecyclerView mAttachments;
