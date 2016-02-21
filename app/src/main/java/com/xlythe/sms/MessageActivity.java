@@ -288,7 +288,7 @@ public class MessageActivity extends AppCompatActivity
     @Override
     public void onItemClicked(Text text) {
         if (text.isMms()) {
-            if (!text.getAttachments().isEmpty()) {
+            if (text.getAttachment() != null) {
                 log("Open attachment");
                 Intent i = new Intent(getBaseContext(), MediaActivity.class);
                 i.putExtra(MediaActivity.EXTRA_TEXT, text);

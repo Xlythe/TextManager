@@ -43,6 +43,7 @@ import java.lang.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -118,7 +119,7 @@ public class ManagerUtils {
             values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
             context.getContentResolver().insert(uri, values);
         } else {
-            List<Attachment> attachments = text.getAttachments();
+            Attachment attachment = text.getAttachment();
             // TODO: add intents for mms
             boolean isFirst = true;
             for (Contact member : text.getMembers()) {
@@ -129,7 +130,7 @@ public class ManagerUtils {
                 address += member.getNumber();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), attachments, null, null);
+                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), null, null);
             }
         }
     }

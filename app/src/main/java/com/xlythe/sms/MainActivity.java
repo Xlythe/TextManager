@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     @Override
     public void onAttachmentClicked(Thread thread) {
         Text text = thread.getLatestMessage();
-        if (!text.getAttachments().isEmpty()) {
+        if (text.getAttachment() != null) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
             i.putExtra(MediaActivity.EXTRA_TEXT, text);
             startActivity(i);
@@ -234,7 +234,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.menu_remove:
-                    mAdapter.removeItems(mAdapter.getSelectedItems());
+                    for (int position : mAdapter.getSelectedItems()) {
+                        TextManager.getInstance(getBaseContext()).delete(mAdapter.getThread(position));
+                    }
                     mode.finish();
                     return true;
                 default:

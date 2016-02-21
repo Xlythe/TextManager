@@ -211,13 +211,13 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         }
 
         public void setImage() {
-            if (getMessage().getAttachments().get(0).getType() == Attachment.Type.VIDEO){
+            if (getMessage().getAttachment().getType() == Attachment.Type.VIDEO){
                 mVideoLabel.setVisibility(View.VISIBLE);
             } else {
                 mVideoLabel.setVisibility(View.GONE);
             }
             Glide.with(getContext())
-                    .load(getMessage().getAttachments().get(0).getUri())
+                    .load(getMessage().getAttachment().getUri())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .dontAnimate()
                     .placeholder(R.color.loading)
@@ -357,7 +357,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         if (!userCurrent && (userPrevious || largePC) && (!userNext && !largeCN)) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_TOP_RIGHT;
                 }
 //                return TYPE_FAILED_TOP_RIGHT;
@@ -365,7 +365,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_TOP_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_MIDDLE_RIGHT;
                 }
 //                return TYPE_FAILED_MIDDLE_RIGHT;
@@ -373,7 +373,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_MIDDLE_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC)) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_BOTTOM_RIGHT;
                 }
 //                return TYPE_FAILED_BOTTOM_RIGHT;
@@ -381,7 +381,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_BOTTOM_RIGHT;
         } else if (!userCurrent) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_SINGLE_RIGHT;
                 }
 //                return TYPE_FAILED_SINGLE_RIGHT;
@@ -389,7 +389,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_SINGLE_RIGHT;
         } else if ((!userPrevious || largePC) && (userNext && !largeCN)) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_TOP_LEFT;
                 }
 //                return TYPE_FAILED_TOP_LEFT;
@@ -397,7 +397,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_TOP_LEFT;
         } else if ((userPrevious && !largePC) && (userNext && !largeCN)) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_MIDDLE_LEFT;
                 }
 //                return TYPE_FAILED_MIDDLE_LEFT;
@@ -405,7 +405,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_MIDDLE_LEFT;
         } else if (userPrevious && !largePC) {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_BOTTOM_LEFT;
                 }
 //                return TYPE_FAILED_BOTTOM_LEFT;
@@ -413,7 +413,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             return TYPE_BOTTOM_LEFT;
         } else {
             if (text.isMms()) {
-                if (!text.getAttachments().isEmpty()) {
+                if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_SINGLE_LEFT;
                 }
 //                return TYPE_FAILED_SINGLE_LEFT;

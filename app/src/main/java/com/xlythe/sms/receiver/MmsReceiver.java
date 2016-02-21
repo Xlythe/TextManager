@@ -26,7 +26,7 @@ public class MmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
     public void onMessageReceived(Context context, Text text) {
         Intent dismissIntent = new Intent(context, MainActivity.class);
         PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
-        Uri imageUri = text.getAttachments().get(0).getUri();
+        Uri imageUri = text.getAttachment().getUri();
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
             NotificationCompat.Builder builder =

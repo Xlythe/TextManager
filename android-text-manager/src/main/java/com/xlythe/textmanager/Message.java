@@ -18,6 +18,6 @@ public interface Message<U extends User> {
     long getTimestamp();
     User getSender();
     Set<U> getMembers();
-    List<Attachment> getAttachments();
+    Attachment getAttachment();
     Status getStatus(); // Status.Sending, Status.Sent, Status.Failed, Status.Read, Status.Unread
 }

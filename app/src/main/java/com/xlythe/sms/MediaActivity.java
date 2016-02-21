@@ -28,9 +28,9 @@ public class MediaActivity extends AppCompatActivity {
         VideoView video = (VideoView) findViewById(R.id.video);
         SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
 
-        Uri uri = mText.getAttachments().get(0).getUri();
+        Uri uri = mText.getAttachment().getUri();
 
-        if (mText.getAttachments().get(0) instanceof VideoAttachment) {
+        if (mText.getAttachment() instanceof VideoAttachment) {
             image.setVisibility(View.GONE);
             video.setVisibility(View.VISIBLE);
             video.setVideoURI(uri);
@@ -38,7 +38,7 @@ public class MediaActivity extends AppCompatActivity {
         } else {
             video.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);
-            image.setImage(ImageSource.uri(mText.getAttachments().get(0).getUri()));
+            image.setImage(ImageSource.uri(mText.getAttachment().getUri()));
         }
     }
 }

@@ -48,7 +48,7 @@ public final class Text implements Message, Parcelable {
     private Contact mSender;
     private HashSet<String> mMemberAddresses = new HashSet<>();
     private HashSet<Contact> mMembers = new HashSet<>();
-    private final List<Attachment> mAttachments = new ArrayList<>();
+    private Attachment mAttachment;
 
     private Text() {}
 
@@ -112,20 +112,17 @@ public final class Text implements Message, Parcelable {
             mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
         }
 
-        int attachmentSize = in.readInt();
-        for (int i = 0; i < attachmentSize; i++) {
-            Attachment.Type type = Attachment.Type.values()[in.readInt()];
-            switch (type) {
-                case IMAGE:
-                    mAttachments.add((Attachment) in.readParcelable(ImageAttachment.class.getClassLoader()));
-                    break;
-                case VIDEO:
-                    mAttachments.add((Attachment) in.readParcelable(VideoAttachment.class.getClassLoader()));
-                    break;
-                case VOICE:
-                    mAttachments.add((Attachment) in.readParcelable(VoiceAttachment.class.getClassLoader()));
-                    break;
-            }
+        Attachment.Type type = Attachment.Type.values()[in.readInt()];
+        switch (type) {
+            case IMAGE:
+                mAttachment = in.readParcelable(ImageAttachment.class.getClassLoader());
+                break;
+            case VIDEO:
+                mAttachment = in.readParcelable(VideoAttachment.class.getClassLoader());
+                break;
+            case VOICE:
+                mAttachment = in.readParcelable(VoiceAttachment.class.getClassLoader());
+                break;
         }
     }
 
@@ -194,13 +191,13 @@ public final class Text implements Message, Parcelable {
                 if (contentType.matches("image/.*")) {
                     // Find any part that is an image attachment
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachments.add(new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
                 } else if (contentType.matches("text/.*")) {
                     // Find any part that is text data
                     mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
                 } else if (contentType.matches("video/.*")) {
                     long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachments.add(new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                    mAttachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
                 }
             }
             inner.close();
@@ -258,8 +255,8 @@ public final class Text implements Message, Parcelable {
     }
 
     @Override
-    public List<Attachment> getAttachments() {
-        return mAttachments;
+    public Attachment getAttachment() {
+        return mAttachment;
     }
 
     @Override
@@ -299,7 +296,7 @@ public final class Text implements Message, Parcelable {
                     && Utils.equals(mIsMms, a.mIsMms)
                     && Utils.equals(mSender, a.mSender)
                     && Utils.equals(mMembers, a.mMembers)
-                    && Utils.equals(mAttachments, a.mAttachments);
+                    && Utils.equals(mAttachment, a.mAttachment);
         }
         return false;
     }
@@ -317,16 +314,16 @@ public final class Text implements Message, Parcelable {
                 + Utils.hashCode(mIsMms)
                 + Utils.hashCode(mSender)
                 + Utils.hashCode(mMembers)
-                + Utils.hashCode(mAttachments);
+                + Utils.hashCode(mAttachment);
     }
 
     @Override
     public String toString() {
         return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s," +
                         "device_number=%s, incoming=%s, is_mms=%s, sender=%s, recipient=%s," +
-                        "attachments=%s}",
+                        "attachment=%s}",
                 mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mDeviceNumber, mIncoming, mIsMms,
-                mSender, mMembers, mAttachments);
+                mSender, mMembers, mAttachment);
     }
 
     @Override
@@ -352,11 +349,8 @@ public final class Text implements Message, Parcelable {
         for (Contact member : mMembers){
             out.writeParcelable(member, flags);
         }
-        out.writeInt(mAttachments.size());
-        for (int i = 0; i < mAttachments.size(); i++){
-            out.writeInt(mAttachments.get(i).getType().ordinal());
-            out.writeParcelable(mAttachments.get(i), flags);
-        }
+        out.writeInt(mAttachment.getType().ordinal());
+        out.writeParcelable(mAttachment, flags);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
@@ -387,7 +381,7 @@ public final class Text implements Message, Parcelable {
         private String mMessage;
         private Contact mSender;
         private HashSet<Contact> mRecipients = new HashSet<>();
-        private final List<Attachment> mAttachments = new ArrayList<>();
+        private Attachment mAttachment;
 
         public Builder(Context context) {
             mContext = context;
@@ -405,7 +399,7 @@ public final class Text implements Message, Parcelable {
         }
 
         public Builder attach(Attachment attachment) {
-            mAttachments.add(attachment);
+            mAttachment = attachment;
             return this;
         }
 
@@ -421,13 +415,10 @@ public final class Text implements Message, Parcelable {
             text.mMembers.addAll(mRecipients);
             if (mRecipients.size() > 1) {
                 text.mIsMms = true;
-                text.mMembers.addAll(mRecipients);
-            } else {
-                text.mMembers.addAll(mRecipients);
             }
-            if (mAttachments.size() > 0) {
+            text.mAttachment = mAttachment;
+            if (mAttachment != null) {
                 text.mIsMms = true;
-                text.mAttachments.addAll(mAttachments);
             }
             text.mDate = System.currentTimeMillis();
             return text;

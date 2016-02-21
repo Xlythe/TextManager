@@ -99,7 +99,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
     public void removeItems(List<Integer> positions) {
         // TODO: FIX
         // Reverse-sort the list
-        if (positions!=null) {
+        if (positions != null) {
             Collections.sort(positions, new Comparator<Integer>() {
                 @Override
                 public int compare(Integer lhs, Integer rhs) {
@@ -243,14 +243,14 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             date.setText(time);
             profile.setBackgroundResource(R.drawable.selector);
 
-            if (attachment != null && latest.getAttachments().size() > 0) {
-                if (latest.getAttachments().get(0).getType() == Attachment.Type.VIDEO) {
+            if (attachment != null && latest.getAttachment() != null) {
+                if (latest.getAttachment().getType() == Attachment.Type.VIDEO) {
                     videoLabel.setVisibility(View.VISIBLE);
                 } else {
                     videoLabel.setVisibility(View.GONE);
                 }
                 Glide.with(getContext())
-                        .load(latest.getAttachments().get(0).getUri())
+                        .load(latest.getAttachment().getUri())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .dontAnimate()
                         .placeholder(R.color.loading)
@@ -346,13 +346,13 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
     @Override
     public int getItemViewType(int position) {
-        if (!getThread(position).getLatestMessage().getAttachments().isEmpty()) {
+        if (getThread(position).getLatestMessage().getAttachment() != null) {
             return TYPE_ATTACHMENT;
         }
         return TYPE_TEXT;
     }
 
-    private Thread getThread(int position) {
+    public Thread getThread(int position) {
         Thread thread = mThreadLruCache.get(position);
         if (thread == null) {
             mCursor.moveToPosition(position);
