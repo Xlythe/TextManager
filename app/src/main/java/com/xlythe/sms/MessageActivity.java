@@ -214,6 +214,10 @@ public class MessageActivity extends AppCompatActivity
         mCameraAttachments = (ImageView) findViewById(R.id.camera);
         mStickerAttachments = (ImageView) findViewById(R.id.sticker);
         mMicAttachments = (ImageView) findViewById(R.id.mic);
+
+        // TODO: Unhide when support is ready
+        mStickerAttachments.setVisibility(View.INVISIBLE);
+        mMicAttachments.setVisibility(View.INVISIBLE);
     }
 
     public void setSendable(boolean sendable){

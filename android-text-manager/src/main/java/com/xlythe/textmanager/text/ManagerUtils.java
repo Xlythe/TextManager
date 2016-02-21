@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -11,14 +12,12 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduBody;
@@ -59,50 +58,40 @@ public class ManagerUtils {
 
         String address = "";
 
-        if (!text.isMms()) {
-            // For when the SMS has been sent
-            context.registerReceiver(new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    ContentValues values = new ContentValues();
-                    Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
-                    switch (getResultCode()) {
-                        case Activity.RESULT_OK:
-                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-                            Toast.makeText(context, "SMS sent successfully", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                            Toast.makeText(context, "Generic failure cause", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_NO_SERVICE:
-                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                            Toast.makeText(context, "Service is currently unavailable", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_NULL_PDU:
-                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                            Toast.makeText(context, "No pdu provided", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_RADIO_OFF:
-                            values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                            Toast.makeText(context, "Radio was explicitly turned off", Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                    context.getContentResolver().update(uri, values, null, null);
-                    context.unregisterReceiver(this);
+        // For when the SMS has been sent
+        context.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                ContentValues values = new ContentValues();
+                Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                        break;
                 }
-            }, new IntentFilter(SMS_SENT));
+                // TODO Don't just mark everything as COMPLETE...
+                context.getContentResolver().update(uri, values, null, null);
+                context.unregisterReceiver(this);
+            }
+        }, new IntentFilter(SMS_SENT));
 
+        if (!text.isMms()) {
             // For when the SMS has been delivered
             context.registerReceiver(new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     switch (getResultCode()) {
                         case Activity.RESULT_OK:
-                            Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "SMS delivered");
                             break;
                         case Activity.RESULT_CANCELED:
-                            Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "SMS not delivered");
                             break;
                     }
                     context.unregisterReceiver(this);
@@ -120,21 +109,19 @@ public class ManagerUtils {
             context.getContentResolver().insert(uri, values);
         } else {
             Attachment attachment = text.getAttachment();
-            // TODO: add intents for mms
-            boolean isFirst = true;
             for (Contact member : text.getMembers()) {
-                if (!isFirst) {
+                if (!address.isEmpty()) {
                     address += " ";
                 }
-                isFirst = false;
                 address += member.getNumber();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), null, null);
+                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), sentPendingIntent, deliveredPendingIntent);
             }
         }
     }
 
+    @TargetApi(21)
     public static void sendMediaMessage(final Context context,
                                               final String address,
                                               final String subject,
@@ -189,8 +176,8 @@ public class ManagerUtils {
                         part.Name = "image" + i;
                         part.Data = imageBytes;
                         data.add(part);
-                    } catch (IOException ioe) {
-                        Log.d(TAG, "File not found");
+                    } catch (IOException e) {
+                        Log.e(TAG, "File not found", e);
                     }
                     break;
                 case VIDEO:
@@ -238,12 +225,24 @@ public class ManagerUtils {
             ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
             HttpUtils.httpConnection(
                     context,4444L,
-                    apnParameters.getMmscUrl(),pdu,HttpUtils.HTTP_POST_METHOD,
+                    apnParameters.getMmscUrl(),
+                    pdu,
+                    HttpUtils.HTTP_POST_METHOD,
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());
+            notify(sentPendingIntent, context, Activity.RESULT_OK);
         } catch(IOException e){
             Log.e(TAG, "Failed to connect to the MMS server", e);
+            notify(sentPendingIntent, context, Activity.RESULT_CANCELED);
+        }
+    }
+
+    private static void notify(PendingIntent pendingIntent, Context context, int result) {
+        try {
+            pendingIntent.send(context, result, null);
+        } catch (PendingIntent.CanceledException ex) {
+            Log.e(TAG, "Failed to notified mms sent", ex);
         }
     }
 
@@ -298,8 +297,7 @@ public class ManagerUtils {
         try {
             p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
         } catch (MmsException e) {
-            Log.e("ManagerUtils", "persisting pdu failed");
-            e.printStackTrace();
+            Log.e(TAG, "persisting pdu failed", e);
         }
         // create byte array which will actually be sent
         final PduComposer composer = new PduComposer(context, sendRequest);
@@ -323,6 +321,5 @@ public class ManagerUtils {
         public String Name = "";
         public String MimeType = "";
         public byte[] Data;
-        public Uri Path;
     }
 }
