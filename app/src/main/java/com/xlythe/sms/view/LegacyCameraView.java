@@ -1,15 +1,14 @@
 package com.xlythe.sms.view;
 
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.commonsware.cwac.camera.CameraHost;
 import com.commonsware.cwac.camera.CameraHostProvider;
 import com.commonsware.cwac.camera.PictureTransaction;
 import com.commonsware.cwac.camera.SimpleCameraHost;
 
+import java.io.File;
 import java.io.IOException;
 
 public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView implements ICameraView {
@@ -23,7 +22,7 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     }
 
     public LegacyCameraView(Context context, AttributeSet attrs, int defStyle) {
-        super(new HostContextWrapper(context), attrs, defStyle);
+        super(context, attrs, defStyle);
     }
 
     @Override
@@ -37,6 +36,8 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
             stopRecording();
         }
         super.onPause();
+        getHost().getVideoPath().delete();
+        getHost().getPhotoPath().delete();
     }
 
     @Override
@@ -57,30 +58,43 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     public void stopRecording() {
         try {
             super.stopRecording();
+            getHost().mVideoListener.onVideoCaptured(getHost().getVideoPath());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void setPictureListener(PictureListener listener) {
-        ((HostContextWrapper) getContext()).getCameraHost().setPictureListener(listener);
+        getHost().setPictureListener(listener);
     }
 
     @Override
     public void setVideoListener(VideoListener listener) {
-        ((HostContextWrapper) getContext()).getCameraHost().setVideoListener(listener);
+        getHost().setVideoListener(listener);
     }
 
-    private static final class Host extends SimpleCameraHost {
-        private PictureListener mPictureListener;
-        private VideoListener mVideoListener;
+    @Override
+    public Host getHost() {
+        return (Host) super.getHost();
+    }
 
-        Host(Context context) {
+    public interface HostProvider extends CameraHostProvider {
+        Host getCameraHost();
+    }
+
+    public static final class Host extends SimpleCameraHost {
+        private ICameraView.PictureListener mPictureListener;
+        private ICameraView.VideoListener mVideoListener;
+
+        private Context mContext;
+
+        public Host(Context context) {
             super(context);
+            mContext = context;
         }
-
-
 
         @Override
         public void saveImage(PictureTransaction xact, byte[] image) {
@@ -90,25 +104,26 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
             }
         }
 
-        public void setPictureListener(PictureListener listener) {
+        public void setPictureListener(ICameraView.PictureListener listener) {
             mPictureListener = listener;
         }
 
-        public void setVideoListener(VideoListener listener) {
+        public void setVideoListener(ICameraView.VideoListener listener) {
             mVideoListener = listener;
         }
-    }
 
-    private static final class HostContextWrapper extends ContextWrapper implements CameraHostProvider {
-        private final Host mHost;
-        HostContextWrapper(Context context) {
-            super(context);
-            mHost = new Host(this);
+        public Context getContext() {
+            return mContext;
         }
 
         @Override
-        public Host getCameraHost() {
-            return mHost;
+        public File getPhotoPath() {
+            return new File(getContext().getCacheDir(), "temp.png");
+        }
+
+        @Override
+        public File getVideoPath() {
+            return new File(getContext().getCacheDir(), "temp.mp4");
         }
     }
 }

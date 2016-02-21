@@ -402,6 +402,8 @@ public class CameraView extends TextureView implements ICameraView {
         } finally {
             mCameraOpenCloseLock.release();
         }
+        createTempVideoFile().delete();
+        createTempImageFile().delete();
     }
 
     @Override
@@ -585,7 +587,8 @@ public class CameraView extends TextureView implements ICameraView {
         mVideoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder.class));
         mMediaRecorder = new MediaRecorder();
         try {
-            setUpMediaRecorder(mVideoFile = createTempVideoFile());
+            mVideoFile = createTempVideoFile();
+            setUpMediaRecorder(mVideoFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -744,7 +747,15 @@ public class CameraView extends TextureView implements ICameraView {
     }
 
     private File createTempVideoFile() {
-        return new File(getContext().getCacheDir(), "temp.mp4");
+        File file = new File(getContext().getCacheDir(), "temp.mp4");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return file;
     }
 
     /**

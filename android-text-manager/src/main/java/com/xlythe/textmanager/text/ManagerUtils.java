@@ -175,9 +175,9 @@ public class ManagerUtils {
 
         int i = 0;
         MMSPart part;
-        for(Attachment a: attachments){
-            Attachment.Type type = a.getType();
-            Uri uri = a.getUri();
+        for(Attachment attachment: attachments){
+            Attachment.Type type = attachment.getType();
+            Uri uri = attachment.getUri();
             switch(type) {
                 case IMAGE:
                     try {
@@ -195,8 +195,7 @@ public class ManagerUtils {
                 case VIDEO:
                     try {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        FileInputStream fis = new FileInputStream(new File(a.toString()));
-                        Log.d("ManagerUtils", a.getUri().getPath() +"");
+                        FileInputStream fis = new FileInputStream(new File(uri.getPath()));
 
                         byte[] buf = new byte[1024];
                         int n;
@@ -210,6 +209,8 @@ public class ManagerUtils {
                         part.Name = "video" + i;
                         part.Data = videoBytes;
                         data.add(part);
+                    } catch (FileNotFoundException e){
+                        throw new RuntimeException("Uri doesn't exist", e);
                     } catch (IOException e){
                         e.printStackTrace();
                     }

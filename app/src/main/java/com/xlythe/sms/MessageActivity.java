@@ -23,6 +23,10 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
+import com.commonsware.cwac.camera.CameraHost;
+import com.commonsware.cwac.camera.CameraHostProvider;
+import com.commonsware.cwac.camera.PictureTransaction;
+import com.commonsware.cwac.camera.SimpleCameraHost;
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.StickerFragment;
@@ -30,13 +34,16 @@ import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.ExtendedEditText;
+import com.xlythe.sms.view.ICameraView;
+import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
-public class MessageActivity extends AppCompatActivity implements MessageAdapter.FailedViewHolder.ClickListener {
+public class MessageActivity extends AppCompatActivity
+        implements MessageAdapter.FailedViewHolder.ClickListener, LegacyCameraView.HostProvider /* legacy support */ {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
     public static final String EXTRA_THREAD = "thread";
@@ -315,5 +322,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         if (DEBUG) {
             Log.d(TAG, message);
         }
+    }
+
+    @Override
+    public LegacyCameraView.Host getCameraHost() {
+        return new LegacyCameraView.Host(this);
     }
 }
