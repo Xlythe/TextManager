@@ -112,18 +112,7 @@ public final class Text implements Message, Parcelable {
             mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
         }
 
-        Attachment.Type type = Attachment.Type.values()[in.readInt()];
-        switch (type) {
-            case IMAGE:
-                mAttachment = in.readParcelable(ImageAttachment.class.getClassLoader());
-                break;
-            case VIDEO:
-                mAttachment = in.readParcelable(VideoAttachment.class.getClassLoader());
-                break;
-            case VOICE:
-                mAttachment = in.readParcelable(VoiceAttachment.class.getClassLoader());
-                break;
-        }
+        mAttachment = in.readParcelable(getClass().getClassLoader());
     }
 
     private String getMessageType(Cursor cursor) {
@@ -349,7 +338,6 @@ public final class Text implements Message, Parcelable {
         for (Contact member : mMembers){
             out.writeParcelable(member, flags);
         }
-        out.writeInt(mAttachment.getType().ordinal());
         out.writeParcelable(mAttachment, flags);
     }
 
@@ -377,19 +365,14 @@ public final class Text implements Message, Parcelable {
     }
 
     public static class Builder {
-        private final Context mContext;
         private String mMessage;
         private Contact mSender;
         private HashSet<Contact> mRecipients = new HashSet<>();
         private Attachment mAttachment;
 
-        public Builder(Context context) {
-            mContext = context;
-        }
-
-        public Builder recipient(String address) {
-            mRecipients.add(TextManager.getInstance(mContext).lookupContact(address));
-            mSender = TextManager.getInstance(mContext).getSelf();
+        public Builder addRecipient(Context context, String address) {
+            mRecipients.add(TextManager.getInstance(context).lookupContact(address));
+            mSender = TextManager.getInstance(context).getSelf();
             return this;
         }
 

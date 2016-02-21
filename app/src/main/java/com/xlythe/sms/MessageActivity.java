@@ -115,9 +115,9 @@ public class MessageActivity extends AppCompatActivity
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mManager.send(new Text.Builder(getBaseContext())
+                mManager.send(new Text.Builder()
                                 .message(mEditText.getText().toString())
-                                .recipient(mThread.getLatestMessage().getMembers())
+                                .recipient(mThread.getLatestMessage().getMembersExceptMe(getBaseContext()))
                                 .build()
                 );
                 mEditText.setText(null);

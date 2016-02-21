@@ -191,7 +191,7 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
 
     @Override
     public void onImageCaptured(File file) {
-        TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+        TextManager.getInstance(getContext()).send(new Text.Builder()
                 .recipient(mText.getMembersExceptMe(getContext()))
                 .attach(new ImageAttachment(Uri.fromFile(file)))
                 .build()
@@ -200,7 +200,7 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
 
     @Override
     public void onVideoCaptured(File file) {
-        TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+        TextManager.getInstance(getContext()).send(new Text.Builder()
                 .recipient(mText.getMembersExceptMe(getContext()))
                 .attach(new VideoAttachment(Uri.fromFile(file)))
                 .build()

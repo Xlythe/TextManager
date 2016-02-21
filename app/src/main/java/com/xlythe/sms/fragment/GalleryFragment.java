@@ -148,7 +148,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TextManager.getInstance(getContext()).send(new Text.Builder(getContext())
+                TextManager.getInstance(getContext()).send(new Text.Builder()
                                 .recipient(mText.getMembersExceptMe(getContext()))
                                 .attach(buildAttachment(position))
                                 .build()

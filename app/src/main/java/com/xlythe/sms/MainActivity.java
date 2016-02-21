@@ -32,6 +32,8 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
+import java.util.Set;
+
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.ThreadViewHolder.ClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
@@ -170,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         if (mActionMode == null) {
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
-        toggleSelection((int) thread.getIdAsLong());
+        toggleSelection(thread);
     }
 
     @Override
@@ -186,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
     @Override
     public void onItemClicked(Thread thread) {
         if (mActionMode != null) {
-            toggleSelection((int) thread.getIdAsLong());
+            toggleSelection(thread);
         } else {
             Intent i = new Intent(getBaseContext(), MessageActivity.class);
             i.putExtra(MessageActivity.EXTRA_THREAD, thread);
@@ -199,12 +201,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         if (mActionMode == null) {
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
-        toggleSelection((int) thread.getIdAsLong());
+        toggleSelection(thread);
         return true;
     }
 
-    private void toggleSelection(int position) {
-        mAdapter.toggleSelection(position);
+    private void toggleSelection(Thread thread) {
+        mAdapter.toggleSelection(thread);
         int count = mAdapter.getSelectedItemCount();
 
         if (count == 0) {
@@ -234,9 +236,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.menu_remove:
-                    for (int position : mAdapter.getSelectedItems()) {
-                        TextManager.getInstance(getBaseContext()).delete(mAdapter.getThread(position));
-                    }
+                    Set<Thread> threads = mAdapter.getSelectedItems();
+                    TextManager.getInstance(getBaseContext()).delete(threads.toArray(new Thread[threads.size()]));
+                    mAdapter.clearSelection();
                     mode.finish();
                     return true;
                 default:
@@ -246,7 +248,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
 
         @Override
         public void onDestroyActionMode(ActionMode mode) {
-            mAdapter.removeItems(null);
             mode.finish();
             mActionMode = null;
             mRecyclerView.setNestedScrollingEnabled(true);

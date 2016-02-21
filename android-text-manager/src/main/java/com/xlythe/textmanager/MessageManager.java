@@ -62,12 +62,12 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
     /**
      * Deletes a message
      * */
-    void delete(M message);
+    void delete(M... message);
 
     /**
      * Deletes a thread
      * */
-    void delete(T thread);
+    void delete(T... thread);
 
     /**
      * Marks a message as read

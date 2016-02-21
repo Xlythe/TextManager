@@ -1,21 +1,15 @@
 package com.xlythe.sms.adapter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AnticipateInterpolator;
-import android.view.animation.AnticipateOvershootInterpolator;
-import android.view.animation.BounceInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
@@ -24,14 +18,10 @@ import android.support.v4.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.R;
-import com.xlythe.sms.util.ColorUtils;
 
 import java.io.File;
 
-/**
- * Created by Niko on 1/21/16.
- */
-public class AttachmentAdapter extends SelectableAdapter<AttachmentAdapter.ViewHolder> {
+public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdapter.ViewHolder> {
     private static final String TAG = AttachmentAdapter.class.getSimpleName();
 
     private ViewHolder.ClickListener mClickListener;

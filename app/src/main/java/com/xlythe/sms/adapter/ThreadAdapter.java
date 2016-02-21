@@ -29,11 +29,14 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
+public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
     private static final Typeface TYPEFACE_NORMAL = Typeface.create("sans-serif-regular", Typeface.NORMAL);
     private static final Typeface TYPEFACE_BOLD = Typeface.create("sans-serif-medium", Typeface.NORMAL);
     private static final int CARD_STATE_ACTIVE_COLOR = Color.rgb(229, 244, 243);
@@ -81,71 +84,6 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
         mCursor = cursor;
         mThreadLruCache.evictAll();
         notifyDataSetChanged();
-    }
-
-    public void add(Thread s, int position) {
-        position = position == -1 ? getItemCount() : position;
-        // TODO: FIX
-        //mData.add(position, s);
-        notifyItemInserted(position);
-    }
-
-    public void removeItem(int position) {
-        // TODO: FIX
-        //mData.remove(position);
-        notifyItemRemoved(position);
-    }
-
-    public void removeItems(List<Integer> positions) {
-        // TODO: FIX
-        // Reverse-sort the list
-        if (positions != null) {
-            Collections.sort(positions, new Comparator<Integer>() {
-                @Override
-                public int compare(Integer lhs, Integer rhs) {
-                    return rhs - lhs;
-                }
-            });
-
-            // Split the list in ranges
-            while (!positions.isEmpty()) {
-                if (positions.size() == 1) {
-                    removeItem(positions.get(0));
-                    positions.remove(0);
-                } else {
-                    int count = 1;
-                    while (positions.size() > count && positions.get(count).equals(positions.get(count - 1) - 1)) {
-                        ++count;
-                    }
-
-                    if (count == 1) {
-                        removeItem(positions.get(0));
-                    } else {
-                        removeRange(positions.get(count - 1), count);
-                    }
-
-                    for (int i = 0; i < count; ++i) {
-                        positions.remove(0);
-                    }
-                }
-            }
-        }
-        clearSelection();
-        invalidate();
-    }
-
-    void invalidate(){
-        for (int i=0; i < mCursor.getCount(); i++) {
-            notifyItemChanged(i);
-        }
-    }
-
-    private void removeRange(int positionStart, int itemCount) {
-        for (int i = 0; i < itemCount; ++i) {
-            // TODO: FIX
-            //mData.remove(positionStart);
-        }
-        notifyItemRangeRemoved(positionStart, itemCount);
     }
 
     public static abstract class ViewHolder extends RecyclerView.ViewHolder {
@@ -338,7 +276,7 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        boolean isSelected = isSelected((int) getThread(position).getIdAsLong());
+        boolean isSelected = isSelected(getThread(position));
         boolean selectMode = selectMode();
 
         holder.setThread(mContext, getThread(position), isSelected, selectMode);
@@ -360,6 +298,14 @@ public class ThreadAdapter extends SelectableAdapter<ThreadAdapter.ViewHolder> i
             mThreadLruCache.put(position, thread);
         }
         return thread;
+    }
+
+    public Set<Thread> getThreads(Collection<Integer> positions) {
+        Set<Thread> set = new HashSet<>(positions.size());
+        for (Integer position : positions) {
+            set.add(getThread(position));
+        }
+        return set;
     }
 
     @Override

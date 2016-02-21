@@ -5,41 +5,41 @@ import android.util.Log;
 import android.util.SparseBooleanArray;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public abstract class SelectableAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
-    private SparseBooleanArray mSelectedItems = new SparseBooleanArray();
+public abstract class SelectableAdapter<S, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
+    private final Set<S> mSelectedItems = new HashSet<>();
 
     public boolean selectMode() {
-        return mSelectedItems.size() > 0;
+        return !mSelectedItems.isEmpty();
     }
 
-    public boolean isSelected(int position) {
-        return getSelectedItems().contains(position);
+    public boolean isSelected(S item) {
+        return mSelectedItems.contains(item);
     }
 
-    public void toggleSelection(int position) {
-        if (mSelectedItems.get(position, false)) {
-            mSelectedItems.delete(position);
+    public void toggleSelection(S item) {
+        if (mSelectedItems.contains(item)) {
+            mSelectedItems.remove(item);
         } else {
-            mSelectedItems.put(position, true);
+            mSelectedItems.add(item);
         }
         notifyDataSetChanged();
     }
 
     public void clearSelection() {
         mSelectedItems.clear();
+        notifyDataSetChanged();
     }
 
     public int getSelectedItemCount() {
         return mSelectedItems.size();
     }
 
-    public List<Integer> getSelectedItems() {
-        List<Integer> items = new ArrayList<>(mSelectedItems.size());
-        for (int i = 0; i < mSelectedItems.size(); ++i) {
-            items.add(mSelectedItems.keyAt(i));
-        }
-        return items;
+    public Set<S> getSelectedItems() {
+        return Collections.unmodifiableSet(mSelectedItems);
     }
 }

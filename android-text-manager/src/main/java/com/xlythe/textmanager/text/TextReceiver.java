@@ -66,8 +66,8 @@ public abstract class TextReceiver extends BroadcastReceiver {
             String message = currentMessage.getDisplayMessageBody();
             // TODO: try and get the real text
             onMessageReceived(context,
-                    new Text.Builder(context)
-                    .recipient(number)
+                    new Text.Builder()
+                    .addRecipient(context, number)
                     .message(message)
                     .build());
         }

@@ -336,24 +336,38 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public void delete(Text message) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms._ID, message.getId());
+    public void delete(Text... messages) {
+        String ids = "";
+        for (Text text : messages) {
+            if (!ids.isEmpty()) {
+                ids += ",";
+            }
+            ids += text.getId();
+        }
+        String clause = String.format("%s in (%s)",
+                Mock.Telephony.Sms._ID, ids);
         int rowsDeleted = mContext.getContentResolver().delete(
                 Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
         if (DEBUG) {
-            Log.i(TAG, String.format("Deleting %s. %s rows deleted", message, rowsDeleted));
+            Log.i(TAG, String.format("Deleting %s. %s rows deleted", ids, rowsDeleted));
         }
     }
 
     @Override
-    public void delete(Thread thread) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms.THREAD_ID, thread.getId());
+    public void delete(Thread... threads) {
+        String ids = "";
+        for (Thread thread : threads) {
+            if (!ids.isEmpty()) {
+                ids += ",";
+            }
+            ids += thread.getId();
+        }
+        String clause = String.format("%s in (%s)",
+                Mock.Telephony.Sms.THREAD_ID, ids);
         int rowsDeleted = mContext.getContentResolver().delete(
                 Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
         if (DEBUG) {
-            Log.i(TAG, String.format("Deleting %s. %s rows deleted", thread, rowsDeleted));
+            Log.i(TAG, String.format("Deleting %s. %s rows deleted", ids, rowsDeleted));
         }
     }
 
