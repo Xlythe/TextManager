@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.VideoAttachment;
 
@@ -24,7 +26,7 @@ public class MediaActivity extends AppCompatActivity {
         mText = getIntent().getParcelableExtra(EXTRA_TEXT);
 
         VideoView video = (VideoView) findViewById(R.id.video);
-        ImageView image = (ImageView) findViewById(R.id.image);
+        SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
 
         Uri uri = mText.getAttachments().get(0).getUri();
 
@@ -36,7 +38,7 @@ public class MediaActivity extends AppCompatActivity {
         } else {
             video.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);
-            image.setImageURI(mText.getAttachments().get(0).getUri());
+            image.setImage(ImageSource.uri(mText.getAttachments().get(0).getUri()));
         }
     }
 }
