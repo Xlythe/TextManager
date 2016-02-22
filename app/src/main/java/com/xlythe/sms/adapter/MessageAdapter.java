@@ -1,6 +1,7 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 
+import com.xlythe.sms.MediaActivity;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
@@ -202,6 +204,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
             mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
+            mImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent i = new Intent(getContext(), MediaActivity.class);
+                    i.putExtra(MediaActivity.EXTRA_TEXT, getMessage());
+                    getContext().startActivity(i);
+                }
+            });
         }
 
         @Override
