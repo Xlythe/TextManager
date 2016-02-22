@@ -236,8 +236,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             @Override
             public void run() {
                 // getMessage is a long running operation
-                // TODO: threadId
-                final Text text = getMessage("", id);
+                final Text text = getMessage(id);
 
                 // Return the list in the callback
                 handler.post(new Runnable() {
@@ -251,9 +250,23 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public Text getMessage(String threadId, String messageId) {
-       // TODO: I deleted this and probably didn't need to
-        return null;
+    public Text getMessage(String messageId) {
+        String clause = String.format("%s = %s",
+                Mock.Telephony.Sms._ID, messageId);
+        ContentResolver contentResolver = mContext.getContentResolver();
+        final String[] projection = PROJECTION;
+        Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
+        String order = "normalized_date ASC";
+        Text.TextCursor cursor = new Text.TextCursor(mContext, contentResolver.query(uri, projection, clause, null, order));
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getText();
+            } else {
+                return null;
+            }
+        } finally {
+            cursor.close();
+        }
     }
 
     @Override
@@ -332,7 +345,28 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public Thread getThread(String threadId) {
-        return null; // TODO
+        String clause = String.format("%s = %s",
+                Mock.Telephony.MmsSms._ID, threadId);
+        ContentResolver contentResolver = mContext.getContentResolver();
+        final Uri uri;
+        final String order;
+        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
+            order = "date DESC";
+        } else {
+            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+            order = "normalized_date DESC";
+        }
+        Thread.ThreadCursor cursor = new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, clause, null, order));
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getThread();
+            } else {
+                return null;
+            }
+        } finally {
+            cursor.close();
+        }
     }
 
     @Override
