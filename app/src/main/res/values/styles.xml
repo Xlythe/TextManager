@@ -27,6 +27,7 @@
 
     <style name="AppTheme.NoActionBar.Compose">
         <item name="android:windowBackground">@color/colorCompose</item>
+        <item name="colorControlNormal">@android:color/white</item>
     </style>
 
     <style name="AppTheme.NoActionBar.Compose.Edit">
