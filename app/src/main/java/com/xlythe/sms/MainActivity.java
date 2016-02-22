@@ -249,6 +249,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Thr
         @Override
         public void onDestroyActionMode(ActionMode mode) {
             mode.finish();
+            mAdapter.clearSelection();
             mActionMode = null;
             mRecyclerView.setNestedScrollingEnabled(true);
         }
