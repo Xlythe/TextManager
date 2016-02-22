@@ -15,7 +15,8 @@
         android:background="@android:color/transparent"
         android:textColorHint="#6B000000"
         android:textSize="16sp"
-        android:hint="To">
+        android:hint="To"
+        android:imeOptions="actionDone">
         <requestFocus/>
     </EditText>
     <View

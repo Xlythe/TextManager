@@ -10,9 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.xlythe.sms.R;
-import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.Text;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageViewHolder> {
     private static final String TAG = ContactAdapter.class.getSimpleName();
@@ -21,9 +19,11 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
 
     private final Context mContext;
     private Contact.ContactCursor mCursor;
+    private ClickListener mClickListener;
     private final LruCache<Integer, Contact> mContactLruCache = new LruCache<>(CACHE_SIZE);
 
     public ContactAdapter(Context context, Contact.ContactCursor cursor) {
+        mClickListener = (ClickListener) context;
         mContext = context;
         mCursor = cursor;
     }
@@ -53,9 +53,15 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
     public static class ViewHolder extends MessageViewHolder {
         public TextView mTextView;
 
-        public ViewHolder(View v) {
+        public ViewHolder(View v, final ClickListener clickListener) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.section_text);
+            mTextView = (TextView) v.findViewById(R.id.title);
+            v.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListener.onItemClicked(getContact());
+                }
+            });
         }
 
         public void setContact(Context context, Contact contact) {
@@ -71,8 +77,8 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
     // Create new views (invoked by the layout manager)
     @Override
     public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View layout = LayoutInflater.from(mContext).inflate(R.layout.section, parent, false);
-        return new ViewHolder(layout);
+        View layout = LayoutInflater.from(mContext).inflate(R.layout.list_item_contact, parent, false);
+        return new ViewHolder(layout, mClickListener);
     }
 
     @Override
@@ -118,5 +124,9 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
         mCursor = cursor;
         mContactLruCache.evictAll();
         notifyDataSetChanged();
+    }
+
+    public interface ClickListener {
+        void onItemClicked(Contact contact);
     }
 }

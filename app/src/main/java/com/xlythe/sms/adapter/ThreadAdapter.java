@@ -61,11 +61,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
-    private ThreadViewHolder.ClickListener mClickListener;
+    private ClickListener mClickListener;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
 
     public ThreadAdapter(Context context, Thread.ThreadCursor cursor) {
-        mClickListener = (ThreadViewHolder.ClickListener) context;
+        mClickListener = (ClickListener) context;
         mContext = context;
         mCursor = cursor;
     }
@@ -260,13 +260,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
             return false;
         }
-
-        public interface ClickListener {
-            void onProfileClicked(Thread thread);
-            void onAttachmentClicked(Thread thread);
-            void onItemClicked(Thread thread);
-            boolean onItemLongClicked(Thread thread);
-        }
     }
 
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -365,5 +358,12 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         }
 
         holder.title.setText(title);
+    }
+
+    public interface ClickListener {
+        void onProfileClicked(Thread thread);
+        void onAttachmentClicked(Thread thread);
+        void onItemClicked(Thread thread);
+        boolean onItemLongClicked(Thread thread);
     }
 }

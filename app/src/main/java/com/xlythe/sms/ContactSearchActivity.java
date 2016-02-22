@@ -7,16 +7,19 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ContactAdapter;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 
-public class ContactSearchActivity extends AppCompatActivity {
+public class ContactSearchActivity extends AppCompatActivity implements ContactAdapter.ClickListener {
     public static final String EXTRA_NUMBER = "number";
+    public static final String EXTRA_CONTACT = "contact";
 
     private TextManager mManager;
 
@@ -64,5 +67,14 @@ public class ContactSearchActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new ContactAdapter(this, mManager.getContactCursor(""));
         mRecyclerView.setAdapter(mAdapter);
+    }
+
+    @Override
+    public void onItemClicked(Contact contact) {
+        Intent intent = new Intent();
+        intent.putExtra(EXTRA_NUMBER, contact.getNumbers(this).get(0));
+        intent.putExtra(EXTRA_CONTACT, contact);
+        setResult(RESULT_OK, intent);
+        finish();
     }
 }

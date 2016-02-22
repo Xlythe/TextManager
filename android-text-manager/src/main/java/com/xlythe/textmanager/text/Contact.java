@@ -11,6 +11,7 @@ import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.util.Log;
 
 import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
@@ -22,6 +23,9 @@ import java.util.List;
  * Represents a phone number.
  */
 public final class Contact implements User, Parcelable {
+    private static final String TAG = Contact.class.getSimpleName();
+    private static final boolean DEBUG = false;
+
     private final long mId;
     private final String mNumber;
     private final String mDisplayName;
@@ -29,6 +33,13 @@ public final class Contact implements User, Parcelable {
     private final String mPhotoThumbUri;
 
     protected Contact(Cursor c) {
+        if (DEBUG) {
+            Log.d(TAG, "--------Printing Columns-------");
+            for (int i = 0; i < c.getColumnCount(); i++) {
+                Log.d(TAG, "Column: " + c.getColumnName(i));
+            }
+        }
+
         mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
         // Number may not exist, so check first
         int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
@@ -64,10 +75,6 @@ public final class Contact implements User, Parcelable {
 
     public String getNumber() {
         return mNumber;
-    }
-
-    public String getNumber(Context context) {
-        return getNumber();
     }
 
     public List<String> getEmails(Context context) {

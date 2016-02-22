@@ -3,22 +3,29 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneNumberUtils;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 
 public class ComposeActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CONTACT = 10001;
 
-    private TextView mContacts;
+    private EditText mContacts;
     private TextView mMessage;
     private Activity mActivity;
     private TextManager mManager;
@@ -32,7 +39,7 @@ public class ComposeActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mManager = TextManager.getInstance(getBaseContext());
-        mContacts = (TextView) findViewById(R.id.contacts);
+        mContacts = (EditText) findViewById(R.id.contacts);
         mMessage = (TextView) findViewById(R.id.message);
         mActivity = this;
 
@@ -49,13 +56,27 @@ public class ComposeActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Hack to force the up arrow to be white
+        final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
+        upArrow.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        getSupportActionBar().setHomeAsUpIndicator(upArrow);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE_CONTACT) {
             if (resultCode == RESULT_OK) {
-                mContacts.setText(intent.getStringExtra(ContactSearchActivity.EXTRA_NUMBER));
+                String number = intent.getStringExtra(ContactSearchActivity.EXTRA_NUMBER);
+                Contact contact = intent.getParcelableExtra(ContactSearchActivity.EXTRA_CONTACT);
+
+                if (contact != null) {
+                    mContacts.setText(contact.getDisplayName());
+                } else {
+                    mContacts.setText(PhoneNumberUtils.formatNumber(number));
+                }
+                mContacts.setTag(number);
+                mContacts.setSelection(mContacts.getText().length());
             }
         } else {
             super.onActivityResult(requestCode, resultCode, intent);
@@ -75,7 +96,7 @@ public class ComposeActivity extends AppCompatActivity {
         if (id == R.id.action_send && mMessage.getText() != null && mContacts.getText() != null) {
             mManager.send(new Text.Builder()
                             .message(mMessage.getText().toString())
-                            .addRecipient(this, mContacts.getText().toString())
+                            .addRecipient(this, mContacts.getTag().toString())
                             .build()
             );
             finish();

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_compose">
-    <TextView
+    <EditText
         android:gravity="center_vertical"
         android:id="@+id/contacts"
         android:paddingLeft="16dp"
