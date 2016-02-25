@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.util.SparseIntArray;
@@ -13,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -116,7 +116,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public final TextView date;
         public final RoundedImageView attachment;
         public final ImageView videoLabel;
-        public final CardView card;
+        public final LinearLayout card;
         public final de.hdodenhof.circleimageview.CircleImageView profile;
         private ClickListener mListener;
 
@@ -128,7 +128,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             date = (TextView) view.findViewById(R.id.date);
             attachment = (RoundedImageView) view.findViewById(R.id.attachment);
             videoLabel = (ImageView) view.findViewById(R.id.video_label);
-            card = (CardView) view.findViewById(R.id.card);
+            card = (LinearLayout) view.findViewById(R.id.card);
             profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
 
             mListener = listener;
@@ -233,9 +233,9 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
             profile.setActivated(isSelected);
             if (isSelected) {
-                card.setCardBackgroundColor(CARD_STATE_ACTIVE_COLOR);
+                card.setBackgroundColor(CARD_STATE_ACTIVE_COLOR);
             } else {
-                card.setCardBackgroundColor(CARD_STATE_COLOR);
+                card.setBackgroundColor(CARD_STATE_COLOR);
             }
         }
 
