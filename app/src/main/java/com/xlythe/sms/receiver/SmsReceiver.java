@@ -5,50 +5,24 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
+import com.google.gson.Gson;
 import com.xlythe.sms.MainActivity;
 import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Text;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SmsReceiver extends com.xlythe.textmanager.text.TextReceiver {
 
     @Override
     public void onMessageReceived(Context context, Text text) {
-        Intent dismissIntent = new Intent(context, MainActivity.class);
-        PendingIntent piDismiss = PendingIntent.getService(context, 0, dismissIntent, 0);
-
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getSender().getDisplayName())
-                        .setContentText(text.getBody())
-                        .setAutoCancel(true)
-                        .setLights(Color.WHITE, 500, 1500)
-                        .setDefaults(Notification.DEFAULT_SOUND)
-                        .setPriority(Notification.PRIORITY_HIGH)
-                        .setCategory(Notification.CATEGORY_MESSAGE)
-                        .addAction(R.mipmap.ic_launcher, "Reply", piDismiss);
-
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-        inboxStyle.setBigContentTitle("X new messages");
-        inboxStyle.addLine(text.getBody());
-        builder.setStyle(inboxStyle);
-
-        Intent resultIntent = new Intent(context, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
-
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(12345, builder.build());
+        Notifications.buildNotification(context, text);
     }
 }
