@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.text.Html;
+import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.xlythe.sms.MainActivity;
@@ -37,37 +39,47 @@ public class Notifications {
             texts.add(gson.fromJson(json, Text.class));
         }
 
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+
+        // Only one message, can be text or Image/Video thumbnail
         if (texts.size() == 1) {
-            //TODO: Ill finish up in the morning
+            Text txt = texts.iterator().next();
+            if (txt.getAttachment() == null) {
+                builder.setSmallIcon(R.drawable.user_icon)
+                        .setContentTitle(txt.getSender().getDisplayName())
+                        .setContentText(txt.getBody());
+
+                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
+                        .addLine(txt.getBody());
+            } else {
+                builder.setSmallIcon(R.drawable.user_icon)
+                        .setContentTitle(txt.getSender().getDisplayName())
+                        .setContentText(txt.getBody());
+                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
+                        .addLine(txt.getBody());
+            }
         }
 
+        // Multiple messages, should all look the same unless its only one conversation
+        else {
+            Set<String> names = new HashSet<>();
+            inboxStyle.setBigContentTitle(texts.size() + " new messages");
+            for (Text txt: texts) {
+                inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
+                names.add(txt.getSender().getDisplayName());
+            }
+            builder.setSmallIcon(R.drawable.user_icon)
+                    .setContentTitle(texts.size() + " new messages")
+                    .setContentText(TextUtils.join(", ", names));
+        }
 
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.drawable.user_icon)
-                        .setContentTitle(text.getSender().getDisplayName())
-                        .setContentText(text.getBody())
-                        .setAutoCancel(true)
-                        .setLights(Color.WHITE, 500, 1500)
-                        .setDefaults(Notification.DEFAULT_SOUND)
-                        .setPriority(Notification.PRIORITY_HIGH)
-                        .setCategory(Notification.CATEGORY_MESSAGE);
-
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-        inboxStyle.setBigContentTitle("X new messages");
-        inboxStyle.addLine(text.getBody());
-        builder.setStyle(inboxStyle);
-
-        Intent resultIntent = new Intent(context, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
+        builder.setAutoCancel(true)
+                .setLights(Color.WHITE, 500, 1500)
+                .setDefaults(Notification.DEFAULT_SOUND)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setCategory(Notification.CATEGORY_MESSAGE)
+                .setStyle(inboxStyle);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(12345, builder.build());

@@ -52,48 +52,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
             new ReceivePushTask(context).execute(intent);
         } else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
             SmsMessage[] messages = getMessagesFromIntent(intent);
-            Receive.storeMessage(context, messages, 0);
-            buildNotification(context, intent);
-        } else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
-            buildNotification(context, intent);
-        }
-    }
-
-    public void buildNotification(Context context, Intent intent) {
-        SmsMessage[] messages = getMessagesFromIntent(intent);
-        for (SmsMessage currentMessage : messages) {
-            String number = currentMessage.getDisplayOriginatingAddress();
-            String message = currentMessage.getDisplayMessageBody();
-            // TODO: try and get the real text
-            onMessageReceived(context,
-                    new Text.Builder()
-                    .addRecipient(context, number)
-                    .message(message)
-                    .build());
-        }
-    }
-
-
-    public static class NotificationText {
-        private String mSender;
-        private String mMessage;
-        private Bitmap mBitmap;
-        protected NotificationText(String sender, String message, Bitmap bitmap) {
-            mSender = sender;
-            mMessage = message;
-            mBitmap = bitmap;
-        }
-
-        public String getSender() {
-            return mSender;
-        }
-
-        public String getMessage() {
-            return mMessage;
-        }
-
-        public Bitmap getBitmap() {
-            return mBitmap;
+            Text text = Receive.storeMessage(context, messages, 0);
+            onMessageReceived(context, text);
+        //} else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
+            //onMessageReceived(context, text);
         }
     }
 
@@ -135,14 +97,18 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     Uri msgUri;
                     try {
                         msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
-                        Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
-                        Text text = new Text(mContext, c);
-                        onMessageReceived(mContext, text);
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
                         values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
+
+                        Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
+                        if (c == null) return;
+                        c.moveToFirst();
+                        Text text = new Text(mContext, c);
+                        c.close();
+                        onMessageReceived(mContext, text);
                     } catch (MmsException e) {
                         Log.e(TAG, "unable to persist message");
                         onFail();

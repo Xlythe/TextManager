@@ -12,6 +12,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
@@ -30,6 +31,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Receive {
+
+    public static final String[] SMS_PROJECTION = new String[] {
+            // Base item ID
+            BaseColumns._ID,
+            // Conversation (thread) ID
+            Mock.Telephony.Sms.Conversations.THREAD_ID,
+            // Date values
+            Mock.Telephony.Sms.DATE,
+            Mock.Telephony.Sms.DATE_SENT,
+            // For SMS only
+            Mock.Telephony.Sms.ADDRESS,
+            Mock.Telephony.Sms.BODY,
+            Mock.Telephony.Sms.TYPE
+    };
+
+
     // Email Address Pattern.
     private static final Pattern EMAIL_ADDRESS_PATTERN = Pattern.compile(
             "[a-zA-Z0-9\\+\\.\\_\\%\\-]{1,256}" + "\\@" + "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
@@ -100,7 +117,7 @@ public class Receive {
      * @param msgs Array of SMS Messages
      * @param error Error code
      */
-    public static void storeMessage(Context context, SmsMessage[] msgs, int error) {
+    public static Text storeMessage(Context context, SmsMessage[] msgs, int error) {
         SmsMessage sms = msgs[0];
 
         // Add everything but the message body
@@ -109,8 +126,8 @@ public class Receive {
 
         // Add the message body
         StringBuilder body = new StringBuilder();
-        for(int i = 0; i < msgs.length; i++) {
-            sms = msgs[i];
+        for (SmsMessage msg: msgs) {
+            sms = msg;
             if(sms.getDisplayMessageBody() != null) {
                 body.append(sms.getDisplayMessageBody());
             }
@@ -128,7 +145,14 @@ public class Receive {
         }
 
         // Add to content provider
-        context.getContentResolver().insert(Mock.Telephony.Sms.Inbox.CONTENT_URI, values);
+        Uri msg = context.getContentResolver().insert(Mock.Telephony.Sms.Inbox.CONTENT_URI, values);
+        if (msg == null) return null;
+        Cursor c = context.getContentResolver().query(msg, SMS_PROJECTION, null, null, "date ASC");
+        if (c == null) return null;
+        c.moveToFirst();
+        Text text = new Text(context, c);
+        c.close();
+        return text;
     }
 
     /**
@@ -200,8 +224,6 @@ public class Receive {
             try {
                 if (cursor.moveToFirst()) {
                     return cursor.getLong(0);
-                } else {
-
                 }
             } finally {
                 cursor.close();

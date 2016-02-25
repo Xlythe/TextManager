@@ -119,7 +119,11 @@ public final class Text implements Message, Parcelable {
         int typeIndex = cursor.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
         if (typeIndex < 0) {
             // Type column not in projection, use another discriminator
-            String cType = cursor.getString(cursor.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
+            String cType = null;
+            int cTypeIndex = cursor.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE);
+            if (cTypeIndex >= 0) {
+                cType = cursor.getString(cursor.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
+            }
             // If content type is present, this is an MMS message
             if (cType != null) {
                 return TYPE_MMS;
