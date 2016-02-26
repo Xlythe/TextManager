@@ -5,8 +5,9 @@
     <FrameLayout
         android:id="@+id/layout_camera"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <com.xlythe.sms.view.LegacyCameraView
+        android:layout_height="match_parent"
+        android:background="#000000">
+        <com.xlythe.sms.view.CameraView
             android:id="@+id/camera"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
@@ -17,6 +18,13 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
             android:layout_marginBottom="48dp" />
+        <ImageView
+            android:id="@+id/btn_toggle_camera"
+            android:src="@drawable/attach"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|top"
+            android:layout_margin="8dp" />
     </FrameLayout>
     <include layout="@layout/content_permission_error" />
 </FrameLayout>

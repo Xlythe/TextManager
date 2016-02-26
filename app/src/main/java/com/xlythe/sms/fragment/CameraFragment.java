@@ -26,7 +26,7 @@ import java.io.File;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
-public class CameraFragment extends Fragment implements ICameraView.PictureListener, ICameraView.VideoListener {
+public class CameraFragment extends Fragment {
     public static final String ARG_COLOR = "color";
     public static final String ARG_MESSAGE = "message";
 
@@ -43,6 +43,28 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
 
     private int mColor;
     private Text mText;
+
+    private ICameraView.CameraListener mPictureListener = new ICameraView.CameraListener() {
+        @Override
+        public void onCaptured(File file) {
+            TextManager.getInstance(getContext()).send(new Text.Builder()
+                    .recipient(mText.getMembersExceptMe(getContext()))
+                    .attach(new ImageAttachment(Uri.fromFile(file)))
+                    .build()
+            );
+        }
+    };
+
+    private ICameraView.CameraListener mVideoListener = new ICameraView.CameraListener() {
+        @Override
+        public void onCaptured(File file) {
+            TextManager.getInstance(getContext()).send(new Text.Builder()
+                    .recipient(mText.getMembersExceptMe(getContext()))
+                    .attach(new VideoAttachment(Uri.fromFile(file)))
+                    .build()
+            );
+        }
+    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -85,8 +107,15 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
 
         mCameraHolder = rootView.findViewById(R.id.layout_camera);
         mCamera = (ICameraView) rootView.findViewById(R.id.camera);
-        mCamera.setPictureListener(this);
-        mCamera.setVideoListener(this);
+
+        View toggleCamera = mCameraHolder.findViewById(R.id.btn_toggle_camera);
+        toggleCamera.setVisibility(mCamera.hasFrontFacingCamera() ? View.VISIBLE : View.GONE);
+        toggleCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCamera.toggleCamera();
+            }
+        });
 
         ImageView capture = (ImageView) mCameraHolder.findViewById(R.id.btn_capture);
         capture.setOnTouchListener(new View.OnTouchListener() {
@@ -116,12 +145,12 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
             };
 
             private void onTap() {
-                mCamera.takePicture();
+                mCamera.takePicture(mPictureListener);
             }
 
             private void onHold() {
                 vibrate();
-                mCamera.startRecording();
+                mCamera.startRecording(mVideoListener);
             }
 
             private void onRelease() {
@@ -187,23 +216,5 @@ public class CameraFragment extends Fragment implements ICameraView.PictureListe
     public void onPause() {
         mCamera.close();
         super.onPause();
-    }
-
-    @Override
-    public void onImageCaptured(File file) {
-        TextManager.getInstance(getContext()).send(new Text.Builder()
-                .recipient(mText.getMembersExceptMe(getContext()))
-                .attach(new ImageAttachment(Uri.fromFile(file)))
-                .build()
-        );
-    }
-
-    @Override
-    public void onVideoCaptured(File file) {
-        TextManager.getInstance(getContext()).send(new Text.Builder()
-                .recipient(mText.getMembersExceptMe(getContext()))
-                .attach(new VideoAttachment(Uri.fromFile(file)))
-                .build()
-        );
     }
 }

@@ -15,16 +15,16 @@ public interface ICameraView {
     void close();
 
     /**
-     * Takes a picture. Set a {@link PictureListener} to be
+     * Takes a picture. Set a {@link CameraListener} to be
      * notified of when the picture has finished saving.
      */
-    void takePicture();
+    void takePicture(CameraListener listener);
 
     /**
-     * Records a video. Set a {@link VideoListener} to be notified of when
+     * Records a video. Set a {@link CameraListener} to be notified of when
      * the video has finished saving.
      */
-    void startRecording();
+    void startRecording(CameraListener listener);
 
     /**
      * Stops recording the video. It's recommended that you set a timeout when recording to avoid
@@ -37,21 +37,11 @@ public interface ICameraView {
      */
     boolean isRecording();
 
-    /**
-     * Listens for captured pictures.
-     */
-    void setPictureListener(PictureListener listener);
+    boolean hasFrontFacingCamera();
 
-    /**
-     * Listens for captured videos.
-     */
-    void setVideoListener(VideoListener listener);
+    void toggleCamera();
 
-    interface PictureListener {
-        void onImageCaptured(File file);
-    }
-
-    interface VideoListener {
-        void onVideoCaptured(File file);
+    interface CameraListener {
+        void onCaptured(File file);
     }
 }

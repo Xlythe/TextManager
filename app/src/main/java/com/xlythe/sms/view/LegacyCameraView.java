@@ -41,12 +41,14 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     }
 
     @Override
-    public void takePicture() {
+    public void takePicture(CameraListener listener) {
+        setPictureListener(listener);
         super.takePicture(false, true);
     }
 
     @Override
-    public void startRecording() {
+    public void startRecording(CameraListener listener) {
+        setVideoListener(listener);
         try {
             super.record();
         } catch (Exception e) {
@@ -58,7 +60,7 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     public void stopRecording() {
         try {
             super.stopRecording();
-            getHost().mVideoListener.onVideoCaptured(getHost().getVideoPath());
+            getHost().mVideoListener.onCaptured(getHost().getVideoPath());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
@@ -67,12 +69,19 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     }
 
     @Override
-    public void setPictureListener(PictureListener listener) {
-        getHost().setPictureListener(listener);
+    public boolean hasFrontFacingCamera() {
+        return false;
     }
 
     @Override
-    public void setVideoListener(VideoListener listener) {
+    public void toggleCamera() {
+    }
+
+    private void setPictureListener(CameraListener listener) {
+        getHost().setPictureListener(listener);
+    }
+
+    private void setVideoListener(CameraListener listener) {
         getHost().setVideoListener(listener);
     }
 
@@ -86,8 +95,8 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     }
 
     public static final class Host extends SimpleCameraHost {
-        private ICameraView.PictureListener mPictureListener;
-        private ICameraView.VideoListener mVideoListener;
+        private ICameraView.CameraListener mPictureListener;
+        private ICameraView.CameraListener mVideoListener;
 
         private Context mContext;
 
@@ -100,15 +109,15 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
         public void saveImage(PictureTransaction xact, byte[] image) {
             super.saveImage(xact, image);
             if (mPictureListener != null) {
-                mPictureListener.onImageCaptured(getPhotoPath());
+                mPictureListener.onCaptured(getPhotoPath());
             }
         }
 
-        public void setPictureListener(ICameraView.PictureListener listener) {
+        public void setPictureListener(ICameraView.CameraListener listener) {
             mPictureListener = listener;
         }
 
-        public void setVideoListener(ICameraView.VideoListener listener) {
+        public void setVideoListener(ICameraView.CameraListener listener) {
             mVideoListener = listener;
         }
 
