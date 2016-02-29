@@ -10,6 +10,8 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -64,7 +66,7 @@ public class ProfileDrawable extends Drawable {
     @Override
     protected void onBoundsChange(Rect bounds) {
         mPath.reset();
-        mPath.addRect(bounds.left, bounds.top, bounds.right, bounds.bottom, Path.Direction.CW);
+        mPath.addCircle((bounds.right-bounds.left) / 2, (bounds.bottom-bounds.top) / 2, (bounds.right-bounds.left) / 2, Path.Direction.CW);
     }
 
     @Override

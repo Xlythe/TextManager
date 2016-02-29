@@ -56,6 +56,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- BroadcastReceiver that listens for deletion of notification -->
+        <receiver
+            android:name=".receiver.Notifications$OnDismissReceiver">
+        </receiver>
+
         <!-- Activity that allows the user to send new SMS/MMS messages -->
         <activity
             android:name=".MainActivity"
