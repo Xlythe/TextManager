@@ -41,7 +41,7 @@ public class Notifications {
     public static void buildNotification(Context context, Text text){
         Set<Text> texts = new HashSet<>();
 
-        SharedPreferences prefs = context.getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         Gson gson = new Gson();
         Set<String> jsonSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
@@ -78,16 +78,14 @@ public class Notifications {
         if (texts.size() == 1) {
             Text txt = texts.iterator().next();
             if (txt.getAttachment() == null) {
-                builder.setSmallIcon(R.drawable.user_icon)
-                        .setLargeIcon(drawableToBitmap(icon))
+                builder.setLargeIcon(drawableToBitmap(icon))
                         .setContentTitle(txt.getSender().getDisplayName())
                         .setContentText(txt.getBody());
 
                 inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
                         .addLine(txt.getBody());
             } else {
-                builder.setSmallIcon(R.drawable.user_icon)
-                        .setLargeIcon(drawableToBitmap(icon))
+                builder.setLargeIcon(drawableToBitmap(icon))
                         .setContentTitle(txt.getSender().getDisplayName())
                         .setContentText(txt.getBody());
                 inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
@@ -103,15 +101,16 @@ public class Notifications {
                 inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
                 names.add(txt.getSender().getDisplayName());
             }
-            builder.setSmallIcon(R.drawable.user_icon)
-                    .setContentTitle(texts.size() + " new messages")
+            builder.setContentTitle(texts.size() + " new messages")
                     .setContentText(TextUtils.join(", ", names));
         }
 
         Intent intent = new Intent(context, OnDismissReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 12345, intent, 0);
 
-        builder.setAutoCancel(true)
+        builder.setSmallIcon(R.drawable.fetch_icon_notif)
+                .setColor(Color.argb(255, 0, 150, 136))
+                .setAutoCancel(true)
                 .setDeleteIntent(pendingIntent)
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
@@ -126,11 +125,9 @@ public class Notifications {
     public static class OnDismissReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            SharedPreferences prefs = context.getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+            SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
-            Set<String> jsonSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
-            jsonSet.clear();
-            editor.putStringSet(NOTIFICATIONS, jsonSet);
+            editor.clear();
             editor.apply();
         }
     }
