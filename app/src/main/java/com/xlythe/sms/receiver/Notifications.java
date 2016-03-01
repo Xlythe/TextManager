@@ -14,21 +14,31 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Parcel;
+import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.Html;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.xlythe.sms.MainActivity;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.util.Utils;
 
+import org.apache.commons.codec.binary.Hex;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,19 +53,14 @@ public class Notifications {
 
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
-        Set<String> jsonSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
-        jsonSet.add(gson.toJson(text));
-        editor.putStringSet(NOTIFICATIONS, jsonSet);
+        Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
+        dataSet.add(Utils.bytesToHex(text.toBytes()));
+        editor.putStringSet(NOTIFICATIONS, dataSet);
         editor.apply();
 
-        for (String json: jsonSet) {
-            texts.add(gson.fromJson(json, Text.class));
+        for (String serializedData: dataSet) {
+            texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
         }
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-
 
         // Maybe make a helper class for this
         String address = "";
@@ -74,22 +79,47 @@ public class Notifications {
                 color,
                 uri);
 
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+        NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
+
         // Only one message, can be text or Image/Video thumbnail
         if (texts.size() == 1) {
             Text txt = texts.iterator().next();
-            if (txt.getAttachment() == null) {
-                builder.setLargeIcon(drawableToBitmap(icon))
-                        .setContentTitle(txt.getSender().getDisplayName())
-                        .setContentText(txt.getBody());
+            if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
+                try {
+                    Spanned s = Html.fromHtml("<i>Picture</i>");
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), txt.getAttachment().getUri());
+                    builder.setLargeIcon(bitmap)
+                            .setContentTitle(txt.getSender().getDisplayName())
+                            .setContentText(s)
+                            .setStyle(pictureStyle);
+                    pictureStyle.setBigContentTitle(txt.getSender().getDisplayName())
+                            .bigLargeIcon(drawableToBitmap(icon))
+                            .setSummaryText(s)
+                            .bigPicture(bitmap);
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
 
-                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
-                        .addLine(txt.getBody());
             } else {
                 builder.setLargeIcon(drawableToBitmap(icon))
                         .setContentTitle(txt.getSender().getDisplayName())
-                        .setContentText(txt.getBody());
-                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName())
-                        .addLine(txt.getBody());
+                        .setStyle(inboxStyle);
+                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName());
+                // Maybe add video too, but we have a problem with thumbnails without glide
+                if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
+                    Spanned s = Html.fromHtml("<i>Video</i>");
+                    builder.setContentText(s);
+                    inboxStyle.addLine(s);
+                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
+                    Spanned s = Html.fromHtml("<i>Voice</i>");
+                    builder.setContentText(s);
+                    inboxStyle.addLine(s);
+                } else {
+                    builder.setContentText(txt.getBody());
+                    inboxStyle.addLine(txt.getBody());
+                }
             }
         }
 
@@ -97,12 +127,26 @@ public class Notifications {
         else {
             Set<String> names = new HashSet<>();
             inboxStyle.setBigContentTitle(texts.size() + " new messages");
-            for (Text txt: texts) {
-                inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
+            List<Text> sortedTexts = new ArrayList<>(texts);
+            Collections.sort(sortedTexts);
+            for (Text txt: sortedTexts) {
+                if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
+                    String s = "<i>Video</i>";
+                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
+                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
+                    String s = "<i>Voice</i>";
+                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
+                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
+                    String s = "<i>Picture</i>";
+                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
+                } else {
+                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
+                }
                 names.add(txt.getSender().getDisplayName());
             }
             builder.setContentTitle(texts.size() + " new messages")
-                    .setContentText(TextUtils.join(", ", names));
+                    .setContentText(TextUtils.join(", ", names))
+                    .setStyle(inboxStyle);
         }
 
         Intent intent = new Intent(context, OnDismissReceiver.class);
@@ -115,8 +159,7 @@ public class Notifications {
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .setCategory(Notification.CATEGORY_MESSAGE)
-                .setStyle(inboxStyle);
+                .setCategory(Notification.CATEGORY_MESSAGE);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(12345, builder.build());

@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {
-        IMAGE, VIDEO, VOICE
+        IMAGE, VIDEO, VOICE;
     }
 
     private final Type mType;

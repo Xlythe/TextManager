@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * Either an sms or an mms
  */
-public final class Text implements Message, Parcelable {
+public final class Text implements Message, Parcelable, Comparable<Text> {
     private static final String[] MMS_PROJECTION = new String[]{
             BaseColumns._ID,
             Mock.Telephony.Mms.Part.CONTENT_TYPE,
@@ -107,12 +107,18 @@ public final class Text implements Message, Parcelable {
         mIsMms = in.readByte() != 0;
         mSender = in.readParcelable(Contact.class.getClassLoader());
 
+//        mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
+
         int membersSize = in.readInt();
         for (int i = 0; i < membersSize; i++) {
-            mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
+            Contact c = in.readParcelable(Contact.class.getClassLoader());
+            mMembers.add(c);
         }
 
-        mAttachment = in.readParcelable(getClass().getClassLoader());
+        Byte attach = in.readByte();
+        if (attach == 1) {
+            mAttachment = in.readParcelable(Attachment.class.getClassLoader());
+        }
     }
 
     private String getMessageType(Cursor cursor) {
@@ -274,6 +280,27 @@ public final class Text implements Message, Parcelable {
         return null;
     }
 
+    public byte[] toBytes() {
+        Parcel parcel = Parcel.obtain();
+        writeToParcel(parcel, describeContents());
+        try {
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    public static Text fromBytes(byte[] bytes) {
+        Parcel parcel = Parcel.obtain();
+        parcel.unmarshall(bytes, 0, bytes.length);
+        parcel.setDataPosition(0);
+        try {
+            return CREATOR.createFromParcel(parcel);
+        } finally {
+            parcel.recycle();
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o != null && o instanceof Text) {
@@ -320,6 +347,17 @@ public final class Text implements Message, Parcelable {
     }
 
     @Override
+    public int compareTo(Text text) {
+        if (text.getTimestamp() > getTimestamp()) {
+            return 1;
+        }
+        if(text.getTimestamp() < getTimestamp()) {
+            return -1;
+        }
+        return 0;
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
@@ -337,12 +375,21 @@ public final class Text implements Message, Parcelable {
         out.writeString(mDeviceNumber);
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
-        out.writeParcelable(mSender, Utils.describeContents(mSender));
+        out.writeParcelable(mSender, flags);
+
+//        out.writeParcelable(mMembers.iterator().next(), flags);
+
         out.writeInt(mMembers.size());
         for (Contact member : mMembers){
             out.writeParcelable(member, flags);
         }
-        out.writeParcelable(mAttachment, flags);
+
+        if (mAttachment != null) {
+            out.writeByte((byte) 1);
+            out.writeParcelable(mAttachment, flags);
+        } else {
+            out.writeByte((byte) 0);
+        }
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {

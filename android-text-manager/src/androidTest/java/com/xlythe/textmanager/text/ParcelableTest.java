@@ -3,8 +3,13 @@ package com.xlythe.textmanager.text;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.xlythe.textmanager.text.util.Utils;
 
 import junit.framework.TestCase;
+
+import java.io.UnsupportedEncodingException;
 
 public class ParcelableTest extends TestCase {
     private Parcel createParcel(Parcelable original) {
@@ -71,6 +76,17 @@ public class ParcelableTest extends TestCase {
 
         // Verify that the received data is correct.
         assertEquals("Text", original, Text.CREATOR.createFromParcel(parcel));
+    }
+
+    public void testToBytes() {
+        Text text = new Text.Builder().build();
+        assertEquals(text, Text.fromBytes(text.toBytes()));
+    }
+
+    public void testToBytesStrings() {
+        Text text = new Text.Builder().build();
+        String string = Utils.bytesToHex(text.toBytes());
+        assertEquals(text, Text.fromBytes(Utils.hexToBytes(string)));
     }
 
     public void testThread() {
