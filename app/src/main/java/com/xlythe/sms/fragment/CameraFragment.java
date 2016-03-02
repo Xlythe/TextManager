@@ -48,7 +48,7 @@ public class CameraFragment extends Fragment {
         @Override
         public void onCaptured(File file) {
             TextManager.getInstance(getContext()).send(new Text.Builder()
-                    .recipient(mText.getMembersExceptMe(getContext()))
+                    .addRecipients(mText.getMembersExceptMe(getContext()))
                     .attach(new ImageAttachment(Uri.fromFile(file)))
                     .build()
             );
@@ -59,7 +59,7 @@ public class CameraFragment extends Fragment {
         @Override
         public void onCaptured(File file) {
             TextManager.getInstance(getContext()).send(new Text.Builder()
-                    .recipient(mText.getMembersExceptMe(getContext()))
+                    .addRecipients(mText.getMembersExceptMe(getContext()))
                     .attach(new VideoAttachment(Uri.fromFile(file)))
                     .build()
             );

@@ -110,7 +110,6 @@
         <!-- Service that delivers messages from the phone "quick response" -->
         <service
             android:name=".service.HeadlessSmsSendService"
-            android:enabled="true"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
             <intent-filter>

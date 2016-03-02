@@ -17,6 +17,7 @@ import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -421,14 +422,36 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         private HashSet<Contact> mRecipients = new HashSet<>();
         private Attachment mAttachment;
 
-        public Builder addRecipient(Context context, String address) {
-            mRecipients.add(TextManager.getInstance(context).lookupContact(address));
+        public Builder setSender(Context context) {
             mSender = TextManager.getInstance(context).getSelf();
             return this;
         }
 
-        public Builder recipient(Set<Contact> addresses) {
+        public Builder addRecipient(Context context, String address) {
+            mRecipients.add(TextManager.getInstance(context).lookupContact(address));
+            return this;
+        }
+
+        public Builder addRecipient(Contact address) {
+            mRecipients.add(address);
+            return this;
+        }
+
+        public Builder addRecipients(Context context, String... addresses) {
+            TextManager textManager = TextManager.getInstance(context);
+            for (String address : addresses) {
+                mRecipients.add(textManager.lookupContact(address));
+            }
+            return this;
+        }
+
+        public Builder addRecipients(Set<Contact> addresses) {
             mRecipients.addAll(addresses);
+            return this;
+        }
+
+        public Builder addRecipients(Contact... addresses) {
+            Collections.addAll(mRecipients, addresses);
             return this;
         }
 

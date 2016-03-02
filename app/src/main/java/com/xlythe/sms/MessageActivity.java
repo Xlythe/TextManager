@@ -117,7 +117,7 @@ public class MessageActivity extends AppCompatActivity
             public void onClick(View v) {
                 mManager.send(new Text.Builder()
                                 .message(mEditText.getText().toString())
-                                .recipient(mThread.getLatestMessage().getMembersExceptMe(getBaseContext()))
+                                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getBaseContext()))
                                 .build()
                 );
                 mEditText.setText(null);
