@@ -62,22 +62,7 @@ public class Notifications {
             texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
         }
 
-        // Maybe make a helper class for this
-        String address = "";
-        Uri uri = null;
-        for (Contact member: text.getMembersExceptMe(context)) {
-            // TODO: Fix icon for group messaging
-            if (!address.isEmpty()) {
-                address += ", ";
-            }
-            address += member.getDisplayName();
-            uri = member.getPhotoUri();
-        }
-        int color = ColorUtils.getColor(Long.parseLong(text.getThreadId()));
-        ProfileDrawable icon = new ProfileDrawable(context,
-                address.charAt(0),
-                color,
-                uri);
+        ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();

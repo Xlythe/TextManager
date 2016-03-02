@@ -25,7 +25,11 @@ import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Attachment;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -187,10 +191,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         public void setProfile() {
             if (mProfile != null) {
-                ProfileDrawable border = new ProfileDrawable(getContext(),
-                        getMessage().getSender().getDisplayName().charAt(0),
-                        ColorUtils.getColor(getMessage().getThreadIdAsLong()),
-                        getMessage().getSender().getPhotoUri());
+                Set<Contact> sender = new HashSet<>();
+                sender.add(getMessage().getSender());
+                ProfileDrawable border = new ProfileDrawable(getContext(), sender);
                 mProfile.setImageDrawable(border);
             }
         }
@@ -251,10 +254,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         public void setProfile() {
             if (mProfile != null) {
-                ProfileDrawable border = new ProfileDrawable(getContext(),
-                        getMessage().getSender().getDisplayName().charAt(0),
-                        ColorUtils.getColor(getMessage().getThreadIdAsLong()),
-                        getMessage().getSender().getPhotoUri());
+                Set<Contact> sender = new HashSet<>();
+                sender.add(getMessage().getSender());
+                ProfileDrawable border = new ProfileDrawable(getContext(), sender);
                 mProfile.setImageDrawable(border);
             }
         }

@@ -19,7 +19,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
-import com.xlythe.sms.drawable.GroupDrawable;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
@@ -31,10 +30,7 @@ import com.xlythe.textmanager.text.Thread;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
@@ -224,14 +220,10 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setImageResource(android.R.color.transparent);
             } else {
                 if (!address.equals("")) {
-                    ProfileDrawable profileDrawable = new ProfileDrawable(getContext(),
-                            address.charAt(0),
-                            color,
-                            uri);
-                    GroupDrawable groupDrawable = new GroupDrawable(getContext(),
-                            profileDrawable,
-                            profileDrawable);
-                    profile.setImageDrawable(groupDrawable);
+                    if (latest != null) {
+                        ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
+                        profile.setImageDrawable(profileDrawable);
+                    }
                 }
             }
 
