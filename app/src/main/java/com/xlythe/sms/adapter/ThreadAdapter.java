@@ -19,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
+import com.xlythe.sms.drawable.GroupDrawable;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
@@ -117,7 +118,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public final RoundedImageView attachment;
         public final ImageView videoLabel;
         public final LinearLayout card;
-        public final de.hdodenhof.circleimageview.CircleImageView profile;
+        public final ImageView profile;
         private ClickListener mListener;
 
         public ThreadViewHolder(View view, ClickListener listener) {
@@ -129,7 +130,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             attachment = (RoundedImageView) view.findViewById(R.id.attachment);
             videoLabel = (ImageView) view.findViewById(R.id.video_label);
             card = (LinearLayout) view.findViewById(R.id.card);
-            profile = (de.hdodenhof.circleimageview.CircleImageView) view.findViewById(R.id.profile_image);
+            profile = (ImageView) view.findViewById(R.id.profile_image);
 
             mListener = listener;
 
@@ -223,11 +224,14 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setImageResource(android.R.color.transparent);
             } else {
                 if (!address.equals("")) {
-                    ProfileDrawable border = new ProfileDrawable(getContext(),
+                    ProfileDrawable profileDrawable = new ProfileDrawable(getContext(),
                             address.charAt(0),
                             color,
                             uri);
-                    profile.setImageDrawable(border);
+                    GroupDrawable groupDrawable = new GroupDrawable(getContext(),
+                            profileDrawable,
+                            profileDrawable);
+                    profile.setImageDrawable(groupDrawable);
                 }
             }
 
