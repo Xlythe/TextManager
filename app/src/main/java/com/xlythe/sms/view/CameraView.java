@@ -463,10 +463,15 @@ public class CameraView extends TextureView implements ICameraView {
             mPreviewBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_VIDEO_SNAPSHOT);
 
             List<Surface> surfaces = new ArrayList<>();
-            for (CameraSurface surface : mCameraSurfaces) {
-                surfaces.add(surface.getSurface());
-                mPreviewBuilder.addTarget(surface.getSurface());
-            }
+
+            // The preview is, well, the preview. This surface draws straight to the CameraView
+            surfaces.add(mPreviewSurface.getSurface());
+            mPreviewBuilder.addTarget(mPreviewSurface.getSurface());
+
+            // The video surface is for recording. When you call startRecording, it starts capturing
+            // the bytes given to it.
+            surfaces.add(mVideoSurface.getSurface());
+            mPreviewBuilder.addTarget(mVideoSurface.getSurface());
 
             mCameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
