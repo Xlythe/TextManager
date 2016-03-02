@@ -176,7 +176,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 message.setText(body);
             }
             date.setText(time);
-            profile.setBackgroundResource(R.drawable.selector);
 
             if (attachment != null && latest.getAttachment() != null) {
                 if (latest.getAttachment().getType() == Attachment.Type.VIDEO) {
@@ -218,7 +217,9 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
             if (selectMode) {
                 profile.setImageResource(android.R.color.transparent);
+                profile.setBackgroundResource(R.drawable.selector);
             } else {
+                profile.setBackgroundResource(android.R.color.transparent);
                 if (!address.equals("")) {
                     if (latest != null) {
                         ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
