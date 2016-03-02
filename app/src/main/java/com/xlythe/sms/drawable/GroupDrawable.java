@@ -35,20 +35,18 @@ public class GroupDrawable extends Drawable {
     Bitmap bmp2;
 
     public GroupDrawable(Context context, Drawable... drawables) {
+        double size;
         bmp1 = drawableToBitmap(drawables[0]);
         bmp2 = drawableToBitmap(drawables[1]);
 
-//        //2
-//        bmp1 = Bitmap.createScaledBitmap(bmp1, 2929 * bmp1.getWidth() / 5000, 2929 * bmp1.getHeight() / 5000, false);
-//        bmp2 = Bitmap.createScaledBitmap(bmp2, 2929 * bmp2.getWidth() / 5000, 2929 * bmp2.getHeight() / 5000, false);
+        //2
+//        size = Math.sqrt(2) * bmp1.getWidth() / (Math.sqrt(2) + 1);
 
-        //3
-        bmp1 = Bitmap.createScaledBitmap(bmp1, bmp1.getWidth() / 2, bmp1.getHeight() / 2, false);
-        bmp2 = Bitmap.createScaledBitmap(bmp2, bmp2.getWidth() / 2, bmp2.getHeight() / 2, false);
+        //3 and 4
+        size = bmp1.getWidth() / 2;
 
-//        //4
-//        bmp1 = Bitmap.createScaledBitmap(bmp1, bmp1.getWidth() / 2, bmp1.getHeight() / 2, false);
-//        bmp2 = Bitmap.createScaledBitmap(bmp2, bmp2.getWidth() / 2, bmp2.getHeight() / 2, false);
+        bmp1 = Bitmap.createScaledBitmap(bmp1, (int) size, (int) size, false);
+        bmp2 = Bitmap.createScaledBitmap(bmp2, (int) size, (int) size, false);
 
         mContext = context;
         px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
@@ -70,11 +68,12 @@ public class GroupDrawable extends Drawable {
     @Override
     public void draw(Canvas canvas) {
 //        canvas.drawBitmap(bmp1, 0, 0, null);
-//        canvas.drawBitmap(bmp2, bmp1.getWidth() - 22 * bmp1.getWidth() / 75, bmp1.getHeight() - 22 * bmp1.getHeight() / 75, null);
+//        canvas.drawBitmap(bmp2, px - bmp1.getWidth(), px - bmp1.getHeight(), null);
 
+        double size = Math.sqrt(3) * bmp1.getHeight() / 2;
         canvas.drawBitmap(bmp2, bmp1.getWidth() / 2, 0, null);
-        canvas.drawBitmap(bmp1, 0, bmp1.getHeight() - 35 * bmp1.getHeight() / 256, null);
-        canvas.drawBitmap(bmp2, bmp1.getWidth(), bmp1.getHeight() - 35 * bmp1.getHeight() / 256, null);
+        canvas.drawBitmap(bmp1, 0, (int) size, null);
+        canvas.drawBitmap(bmp2, bmp1.getWidth(), (int) size, null);
 
 //        canvas.drawBitmap(bmp1, 0, 0, null);
 //        canvas.drawBitmap(bmp2, bmp1.getWidth(), 0, null);
