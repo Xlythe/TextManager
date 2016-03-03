@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.xlythe.sms.util.MessageUtils;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -33,6 +34,18 @@ public class ComposeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        if (Intent.ACTION_SEND.equals(action)
+                || Intent.ACTION_SENDTO.equals(action)
+                || Intent.ACTION_VIEW.equals(action)) {
+            String[] recipients = MessageUtils.getRecipients(intent);
+            String body = MessageUtils.getBody(intent);
+
+            // TODO: Update ui to show recipients / body
+        }
+
         setContentView(R.layout.activity_compose);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
