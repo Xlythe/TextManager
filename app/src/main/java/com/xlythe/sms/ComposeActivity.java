@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.telephony.PhoneNumberUtils;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,17 +35,6 @@ public class ComposeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Intent intent = getIntent();
-        String action = intent.getAction();
-        if (Intent.ACTION_SEND.equals(action)
-                || Intent.ACTION_SENDTO.equals(action)
-                || Intent.ACTION_VIEW.equals(action)) {
-            String[] recipients = MessageUtils.getRecipients(intent);
-            String body = MessageUtils.getBody(intent);
-
-            // TODO: Update ui to show recipients / body
-        }
 
         setContentView(R.layout.activity_compose);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -74,6 +64,22 @@ public class ComposeActivity extends AppCompatActivity {
         final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
         upArrow.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
         getSupportActionBar().setHomeAsUpIndicator(upArrow);
+
+        if (savedInstanceState == null) {
+            // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.
+            Intent intent = getIntent();
+            String action = intent.getAction();
+            if (Intent.ACTION_SEND.equals(action)
+                    || Intent.ACTION_SENDTO.equals(action)
+                    || Intent.ACTION_VIEW.equals(action)) {
+                String[] recipients = MessageUtils.getRecipients(intent);
+                String body = MessageUtils.getBody(intent);
+
+
+                mContacts.setText(TextUtils.join(";", recipients));
+                mMessage.setText(body);
+            }
+        }
     }
 
     @Override
@@ -106,13 +112,14 @@ public class ComposeActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_send && mMessage.getText() != null && mContacts.getText() != null) {
-            mManager.send(new Text.Builder()
-                            .message(mMessage.getText().toString())
-                            .addRecipient(this, mContacts.getTag().toString())
-                            .build()
-            );
-            finish();
+        if (id == R.id.action_send) {
+            if (TextUtils.isEmpty(mMessage.getText().toString()) && TextUtils.isEmpty(mContacts.getText().toString())) {
+                mManager.send(new Text.Builder()
+                        .message(mMessage.getText().toString())
+                        .addRecipient(this, mContacts.getTag().toString())
+                        .build());
+                finish();
+            }
             return true;
         }
 
