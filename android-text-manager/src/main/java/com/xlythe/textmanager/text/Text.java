@@ -108,18 +108,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mIsMms = in.readByte() != 0;
         mSender = in.readParcelable(Contact.class.getClassLoader());
 
-//        mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
-
         int membersSize = in.readInt();
         for (int i = 0; i < membersSize; i++) {
-            Contact c = in.readParcelable(Contact.class.getClassLoader());
-            mMembers.add(c);
+            mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
         }
 
-        Byte attach = in.readByte();
-        if (attach == 1) {
-            mAttachment = in.readParcelable(Attachment.class.getClassLoader());
-        }
+        mAttachment = in.readParcelable(Attachment.class.getClassLoader());
     }
 
     private String getMessageType(Cursor cursor) {
@@ -378,19 +372,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeParcelable(mSender, flags);
 
-//        out.writeParcelable(mMembers.iterator().next(), flags);
-
         out.writeInt(mMembers.size());
         for (Contact member : mMembers){
             out.writeParcelable(member, flags);
         }
 
-        if (mAttachment != null) {
-            out.writeByte((byte) 1);
-            out.writeParcelable(mAttachment, flags);
-        } else {
-            out.writeByte((byte) 0);
-        }
+        out.writeParcelable(mAttachment, flags);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {

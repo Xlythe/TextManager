@@ -49,18 +49,7 @@ public class Notifications {
     public static final String NOTIFICATIONS = "notifications";
 
     public static void buildNotification(Context context, Text text){
-        Set<Text> texts = new HashSet<>();
-
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
-        dataSet.add(Utils.bytesToHex(text.toBytes()));
-        editor.putStringSet(NOTIFICATIONS, dataSet);
-        editor.apply();
-
-        for (String serializedData: dataSet) {
-            texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
-        }
+        Set<Text> texts = getVisibleTexts(context, text);
 
         ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
 
@@ -84,7 +73,7 @@ public class Notifications {
             Text txt = texts.iterator().next();
             if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
                 try {
-                    Spanned s = Html.fromHtml("<i>Picture</i>");
+                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.picture) + "</i>");
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), txt.getAttachment().getUri());
                     builder.setLargeIcon(bitmap)
                             .setContentTitle(txt.getSender().getDisplayName())
@@ -105,11 +94,11 @@ public class Notifications {
                 textStyle.setBigContentTitle(txt.getSender().getDisplayName());
                 // Maybe add video too, but we have a problem with thumbnails without glide
                 if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
-                    Spanned s = Html.fromHtml("<i>Video</i>");
+                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.video) + "</i>");
                     builder.setContentText(s);
                     textStyle.bigText(s);
                 } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
-                    Spanned s = Html.fromHtml("<i>Voice</i>");
+                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.voice) + "</i>");
                     builder.setContentText(s);
                     textStyle.bigText(s);
                 } else {
@@ -122,25 +111,25 @@ public class Notifications {
         // Multiple messages, should all look the same unless its only one conversation
         else {
             Set<String> names = new HashSet<>();
-            inboxStyle.setBigContentTitle(texts.size() + " new messages");
+            inboxStyle.setBigContentTitle(texts.size() + context.getString(R.string.new_message));
             List<Text> sortedTexts = new ArrayList<>(texts);
             Collections.sort(sortedTexts);
             for (Text txt: sortedTexts) {
                 if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
-                    String s = "<i>Video</i>";
+                    String s = "<i>" + context.getString(R.string.video) + "</i>";
                     inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
                 } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
-                    String s = "<i>Voice</i>";
+                    String s = "<i>" + context.getString(R.string.voice) + "</i>";
                     inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
                 } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
-                    String s = "<i>Picture</i>";
+                    String s = "<i>" + context.getString(R.string.picture) + "</i>";
                     inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
                 } else {
                     inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
                 }
                 names.add(txt.getSender().getDisplayName());
             }
-            builder.setContentTitle(texts.size() + " new messages")
+            builder.setContentTitle(texts.size() + context.getString(R.string.new_message))
                     .setContentText(TextUtils.join(", ", names))
                     .setStyle(inboxStyle);
         }
@@ -172,7 +161,24 @@ public class Notifications {
         }
     }
 
-    public static Bitmap drawableToBitmap (Drawable drawable) {
+    private static Set<Text> getVisibleTexts(Context context, Text text) {
+        Set<Text> texts = new HashSet<>();
+
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
+        dataSet.add(Utils.bytesToHex(text.toBytes()));
+        editor.putStringSet(NOTIFICATIONS, dataSet);
+        editor.apply();
+
+        for (String serializedData : dataSet) {
+            texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
+        }
+
+        return texts;
+    }
+
+    private static Bitmap drawableToBitmap (Drawable drawable) {
         Bitmap bitmap;
 
         if (drawable instanceof BitmapDrawable) {

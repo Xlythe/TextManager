@@ -15,4 +15,10 @@
     <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
     <string name="error_permissions_resolve">Request</string>
 
+    <string name="picture">Picture</string>
+    <string name="video">Video</string>
+    <string name="voice">Voice</string>
+    <string name="new_message">" new messages"</string>
+
+
 </resources>

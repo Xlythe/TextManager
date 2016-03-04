@@ -133,7 +133,7 @@ public class ProfileDrawable extends Drawable {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
                 bitmap = Bitmap.createScaledBitmap(bitmap, (int) px, (int) px, false);
                 mPaint.setColor(Color.WHITE);
-                canvas.drawBitmap(getclip(bitmap), 0, 0, mPaint);
+                canvas.drawBitmap(clip(bitmap), 0, 0, mPaint);
             } catch (IOException ioe){
                 Log.d("Profile image","io");
             }
@@ -170,7 +170,7 @@ public class ProfileDrawable extends Drawable {
         return PixelFormat.TRANSLUCENT;
     }
 
-    public Bitmap getclip(Bitmap bitmap) {
+    public Bitmap clip(Bitmap bitmap) {
         Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
                 bitmap.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(output);
