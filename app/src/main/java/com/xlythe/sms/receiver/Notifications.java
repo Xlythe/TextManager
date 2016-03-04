@@ -64,9 +64,20 @@ public class Notifications {
 
         ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
 
+        Intent resultIntent = new Intent(context, MainActivity.class);
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                resultIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
         NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
+        NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
 
         // Only one message, can be text or Image/Video thumbnail
         if (texts.size() == 1) {
@@ -90,20 +101,20 @@ public class Notifications {
             } else {
                 builder.setLargeIcon(drawableToBitmap(icon))
                         .setContentTitle(txt.getSender().getDisplayName())
-                        .setStyle(inboxStyle);
-                inboxStyle.setBigContentTitle(txt.getSender().getDisplayName());
+                        .setStyle(textStyle);
+                textStyle.setBigContentTitle(txt.getSender().getDisplayName());
                 // Maybe add video too, but we have a problem with thumbnails without glide
                 if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
                     Spanned s = Html.fromHtml("<i>Video</i>");
                     builder.setContentText(s);
-                    inboxStyle.addLine(s);
+                    textStyle.bigText(s);
                 } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
                     Spanned s = Html.fromHtml("<i>Voice</i>");
                     builder.setContentText(s);
-                    inboxStyle.addLine(s);
+                    textStyle.bigText(s);
                 } else {
                     builder.setContentText(txt.getBody());
-                    inboxStyle.addLine(txt.getBody());
+                    textStyle.bigText(txt.getBody());
                 }
             }
         }
@@ -144,7 +155,8 @@ public class Notifications {
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .setCategory(Notification.CATEGORY_MESSAGE);
+                .setCategory(Notification.CATEGORY_MESSAGE)
+                .setContentIntent(resultPendingIntent);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(12345, builder.build());
