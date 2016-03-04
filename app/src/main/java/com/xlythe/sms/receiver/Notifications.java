@@ -41,6 +41,7 @@ import java.util.Set;
 public class Notifications {
     public static final String TEXTS_VISIBLE_IN_NOTIFICATION = "texts_visible_in_notification";
     public static final String NOTIFICATIONS = "notifications";
+    private static final int NOTIFICATION_ID = 12345;
 
     public static void buildNotification(Context context, Text text){
         Set<Text> texts = getVisibleTexts(context, text);
@@ -55,13 +56,19 @@ public class Notifications {
         NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
         NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
 
-        // Only one message, can be text or Image/Video thumbnail
-        if (texts.size() == 1) {
+        if (sameSender(texts)) {
             Text txt = texts.iterator().next();
-
             intent = new Intent(context, MessageActivity.class);
             intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getThread(txt.getThreadId(), context));
             stackBuilder.addParentStack(MessageActivity.class);
+            builder.setLargeIcon(drawableToBitmap(icon));
+        } else {
+            stackBuilder.addParentStack(MainActivity.class);
+        }
+
+        // Only one message, can be text or Image/Video thumbnail
+        if (texts.size() == 1) {
+            Text txt = texts.iterator().next();
 
             if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
                 try {
@@ -80,8 +87,7 @@ public class Notifications {
                 }
 
             } else {
-                builder.setLargeIcon(drawableToBitmap(icon))
-                        .setContentTitle(txt.getSender().getDisplayName())
+                builder.setContentTitle(txt.getSender().getDisplayName())
                         .setStyle(textStyle);
                 textStyle.setBigContentTitle(txt.getSender().getDisplayName());
                 // Maybe add video too, but we have a problem with thumbnails without glide
@@ -102,7 +108,6 @@ public class Notifications {
 
         // Multiple messages, should all look the same unless its only one conversation
         else {
-            stackBuilder.addParentStack(MainActivity.class);
             Set<String> names = new HashSet<>();
             inboxStyle.setBigContentTitle(texts.size() + context.getString(R.string.new_message));
             List<Text> sortedTexts = new ArrayList<>(texts);
@@ -128,22 +133,22 @@ public class Notifications {
         }
 
         Intent dismissIntent = new Intent(context.getApplicationContext(), OnDismissReceiver.class);
-        PendingIntent pendingIntent1 = PendingIntent.getBroadcast(context.getApplicationContext(), 12345, dismissIntent, 0);
+        PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), NOTIFICATION_ID, dismissIntent, 0);
         stackBuilder.addNextIntent(intent);
-        PendingIntent pendingIntent2 = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent onClickPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
 
         builder.setSmallIcon(R.drawable.fetch_icon_notif)
-                .setColor(Color.argb(255, 0, 150, 136))
+                .setColor(context.getResources().getColor(R.color.colorPrimary))
                 .setAutoCancel(true)
-                .setDeleteIntent(pendingIntent1)
+                .setDeleteIntent(onDismissPendingIntent)
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setCategory(Notification.CATEGORY_MESSAGE)
-                .setContentIntent(pendingIntent2);
+                .setContentIntent(onClickPendingIntent);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(12345, builder.build());
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 
     public static class OnDismissReceiver extends BroadcastReceiver {
@@ -151,6 +156,19 @@ public class Notifications {
         public void onReceive(Context context, Intent intent) {
             clearNotifications(context);
         }
+    }
+
+    private static boolean sameSender(Set<Text> texts) {
+        String prevNumber = null;
+        for (Text text : texts) {
+            if (prevNumber != null) {
+                if (!prevNumber.equals(text.getThreadId())) {
+                    return false;
+                }
+            }
+            prevNumber = text.getThreadId();
+        }
+        return true;
     }
 
     public static void clearNotifications(Context context) {
