@@ -369,6 +369,31 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
+    public static Thread getThread(String threadId, Context context) {
+        String clause = String.format("%s = %s",
+                Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
+        ContentResolver contentResolver = context.getContentResolver();
+        final Uri uri;
+        final String order;
+        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
+            order = "date DESC";
+        } else {
+            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+            order = "normalized_date DESC";
+        }
+        Thread.ThreadCursor cursor = new Thread.ThreadCursor(context, contentResolver.query(uri, null, clause, null, order));
+        try {
+            if (cursor.moveToFirst()) {
+                return cursor.getThread();
+            } else {
+                return null;
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
     @Override
     public void delete(Text... messages) {
         String ids = "";

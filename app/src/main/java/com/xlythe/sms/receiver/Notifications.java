@@ -12,27 +12,21 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
-import android.net.Uri;
-import android.os.Parcel;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.xlythe.sms.MainActivity;
+import com.xlythe.sms.MessageActivity;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
-import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Attachment;
-import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.util.Utils;
-
-import org.apache.commons.codec.binary.Hex;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,15 +47,8 @@ public class Notifications {
 
         ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
 
-        Intent resultIntent = new Intent(context, MainActivity.class);
-        resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-        PendingIntent resultPendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                resultIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
+        Intent intent = new Intent(context, MainActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
@@ -71,6 +58,11 @@ public class Notifications {
         // Only one message, can be text or Image/Video thumbnail
         if (texts.size() == 1) {
             Text txt = texts.iterator().next();
+
+            intent = new Intent(context, MessageActivity.class);
+            intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getThread(txt.getThreadId(), context));
+            stackBuilder.addParentStack(MessageActivity.class);
+
             if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
                 try {
                     Spanned s = Html.fromHtml("<i>" + context.getString(R.string.picture) + "</i>");
@@ -110,6 +102,7 @@ public class Notifications {
 
         // Multiple messages, should all look the same unless its only one conversation
         else {
+            stackBuilder.addParentStack(MainActivity.class);
             Set<String> names = new HashSet<>();
             inboxStyle.setBigContentTitle(texts.size() + context.getString(R.string.new_message));
             List<Text> sortedTexts = new ArrayList<>(texts);
@@ -134,18 +127,20 @@ public class Notifications {
                     .setStyle(inboxStyle);
         }
 
-        Intent intent = new Intent(context, OnDismissReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), 12345, intent, 0);
+        Intent dismissIntent = new Intent(context.getApplicationContext(), OnDismissReceiver.class);
+        PendingIntent pendingIntent1 = PendingIntent.getBroadcast(context.getApplicationContext(), 12345, dismissIntent, 0);
+        stackBuilder.addNextIntent(intent);
+        PendingIntent pendingIntent2 = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
 
         builder.setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(Color.argb(255, 0, 150, 136))
                 .setAutoCancel(true)
-                .setDeleteIntent(pendingIntent)
+                .setDeleteIntent(pendingIntent1)
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setCategory(Notification.CATEGORY_MESSAGE)
-                .setContentIntent(resultPendingIntent);
+                .setContentIntent(pendingIntent2);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(12345, builder.build());
