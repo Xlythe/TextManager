@@ -149,11 +149,15 @@ public class Notifications {
     public static class OnDismissReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.clear();
-            editor.apply();
+            clearNotifications(context);
         }
+    }
+
+    public static void clearNotifications(Context context) {
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
     }
 
     private static Set<Text> getVisibleTexts(Context context, Text text) {

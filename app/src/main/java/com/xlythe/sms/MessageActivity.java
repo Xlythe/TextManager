@@ -32,6 +32,7 @@ import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
+import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.sms.view.ICameraView;
@@ -80,6 +81,8 @@ public class MessageActivity extends AppCompatActivity
         setContentView(R.layout.activity_message);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Notifications.clearNotifications(getApplicationContext());
 
         final Window rootWindow = getWindow();
         final View root = rootWindow.getDecorView().findViewById(android.R.id.content);

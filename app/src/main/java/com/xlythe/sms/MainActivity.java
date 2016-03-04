@@ -3,6 +3,7 @@ package com.xlythe.sms;
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 import android.Manifest;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,6 +27,7 @@ import android.widget.Button;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.ThreadsItemDecoration;
 import com.xlythe.sms.decoration.HeadersDecoration;
+import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.Text;
@@ -73,7 +75,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mManager = TextManager.getInstance(getBaseContext());
+        Notifications.clearNotifications(getApplicationContext());
+
+        mManager = TextManager.getInstance(getApplicationContext());
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
