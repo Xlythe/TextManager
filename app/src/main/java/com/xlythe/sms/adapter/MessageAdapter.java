@@ -33,7 +33,7 @@ import java.util.Set;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
+public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
@@ -105,7 +105,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     private MessageViewHolder.ClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
-    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
         private Context mContext;
         private ClickListener mListener;
@@ -115,6 +115,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             super(v);
             mListener = listener;
             v.setOnClickListener(this);
+            v.setOnLongClickListener(this);
             mDate = (TextView) v.findViewById(R.id.date);
         }
 
@@ -137,8 +138,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             }
         }
 
+        @Override
+        public boolean onLongClick(View v) {
+            return mListener != null && mListener.onItemLongClicked(getMessage());
+        }
+
         public interface ClickListener {
             void onItemClicked(Text text);
+            boolean onItemLongClicked(Text text);
         }
 
         public Text getMessage() {

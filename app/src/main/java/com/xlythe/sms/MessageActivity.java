@@ -6,9 +6,11 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +18,8 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -43,6 +47,8 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 
+import java.util.Set;
+
 public class MessageActivity extends AppCompatActivity
         implements MessageAdapter.FailedViewHolder.ClickListener, LegacyCameraView.HostProvider /* legacy support */ {
     private static final String TAG = TextManager.class.getSimpleName();
@@ -55,6 +61,7 @@ public class MessageActivity extends AppCompatActivity
     private boolean mAdjustNothing;
     private boolean mKeyboardOpen;
 
+    private AppBarLayout mAppbar;
     private View mAttachView;
     private ExtendedEditText mEditText;
     private ImageView mSendButton;
@@ -69,6 +76,9 @@ public class MessageActivity extends AppCompatActivity
             mManager.markAsRead(mThread);
         }
     };
+
+    private ActionModeCallback mActionModeCallback = new ActionModeCallback();
+    private ActionMode mActionMode;
 
     private ImageView mGalleryAttachments;
     private ImageView mCameraAttachments;
@@ -96,7 +106,7 @@ public class MessageActivity extends AppCompatActivity
                 View view = rootWindow.getDecorView();
                 view.getWindowVisibleDisplayFrame(r);
                 log("old size: " + mScreenSize + ", new size: " + r.bottom);
-                if (mScreenSize != 0 && mScreenSize != r.bottom){
+                if (mScreenSize != 0 && mScreenSize != r.bottom) {
                     mKeyboardSize = mScreenSize - r.bottom;
                     log("keyboard: " + mKeyboardSize);
                     mAttachView.getLayoutParams().height = mKeyboardSize;
@@ -110,6 +120,8 @@ public class MessageActivity extends AppCompatActivity
                 }
             }
         });
+
+        mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
         mAttachView = findViewById(R.id.fragment_container);
         mEditText = (ExtendedEditText) findViewById(R.id.edit_text);
@@ -295,6 +307,61 @@ public class MessageActivity extends AppCompatActivity
     @Override
     public void onItemClicked(Text text) {
         log("Do nothing");
+    }
+
+    @Override
+    public boolean onItemLongClicked(Text text) {
+        if (mActionMode == null) {
+            mActionMode = startSupportActionMode(mActionModeCallback);
+        }
+        toggleSelection(text);
+        return true;
+    }
+
+    private void toggleSelection(Text text) {
+        mAdapter.toggleSelection(text);
+        int count = mAdapter.getSelectedItemCount();
+
+        if (count == 0) {
+            mActionMode.finish();
+        } else {
+            mActionMode.setTitle(String.valueOf(count)+" selected");
+            mActionMode.invalidate();
+        }
+    }
+
+    private class ActionModeCallback implements ActionMode.Callback {
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate (R.menu.selected_menu, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            mRecyclerView.setNestedScrollingEnabled(false);
+            mAppbar.setExpanded(true);
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.menu_remove:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            mode.finish();
+            mAdapter.clearSelection();
+            mActionMode = null;
+            mRecyclerView.setNestedScrollingEnabled(true);
+        }
     }
 
     @Override

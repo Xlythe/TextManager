@@ -251,11 +251,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
         @Override
         public boolean onLongClick(View v) {
-            if (mListener != null) {
-                return mListener.onItemLongClicked(getThread());
-            }
-
-            return false;
+            return mListener != null && mListener.onItemLongClicked(getThread());
         }
     }
 
