@@ -6,7 +6,8 @@
     <string name="compose">Compose</string>
     <string name="action_search">Search</string>
     <string name="action_send">Send</string>
-    <string name="action_remove">Remove</string>
+    <string name="action_remove">Delete</string>
+    <string name="action_copy">Copy text</string>
     <string name="title_activity_message">MessageActivity</string>
 
     <string name="msg_not_set_as_default">Fetch is not the default SMS app</string>

@@ -1,5 +1,7 @@
 package com.xlythe.sms;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
@@ -334,7 +336,7 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            mode.getMenuInflater().inflate (R.menu.selected_menu, menu);
+            mode.getMenuInflater().inflate (R.menu.menu_message, menu);
             return true;
         }
 
@@ -347,8 +349,24 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            Set<Text> texts = mAdapter.getSelectedItems();
             switch (item.getItemId()) {
                 case R.id.menu_remove:
+                    TextManager.getInstance(getBaseContext()).delete(texts.toArray(new Text[texts.size()]));
+                    mAdapter.clearSelection();
+                    mode.finish();
+                    return true;
+                case R.id.menu_copy:
+                    String copy = "";
+                    for (Text text : texts) {
+                        if (!copy.isEmpty()) {
+                            copy += "\n";
+                        }
+                        copy += text.getBody();
+                    }
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("simple text", copy);
+                    clipboard.setPrimaryClip(clip);
                     return true;
                 default:
                     return false;

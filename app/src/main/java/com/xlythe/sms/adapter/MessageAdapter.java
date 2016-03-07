@@ -3,6 +3,7 @@ package com.xlythe.sms.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -119,7 +120,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             mDate = (TextView) v.findViewById(R.id.date);
         }
 
-        public void setMessage(Context context, Text text) {
+        public void setMessage(Context context, Text text, boolean selected) {
             mText = text;
             mContext = context;
             setDateText(DateFormatter.getFormattedDate(text));
@@ -165,8 +166,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             mTextView = (TextView) v.findViewById(R.id.message);
         }
 
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
+        public void setMessage(Context context, Text text, boolean selected) {
+            super.setMessage(context, text, selected);
             setBodyText(text.getBody());
         }
 
@@ -186,9 +187,14 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
 
         @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
-            setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
+        public void setMessage(Context context, Text text, boolean selected) {
+            super.setMessage(context, text, selected);
+            if (selected) {
+                setColor(context.getResources().getColor(R.color.colorPrimary));
+            } else {
+                setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
+            }
+
             setProfile();
         }
 
@@ -225,8 +231,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
 
         @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
+        public void setMessage(Context context, Text text, boolean selected) {
+            super.setMessage(context, text, selected);
             setImage();
         }
 
@@ -254,8 +260,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
 
         @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
+        public void setMessage(Context context, Text text, boolean selected) {
+            super.setMessage(context, text, selected);
             setProfile();
         }
 
@@ -276,8 +282,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
 
         @Override
-        public void setMessage(Context context, Text text) {
-            super.setMessage(context, text);
+        public void setMessage(Context context, Text text, boolean selected) {
+            super.setMessage(context, text, selected);
             mTextView.setText("New attachment to download");
         }
     }
@@ -453,7 +459,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     @Override
     public void onBindViewHolder(MessageViewHolder holder, int position) {
-        holder.setMessage(mContext, getText(position));
+        boolean selected = isSelected(getText(position));
+        holder.setMessage(mContext, getText(position), selected);
     }
 
     @Override
