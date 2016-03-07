@@ -337,6 +337,7 @@ public class MessageActivity extends AppCompatActivity
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate (R.menu.menu_message, menu);
+            menu.findItem(R.id.menu_remove).setVisible(TextManager.getInstance(getBaseContext()).isDefaultSmsPackage());
             return true;
         }
 
@@ -352,7 +353,7 @@ public class MessageActivity extends AppCompatActivity
             Set<Text> texts = mAdapter.getSelectedItems();
             switch (item.getItemId()) {
                 case R.id.menu_remove:
-                    TextManager.getInstance(getBaseContext()).delete(texts.toArray(new Text[texts.size()]));
+                    TextManager.getInstance(getBaseContext()).delete(texts);
                     mAdapter.clearSelection();
                     mode.finish();
                     return true;

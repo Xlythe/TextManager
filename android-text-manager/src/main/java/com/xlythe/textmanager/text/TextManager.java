@@ -24,6 +24,7 @@ import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -392,6 +393,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         } finally {
             cursor.close();
         }
+    }
+
+    public void delete(Collection<Text> messages) {
+        delete(messages.toArray(new Text[messages.size()]));
     }
 
     @Override
