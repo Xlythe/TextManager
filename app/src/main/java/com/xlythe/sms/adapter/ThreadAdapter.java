@@ -273,6 +273,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
     }
 
     @Override
+    public long getItemId(int position) {
+        return getThread(position).getIdAsLong();
+    }
+
+    @Override
     public int getItemViewType(int position) {
         if (getThread(position).getLatestMessage().getAttachment() != null) {
             return TYPE_ATTACHMENT;

@@ -3,7 +3,6 @@ package com.xlythe.sms;
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 import android.Manifest;
-import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -126,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
         }
     }
 
-
     @Override
     protected void onDestroy() {
         mManager.unregisterObserver(mMessageObserver);
@@ -138,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
         mAdapter = new ThreadAdapter(this, mThreads);
+        mAdapter.setHasStableIds(true);
         mRecyclerView.addItemDecoration(new HeadersDecoration(mAdapter));
         mRecyclerView.addItemDecoration(new ThreadsItemDecoration(this, R.drawable.divider));
         mRecyclerView.setAdapter(mAdapter);
