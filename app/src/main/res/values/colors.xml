@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#009688</color>
+    <color name="colorPrimaryOverlay">#66009688</color>
     <color name="colorPrimaryDark">#00897b</color>
     <color name="colorAccent">#009688</color>
     <color name="colorBackground">#ececec</color>
@@ -10,6 +11,8 @@
     <color name="titleText">#212121</color>
     <color name="icon_color">#757575</color>
     <color name="loading">#eeeeee</color>
+
+    <color name="select_tint">#4d000000</color>
 
     <color name="black_overlay">#66000000</color>
 </resources>

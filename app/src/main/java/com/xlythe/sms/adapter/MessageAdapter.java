@@ -160,15 +160,26 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     public static class ViewHolder extends MessageViewHolder {
         public TextView mTextView;
+        public FrameLayout mFrame;
 
         public ViewHolder(View v, ClickListener listener) {
             super(v, listener);
+            mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mTextView = (TextView) v.findViewById(R.id.message);
         }
 
         public void setMessage(Context context, Text text, boolean selected) {
             super.setMessage(context, text, selected);
             setBodyText(text.getBody());
+            if (selected) {
+                setColor(tintColor(Color.WHITE));
+            } else {
+                setColor(context.getResources().getColor(android.R.color.white));
+            }
+        }
+
+        public void setColor(int color) {
+            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
         }
 
         public void setBodyText(String body) {
@@ -190,11 +201,10 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public void setMessage(Context context, Text text, boolean selected) {
             super.setMessage(context, text, selected);
             if (selected) {
-                setColor(context.getResources().getColor(R.color.colorPrimary));
+                setColor(tintColor(ColorUtils.getColor(text.getThreadIdAsLong())));
             } else {
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
-
             setProfile();
         }
 
@@ -234,6 +244,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public void setMessage(Context context, Text text, boolean selected) {
             super.setMessage(context, text, selected);
             setImage();
+            if (selected) {
+                setColor(context.getResources().getColor(R.color.select_tint));
+            } else {
+                mImageView.clearColorFilter();
+            }
+        }
+
+        public void setColor(int color) {
+            mImageView.setColorFilter(color);
         }
 
         public void setImage() {
@@ -476,6 +495,16 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
+    }
+
+    public static int tintColor(int color) {
+        int red = color >> 16 & 0x0000ff;
+        int green = color >> 8 & 0x0000ff;
+        int blue = color & 0x0000ff;
+        red = (int)((double)red * 0.7);
+        green = (int)((double)green * 0.7);
+        blue = (int)((double)blue * 0.7);
+        return Color.argb(255, red, green, blue);
     }
 
     public void swapCursor(Text.TextCursor cursor) {
