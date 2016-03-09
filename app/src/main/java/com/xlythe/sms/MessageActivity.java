@@ -44,6 +44,7 @@ import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.sms.view.ICameraView;
 import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -308,7 +309,15 @@ public class MessageActivity extends AppCompatActivity
 
     @Override
     public void onItemClicked(Text text) {
-        log("Do nothing");
+        if (mActionMode != null) {
+            toggleSelection(text);
+        } else if (text.getAttachment() != null
+                && (text.getAttachment().getType() == Attachment.Type.IMAGE
+                || text.getAttachment().getType() == Attachment.Type.VIDEO)) {
+            Intent i = new Intent(getBaseContext(), MediaActivity.class);
+            i.putExtra(MediaActivity.EXTRA_TEXT, text);
+            startActivity(i);
+        }
     }
 
     @Override

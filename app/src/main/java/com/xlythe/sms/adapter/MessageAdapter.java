@@ -230,14 +230,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
             mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
-            mImageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent i = new Intent(getContext(), MediaActivity.class);
-                    i.putExtra(MediaActivity.EXTRA_TEXT, getMessage());
-                    getContext().startActivity(i);
-                }
-            });
         }
 
         @Override
