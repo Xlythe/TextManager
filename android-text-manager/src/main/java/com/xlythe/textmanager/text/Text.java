@@ -41,6 +41,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private long mThreadId;
     private long mDate;
     private long mMmsId;
+    private int mStatus;
     private String mBody;
     private String mDeviceNumber;
     private boolean mIncoming;
@@ -101,6 +102,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mThreadId = in.readLong();
         mDate = in.readLong();
         mMmsId = in.readLong();
+        mStatus = in.readInt();
         mSenderAddress = in.readString();
         mBody = in.readString();
         mDeviceNumber = in.readString();
@@ -144,7 +146,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mMemberAddresses.add(data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS)));
         mSenderAddress = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
         mBody = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
-        Log.d("Text", "SMS Status: " + data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS)));
+        mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
     }
 
     private void parseMmsMessage(Cursor data, Context context) {
@@ -153,7 +155,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
-        Log.d("Text", "MMS Status: " + data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS)));
+        mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
         Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
 
         // Query the address information for this message
@@ -365,6 +367,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         out.writeLong(mThreadId);
         out.writeLong(mDate);
         out.writeLong(mMmsId);
+        out.writeInt(mStatus);
         // TODO: can probably remove the string addresses
         // Should probably not even be a global variable
         out.writeString(mSenderAddress);
