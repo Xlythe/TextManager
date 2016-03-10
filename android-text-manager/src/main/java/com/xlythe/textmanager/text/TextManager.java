@@ -52,9 +52,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Mock.Telephony.Sms.ADDRESS,
             Mock.Telephony.Sms.BODY,
             Mock.Telephony.Sms.TYPE,
+            Mock.Telephony.Sms.STATUS,
             // For MMS only
             Mock.Telephony.Mms.SUBJECT,
-            Mock.Telephony.Mms.MESSAGE_BOX
+            Mock.Telephony.Mms.MESSAGE_BOX,
+            Mock.Telephony.Mms.STATUS
     };
 
     private static TextManager sTextManager;

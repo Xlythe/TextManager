@@ -48,12 +48,14 @@ import java.util.List;
 
 public class ManagerUtils {
     private static final String TAG = ManagerUtils.class.getSimpleName();
+    private static final String URI_EXTRA = "uri_extra";
 
-    public static void send(Context context, final Text text){
+    public static void send(Context context, final Text text) {
         String SMS_SENT = "SMS_SENT";
+        String MMS_SENT = "MMS_SENT";
         String SMS_DELIVERED = "SMS_DELIVERED";
 
-        PendingIntent sentPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_SENT), 0);
+        PendingIntent sentMmsPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(MMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
         String address = "";
@@ -62,8 +64,8 @@ public class ManagerUtils {
         context.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                String uri = intent.getStringExtra(URI_EXTRA);
                 ContentValues values = new ContentValues();
-                Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
@@ -75,11 +77,31 @@ public class ManagerUtils {
                         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         break;
                 }
-                // TODO Don't just mark everything as COMPLETE...
-                context.getContentResolver().update(uri, values, null, null);
+                context.getContentResolver().update(Uri.parse(uri), values, null, null);
                 context.unregisterReceiver(this);
             }
         }, new IntentFilter(SMS_SENT));
+
+        context.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String uri = intent.getStringExtra(URI_EXTRA);
+                ContentValues values = new ContentValues();
+                switch (getResultCode()) {
+                    case Activity.RESULT_OK:
+                        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                        break;
+                }
+                context.getContentResolver().update(Uri.parse(uri), values, null, null);
+                context.unregisterReceiver(this);
+            }
+        }, new IntentFilter(MMS_SENT));
 
         if (!text.isMms()) {
             // For when the SMS has been delivered
@@ -100,13 +122,16 @@ public class ManagerUtils {
 
             SmsManager sms = SmsManager.getDefault();
             address = text.getMembers().iterator().next().getNumber();
-            sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
             values.put(Mock.Telephony.Sms.ADDRESS, address);
             values.put(Mock.Telephony.Sms.BODY, text.getBody());
             values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-            context.getContentResolver().insert(uri, values);
+            uri = context.getContentResolver().insert(uri, values);
+            Intent intent = new Intent(SMS_SENT);
+            intent.putExtra(URI_EXTRA, uri);
+            PendingIntent sentPendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+            sms.sendTextMessage(address, null, text.getBody(), sentPendingIntent, deliveredPendingIntent);
         } else {
             Attachment attachment = text.getAttachment();
             for (Contact member : text.getMembers()) {
@@ -116,7 +141,7 @@ public class ManagerUtils {
                 address += member.getNumber();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), sentPendingIntent, deliveredPendingIntent);
+                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), sentMmsPendingIntent);
             }
         }
     }
@@ -127,8 +152,11 @@ public class ManagerUtils {
                                               final String subject,
                                               final String body,
                                               final List<Attachment> attachments,
-                                              final PendingIntent sentPendingIntent,
-                                              final PendingIntent deliveredPendingIntent) {
+                                              final PendingIntent sentMmsPendingIntent) {
+        Set set = storeData(context, address, subject, body, attachments);
+        final byte[] pdu = set.data;
+        final Uri uri = set.messageUri;
+
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkRequest.Builder builder = new NetworkRequest.Builder();
@@ -144,7 +172,7 @@ public class ManagerUtils {
                     public void onAvailable(Network network) {
                         super.onAvailable(network);
                         ConnectivityManager.setProcessDefaultNetwork(network);
-                        sendData(context, address, subject, body, attachments, sentPendingIntent, deliveredPendingIntent);
+                        sendData(context, pdu, sentMmsPendingIntent, uri);
                         connectivityManager.unregisterNetworkCallback(this);
                     }
                 });
@@ -152,13 +180,11 @@ public class ManagerUtils {
         }).start();
     }
 
-    public static void sendData(final Context context,
+    public static Set storeData(final Context context,
                          final String address,
                          final String subject,
                          final String body,
-                         final List<Attachment> attachments,
-                         PendingIntent sentPendingIntent,
-                         PendingIntent deliveredPendingIntent){
+                         final List<Attachment> attachments){
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
@@ -219,8 +245,10 @@ public class ManagerUtils {
             data.add(part);
         }
 
-        final byte[] pdu = getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+        return getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+    }
 
+    public static void sendData(Context context, byte[] pdu, PendingIntent sentMmsPendingIntent, Uri uri) {
         try {
             ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
             HttpUtils.httpConnection(
@@ -231,22 +259,24 @@ public class ManagerUtils {
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());
-            notify(sentPendingIntent, context, Activity.RESULT_OK);
+            notify(sentMmsPendingIntent, context, Activity.RESULT_OK, uri);
         } catch(IOException e){
             Log.e(TAG, "Failed to connect to the MMS server", e);
-            notify(sentPendingIntent, context, Activity.RESULT_CANCELED);
+            notify(sentMmsPendingIntent, context, Activity.RESULT_CANCELED, uri);
         }
     }
 
-    private static void notify(PendingIntent pendingIntent, Context context, int result) {
+    private static void notify(PendingIntent pendingIntent, Context context, int result, Uri uri) {
         try {
-            pendingIntent.send(context, result, null);
+            Intent intent = new Intent();
+            intent.putExtra(URI_EXTRA, uri.toString());
+            pendingIntent.send(context, result, intent);
         } catch (PendingIntent.CanceledException ex) {
             Log.e(TAG, "Failed to notified mms sent", ex);
         }
     }
 
-    public static byte[] getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
+    public static Set getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
         final SendReq sendRequest = new SendReq();
         // create send request addresses
         for (int i = 0; i < recipients.length; i++) {
@@ -294,16 +324,28 @@ public class ManagerUtils {
         sendRequest.setMessageSize(size);
 
         PduPersister p = PduPersister.getPduPersister(context);
+        Uri uri;
         try {
-            p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
+           uri = p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
+            uri = null;
         }
         // create byte array which will actually be sent
         final PduComposer composer = new PduComposer(context, sendRequest);
         final byte[] bytesToSend;
         bytesToSend = composer.make();
-        return bytesToSend;
+        return new Set(bytesToSend, uri);
+    }
+
+    public static class Set {
+        byte [] data;
+        Uri messageUri;
+
+        Set(byte [] data, Uri messageUri) {
+            this.data = data;
+            this.messageUri = messageUri;
+        }
     }
 
     public static byte[] bitmapToByteArray(Bitmap image) {
