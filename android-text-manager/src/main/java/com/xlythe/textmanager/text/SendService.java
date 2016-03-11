@@ -173,6 +173,10 @@ public class SendService extends IntentService {
         final byte[] pdu = set.data;
         final Uri uri = set.messageUri;
 
+        ContentValues values = new ContentValues();
+        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
+        context.getContentResolver().update(uri, values, null, null);
+
         // Request a data connection
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         final NetworkRequest networkRequest = new NetworkRequest.Builder()
@@ -206,7 +210,7 @@ public class SendService extends IntentService {
         }
         if (!success) {
             Log.d(TAG, "Mark Failed");
-            ContentValues values = new ContentValues();
+            values = new ContentValues();
             values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             context.getContentResolver().update(uri, values, null, null);
         }
