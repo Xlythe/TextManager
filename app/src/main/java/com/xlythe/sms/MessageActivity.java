@@ -108,10 +108,8 @@ public class MessageActivity extends AppCompatActivity
                 Rect r = new Rect();
                 View view = rootWindow.getDecorView();
                 view.getWindowVisibleDisplayFrame(r);
-                log("old size: " + mScreenSize + ", new size: " + r.bottom);
                 if (mScreenSize != 0 && mScreenSize != r.bottom) {
                     mKeyboardSize = mScreenSize - r.bottom;
-                    log("keyboard: " + mKeyboardSize);
                     mAttachView.getLayoutParams().height = mKeyboardSize;
                     rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
                     if (mKeyboardOpen) {
@@ -135,7 +133,7 @@ public class MessageActivity extends AppCompatActivity
             public void onClick(View v) {
                 mManager.send(new Text.Builder()
                                 .message(mEditText.getText().toString())
-                                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getBaseContext()))
+                                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getApplicationContext()))
                                 .build()
                 );
                 mEditText.setText(null);
@@ -146,7 +144,6 @@ public class MessageActivity extends AppCompatActivity
         mEditText.setOnDismissKeyboardListener(new ExtendedEditText.OnDismissKeyboardListener() {
             @Override
             public void onDismissed() {
-                log("back");
                 mEditText.clearFocus();
                 onAttachmentHidden();
             }
@@ -168,7 +165,6 @@ public class MessageActivity extends AppCompatActivity
         mEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                log("focus: " + hasFocus);
                 mKeyboardOpen = hasFocus;
                 if(hasFocus) {
                     clearAttachmentSelection();
@@ -268,21 +264,17 @@ public class MessageActivity extends AppCompatActivity
                 fragment = new GalleryFragment();
                 fragment.setArguments(args);
                 transaction.replace(R.id.fragment_container, fragment).commit();
-                log("photo");
                 break;
             case R.id.camera:
                 fragment = new CameraFragment();
                 fragment.setArguments(args);
                 transaction.replace(R.id.fragment_container, fragment).commit();
-                log("camera");
                 break;
             case R.id.sticker:
                 transaction.replace(R.id.fragment_container, new StickerFragment()).commit();
-                log("sticker");
                 break;
             case R.id.mic:
                 transaction.replace(R.id.fragment_container, new MicFragment()).commit();
-                log("mic");
                 break;
         }
     }

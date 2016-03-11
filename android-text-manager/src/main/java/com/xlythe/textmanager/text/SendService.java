@@ -2,11 +2,13 @@ package com.xlythe.textmanager.text;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.IntentService;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
+import android.content.Context;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
@@ -38,23 +40,33 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.*;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-public class ManagerUtils {
-    private static final String TAG = ManagerUtils.class.getSimpleName();
+// TODO: Mark message as failed when service is killed
+public class SendService extends IntentService {
+    private static final String TAG = SendService.class.getSimpleName();
     private static final String URI_EXTRA = "uri_extra";
+    private static final String SMS_SENT = "SMS_SENT";
+    private static final String MMS_SENT = "MMS_SENT";
+    private static final String SMS_DELIVERED = "SMS_DELIVERED";
+    public static final String TEXT_EXTRA = "text_extra";
+
+    public SendService() {
+        super("SendService");
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        Text text = intent.getParcelableExtra(TEXT_EXTRA);
+        send(this, text);
+    }
 
     public static void send(Context context, final Text text) {
-        String SMS_SENT = "SMS_SENT";
-        String MMS_SENT = "MMS_SENT";
-        String SMS_DELIVERED = "SMS_DELIVERED";
-
         PendingIntent sentMmsPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(MMS_SENT), 0);
         PendingIntent deliveredPendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
 
@@ -141,36 +153,45 @@ public class ManagerUtils {
                 address += member.getNumber();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[] {attachment}), sentMmsPendingIntent);
+                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[]{attachment}), sentMmsPendingIntent);
             }
         }
     }
 
     @TargetApi(21)
     public static void sendMediaMessage(final Context context,
-                                              final String address,
-                                              final String subject,
-                                              final String body,
-                                              final List<Attachment> attachments,
-                                              final PendingIntent sentMmsPendingIntent) {
+                                        final String address,
+                                        final String subject,
+                                        final String body,
+                                        final List<Attachment> attachments,
+                                        final PendingIntent sentMmsPendingIntent) {
+
+        // Store the pending message in the database
         Set set = storeData(context, address, subject, body, attachments);
+
+        // Collect the data we're going to send to the server
         final byte[] pdu = set.data;
         final Uri uri = set.messageUri;
 
+        // Request a data connection
         final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkRequest networkRequest = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                .build();
 
-        NetworkRequest.Builder builder = new NetworkRequest.Builder();
-
-        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
-
-        final NetworkRequest networkRequest = builder.build();
+        // Use a countdownlatch because this may never return, and we want to mark the MMS
+        // as failed in that case.
+        final CountDownLatch latch = new CountDownLatch(1);
+        boolean success = false;
+        Log.d(TAG, "Network callback");
         new java.lang.Thread(new Runnable() {
             public void run() {
                 connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(Network network) {
                         super.onAvailable(network);
+                        latch.countDown();
                         ConnectivityManager.setProcessDefaultNetwork(network);
                         sendData(context, pdu, sentMmsPendingIntent, uri);
                         connectivityManager.unregisterNetworkCallback(this);
@@ -178,13 +199,24 @@ public class ManagerUtils {
                 });
             }
         }).start();
+        try {
+            success = latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (!success) {
+            Log.d(TAG, "Mark Failed");
+            ContentValues values = new ContentValues();
+            values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+            context.getContentResolver().update(uri, values, null, null);
+        }
     }
 
     public static Set storeData(final Context context,
-                         final String address,
-                         final String subject,
-                         final String body,
-                         final List<Attachment> attachments){
+                                final String address,
+                                final String subject,
+                                final String body,
+                                final List<Attachment> attachments){
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
@@ -252,7 +284,7 @@ public class ManagerUtils {
         try {
             ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
             HttpUtils.httpConnection(
-                    context,4444L,
+                    context, 4444L,
                     apnParameters.getMmscUrl(),
                     pdu,
                     HttpUtils.HTTP_POST_METHOD,
@@ -326,7 +358,7 @@ public class ManagerUtils {
         PduPersister p = PduPersister.getPduPersister(context);
         Uri uri;
         try {
-           uri = p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
+            uri = p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
             uri = null;

@@ -1,8 +1,10 @@
 package com.xlythe.textmanager.text;
 
+import android.app.IntentService;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -200,7 +202,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public void send(final Text text) {
-        ManagerUtils.send(mContext, text);
+        Intent sendService = new Intent(mContext, SendService.class);
+        sendService.putExtra(SendService.TEXT_EXTRA, text);
+        mContext.startService(sendService);
     }
 
     @Override
