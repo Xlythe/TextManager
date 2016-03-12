@@ -275,8 +275,13 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     @Override
     public Status getStatus() {
-        //TODO: getStatus()
-        return null;
+        if (mStatus == Mock.Telephony.Sms.STATUS_COMPLETE)
+                return Status.COMPLETE;
+        if (mStatus == Mock.Telephony.Sms.STATUS_PENDING)
+                return Status.PENDING;
+        if (mStatus == Mock.Telephony.Sms.STATUS_FAILED)
+                return Status.FAILED;
+        return Status.NONE;
     }
 
     public byte[] toBytes() {

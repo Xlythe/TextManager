@@ -27,6 +27,7 @@ import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
+import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
 
 import java.util.HashSet;
@@ -173,6 +174,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             setBodyText(text.getBody());
             if (selected) {
                 setColor(tintColor(Color.WHITE));
+            } else if (text.getStatus() == Status.FAILED) {
+                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 setColor(context.getResources().getColor(android.R.color.white));
             }
@@ -202,6 +205,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             super.setMessage(context, text, selected);
             if (selected) {
                 setColor(tintColor(ColorUtils.getColor(text.getThreadIdAsLong())));
+            } else if (text.getStatus() == Status.FAILED) {
+                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
@@ -238,6 +243,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             setImage();
             if (selected) {
                 setColor(context.getResources().getColor(R.color.select_tint));
+            }  else if (text.getStatus() == Status.FAILED) {
+                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 mImageView.clearColorFilter();
             }
