@@ -516,11 +516,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Contact getSelf() {
         TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        String phoneNumber = manager.getLine1Number();
+        if (phoneNumber == null) {
+            return new Contact("???");
+        } else {
+            return lookupContact(phoneNumber);
+        }
+
         // For profile
         // Uri uri = Uri.withAppendedPath(
         // ContactsContract.Profile.CONTENT_URI,
         // ContactsContract.Contacts.Data.CONTENT_DIRECTORY);
-        return lookupContact(manager.getLine1Number());
     }
 
     public String getDefaultSmsPackage() {

@@ -57,9 +57,10 @@
         </receiver>
 
         <!-- BroadcastReceiver that listens for deletion of notification -->
-        <receiver
-            android:name=".receiver.Notifications$OnDismissReceiver">
-        </receiver>
+        <receiver android:name=".receiver.Notifications$OnDismissReceiver" />
+
+        <!-- BroadcastReceiver that listens for replies to notifications -->
+        <receiver android:name=".receiver.Notifications$OnReplyReceiver" />
 
         <!-- Activity that allows the user to send new SMS/MMS messages -->
         <activity

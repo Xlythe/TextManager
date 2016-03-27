@@ -42,6 +42,8 @@ import java.util.List;
 @TargetApi(21)
 public class CameraView extends TextureView implements ICameraView {
     private static final String TAG = CameraView.class.getSimpleName();
+    private static final String TEMP_FILE_PIC = "temp.png";
+    private static final String TEMP_FILE_VID = "temp.mp4";
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -143,7 +145,7 @@ public class CameraView extends TextureView implements ICameraView {
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
-            // This method is called when the camera is opened.  We start camera preview here.
+            // The camera has opened. Start the preview now.
             mCameraDevice = cameraDevice;
             startPreview();
         }
@@ -718,7 +720,7 @@ public class CameraView extends TextureView implements ICameraView {
         }
 
         private File getFile() {
-            return new File(mCameraView.getContext().getCacheDir(), "temp.png");
+            return new File(mCameraView.getContext().getCacheDir(), TEMP_FILE_PIC);
         }
 
         void takePicture(CameraListener listener) {
@@ -804,7 +806,7 @@ public class CameraView extends TextureView implements ICameraView {
         }
 
         private File getFile() {
-            return new File(mCameraView.getContext().getCacheDir(), "temp.mp4");
+            return new File(mCameraView.getContext().getCacheDir(), TEMP_FILE_VID);
         }
 
         void startRecording(CameraListener listener) {

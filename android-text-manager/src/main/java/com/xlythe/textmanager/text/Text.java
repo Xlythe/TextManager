@@ -478,4 +478,31 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             return text;
         }
     }
+
+    /**
+     * Visible for testing
+     */
+    static class DebugBuilder extends Builder {
+        private Contact mSender;
+        private long mThreadId;
+
+        public DebugBuilder setSender(String contact) {
+            mSender = new Contact(contact);
+            return this;
+        }
+
+        public DebugBuilder setThreadId(long threadId) {
+            mThreadId = threadId;
+            return this;
+        }
+
+        public Text build() {
+            Text text = super.build();
+            if (mSender != null) {
+                text.mSender = mSender;
+            }
+            text.mThreadId = mThreadId;
+            return text;
+        }
+    }
 }

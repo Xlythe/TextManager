@@ -1,14 +1,15 @@
 <resources>
-
-    <string name="action_delete">Delete</string>
-
     <string name="app_name">Fetch</string>
+    <string name="title_activity_message">MessageActivity</string>
     <string name="compose">Compose</string>
+
     <string name="action_search">Search</string>
     <string name="action_send">Send</string>
     <string name="action_remove">Delete</string>
     <string name="action_copy">Copy text</string>
-    <string name="title_activity_message">MessageActivity</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_delete">Delete</string>
+
 
     <string name="msg_not_set_as_default">Fetch is not the default SMS app</string>
     <string name="btn_change">Change</string>
@@ -16,10 +17,8 @@
     <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
     <string name="error_permissions_resolve">Request</string>
 
-    <string name="picture">Picture</string>
-    <string name="video">Video</string>
-    <string name="voice">Voice</string>
-    <string name="new_message">" new messages"</string>
-
-
+    <string name="notification_label_picture">Picture</string>
+    <string name="notification_label_video">Video</string>
+    <string name="notification_label_voice">Voice</string>
+    <string name="notification_label_new_messages">%s new messages</string>
 </resources>

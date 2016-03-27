@@ -128,7 +128,10 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
     @Override
     protected void onDestroy() {
         mManager.unregisterObserver(mMessageObserver);
-        mAdapter.destroy();
+        if (mAdapter != null) {
+            mAdapter.destroy();
+            mAdapter = null;
+        }
         super.onDestroy();
     }
 

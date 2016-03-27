@@ -113,7 +113,7 @@ public class ComposeActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_send) {
-            if (TextUtils.isEmpty(mMessage.getText().toString()) && TextUtils.isEmpty(mContacts.getText().toString())) {
+            if (!TextUtils.isEmpty(mMessage.getText().toString()) && !TextUtils.isEmpty(mContacts.getText().toString())) {
                 mManager.send(new Text.Builder()
                         .message(mMessage.getText().toString())
                         .addRecipient(this, mContacts.getTag().toString())
