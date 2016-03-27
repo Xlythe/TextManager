@@ -42,6 +42,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
+    private static final long TIMEOUT = 10 * 1000;
 
     private static final int TYPE_TOP_RIGHT                 = 0;
     private static final int TYPE_MIDDLE_RIGHT              = 1;
@@ -106,6 +107,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Context mContext;
     private MessageViewHolder.ClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
+
+    public static boolean failed(Text text) {
+        // This is kinda hacky because is the app force closes then the message status isnt updated
+        Log.d(TAG, "Time stamp: " + text.getTimestamp());
+        Log.d(TAG, "System time: " + System.currentTimeMillis());
+        return text.getStatus() == Status.FAILED
+                || (text.getStatus() == Status.PENDING
+                && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
+    }
 
     public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
@@ -205,7 +215,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             super.setMessage(context, text, selected);
             if (selected) {
                 setColor(tintColor(ColorUtils.getColor(text.getThreadIdAsLong())));
-            } else if (text.getStatus() == Status.FAILED) {
+            } else if (failed(text)) {
                 setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
@@ -243,7 +253,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             setImage();
             if (selected) {
                 setColor(context.getResources().getColor(R.color.select_tint));
-            }  else if (text.getStatus() == Status.FAILED) {
+            }  else if (failed(text)) {
                 setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 mImageView.clearColorFilter();

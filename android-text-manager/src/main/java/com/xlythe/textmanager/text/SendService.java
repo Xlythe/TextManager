@@ -153,7 +153,7 @@ public class SendService extends IntentService {
                 address += member.getNumber();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[]{attachment}), sentMmsPendingIntent);
+                sendMediaMessage(context, address, " ", text.getBody(), attachment, sentMmsPendingIntent);
             }
         }
     }
@@ -163,11 +163,11 @@ public class SendService extends IntentService {
                                         final String address,
                                         final String subject,
                                         final String body,
-                                        final List<Attachment> attachments,
+                                        final Attachment attachment,
                                         final PendingIntent sentMmsPendingIntent) {
 
         // Store the pending message in the database
-        Set set = storeData(context, address, subject, body, attachments);
+        Set set = storeData(context, address, subject, body, attachment);
 
         // Collect the data we're going to send to the server
         final byte[] pdu = set.data;
@@ -220,15 +220,15 @@ public class SendService extends IntentService {
                                 final String address,
                                 final String subject,
                                 final String body,
-                                final List<Attachment> attachments){
+                                final Attachment attachment){
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
         MMSPart part;
-        for(Attachment attachment: attachments){
+        if (attachment != null) {
             Attachment.Type type = attachment.getType();
             Uri uri = attachment.getUri();
-            switch(type) {
+            switch (type) {
                 case IMAGE:
                     try {
                         Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
@@ -259,9 +259,9 @@ public class SendService extends IntentService {
                         part.Name = "video" + i;
                         part.Data = videoBytes;
                         data.add(part);
-                    } catch (FileNotFoundException e){
+                    } catch (FileNotFoundException e) {
                         throw new RuntimeException("Uri doesn't exist", e);
-                    } catch (IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                     break;
@@ -269,7 +269,6 @@ public class SendService extends IntentService {
                     //TODO: Voice support
                     break;
             }
-            i++;
         }
 
         if (body != null && !body.isEmpty()) {
