@@ -56,31 +56,8 @@ public class SendService extends IntentService {
     private static final String MMS_SENT = PREAMBLE + "MMS_SENT";
     public static final String TEXT_EXTRA = "text_extra";
 
-    private SmsSentReceiver mSmsSentReceiver = new SmsSentReceiver();
-    private SmsDeliveredReceiver mSmsDeliveredReceiver = new SmsDeliveredReceiver();
-    private MmsSentReceiver mMmsSentReceiver = new MmsSentReceiver();
-
     public SendService() {
         super("SendService");
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // Set up receivers for marking sms/mms as sent
-        registerReceiver(mSmsSentReceiver, new IntentFilter(SMS_SENT));
-        registerReceiver(mSmsDeliveredReceiver, new IntentFilter(SMS_DELIVERED));
-        registerReceiver(mMmsSentReceiver, new IntentFilter(MMS_SENT));
-    }
-
-    @Override
-    public void onDestroy() {
-        unregisterReceiver(mSmsSentReceiver);
-        unregisterReceiver(mSmsDeliveredReceiver);
-        unregisterReceiver(mMmsSentReceiver);
-
-        super.onDestroy();
     }
 
     @Override
@@ -373,7 +350,7 @@ public class SendService extends IntentService {
         public byte[] Data;
     }
 
-    private static final class SmsSentReceiver extends BroadcastReceiver {
+    public static final class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String uri = intent.getStringExtra(URI_EXTRA);
@@ -390,7 +367,7 @@ public class SendService extends IntentService {
         }
     }
 
-    private static final class SmsDeliveredReceiver extends BroadcastReceiver {
+    public static final class SmsDeliveredReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (getResultCode()) {
@@ -404,7 +381,7 @@ public class SendService extends IntentService {
         }
     }
 
-    private static final class MmsSentReceiver extends BroadcastReceiver {
+    public static final class MmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String uri = intent.getStringExtra(URI_EXTRA);

@@ -3,9 +3,22 @@
     package="com.xlythe.textmanager">
 
     <application>
-        <service
-            android:name=".text.SendService"
-            android:exported="false"/>
+        <service android:name=".text.SendService" />
+        <receiver android:name=".text.SendService$SmsSentReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.SMS_SENT" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".text.SendService$SmsDeliveredReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.SMS_DELIVERED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".text.SendService$MmsSentReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.MMS_SENT" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
