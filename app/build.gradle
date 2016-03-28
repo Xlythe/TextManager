@@ -7,14 +7,14 @@ repositories {
 }
 
 android {
-    compileSdkVersion 'android-N'
+    compileSdkVersion 23
     buildToolsVersion '24.0.0-rc2'
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "com.xlythe.sms"
         minSdkVersion 14
-        targetSdkVersion 'N'
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
