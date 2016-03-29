@@ -35,7 +35,7 @@ import com.xlythe.textmanager.text.Thread;
 
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity implements ThreadAdapter.ClickListener {
+public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
             Manifest.permission.READ_CONTACTS

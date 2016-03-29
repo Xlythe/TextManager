@@ -1,60 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/card"
-    android:padding="16dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <ImageView
-        android:id="@+id/profile_image"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginRight="16dp"
-        android:src="@android:color/transparent"/>
+    android:layout_height="match_parent">
     <LinearLayout
-        android:orientation="vertical"
+        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="?selectableItemBackground">
+        <ImageView
+            android:id="@+id/profile_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginRight="16dp"
+            android:src="@android:color/transparent"/>
         <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="wrap_content"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/sender"
+                    android:textSize="16sp"
+                    android:textColor="#00acc1"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingRight="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:textSize="16sp"
+                    android:textColor="#00acc1"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:id="@+id/unread"
+                    android:background="@drawable/highlight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
             <TextView
-                android:textSize="16sp"
-                android:textColor="#00acc1"
+                android:textSize="14sp"
+                android:textColor="#212121"
                 android:fontFamily="sans-serif-medium"
-                android:id="@+id/sender"
-                android:paddingRight="4dp"
-                android:text="Will Harmon"
+                android:id="@+id/message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
             <TextView
-                android:textSize="16sp"
-                android:textColor="#00acc1"
+                android:textSize="14sp"
+                android:textColor="#707070"
                 android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:id="@+id/unread"
-                android:text="6 new"
-                android:background="@drawable/highlight"
+                android:id="@+id/date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
-        <TextView
-            android:textSize="14sp"
-            android:textColor="#212121"
-            android:fontFamily="sans-serif-medium"
-            android:id="@+id/message"
-            android:text="Hows it going, did you get the ..."
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:textSize="14sp"
-            android:textColor="#707070"
-            android:fontFamily="sans-serif-medium"
-            android:id="@+id/date"
-            android:text="10 min"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

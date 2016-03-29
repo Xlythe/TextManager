@@ -10,6 +10,12 @@
     <string name="action_reply">Reply</string>
     <string name="action_delete">Delete</string>
 
+    <string name="thread_title_today">Today</string>
+    <string name="thread_title_yesterday">Yesterday</string>
+    <string name="thread_title_week">This week</string>
+    <string name="thread_title_month">This month</string>
+
+    <string name="thread_unread_messages">%s new</string>
 
     <string name="msg_not_set_as_default">Fetch is not the default SMS app</string>
     <string name="btn_change">Change</string>

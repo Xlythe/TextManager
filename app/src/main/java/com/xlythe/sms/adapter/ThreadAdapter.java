@@ -58,11 +58,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
-    private ClickListener mClickListener;
+    private OnClickListener mClickListener;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
 
     public ThreadAdapter(Context context, Thread.ThreadCursor cursor) {
-        mClickListener = (ClickListener) context;
+        mClickListener = (OnClickListener) context;
         mContext = context;
         mCursor = cursor;
     }
@@ -113,11 +113,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public final TextView date;
         public final RoundedImageView attachment;
         public final ImageView videoLabel;
-        public final LinearLayout card;
+        public final ViewGroup card;
         public final ImageView profile;
-        private ClickListener mListener;
+        private OnClickListener mListener;
 
-        public ThreadViewHolder(View view, ClickListener listener) {
+        public ThreadViewHolder(View view, OnClickListener listener) {
             super(view);
             title = (TextView) view.findViewById(R.id.sender);
             unread = (TextView) view.findViewById(R.id.unread);
@@ -125,7 +125,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             date = (TextView) view.findViewById(R.id.date);
             attachment = (RoundedImageView) view.findViewById(R.id.attachment);
             videoLabel = (ImageView) view.findViewById(R.id.video_label);
-            card = (LinearLayout) view.findViewById(R.id.card);
+            card = (ViewGroup) view.findViewById(R.id.card);
             profile = (ImageView) view.findViewById(R.id.profile_image);
 
             mListener = listener;
@@ -194,7 +194,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             if (unreadCount > 0) {
                 title.setText(address);
                 unread.setVisibility(View.VISIBLE);
-                unread.setText(unreadCount + " new");
+                unread.setText(getContext().getString(R.string.thread_unread_messages, unreadCount));
                 unread.setTextColor(color);
                 unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 unread.getBackground().setAlpha(25);
@@ -343,13 +343,13 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         long date = thread.getLatestMessage().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
-            title = "Today";
+            title = mContext.getString(R.string.thread_title_today);
         } else if (time < 2 * ONE_DAY) {
-            title = "Yesterday";
+            title = mContext.getString(R.string.thread_title_yesterday);
         } else if (time < ONE_WEEK) {
-            title = "This week";
+            title = mContext.getString(R.string.thread_title_week);
         } else if (time < ONE_MONTH) {
-            title = "This month";
+            title = mContext.getString(R.string.thread_title_month);
         } else {
             SimpleDateFormat formatter = new SimpleDateFormat("MMMM yyyy");
             title = formatter.format(date);
@@ -358,7 +358,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         holder.title.setText(title);
     }
 
-    public interface ClickListener {
+    public interface OnClickListener {
         void onProfileClicked(Thread thread);
         void onAttachmentClicked(Thread thread);
         void onItemClicked(Thread thread);
