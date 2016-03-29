@@ -254,23 +254,16 @@ public class MessageActivity extends AppCompatActivity
         ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        Fragment fragment;
-        Bundle args = new Bundle();
-        args.putInt(GalleryFragment.ARG_COLOR, color);
-        args.putParcelable(GalleryFragment.ARG_MESSAGE, mThread.getLatestMessage());
+        Text text = mThread.getLatestMessage();
         switch (view.getId()) {
             case R.id.gallery:
-                fragment = new GalleryFragment();
-                fragment.setArguments(args);
-                transaction.replace(R.id.fragment_container, fragment).commit();
+                transaction.replace(R.id.fragment_container, GalleryFragment.newInstance(text, color)).commit();
                 break;
             case R.id.camera:
-                fragment = new CameraFragment();
-                fragment.setArguments(args);
-                transaction.replace(R.id.fragment_container, fragment).commit();
+                transaction.replace(R.id.fragment_container, CameraFragment.newInstance(text)).commit();
                 break;
             case R.id.sticker:
-                transaction.replace(R.id.fragment_container, new StickerFragment()).commit();
+                transaction.replace(R.id.fragment_container, StickerFragment.newInstance(text)).commit();
                 break;
             case R.id.mic:
                 transaction.replace(R.id.fragment_container, new MicFragment()).commit();

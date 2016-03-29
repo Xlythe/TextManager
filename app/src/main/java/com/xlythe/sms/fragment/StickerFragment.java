@@ -13,19 +13,39 @@ import android.view.ViewGroup;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
+import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 
 public class StickerFragment extends Fragment {
     private static final String TAG = StickerFragment.class.getSimpleName();
     private static final boolean DEBUG = true;
 
+    public static final String ARG_MESSAGE = "message";
+
+    public static StickerFragment newInstance(Text text) {
+        StickerFragment fragment = new StickerFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(ARG_MESSAGE, text);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Text mText;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mText = getArguments().getParcelable(ARG_MESSAGE);
+
         ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_sticker, container, false);
         RecyclerView gridView = (RecyclerView) rootView.findViewById(R.id.content);
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Drawable drawable) {
-
+                TextManager.getInstance(getContext()).send(new Text.Builder()
+                        .addRecipients(mText.getMembersExceptMe(getContext()))
+                        .attach(null) // TODO
+                        .build()
+                );
             }
         }));
         gridView.setLayoutManager(new GridAutofitLayoutManager(getContext()));

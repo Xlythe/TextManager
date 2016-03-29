@@ -34,6 +34,15 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
 
+    public static GalleryFragment newInstance(Text text, int color) {
+        GalleryFragment fragment = new GalleryFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(ARG_MESSAGE, text);
+        args.putInt(ARG_COLOR, color);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     private int mColor;
     private Text mText;
     private Cursor mCursor;
