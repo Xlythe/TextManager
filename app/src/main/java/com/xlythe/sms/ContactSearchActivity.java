@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ContactAdapter;
+import com.xlythe.sms.decoration.DividerItemDecoration;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 
@@ -67,6 +68,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new ContactAdapter(this, mManager.getContactCursor(""));
         mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
     }
 
     @Override
