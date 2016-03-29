@@ -1,7 +1,6 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -20,7 +19,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 
-import com.xlythe.sms.MediaActivity;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
@@ -104,16 +102,16 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     private Text.TextCursor mCursor;
     private Context mContext;
-    private MessageViewHolder.ClickListener mClickListener;
+    private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
         private Context mContext;
-        private ClickListener mListener;
+        private MessageAdapter.OnClickListener mListener;
         public TextView mDate;
 
-        public MessageViewHolder(View v, ClickListener listener) {
+        public MessageViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v);
             mListener = listener;
             v.setOnClickListener(this);
@@ -145,11 +143,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             return mListener != null && mListener.onItemLongClicked(getMessage());
         }
 
-        public interface ClickListener {
-            void onItemClicked(Text text);
-            boolean onItemLongClicked(Text text);
-        }
-
         public Text getMessage() {
             return mText;
         }
@@ -163,7 +156,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public TextView mTextView;
         public FrameLayout mFrame;
 
-        public ViewHolder(View v, ClickListener listener) {
+        public ViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mTextView = (TextView) v.findViewById(R.id.message);
@@ -194,7 +187,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public FrameLayout mFrame;
         private CircleImageView mProfile;
 
-        public LeftViewHolder(View v, ClickListener listener) {
+        public LeftViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
@@ -231,7 +224,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         private RoundedImageView mImageView;
         private ImageView mVideoLabel;
 
-        public AttachmentViewHolder(View v, ClickListener listener) {
+        public AttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
             mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
@@ -272,7 +265,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     public static class LeftAttachmentViewHolder extends AttachmentViewHolder {
         private CircleImageView mProfile;
 
-        public LeftAttachmentViewHolder(View v, ClickListener listener) {
+        public LeftAttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
         }
@@ -295,7 +288,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     public static class FailedViewHolder extends LeftViewHolder {
 
-        public FailedViewHolder(View v, ClickListener listener) {
+        public FailedViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
         }
 
@@ -311,7 +304,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         mContext = context;
     }
 
-    public void setOnClickListener(MessageViewHolder.ClickListener onClickListener) {
+    public void setOnClickListener(MessageAdapter.OnClickListener onClickListener) {
         mClickListener = onClickListener;
     }
 
@@ -514,5 +507,10 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         mCursor = cursor;
         mTextLruCache.evictAll();
         notifyDataSetChanged();
+    }
+
+    public interface OnClickListener {
+        void onItemClicked(Text text);
+        boolean onItemLongClicked(Text text);
     }
 }

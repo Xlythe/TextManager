@@ -53,7 +53,7 @@ import com.xlythe.textmanager.text.Thread;
 import java.util.Set;
 
 public class MessageActivity extends AppCompatActivity
-        implements MessageAdapter.FailedViewHolder.ClickListener, LegacyCameraView.HostProvider /* legacy support */ {
+        implements MessageAdapter.OnClickListener, LegacyCameraView.HostProvider /* legacy support */ {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
     public static final String EXTRA_THREAD = "thread";
@@ -230,8 +230,7 @@ public class MessageActivity extends AppCompatActivity
         mMicAttachments = (ImageView) findViewById(R.id.mic);
 
         // TODO: Unhide when support is ready
-        mStickerAttachments.setVisibility(View.INVISIBLE);
-        mMicAttachments.setVisibility(View.INVISIBLE);
+        mMicAttachments.setVisibility(View.GONE);
     }
 
     public void setSendable(boolean sendable){
