@@ -3,19 +3,14 @@ package com.xlythe.sms.drawable;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -24,24 +19,22 @@ import android.util.TypedValue;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Receive;
-import com.xlythe.textmanager.text.Text;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 public class ProfileDrawable extends Drawable {
-    Paint mPaint;
-    Context mContext;
-    float px;
-    float sp;
-    ArrayList<Bitmap> mBitmaps = new ArrayList<>();
+    private static final String TAG = ProfileDrawable.class.getSimpleName();
+
+    private final Paint mPaint;
+    private final Context mContext;
+    private final float mDrawableSizeInPx;
+    private final float mFontSizeInSp;
+    private final Bitmap[] mBitmaps;
+    private final int mBitmapSize;
 
     public ProfileDrawable(Context context, Set<Contact> contacts) {
         mContext = context;
@@ -49,73 +42,80 @@ public class ProfileDrawable extends Drawable {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
 
-        px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
-        sp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, mContext.getResources().getDisplayMetrics());
+        mDrawableSizeInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
+        mFontSizeInSp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, mContext.getResources().getDisplayMetrics());
 
-        for (Contact contact : contacts) {
-            mBitmaps.add(drawableToBitmap(contact));
+        // Create an array of bitmaps (min 1, max 4) that hold the profile picture of a contact
+        mBitmaps = new Bitmap[Math.min(4, contacts.size())];
+        Contact[] contactsArray = contacts.toArray(new Contact[contacts.size()]);
+        for (int i = 0; i < mBitmaps.length; i++) {
+            mBitmaps[i] = drawableToBitmap(contactsArray[i]);
         }
+
+        // Resize the bitmaps so they'll all fit within the confines of our drawable
+        mBitmapSize = getBitmapSize(mBitmaps[0].getWidth(), mBitmaps.length);
+        for (int i = 0; i < mBitmaps.length; i++) {
+            mBitmaps[i] = Bitmap.createScaledBitmap(mBitmaps[i], mBitmapSize, mBitmapSize, false);
+        }
+
+    }
+
+    private int getBitmapSize(int width, int numberOfContacts) {
+        double size;
+        switch (numberOfContacts) {
+            case 1:
+                size = width;
+                break;
+            case 2:
+                size = Math.sqrt(2) * width / (Math.sqrt(2) + 1);
+                break;
+            case 3:
+                size = width / 2;
+                break;
+            default:
+                size = width / 2;
+                break;
+        }
+        return (int) size;
     }
 
     @Override
     public int getIntrinsicHeight() {
-        return (int)px;
+        return (int) mDrawableSizeInPx;
     }
     @Override
     public int getIntrinsicWidth() {
-        return (int)px;
-    }
-
-    @Override
-    protected void onBoundsChange(Rect bounds) {
+        return (int) mDrawableSizeInPx;
     }
 
     @Override
     public void draw(Canvas canvas) {
         double size;
-        Bitmap bmp1;
-        Bitmap bmp2;
-        Bitmap bmp3;
-        Bitmap bmp4;
-        switch (mBitmaps.size()) {
+        switch (mBitmaps.length) {
             case 1:
-                size = mBitmaps.get(0).getWidth();
-                bmp1 = Bitmap.createScaledBitmap(mBitmaps.get(0), (int) size, (int) size, false);
-                canvas.drawBitmap(bmp1, 0, 0, null);
+                canvas.drawBitmap(mBitmaps[0], 0, 0, null);
                 break;
             case 2:
-                size = Math.sqrt(2) * mBitmaps.get(0).getWidth() / (Math.sqrt(2) + 1);
-                bmp1 = Bitmap.createScaledBitmap(mBitmaps.get(0), (int) size, (int) size, false);
-                bmp2 = Bitmap.createScaledBitmap(mBitmaps.get(1), (int) size, (int) size, false);
-                canvas.drawBitmap(bmp1, 0, 0, null);
-                canvas.drawBitmap(bmp2, px - bmp1.getWidth(), px - bmp1.getHeight(), null);
+                canvas.drawBitmap(mBitmaps[0], 0, 0, null);
+                canvas.drawBitmap(mBitmaps[1], mDrawableSizeInPx - mBitmapSize, mDrawableSizeInPx - mBitmapSize, null);
                 break;
             case 3:
-                size = mBitmaps.get(0).getWidth() / 2;
-                bmp1 = Bitmap.createScaledBitmap(mBitmaps.get(0), (int) size, (int) size, false);
-                bmp2 = Bitmap.createScaledBitmap(mBitmaps.get(1), (int) size, (int) size, false);
-                bmp3 = Bitmap.createScaledBitmap(mBitmaps.get(2), (int) size, (int) size, false);
-                canvas.drawBitmap(bmp1, bmp1.getWidth() / 2, 0, null);
-                canvas.drawBitmap(bmp2, 0, (int) size, null);
-                canvas.drawBitmap(bmp3, bmp1.getWidth(), (int) size, null);
+                canvas.drawBitmap(mBitmaps[0], mBitmapSize / 2, 0, null);
+                canvas.drawBitmap(mBitmaps[1], 0, mBitmapSize, null);
+                canvas.drawBitmap(mBitmaps[2], mBitmapSize, mBitmapSize, null);
                 break;
             default:
-                size = mBitmaps.get(0).getWidth() / 2;
-                bmp1 = Bitmap.createScaledBitmap(mBitmaps.get(0), (int) size, (int) size, false);
-                bmp2 = Bitmap.createScaledBitmap(mBitmaps.get(1), (int) size, (int) size, false);
-                bmp3 = Bitmap.createScaledBitmap(mBitmaps.get(2), (int) size, (int) size, false);
-                bmp4 = Bitmap.createScaledBitmap(mBitmaps.get(3), (int) size, (int) size, false);
-                canvas.drawBitmap(bmp1, 0, 0, null);
-                canvas.drawBitmap(bmp2, bmp1.getWidth(), 0, null);
-                canvas.drawBitmap(bmp3, 0, bmp1.getWidth(), null);
-                canvas.drawBitmap(bmp4, bmp1.getWidth(), bmp1.getWidth(), null);
+                canvas.drawBitmap(mBitmaps[0], 0, 0, null);
+                canvas.drawBitmap(mBitmaps[1], mBitmapSize, 0, null);
+                canvas.drawBitmap(mBitmaps[2], 0, mBitmapSize, null);
+                canvas.drawBitmap(mBitmaps[3], mBitmapSize, mBitmapSize, null);
                 break;
         }
 
     }
 
     public Bitmap drawableToBitmap(Contact contact) {
-        Bitmap profileBitmap = Bitmap.createBitmap((int) px, (int) px, Bitmap.Config.ARGB_8888);
+        Bitmap profileBitmap = Bitmap.createBitmap((int) mDrawableSizeInPx, (int) mDrawableSizeInPx, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(profileBitmap);
 
         char initial = contact.getDisplayName().charAt(0);
@@ -126,27 +126,27 @@ public class ProfileDrawable extends Drawable {
         }
 
         mPaint.setColor(color);
-        canvas.drawCircle(px / 2, px / 2, px / 2, mPaint);
+        canvas.drawCircle(mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mPaint);
         mPaint.setColor(mContext.getResources().getColor(R.color.text));
         if (uri != null) {
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
-                bitmap = Bitmap.createScaledBitmap(bitmap, (int) px, (int) px, false);
+                bitmap = Bitmap.createScaledBitmap(bitmap, (int) mDrawableSizeInPx, (int) mDrawableSizeInPx, false);
                 mPaint.setColor(Color.WHITE);
                 canvas.drawBitmap(clip(bitmap), 0, 0, mPaint);
-            } catch (IOException ioe){
-                Log.d("Profile image","io");
+            } catch (IOException e){
+                Log.e(TAG, "Failed to load bitmap", e);
             }
         } else if (Character.isLetter(initial)) {
-            mPaint.setTextSize(sp);
+            mPaint.setTextSize(mFontSizeInSp);
             mPaint.setTextAlign(Paint.Align.CENTER);
 
             String text = initial + "";
             Rect r = new Rect();
             mPaint.getTextBounds(text, 0, text.length(), r);
-            int y = (int) px/2 + (Math.abs(r.height()))/2;
+            int y = (int) mDrawableSizeInPx /2 + (Math.abs(r.height()))/2;
 
-            canvas.drawText(text, px/2, y, mPaint);
+            canvas.drawText(text, mDrawableSizeInPx /2, y, mPaint);
         } else {
             Bitmap bmp1 = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_profile);
             canvas.drawBitmap(bmp1, 0, 0, mPaint);
