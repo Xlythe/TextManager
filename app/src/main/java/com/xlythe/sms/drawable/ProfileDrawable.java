@@ -90,7 +90,6 @@ public class ProfileDrawable extends Drawable {
 
     @Override
     public void draw(Canvas canvas) {
-        double size;
         switch (mBitmaps.length) {
             case 1:
                 canvas.drawBitmap(mBitmaps[0], 0, 0, null);
@@ -114,7 +113,7 @@ public class ProfileDrawable extends Drawable {
 
     }
 
-    public Bitmap drawableToBitmap(Contact contact) {
+    protected Bitmap drawableToBitmap(Contact contact) {
         Bitmap profileBitmap = Bitmap.createBitmap((int) mDrawableSizeInPx, (int) mDrawableSizeInPx, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(profileBitmap);
 
@@ -170,7 +169,7 @@ public class ProfileDrawable extends Drawable {
         return PixelFormat.TRANSLUCENT;
     }
 
-    public Bitmap clip(Bitmap bitmap) {
+    protected Bitmap clip(Bitmap bitmap) {
         Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
                 bitmap.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(output);
