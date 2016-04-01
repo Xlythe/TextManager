@@ -24,6 +24,9 @@ import com.xlythe.textmanager.text.Receive;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ProfileDrawable extends Drawable {
@@ -35,6 +38,10 @@ public class ProfileDrawable extends Drawable {
     private final float mFontSizeInSp;
     private final Bitmap[] mBitmaps;
     private final int mBitmapSize;
+
+    public ProfileDrawable(Context context, Contact... contacts) {
+        this(context, new HashSet<Contact>(Arrays.asList(contacts)));
+    }
 
     public ProfileDrawable(Context context, Set<Contact> contacts) {
         mContext = context;
@@ -53,11 +60,10 @@ public class ProfileDrawable extends Drawable {
         }
 
         // Resize the bitmaps so they'll all fit within the confines of our drawable
-        mBitmapSize = getBitmapSize(mBitmaps[0].getWidth(), mBitmaps.length);
+        mBitmapSize = getBitmapSize((int) mDrawableSizeInPx, mBitmaps.length);
         for (int i = 0; i < mBitmaps.length; i++) {
             mBitmaps[i] = Bitmap.createScaledBitmap(mBitmaps[i], mBitmapSize, mBitmapSize, false);
         }
-
     }
 
     private int getBitmapSize(int width, int numberOfContacts) {

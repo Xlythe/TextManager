@@ -17,6 +17,10 @@
 
     <string name="thread_unread_messages">%s new</string>
 
+    <string name="compose_hint">To</string>
+    <string name="compose_msg_hint">Message</string>
+    <string name="compose_msg_hint_long">Type a message</string>
+
     <string name="msg_not_set_as_default">Fetch is not the default SMS app</string>
     <string name="btn_change">Change</string>
 
