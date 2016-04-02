@@ -148,7 +148,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             String body = "";
             String time = "";
             String address = "";
-            Uri uri = null;
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
@@ -158,12 +157,10 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
                 for (Contact member: latest.getMembersExceptMe(getContext())) {
-                    // TODO: Fix icon for group messaging
                     if (!address.isEmpty()) {
                         address += ", ";
                     }
                     address += member.getDisplayName();
-                    uri = member.getPhotoUri();
                 }
                 if (!getThread().hasLoadedUnreadCount()) {
                     unreadCount = getThread().getUnreadCount(getContext());

@@ -72,7 +72,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
         for (String address : mMemberAddresses) {
             Contact addr = TextManager.getInstance(context).lookupContact(address);
-            if (!equal(addr.getNumber(), TextManager.getInstance(context).getSelf().getNumber())) {
+            if (!equal(addr.getNumber(context).get(), TextManager.getInstance(context).getSelf().getNumber(context).get())) {
                 mMembers.add(addr);
             }
         }

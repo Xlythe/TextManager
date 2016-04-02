@@ -3,7 +3,6 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
@@ -14,8 +13,12 @@ import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 
 import com.xlythe.textmanager.User;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.concurrency.FutureImpl;
+import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.lang.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,7 +30,7 @@ public final class Contact implements User, Parcelable {
     private static final boolean DEBUG = false;
 
     private final long mId;
-    private final String mNumber;
+    private String mNumber;
     private final String mDisplayName;
     private final String mPhotoUri;
     private final String mPhotoThumbUri;
@@ -77,8 +80,22 @@ public final class Contact implements User, Parcelable {
         return mId;
     }
 
-    public String getNumber() {
-        return mNumber;
+    public synchronized Future<String> getNumber(final Context context) {
+        if (mNumber != null) {
+            return new Present<>(mNumber);
+        } else {
+            return new FutureImpl<String>() {
+                @Override
+                public String get() {
+                    setNumber(getNumbers(context).get(0));
+                    return mNumber;
+                }
+            };
+        }
+    }
+
+    private synchronized void setNumber(String number) {
+        mNumber = number;
     }
 
     public List<String> getEmails(Context context) {
@@ -145,32 +162,27 @@ public final class Contact implements User, Parcelable {
         return phoneNumbers;
     }
 
+    @Override
     public String getDisplayName() {
-        return hasName() ? mDisplayName : getNumber();
+        if (hasName()) {
+            return mDisplayName;
+        } else {
+            // Guaranteed to have a number if the name is null.
+            return getNumber(null /*context*/).get();
+        }
     }
 
     public boolean hasName() {
         return mDisplayName != null;
     }
 
-    public Bitmap getPhoto() {
-        return null;
+    @Override
+    public Uri getPhotoUri() {
+        return mPhotoUri != null ? Uri.parse(mPhotoUri) : null;
     }
 
-    public Uri getPhotoThumbUri(){
+    public Uri getThumbnailUri() {
         return mPhotoThumbUri != null ? Uri.parse(mPhotoThumbUri) : null;
-    }
-
-    public Uri getPhotoUri(){
-        return mPhotoUri!=null ? Uri.parse(mPhotoUri) : null;
-    }
-
-    public Drawable getPhotoThumbDrawable(){
-        return null;
-    }
-
-    public Drawable getPhotoDrawable(){
-        return null;
     }
 
     @Override

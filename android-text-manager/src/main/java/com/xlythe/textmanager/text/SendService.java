@@ -71,7 +71,7 @@ public class SendService extends IntentService {
 
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
-            address = text.getMembers().iterator().next().getNumber();
+            address = text.getMembers().iterator().next().getNumber(context).get();
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
             values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -85,7 +85,7 @@ public class SendService extends IntentService {
                 if (!address.isEmpty()) {
                     address += ";";
                 }
-                address += member.getNumber();
+                address += member.getNumber(context).get();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[]{attachment}), newMmsSentPendingIntent(context));

@@ -522,13 +522,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         } else {
             return lookupContact(phoneNumber);
         }
-
-        // For profile
-        // Uri uri = Uri.withAppendedPath(
-        // ContactsContract.Profile.CONTENT_URI,
-        // ContactsContract.Contacts.Data.CONTENT_DIRECTORY);
     }
 
+    /**
+     * The default sms app. Before api 19, this returns null.
+     */
     public String getDefaultSmsPackage() {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext);
@@ -537,11 +535,23 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
+    /**
+     * Returns true if your package is the default SMS app. Before API 19, that means everyone.
+     */
     public boolean isDefaultSmsPackage() {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());
         } else {
             return true;
         }
+    }
+
+    /**
+     * Setting this to true means Texts, Threads, and Contacts will load all of their data before
+     * returning. It's useful when grabbing a single Text or are making calls on a background thread.
+     * However, on the UI thread, and with a large number of texts or threads, this can be slow.
+     */
+    public void setBlockingLoad(boolean block) {
+
     }
 }
