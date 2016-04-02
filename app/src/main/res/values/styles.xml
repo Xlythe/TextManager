@@ -2,6 +2,8 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -16,12 +18,15 @@
         <item name="android:actionModeSplitBackground">@android:color/white</item>
     </style>
 
+    <style name="AppTheme.Main">
         <item name="android:windowBackground">@color/colorBackground</item>
     </style>
 
+    <style name="AppTheme.Compose">
         <item name="android:windowBackground">@color/colorCompose</item>
     </style>
 
+    <style name="AppTheme.Compose.Edit"/>
 
     <style name="Date">
         <item name="android:layout_marginTop">8dp</item>
