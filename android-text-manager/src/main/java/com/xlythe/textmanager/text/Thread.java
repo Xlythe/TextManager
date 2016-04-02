@@ -40,8 +40,11 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     protected Thread(Context context, Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
         Cursor textCursor = TextManager.getInstance(context).getMessageCursor(Long.toString(mThreadId));
-        textCursor.moveToLast();
-        mText = new Text(context, textCursor);
+        if (textCursor.moveToLast()) {
+            mText = new Text(context, textCursor);
+        } else {
+            mText = Text.EMPTY_TEXT;
+        }
     }
 
     /**

@@ -39,12 +39,15 @@ public class ProfileDrawable extends Drawable {
     private final Bitmap[] mBitmaps;
     private final int mBitmapSize;
 
+    private final Set<Contact> mContacts;
+
     public ProfileDrawable(Context context, Contact... contacts) {
-        this(context, new HashSet<Contact>(Arrays.asList(contacts)));
+        this(context, new HashSet<>(Arrays.asList(contacts)));
     }
 
     public ProfileDrawable(Context context, Set<Contact> contacts) {
         mContext = context;
+        mContacts = contacts;
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
@@ -190,5 +193,9 @@ public class ProfileDrawable extends Drawable {
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, rect, rect, paint);
         return output;
+    }
+
+    public Set<Contact> getContacts() {
+        return mContacts;
     }
 }

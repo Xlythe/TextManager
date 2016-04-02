@@ -16,21 +16,12 @@
         <item name="android:actionModeSplitBackground">@android:color/white</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-
-    <style name="AppTheme.NoActionBar.Main">
         <item name="android:windowBackground">@color/colorBackground</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.Compose">
         <item name="android:windowBackground">@color/colorCompose</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.Compose.Edit">
-    </style>
 
     <style name="Date">
         <item name="android:layout_marginTop">8dp</item>

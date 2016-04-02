@@ -7,24 +7,26 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ContactAdapter;
 import com.xlythe.sms.decoration.DividerItemDecoration;
+import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 
+import java.util.ArrayList;
+
 public class ContactSearchActivity extends AppCompatActivity implements ContactAdapter.ClickListener {
-    public static final String EXTRA_NUMBER = "number";
-    public static final String EXTRA_CONTACT = "contact";
+    private static final String TAG = ContactSearchActivity.class.getSimpleName();
+
+    public static final String EXTRA_CONTACTS = "contacts";
 
     private TextManager mManager;
 
-    private EditText mInputField;
+    private ContactEditText mInputField;
     private RecyclerView mRecyclerView;
 
     private ContactAdapter mAdapter;
@@ -33,18 +35,16 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_search);
-        setResult(RESULT_CANCELED);
+        setResult(RESULT_OK);
 
         mManager = TextManager.getInstance(getBaseContext());
 
-        mInputField = (EditText) findViewById(R.id.field);
+        mInputField = (ContactEditText) findViewById(R.id.field);
         mInputField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    Intent intent = new Intent();
-                    intent.putExtra(EXTRA_NUMBER, mInputField.getText().toString());
-                    setResult(RESULT_OK, intent);
+                    setResult();
                     finish();
                 }
                 return false;
@@ -59,7 +59,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
 
             @Override
             public void afterTextChanged(Editable s) {
-                mAdapter.swapCursor(mManager.getContactCursor(s.toString()));
+                mAdapter.swapCursor(mManager.getContactCursor(mInputField.getPendingText()));
             }
         });
 
@@ -69,14 +69,31 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
         mAdapter = new ContactAdapter(this, mManager.getContactCursor(""));
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
+
+        if (getIntent().hasExtra(EXTRA_CONTACTS)) {
+            ArrayList<Contact> contacts = getIntent().getParcelableArrayListExtra(EXTRA_CONTACTS);
+            mInputField.setContacts(contacts);
+        }
     }
 
     @Override
     public void onItemClicked(Contact contact) {
+        mInputField.insert(contact);
+    }
+
+    @Override
+    public void onBackPressed() {
+        setResult();
+        super.onBackPressed();
+    }
+
+    private void setResult() {
+        // Insert any remaining text
+        mInputField.insertPendingText();
+
+        // Send result
         Intent intent = new Intent();
-        intent.putExtra(EXTRA_NUMBER, contact.getNumbers(this).get(0));
-        intent.putExtra(EXTRA_CONTACT, contact);
+        intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mInputField.getContacts());
         setResult(RESULT_OK, intent);
-        finish();
     }
 }

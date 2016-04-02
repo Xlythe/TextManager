@@ -6,28 +6,30 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import com.xlythe.sms.util.MessageUtils;
+import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 
+import java.util.ArrayList;
+
+import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
+
 public class ComposeActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CONTACT = 10001;
 
-    private EditText mContacts;
+    private ContactEditText mContacts;
     private TextView mMessage;
     private Activity mActivity;
     private TextManager mManager;
@@ -42,7 +44,7 @@ public class ComposeActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mManager = TextManager.getInstance(getBaseContext());
-        mContacts = (EditText) findViewById(R.id.contacts);
+        mContacts = (ContactEditText) findViewById(R.id.contacts);
         mMessage = (TextView) findViewById(R.id.message);
         mActivity = this;
 
@@ -50,6 +52,7 @@ public class ComposeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
+                intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
                 if (android.os.Build.VERSION.SDK_INT >= 21) {
                     ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                             Pair.create((View) mContacts, "edit_text"));
@@ -75,7 +78,6 @@ public class ComposeActivity extends AppCompatActivity {
                 String[] recipients = MessageUtils.getRecipients(intent);
                 String body = MessageUtils.getBody(intent);
 
-
                 mContacts.setText(TextUtils.join(";", recipients));
                 mMessage.setText(body);
             }
@@ -86,15 +88,9 @@ public class ComposeActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE_CONTACT) {
             if (resultCode == RESULT_OK) {
-                String number = intent.getStringExtra(ContactSearchActivity.EXTRA_NUMBER);
-                Contact contact = intent.getParcelableExtra(ContactSearchActivity.EXTRA_CONTACT);
-
-                if (contact != null) {
-                    mContacts.setText(contact.getDisplayName());
-                } else {
-                    mContacts.setText(PhoneNumberUtils.formatNumber(number));
-                }
-                mContacts.setTag(number);
+                // Yay! We got contacts back! Lets add them to our EditText
+                ArrayList<Contact> contacts = intent.getParcelableArrayListExtra(EXTRA_CONTACTS);
+                mContacts.setContacts(contacts);
                 mContacts.setSelection(mContacts.getText().length());
             }
         } else {
@@ -116,7 +112,7 @@ public class ComposeActivity extends AppCompatActivity {
             if (!TextUtils.isEmpty(mMessage.getText().toString()) && !TextUtils.isEmpty(mContacts.getText().toString())) {
                 mManager.send(new Text.Builder()
                         .message(mMessage.getText().toString())
-                        .addRecipient(this, mContacts.getTag().toString())
+                        .addRecipients(mContacts.getContacts())
                         .build());
                 finish();
             }

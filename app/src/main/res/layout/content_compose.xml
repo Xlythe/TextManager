@@ -9,7 +9,7 @@
     android:showDividers="middle"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_compose">
-    <EditText
+    <com.xlythe.sms.view.ContactEditText
         android:gravity="center_vertical"
         android:id="@+id/contacts"
         android:paddingLeft="16dp"

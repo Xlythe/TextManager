@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:divider="@drawable/divider_compose"
     android:showDividers="middle">
-    <com.xlythe.sms.view.EditTextSelectable
+    <com.xlythe.sms.view.ContactEditText
         android:transitionName="edit_text"
         android:id="@+id/field"
         android:layout_width="match_parent"
@@ -20,7 +20,7 @@
         android:hint="@string/compose_hint"
         android:imeOptions="actionDone">
         <requestFocus/>
-    </com.xlythe.sms.view.EditTextSelectable>
+    </com.xlythe.sms.view.ContactEditText>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"

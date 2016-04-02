@@ -17,6 +17,7 @@ import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
     private static final long TYPE_SENDER = 137;
+
+    static final Text EMPTY_TEXT = new Text();
 
     private long mId;
     private long mThreadId;
@@ -442,7 +445,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             return this;
         }
 
-        public Builder addRecipients(Set<Contact> addresses) {
+        public Builder addRecipients(Collection<Contact> addresses) {
             mRecipients.addAll(addresses);
             return this;
         }

@@ -49,10 +49,14 @@ public final class Contact implements User, Parcelable {
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
-    protected Contact(String address) {
+    protected Contact(String number) {
+        this(number, null);
+    }
+
+    protected Contact(String number, String displayName) {
         mId = -1;
-        mNumber = address;
-        mDisplayName = null;
+        mNumber = number;
+        mDisplayName = displayName;
         mPhotoUri = null;
         mPhotoThumbUri = null;
     }
@@ -240,6 +244,25 @@ public final class Contact implements User, Parcelable {
 
         public String getKey() {
             return key;
+        }
+    }
+
+    public static class Builder {
+        private String mNumber;
+        private String mDisplayName;
+
+        public Builder setNumber(String number) {
+            mNumber = number;
+            return this;
+        }
+
+        public Builder setDisplayName(String displayName) {
+            mDisplayName = displayName;
+            return this;
+        }
+
+        public Contact build() {
+            return new Contact(mNumber, mDisplayName);
         }
     }
 }
