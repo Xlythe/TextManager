@@ -290,7 +290,7 @@ public class Notifications {
         public void onReceive(Context context, Intent intent) {
             CharSequence reply = getMessageText(intent);
             Text text = getText(intent);
-            if (TextUtils.isEmpty(reply)) {
+            if (!TextUtils.isEmpty(reply)) {
                 Log.d(TAG, "Sending reply");
                 TextManager textManager = TextManager.getInstance(context);
                 textManager.send(new Text.Builder()
@@ -299,6 +299,7 @@ public class Notifications {
                         .build());
             } else {
                 Log.w(TAG, "Was told to send a reply, but there was no message");
+                // TODO start conversation activity
             }
             Notifications.clearNotifications(context);
         }
