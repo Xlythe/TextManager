@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.Context;
@@ -94,17 +95,22 @@ public class SendService extends IntentService {
     }
 
     private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri) {
-        Intent intent = new Intent(SMS_SENT);
+        Intent intent = new Intent(context, SmsSentReceiver.class);
+        intent.setAction(SMS_SENT);
         intent.putExtra(URI_EXTRA, uri);
         return PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
     private static PendingIntent newSmsDeliveredPendingIntent(Context context) {
-        return PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
+        Intent intent = new Intent(context, SmsDeliveredReceiver.class);
+        intent.setAction(SMS_DELIVERED);
+        return PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
     private static PendingIntent newMmsSentPendingIntent(Context context) {
-        return PendingIntent.getBroadcast(context, 0, new Intent(MMS_SENT), 0);
+        Intent intent = new Intent(context, MmsSentReceiver.class);
+        intent.setAction(MMS_SENT);
+        return PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
     @TargetApi(21)

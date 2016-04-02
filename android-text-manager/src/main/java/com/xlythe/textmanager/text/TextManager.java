@@ -545,13 +545,4 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             return true;
         }
     }
-
-    /**
-     * Setting this to true means Texts, Threads, and Contacts will load all of their data before
-     * returning. It's useful when grabbing a single Text or are making calls on a background thread.
-     * However, on the UI thread, and with a large number of texts or threads, this can be slow.
-     */
-    public void setBlockingLoad(boolean block) {
-
-    }
 }

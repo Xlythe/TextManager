@@ -59,7 +59,7 @@ public class ProfileDrawable extends Drawable {
         mBitmaps = new Bitmap[Math.min(4, contacts.size())];
         Contact[] contactsArray = contacts.toArray(new Contact[contacts.size()]);
         for (int i = 0; i < mBitmaps.length; i++) {
-            mBitmaps[i] = drawableToBitmap(contactsArray[i]);
+            mBitmaps[i] = toBitmap(contactsArray[i]);
         }
 
         // Resize the bitmaps so they'll all fit within the confines of our drawable
@@ -122,42 +122,59 @@ public class ProfileDrawable extends Drawable {
 
     }
 
-    protected Bitmap drawableToBitmap(Contact contact) {
+    protected Bitmap toBitmap(Contact contact) {
         Bitmap profileBitmap = Bitmap.createBitmap((int) mDrawableSizeInPx, (int) mDrawableSizeInPx, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(profileBitmap);
 
         char initial = contact.getDisplayName().charAt(0);
         Uri uri = contact.getPhotoUri();
-        int color = ColorUtils.getColor(contact.hashCode());
-
-        mPaint.setColor(color);
-        canvas.drawCircle(mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mPaint);
-        mPaint.setColor(mContext.getResources().getColor(R.color.text));
         if (uri != null) {
-            try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
-                bitmap = Bitmap.createScaledBitmap(bitmap, (int) mDrawableSizeInPx, (int) mDrawableSizeInPx, false);
-                mPaint.setColor(Color.WHITE);
-                canvas.drawBitmap(clip(bitmap), 0, 0, mPaint);
-            } catch (IOException e){
-                Log.e(TAG, "Failed to load bitmap", e);
-            }
+            drawUri(canvas, uri);
         } else if (Character.isLetter(initial)) {
-            mPaint.setTextSize(mFontSizeInSp);
-            mPaint.setTextAlign(Paint.Align.CENTER);
-
-            String text = initial + "";
-            Rect r = new Rect();
-            mPaint.getTextBounds(text, 0, text.length(), r);
-            int y = (int) mDrawableSizeInPx /2 + (Math.abs(r.height()))/2;
-
-            canvas.drawText(text, mDrawableSizeInPx /2, y, mPaint);
+            drawBackground(canvas, contact);
+            drawName(canvas, initial);
         } else {
-            Bitmap bmp1 = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_profile);
-            canvas.drawBitmap(bmp1, 0, 0, mPaint);
+            drawBackground(canvas, contact);
+            drawNumber(canvas);
         }
 
         return profileBitmap;
+    }
+
+    private void drawUri(Canvas canvas, Uri uri) {
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
+            bitmap = Bitmap.createScaledBitmap(bitmap, (int) mDrawableSizeInPx, (int) mDrawableSizeInPx, false);
+            mPaint.setColor(Color.WHITE);
+            canvas.drawBitmap(clip(bitmap), 0, 0, mPaint);
+        } catch (IOException e){
+            Log.e(TAG, "Failed to load bitmap", e);
+        }
+    }
+
+    private void drawName(Canvas canvas, char initial) {
+        mPaint.setColor(mContext.getResources().getColor(R.color.text));
+        mPaint.setTextSize(mFontSizeInSp);
+        mPaint.setTextAlign(Paint.Align.CENTER);
+
+        String text = Character.toString(initial);
+        Rect r = new Rect();
+        mPaint.getTextBounds(text, 0, 1, r);
+        int y = (int) mDrawableSizeInPx / 2 + Math.abs(r.height()) / 2;
+
+        canvas.drawText(text, mDrawableSizeInPx / 2, y, mPaint);
+    }
+
+    private void drawNumber(Canvas canvas) {
+        mPaint.setColor(mContext.getResources().getColor(R.color.text));
+        Bitmap bmp1 = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.ic_profile);
+        canvas.drawBitmap(bmp1, 0, 0, mPaint);
+    }
+
+    private void drawBackground(Canvas canvas, Contact contact) {
+        int color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber(mContext).get()));
+        mPaint.setColor(color);
+        canvas.drawCircle(mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mPaint);
     }
 
     @Override

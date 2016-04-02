@@ -14,6 +14,7 @@ import android.widget.EditText;
 
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
+import com.xlythe.textmanager.text.TextManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,7 +151,6 @@ public class ContactEditText extends EditText {
      * Inserts the given Contact into the EditText
      */
     public void insert(Contact contact) {
-        Log.d(TAG, "Replacing " + mPendingText.text + " with " + contact.getDisplayName());
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
         // Create a drawable to represent this Contact
@@ -175,8 +175,6 @@ public class ContactEditText extends EditText {
 
         // Update the text
         getText().replace(start, end, builder);
-
-        Log.d(TAG, "EditText now shows " + getText().toString());
     }
 
     /**
@@ -184,7 +182,7 @@ public class ContactEditText extends EditText {
      */
     public void insertPendingText() {
         if (!TextUtils.isEmpty(mPendingText.text)) {
-            insert(new Contact.Builder().setNumber(mPendingText.text).build());
+            insert(TextManager.getInstance(getContext()).lookupContact(mPendingText.text));
         }
     }
 

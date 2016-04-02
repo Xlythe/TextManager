@@ -258,23 +258,4 @@ public final class Contact implements User, Parcelable {
             return key;
         }
     }
-
-    public static class Builder {
-        private String mNumber;
-        private String mDisplayName;
-
-        public Builder setNumber(String number) {
-            mNumber = number;
-            return this;
-        }
-
-        public Builder setDisplayName(String displayName) {
-            mDisplayName = displayName;
-            return this;
-        }
-
-        public Contact build() {
-            return new Contact(mNumber, mDisplayName);
-        }
-    }
 }
