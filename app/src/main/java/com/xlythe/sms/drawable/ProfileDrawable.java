@@ -128,10 +128,7 @@ public class ProfileDrawable extends Drawable {
 
         char initial = contact.getDisplayName().charAt(0);
         Uri uri = contact.getPhotoUri();
-        int color = ColorUtils.getColor(contact.getIdAsLong());
-        if (contact.getIdAsLong() < 0) {
-            color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber()));
-        }
+        int color = ColorUtils.getColor(contact.hashCode());
 
         mPaint.setColor(color);
         canvas.drawCircle(mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mPaint);
