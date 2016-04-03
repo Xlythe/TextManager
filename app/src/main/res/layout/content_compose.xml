@@ -10,24 +10,24 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_compose">
     <com.xlythe.sms.view.ContactEditText
-        android:gravity="center_vertical"
         android:id="@+id/contacts"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:layout_width="match_parent"
-        android:background="@android:color/transparent"
         android:layout_height="58dp"
+        android:gravity="center_vertical"
         android:textColor="#EB000000"
         android:textColorHint="#6B000000"
         android:textSize="16sp"
+        android:background="@android:color/transparent"
         android:hint="@string/compose_hint"/>
     <EditText
         android:id="@+id/message"
         android:padding="16dp"
         android:gravity="top"
         android:inputType="textCapSentences|textMultiLine"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:textColorHint="#6B000000"
         android:textSize="16sp"
         android:background="@android:color/transparent"

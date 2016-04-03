@@ -51,14 +51,21 @@ public class ComposeActivity extends AppCompatActivity {
         mContacts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
-                intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
-                if (android.os.Build.VERSION.SDK_INT >= 21) {
-                    ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
-                            Pair.create((View) mContacts, "edit_text"));
-                    startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());
-                } else {
-                    startActivityForResult(intent, REQUEST_CODE_CONTACT);
+                startContactSearch();
+            }
+        });
+        mContacts.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            private boolean initialRun;
+
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!initialRun) {
+                    initialRun = true;
+                    return;
+                }
+
+                if (hasFocus) {
+                    startContactSearch();
                 }
             }
         });
@@ -120,5 +127,17 @@ public class ComposeActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startContactSearch() {
+        Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
+        intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
+                    Pair.create((View) mContacts, "edit_text"));
+            startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());
+        } else {
+            startActivityForResult(intent, REQUEST_CODE_CONTACT);
+        }
     }
 }

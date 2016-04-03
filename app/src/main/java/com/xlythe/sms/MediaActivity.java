@@ -21,8 +21,6 @@ public class MediaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media);
 
-        getSupportActionBar().hide();
-
         mText = getIntent().getParcelableExtra(EXTRA_TEXT);
 
         VideoView video = (VideoView) findViewById(R.id.video);

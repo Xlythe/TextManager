@@ -20,14 +20,17 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.commonsware.cwac.camera.CameraHost;
 import com.commonsware.cwac.camera.CameraHostProvider;
@@ -75,8 +78,29 @@ public class MessageActivity extends AppCompatActivity
     private final MessageObserver mMessageObserver = new MessageObserver() {
         @Override
         public void notifyDataChanged() {
+            boolean scroll = isScrolledToBottom(mRecyclerView);
             mAdapter.swapCursor(mManager.getMessageCursor(mThread));
             mManager.markAsRead(mThread);
+            if (scroll) {
+                mRecyclerView.scrollToPosition(mAdapter.getItemCount() - 1);
+            }
+        }
+
+        private boolean isScrolledToBottom(RecyclerView recyclerView) {
+            if (recyclerView.getAdapter().getItemCount() != 0) {
+                int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+                if (lastVisibleItemPosition != RecyclerView.NO_POSITION) {
+                    if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
+                        // The last item is fully visible. Fully scrolled.
+                        return true;
+                    }
+                    if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 2) {
+                        // The 2nd to last item is fully visible. Mostly scrolled.
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     };
 
@@ -128,16 +152,22 @@ public class MessageActivity extends AppCompatActivity
         mEditText = (ExtendedEditText) findViewById(R.id.edit_text);
         mSendButton = (ImageView) findViewById(R.id.send);
 
+        setSendable(false);
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mManager.send(new Text.Builder()
-                                .message(mEditText.getText().toString())
-                                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getApplicationContext()))
-                                .build()
-                );
-                mEditText.setText(null);
-                setSendable(false);
+                send();
+            }
+        });
+
+        mEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    send();
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -236,7 +266,7 @@ public class MessageActivity extends AppCompatActivity
     public void setSendable(boolean sendable){
         mSendButton.setEnabled(sendable);
         if (sendable) {
-            mSendButton.setColorFilter(ColorUtils.getColor(Long.parseLong(mThread.getId())), PorterDuff.Mode.SRC_ATOP);
+            mSendButton.setColorFilter(ColorUtils.getColor(mThread.getIdAsLong()), PorterDuff.Mode.SRC_ATOP);
         } else {
             mSendButton.clearColorFilter();
         }
@@ -395,6 +425,15 @@ public class MessageActivity extends AppCompatActivity
         if (DEBUG) {
             Log.d(TAG, message);
         }
+    }
+
+    protected void send() {
+        mManager.send(new Text.Builder()
+                .message(mEditText.getText().toString())
+                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getApplicationContext()))
+                .build()
+        );
+        mEditText.setText(null);
     }
 
     @Override

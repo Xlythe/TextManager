@@ -46,6 +46,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     setResult();
                     finish();
+                    return true;
                 }
                 return false;
             }

@@ -167,7 +167,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 } else {
                     unreadCount = getThread().getUnreadCount();
                 }
-                color = ColorUtils.getColor(Long.parseLong(getThread().getId()));
+                color = ColorUtils.getColor(getThread().getIdAsLong());
             }
             if (message != null) {
                 message.setText(body);
