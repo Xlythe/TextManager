@@ -50,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 // TODO: Mark message as failed when service is killed
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
-    private static final String URI_EXTRA = "uri_extra";
     private static final String PREAMBLE = "com.xlythe.textmanager.text.";
     private static final String SMS_SENT = PREAMBLE + "SMS_SENT";
     private static final String SMS_DELIVERED = PREAMBLE + "SMS_DELIVERED";
@@ -97,7 +96,7 @@ public class SendService extends IntentService {
     private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(SMS_SENT);
-        intent.putExtra(URI_EXTRA, uri);
+        intent.setData(uri);
         return PendingIntent.getBroadcast(context, 0, intent, 0);
     }
 
@@ -260,7 +259,7 @@ public class SendService extends IntentService {
     private static void notify(PendingIntent pendingIntent, Context context, int result, Uri uri) {
         try {
             Intent intent = new Intent();
-            intent.putExtra(URI_EXTRA, uri.toString());
+            intent.setData(uri);
             pendingIntent.send(context, result, intent);
         } catch (PendingIntent.CanceledException ex) {
             Log.e(TAG, "Failed to notified mms sent", ex);
@@ -359,22 +358,19 @@ public class SendService extends IntentService {
     public static final class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String uri = intent.getStringExtra(URI_EXTRA);
-            if (uri == null) {
-                Log.w(TAG, "Uri got corrupted when marking as sent");
-                return;
-            }
-
+            Uri uri = intent.getData();
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
+                    Log.d(TAG, "SMS sent");
                     values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                     break;
                 default:
+                    Log.d(TAG, "SMS failed to send");
                     values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                     break;
             }
-            context.getContentResolver().update(Uri.parse(uri), values, null, null);
+            context.getContentResolver().update(uri, values, null, null);
         }
     }
 
@@ -395,7 +391,7 @@ public class SendService extends IntentService {
     public static final class MmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String uri = intent.getStringExtra(URI_EXTRA);
+            Uri uri = intent.getData();
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
@@ -405,7 +401,7 @@ public class SendService extends IntentService {
                     values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                     break;
             }
-            context.getContentResolver().update(Uri.parse(uri), values, null, null);
+            context.getContentResolver().update(uri, values, null, null);
         }
     }
 }

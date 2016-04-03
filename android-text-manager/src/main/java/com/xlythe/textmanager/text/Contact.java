@@ -10,6 +10,7 @@ import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.User;
@@ -46,7 +47,9 @@ public final class Contact implements User, Parcelable {
         mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
         // Number may not exist, so check first
         int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
-        mNumber = column != -1 ? c.getString(column) : null;
+        if (column != -1) {
+            setNumber(mNumber);
+        }
         mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
         mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
@@ -58,7 +61,7 @@ public final class Contact implements User, Parcelable {
 
     protected Contact(String number, String displayName) {
         mId = -1;
-        mNumber = number;
+        setNumber(number);
         mDisplayName = displayName;
         mPhotoUri = null;
         mPhotoThumbUri = null;
@@ -95,6 +98,10 @@ public final class Contact implements User, Parcelable {
     }
 
     private synchronized void setNumber(String number) {
+        if (number != null) {
+            // Sanitize the number
+            number = number.replaceAll("[^\\d+]", "");
+        }
         mNumber = number;
     }
 
@@ -168,7 +175,7 @@ public final class Contact implements User, Parcelable {
             return mDisplayName;
         } else {
             // Guaranteed to have a number if the name is null.
-            return getNumber(null /*context*/).get();
+            return PhoneNumberUtils.formatNumber(getNumber(null /*context*/).get());
         }
     }
 
