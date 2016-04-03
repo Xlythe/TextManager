@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Notifications.clearNotifications(getApplicationContext());
+        Notifications.dismissAllNotifications(getApplicationContext());
 
         mManager = TextManager.getInstance(getApplicationContext());
 

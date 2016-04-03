@@ -118,8 +118,6 @@ public class MessageActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Notifications.clearNotifications(getApplicationContext());
-
         final Window rootWindow = getWindow();
         final View root = rootWindow.getDecorView().findViewById(android.R.id.content);
 
@@ -264,6 +262,8 @@ public class MessageActivity extends AppCompatActivity
 
         // TODO: Unhide when support is ready
         mMicAttachments.setVisibility(View.GONE);
+
+        Notifications.dismissNotification(getApplicationContext(), mThread);
 
         if (savedInstanceState == null) {
             // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.

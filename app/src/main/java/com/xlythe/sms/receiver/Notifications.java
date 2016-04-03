@@ -29,12 +29,14 @@ import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -42,8 +44,10 @@ public class Notifications {
     private static final String TAG = "Notifications";
     private static final String EXTRA_INLINE_REPLY = "inline_reply";
     private static final String EXTRA_TEXT = "text";
+    private static final String EXTRA_THREAD_ID = "thread_id";
     private static final String TEXTS_VISIBLE_IN_NOTIFICATION = "texts_visible_in_notification";
     private static final String NOTIFICATIONS = "notifications";
+    private static final String NOTIFICATION_IDS = "notification_ids";
     private static final int NOTIFICATION_ID = 12345;
 
     public static void buildNotification(Context context, Text text) {
@@ -63,11 +67,12 @@ public class Notifications {
     public static void buildNotification(Context context, Set<Text> texts, int id) {
         Log.v(TAG, "Building a notification");
         context = context.getApplicationContext();
+        addNotificationId(context, id);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(context.getResources().getColor(R.color.colorPrimary))
                 .setAutoCancel(true)
-                .setDeleteIntent(buildOnDismissIntent(context))
+                .setDeleteIntent(buildOnDismissIntent(context, texts))
                 .setContentIntent(buildOnClickIntent(context, texts))
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
@@ -107,29 +112,141 @@ public class Notifications {
         return true;
     }
 
-    public static void clearNotifications(Context context) {
+    /**
+     * Dismisses all notifications for the given thread
+     */
+    public static void dismissNotification(Context context, Thread thread) {
+        dismissNotification(context, thread.getId());
+    }
+
+    /**
+     * Dismisses all notifications for the given thread
+     */
+    public static void dismissNotification(Context context, String threadId) {
+        // Clean up any data regarding this thread
+        clearNotification(context, threadId);
+
+        // Dismiss the notification, if needed
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            // On Android N+, we show separate notifications per thread, so we can just dismiss that notification
+            notificationManager.cancel(threadId.hashCode());
+        } else {
+            // Before Android N, we show one notification. See if we should dismiss the notification (because we cleared everything shown)
+            Set<Text> texts = getVisibleTexts(context);
+            if (texts.isEmpty()) {
+                notificationManager.cancel(NOTIFICATION_ID);
+            }
+        }
+    }
+
+    /**
+     * Dismisses all notifications
+     */
+    public static void dismissAllNotifications(Context context) {
+        // Dismiss any notifications we've created
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        for (int id : getNotificationIds(context)) {
+            notificationManager.cancel(id);
+        }
+
+        // Stop persisting the data from those notifications
+        clearAllNotifications(context);
+    }
+
+    /**
+     * Stops persisting any notifications related to the given thread
+     */
+    private static void clearNotification(Context context, Thread thread) {
+        clearNotification(context, thread.getId());
+    }
+
+    /**
+     * Stops persisting any notifications related to the given thread
+     */
+    private static void clearNotification(Context context, String threadId) {
+        // Grab all the notifications
+        SharedPreferences prefs = getSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
+
+        // Loop over them and remove any that have the same id as the thread
+        Iterator<String> iterator = dataSet.iterator();
+        while (iterator.hasNext()) {
+            String serializedData = iterator.next();
+            Text text = Text.fromBytes(Utils.hexToBytes(serializedData));
+
+            if (threadId.equals(text.getThreadId())) {
+                iterator.remove();
+            }
+        }
+
+        // Re-save the notifications
+        editor.putStringSet(NOTIFICATIONS, dataSet);
+        editor.apply();
+    }
+
+    /**
+     * Stops persisting notification data
+     */
+    private static void clearAllNotifications(Context context) {
         context = context.getApplicationContext();
-        SharedPreferences prefs = context.getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
     }
 
+    /**
+     * Returns the texts we're currently showing in the notification.
+     */
+    private static Set<Text> getVisibleTexts(Context context) {
+        return getVisibleTexts(context, null);
+    }
+
+    /**
+     * Returns the texts we're currently showing in the notification. Text, if not null, is added to that set.
+     */
     private static Set<Text> getVisibleTexts(Context context, Text text) {
         Set<Text> texts = new HashSet<>();
 
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
-        dataSet.add(Utils.bytesToHex(text.toBytes()));
-        editor.putStringSet(NOTIFICATIONS, dataSet);
-        editor.apply();
+
+        if (text != null) {
+            dataSet.add(Utils.bytesToHex(text.toBytes()));
+            editor.putStringSet(NOTIFICATIONS, dataSet);
+            editor.apply();
+        }
 
         for (String serializedData : dataSet) {
             texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
         }
 
         return texts;
+    }
+
+    private static void addNotificationId(Context context, int id) {
+        SharedPreferences prefs = getSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Set<String> idsAsStrings = prefs.getStringSet(NOTIFICATION_IDS, new HashSet<String>());
+        idsAsStrings.add(Integer.toString(id));
+        editor.putStringSet(NOTIFICATION_IDS, idsAsStrings);
+        editor.apply();
+    }
+
+    private static Set<Integer> getNotificationIds(Context context) {
+        Set<Integer> ids = new HashSet<>();
+
+        SharedPreferences prefs = getSharedPreferences(context);
+        Set<String> idsAsStrings = prefs.getStringSet(NOTIFICATION_IDS, new HashSet<String>());
+
+        for (String string : idsAsStrings) {
+            ids.add(Integer.parseInt(string));
+        }
+
+        return ids;
     }
 
     private static Set<Text> getTextsFromSameSender(Text original, Set<Text> texts) {
@@ -173,7 +290,7 @@ public class Notifications {
             stackBuilder.addParentStack(MessageActivity.class);
 
             String threadId = texts.iterator().next().getThreadId();
-            intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getInstance(context).getThread(threadId));
+            intent.putExtra(MessageActivity.EXTRA_THREAD_ID, threadId);
         } else {
             intent = new Intent(context, MainActivity.class);
             stackBuilder.addParentStack(MainActivity.class);
@@ -183,8 +300,13 @@ public class Notifications {
         return stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent buildOnDismissIntent(Context context) {
+    private static PendingIntent buildOnDismissIntent(Context context, Set<Text> texts) {
         Intent dismissIntent = new Intent(context, OnDismissReceiver.class);
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            // All texts are by the same sender, so grab one of the threads
+            String threadId = texts.iterator().next().getThreadId();
+            dismissIntent.putExtra(EXTRA_THREAD_ID, threadId);
+        }
         return PendingIntent.getBroadcast(context, NOTIFICATION_ID, dismissIntent, 0);
     }
 
@@ -285,12 +407,17 @@ public class Notifications {
         return "<b>" + string + "</b>";
     }
 
+    private static SharedPreferences getSharedPreferences(Context context) {
+        return context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+    }
+
     public static final class OnReplyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             CharSequence reply = getMessageText(intent);
             Text text = getText(intent);
             TextManager textManager = TextManager.getInstance(context);
+            Thread thread = textManager.getThread(text.getThreadId());
             if (!TextUtils.isEmpty(reply)) {
                 Log.d(TAG, "Sending reply");
                 textManager.send(new Text.Builder()
@@ -301,10 +428,10 @@ public class Notifications {
                 Log.w(TAG, "Was told to send a reply, but there was no message");
                 Intent startActivity = new Intent(context, MessageActivity.class);
                 startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity.putExtra(MessageActivity.EXTRA_THREAD, textManager.getThread(text.getThreadId()));
+                startActivity.putExtra(MessageActivity.EXTRA_THREAD, thread);
                 context.startActivity(startActivity);
             }
-            Notifications.clearNotifications(context);
+            Notifications.clearNotification(context, thread);;
         }
 
         private CharSequence getMessageText(Intent intent) {
@@ -324,7 +451,12 @@ public class Notifications {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "Clearing notifications");
-            Notifications.clearNotifications(context);
+            if (intent.hasExtra(EXTRA_THREAD_ID)) {
+                String threadId = intent.getStringExtra(EXTRA_THREAD_ID);
+                Notifications.clearNotification(context, threadId);
+            } else {
+                Notifications.clearAllNotifications(context);
+            }
         }
     }
 }
