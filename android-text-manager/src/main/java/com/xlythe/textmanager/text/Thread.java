@@ -45,6 +45,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         } else {
             mText = Text.EMPTY_TEXT;
         }
+        textCursor.close();
     }
 
     /**

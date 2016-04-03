@@ -23,6 +23,14 @@ import java.util.List;
 public class FetchChooserTargetService extends ChooserTargetService {
     private static final int SIZE = 3;
 
+    private TextManager mManager;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mManager = TextManager.getInstance(this);
+    }
+
     @Override
     public List<ChooserTarget> onGetChooserTargets(ComponentName targetActivityName, IntentFilter matchedFilter) {
         final List<ChooserTarget> targets = new ArrayList<>();
@@ -57,7 +65,6 @@ public class FetchChooserTargetService extends ChooserTargetService {
     private Icon getIcon(Thread thread) {
         ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage().getMembersExceptMe(this));
 
-
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.draw(canvas);
@@ -67,7 +74,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private List<Thread> getRecentThreads() {
         List<Thread> recentThreads = new ArrayList<>(SIZE);
-        Thread.ThreadCursor cursor = TextManager.getInstance(this).getThreadCursor();
+        Thread.ThreadCursor cursor = mManager.getThreadCursor();
         try {
             while (cursor.moveToNext() && recentThreads.size() < SIZE) {
                 if (cursor.getThread().getLatestMessage().getMembersExceptMe(this).size() == 0) {
