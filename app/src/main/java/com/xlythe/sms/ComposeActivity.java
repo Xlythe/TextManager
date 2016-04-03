@@ -3,9 +3,6 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.MessageUtils;
 import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
@@ -43,6 +41,7 @@ public class ComposeActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBarUtils.whiteUpArrow(this);
 
         mManager = TextManager.getInstance(getBaseContext());
         mContacts = (ContactEditText) findViewById(R.id.contacts);
@@ -70,11 +69,6 @@ public class ComposeActivity extends AppCompatActivity {
                 }
             }
         });
-
-        // Hack to force the up arrow to be white
-        final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-        upArrow.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        getSupportActionBar().setHomeAsUpIndicator(upArrow);
 
         if (savedInstanceState == null) {
             // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.

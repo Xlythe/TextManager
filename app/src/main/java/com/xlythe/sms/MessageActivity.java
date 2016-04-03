@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
@@ -32,19 +31,16 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.commonsware.cwac.camera.CameraHost;
-import com.commonsware.cwac.camera.CameraHostProvider;
-import com.commonsware.cwac.camera.PictureTransaction;
-import com.commonsware.cwac.camera.SimpleCameraHost;
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
+import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.sms.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
-import com.xlythe.sms.view.ICameraView;
 import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Attachment;
@@ -209,9 +205,6 @@ public class MessageActivity extends AppCompatActivity
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
-        final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-        upArrow.setColorFilter(getResources().getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
-        getSupportActionBar().setHomeAsUpIndicator(upArrow);
 
         String name = "";
         for (Contact member : mThread.getLatestMessage().getMembersExceptMe(this)) {
@@ -222,6 +215,7 @@ public class MessageActivity extends AppCompatActivity
         }
         getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" + name + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBarUtils.grayUpArrow(this);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(ColorUtils.getDarkColor(mThread.getIdAsLong()));
@@ -261,6 +255,13 @@ public class MessageActivity extends AppCompatActivity
 
         // TODO: Unhide when support is ready
         mMicAttachments.setVisibility(View.GONE);
+
+        if (savedInstanceState == null) {
+            // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.
+            Intent intent = getIntent();
+            String body = MessageUtils.getBody(intent);
+            mEditText.setText(body);
+        }
     }
 
     public void setSendable(boolean sendable){
