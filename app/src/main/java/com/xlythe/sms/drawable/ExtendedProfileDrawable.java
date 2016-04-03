@@ -30,6 +30,8 @@ import java.util.Set;
 public class ExtendedProfileDrawable extends Drawable {
     private static final int DRAWABLE_MARGIN_SIZE_DP = 2;
     private static final int FONT_SIZE_SP = 14;
+    private static final int BG_COLOR = 0xfff2f2f2;
+    private static final int FONT_COLOR = 0xff939393;
 
     private final Context mContext;
     private final Contact mContact;
@@ -105,7 +107,7 @@ public class ExtendedProfileDrawable extends Drawable {
         canvas.translate(mMargins.left, mMargins.top);
 
         // Draw a grey oval in the background, by using 2 circles and a rectangle
-        mPaint.setColor(Color.LTGRAY);
+        mPaint.setColor(BG_COLOR);
         int radius = mProfileDrawable.getIntrinsicWidth() / 2;
         canvas.drawCircle(getWidth() - radius, radius, radius, mPaint);
         canvas.drawRect(radius, 0, getWidth() - radius, getHeight(), mPaint);
@@ -115,7 +117,7 @@ public class ExtendedProfileDrawable extends Drawable {
 
         // Draw the user's name on the right
         String text = mContact.getDisplayName();
-        mPaint.setColor(mContext.getResources().getColor(R.color.text));
+        mPaint.setColor(FONT_COLOR);
         int x = mProfileDrawable.getIntrinsicWidth() + mTextMargins.left;
         int y = getHeight() / 2 + mTextBounds.height() / 2;
         canvas.drawText(text, x, y, mPaint);
