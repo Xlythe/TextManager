@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
+import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 
@@ -43,7 +44,7 @@ public class StickerFragment extends Fragment {
             public void onItemClick(Drawable drawable) {
                 TextManager.getInstance(getContext()).send(new Text.Builder()
                         .addRecipients(mText.getMembersExceptMe(getContext()))
-                        .attach(null) // TODO
+                        .attach(new ImageAttachment(getContext(), "sticker", drawable))
                         .build()
                 );
             }
