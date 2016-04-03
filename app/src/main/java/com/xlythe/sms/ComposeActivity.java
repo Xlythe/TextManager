@@ -25,6 +25,7 @@ import com.xlythe.textmanager.text.TextManager;
 import java.util.ArrayList;
 
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
+import static com.xlythe.sms.ContactSearchActivity.EXTRA_CURSOR;
 
 public class ComposeActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CONTACT = 10001;
@@ -98,7 +99,8 @@ public class ComposeActivity extends AppCompatActivity {
                 // Yay! We got contacts back! Lets add them to our EditText
                 ArrayList<Contact> contacts = intent.getParcelableArrayListExtra(EXTRA_CONTACTS);
                 mContacts.setContacts(contacts);
-                mContacts.setSelection(mContacts.getText().length());
+                int cursor = intent.getIntExtra(EXTRA_CURSOR, mContacts.getText().length());
+                mContacts.setSelection(cursor);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, intent);
@@ -132,6 +134,7 @@ public class ComposeActivity extends AppCompatActivity {
     private void startContactSearch() {
         Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
         intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
+        intent.putExtra(EXTRA_CURSOR, mContacts.getSelectionStart());
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                     Pair.create((View) mContacts, "edit_text"));

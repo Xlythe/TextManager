@@ -23,6 +23,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
     private static final String TAG = ContactSearchActivity.class.getSimpleName();
 
     public static final String EXTRA_CONTACTS = "contacts";
+    public static final String EXTRA_CURSOR = "cursor";
 
     private TextManager mManager;
 
@@ -75,6 +76,10 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
             ArrayList<Contact> contacts = getIntent().getParcelableArrayListExtra(EXTRA_CONTACTS);
             mInputField.setContacts(contacts);
         }
+
+        if (getIntent().hasExtra(EXTRA_CURSOR)) {
+            mInputField.setSelection(getIntent().getIntExtra(EXTRA_CURSOR, mInputField.getText().length()));
+        }
     }
 
     @Override
@@ -95,6 +100,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
         // Send result
         Intent intent = new Intent();
         intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mInputField.getContacts());
+        intent.putExtra(EXTRA_CURSOR, mInputField.getSelectionStart());
         setResult(RESULT_OK, intent);
     }
 }

@@ -32,6 +32,8 @@ import java.util.Set;
 
 public class ProfileDrawable extends Drawable {
     private static final String TAG = ProfileDrawable.class.getSimpleName();
+    private static final int DRAWABLE_SIZE_DP = 40;
+    private static final int FONT_SIZE_SP = 24;
 
     private static final LruCache<Contact, Integer> COLOR_CACHE = new LruCache<>(50);
 
@@ -55,8 +57,8 @@ public class ProfileDrawable extends Drawable {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
 
-        mDrawableSizeInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, mContext.getResources().getDisplayMetrics());
-        mFontSizeInSp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, mContext.getResources().getDisplayMetrics());
+        mDrawableSizeInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DRAWABLE_SIZE_DP, mContext.getResources().getDisplayMetrics());
+        mFontSizeInSp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, FONT_SIZE_SP, mContext.getResources().getDisplayMetrics());
 
         // Create an array of bitmaps (min 1, max 4) that hold the profile picture of a contact
         mBitmaps = new Bitmap[Math.min(4, contacts.size())];
@@ -95,6 +97,7 @@ public class ProfileDrawable extends Drawable {
     public int getIntrinsicHeight() {
         return (int) mDrawableSizeInPx;
     }
+
     @Override
     public int getIntrinsicWidth() {
         return (int) mDrawableSizeInPx;
@@ -163,7 +166,7 @@ public class ProfileDrawable extends Drawable {
         String text = Character.toString(initial);
         Rect r = new Rect();
         mPaint.getTextBounds(text, 0, 1, r);
-        int y = (int) mDrawableSizeInPx / 2 + Math.abs(r.height()) / 2;
+        int y = (int) mDrawableSizeInPx / 2 + r.height() / 2;
 
         canvas.drawText(text, mDrawableSizeInPx / 2, y, mPaint);
     }

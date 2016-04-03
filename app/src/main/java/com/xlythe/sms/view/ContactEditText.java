@@ -12,7 +12,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.EditText;
 
-import com.xlythe.sms.drawable.ProfileDrawable;
+import com.xlythe.sms.drawable.ExtendedProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 
@@ -154,7 +154,7 @@ public class ContactEditText extends EditText {
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
         // Create a drawable to represent this Contact
-        Drawable drawable = new ProfileDrawable(getContext(), contact);
+        Drawable drawable = new ExtendedProfileDrawable(getContext(), contact);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
 
         // Create the String that the real value is of
@@ -202,8 +202,8 @@ public class ContactEditText extends EditText {
 
         ArrayList<Contact> contacts = new ArrayList<>(spans.length);
         for (ImageSpan span : spans) {
-            ProfileDrawable drawable = (ProfileDrawable) span.getDrawable();
-            contacts.addAll(drawable.getContacts());
+            ExtendedProfileDrawable drawable = (ExtendedProfileDrawable) span.getDrawable();
+            contacts.add(drawable.getContact());
         }
         return contacts;
     }
