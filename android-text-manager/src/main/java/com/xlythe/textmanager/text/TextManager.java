@@ -350,6 +350,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }.start();
     }
 
+    public Thread getThread(long threadId) {
+        return getThread(Long.toString(threadId));
+    }
+
     @Override
     public Thread getThread(String threadId) {
         String clause = String.format("%s = %s",

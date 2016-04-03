@@ -55,7 +55,10 @@ public class MessageActivity extends AppCompatActivity
         implements MessageAdapter.OnClickListener, LegacyCameraView.HostProvider /* legacy support */ {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
+
     public static final String EXTRA_THREAD = "thread";
+    /* ChooserTargetService cannot send Parcelables, so we make do with just the id */
+    public static final String EXTRA_THREAD_ID = "thread_id";
 
     // Keyboard hack
     private int mScreenSize;
@@ -205,6 +208,12 @@ public class MessageActivity extends AppCompatActivity
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
+        if (mThread == null) {
+            long id = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
+            if (id != -1) {
+                mThread = mManager.getThread(id);
+            }
+        }
 
         String name = "";
         for (Contact member : mThread.getLatestMessage().getMembersExceptMe(this)) {
