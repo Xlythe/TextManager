@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.RemoteInput;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.xlythe.textmanager.text.Text;
 
@@ -14,24 +15,22 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
 public class MessageUtils {
-    static final String SMS_BODY = "sms_body";
-    static final String ADDRESS = "address";
+    private static final String TAG = MessageUtils.class.getSimpleName();
+    private static final String SMS_BODY = "sms_body";
+    private static final String ADDRESS = "address";
 
     @Nullable
     public static Text parse(Context context, Intent intent) {
-        Bundle extras = intent.getExtras();
-        if (extras == null) {
-            return null;
-        }
-
         String[] recipients = getRecipients(intent);
         String message = getBody(intent);
 
-        if (recipients != null) {
+        if (recipients == null) {
+            Log.w(TAG, "Parsing intent, but found no recipients");
             return null;
         }
 
         if (TextUtils.isEmpty(message)) {
+            Log.w(TAG, "Parsing intent, but found no message");
             return null;
         }
 
