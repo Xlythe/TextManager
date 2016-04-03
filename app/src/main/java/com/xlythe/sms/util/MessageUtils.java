@@ -42,15 +42,17 @@ public class MessageUtils {
 
     public static String[] getRecipients(Intent intent) {
         Uri uri = intent.getData();
-        String recipients = uri.getSchemeSpecificPart();
-        final int pos = recipients.indexOf('?');
-        if (pos != -1) {
-            recipients = recipients.substring(0, pos);
-        }
-        recipients = replaceUnicodeDigits(recipients).replace(',', ';');
+        if (uri != null) {
+            String recipients = uri.getSchemeSpecificPart();
+            final int pos = recipients.indexOf('?');
+            if (pos != -1) {
+                recipients = recipients.substring(0, pos);
+            }
+            recipients = replaceUnicodeDigits(recipients).replace(',', ';');
 
-        if (!recipients.isEmpty()) {
-            return TextUtils.split(recipients, ";");
+            if (!recipients.isEmpty()) {
+                return TextUtils.split(recipients, ";");
+            }
         }
 
         final boolean haveAddress = !TextUtils.isEmpty(intent.getStringExtra(ADDRESS));
