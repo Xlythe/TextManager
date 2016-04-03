@@ -63,16 +63,16 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private static TextManager sTextManager;
 
-    private Context mContext;
-    private final Set<MessageObserver> mObservers = new HashSet<>();
-    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
-
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
             sTextManager = new TextManager(context);
         }
         return sTextManager;
     }
+
+    private Context mContext;
+    private final Set<MessageObserver> mObservers = new HashSet<>();
+    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
     private TextManager(Context context) {
         mContext = context;
@@ -365,31 +365,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             order = "normalized_date DESC";
         }
         Thread.ThreadCursor cursor = new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, clause, null, order));
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getThread();
-            } else {
-                return null;
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
-    public static Thread getThread(String threadId, Context context) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
-        ContentResolver contentResolver = context.getContentResolver();
-        final Uri uri;
-        final String order;
-        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
-            order = "date DESC";
-        } else {
-            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-            order = "normalized_date DESC";
-        }
-        Thread.ThreadCursor cursor = new Thread.ThreadCursor(context, contentResolver.query(uri, null, clause, null, order));
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getThread();

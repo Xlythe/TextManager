@@ -15,6 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.LruCache;
 import android.util.TypedValue;
 
 import com.xlythe.sms.R;
@@ -31,6 +32,8 @@ import java.util.Set;
 
 public class ProfileDrawable extends Drawable {
     private static final String TAG = ProfileDrawable.class.getSimpleName();
+
+    private static final LruCache<Contact, Integer> COLOR_CACHE = new LruCache<>(50);
 
     private final Paint mPaint;
     private final Context mContext;
@@ -172,7 +175,12 @@ public class ProfileDrawable extends Drawable {
     }
 
     private void drawBackground(Canvas canvas, Contact contact) {
-        int color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber(mContext).get()));
+        Integer color = COLOR_CACHE.get(contact);
+        if (color == null) {
+            // Hasn't been queried yet
+            color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber(mContext).get()));
+            COLOR_CACHE.put(contact, color);
+        }
         mPaint.setColor(color);
         canvas.drawCircle(mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mDrawableSizeInPx / 2, mPaint);
     }

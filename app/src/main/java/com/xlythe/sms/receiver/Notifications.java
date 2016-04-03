@@ -173,7 +173,7 @@ public class Notifications {
             stackBuilder.addParentStack(MessageActivity.class);
 
             String threadId = texts.iterator().next().getThreadId();
-            intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getThread(threadId, context));
+            intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getInstance(context).getThread(threadId));
         } else {
             intent = new Intent(context, MainActivity.class);
             stackBuilder.addParentStack(MainActivity.class);
@@ -290,16 +290,19 @@ public class Notifications {
         public void onReceive(Context context, Intent intent) {
             CharSequence reply = getMessageText(intent);
             Text text = getText(intent);
+            TextManager textManager = TextManager.getInstance(context);
             if (!TextUtils.isEmpty(reply)) {
                 Log.d(TAG, "Sending reply");
-                TextManager textManager = TextManager.getInstance(context);
                 textManager.send(new Text.Builder()
                         .message(reply.toString())
                         .addRecipients(text.getMembersExceptMe(context))
                         .build());
             } else {
                 Log.w(TAG, "Was told to send a reply, but there was no message");
-                // TODO start conversation activity
+                Intent startActivity = new Intent(context, MessageActivity.class);
+                startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity.putExtra(MessageActivity.EXTRA_THREAD, textManager.getThread(text.getThreadId()));
+                context.startActivity(startActivity);
             }
             Notifications.clearNotifications(context);
         }
