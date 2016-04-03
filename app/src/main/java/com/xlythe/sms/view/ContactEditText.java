@@ -9,7 +9,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.EditText;
 
 import com.xlythe.sms.drawable.ExtendedProfileDrawable;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 
 public class ContactEditText extends EditText {
     private static final String TAG = ContactEditText.class.getSimpleName();
@@ -158,7 +156,7 @@ public class ContactEditText extends EditText {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
 
         // Create the String that the real value is of
-        String stringRepresentation = contact.getDisplayName() + ";";
+        String stringRepresentation = contact.getNumber(getContext()).get() + ";";
         builder.append(stringRepresentation);
 
         // Map the drawable to the string
