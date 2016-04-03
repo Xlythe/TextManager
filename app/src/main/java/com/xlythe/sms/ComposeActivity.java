@@ -86,7 +86,9 @@ public class ComposeActivity extends AppCompatActivity {
                 String[] recipients = MessageUtils.getRecipients(intent);
                 String body = MessageUtils.getBody(intent);
 
-                mContacts.setText(TextUtils.join(";", recipients));
+                if (recipients != null) {
+                    mContacts.setText(TextUtils.join(";", recipients));
+                }
                 mMessage.setText(body);
             }
         }

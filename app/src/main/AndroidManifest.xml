@@ -51,7 +51,6 @@
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
                 <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
-
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>
         </receiver>
@@ -62,7 +61,7 @@
         <!-- BroadcastReceiver that listens for replies to notifications -->
         <receiver android:name=".receiver.Notifications$OnReplyReceiver" />
 
-        <!-- Activity that allows the user to send new SMS/MMS messages -->
+        <!-- Shows all the user's texts -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -73,6 +72,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- See ComposeActivity. This Activity helps select a contact -->
         <activity
             android:name=".ContactSearchActivity"
             android:theme="@style/AppTheme.Compose.Edit"
@@ -82,11 +83,12 @@
                 android:value="com.xlythe.sms.ComposeActivity" />
         </activity>
 
-        <!-- Activity that allows the user to send new SMS/MMS messages -->
+        <!-- For sending messages to a new contact -->
         <activity
             android:name=".ComposeActivity"
-            android:label="@string/compose"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.Compose" >
+
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
@@ -104,6 +106,21 @@
                 <data android:scheme="mms" />
                 <data android:scheme="mmsto" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SENDTO" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".service.FetchChooserTargetService" />
+
         </activity>
 
         <!-- Service that delivers messages from the phone "quick response" -->
@@ -121,18 +138,31 @@
             </intent-filter>
         </service>
 
+        <!-- On Android M+, you can share directly to contacts -->
+        <service
+            android:name=".service.FetchChooserTargetService"
+            android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.chooser.ChooserTargetService" />
+            </intent-filter>
+        </service>
+
+        <!-- For sending messages -->
         <activity
             android:name=".MessageActivity"
             android:label="@string/title_activity_message"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustNothing"
             android:theme="@style/AppTheme.Compose" >
+
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
+
         </activity>
-        <activity android:name=".MediaActivity" >
-        </activity>
+
+        <!-- For viewing a video or picture -->
+        <activity android:name=".MediaActivity" />
     </application>
 
 </manifest>
