@@ -20,7 +20,7 @@
         android:textColorHint="#6B000000"
         android:textSize="16sp"
         android:hint="@string/compose_hint"
-        android:imeOptions="actionDone">
+        android:imeOptions="actionDone|flagNoExtractUi">
         <requestFocus/>
     </com.xlythe.sms.view.ContactEditText>
     <android.support.v7.widget.RecyclerView
