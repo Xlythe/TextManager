@@ -30,28 +30,10 @@
         android:theme="@style/AppTheme"
         android:largeHeap="true">
 
-        <!-- BroadcastReceiver that listens for incoming SMS messages -->
-        <receiver
-            android:name=".receiver.SmsReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS" >
+        <!-- BroadcastReceiver that listens for incoming messages -->
+        <receiver android:name=".receiver.MessageReceiver">
             <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_DELIVER" />
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- BroadcastReceiver that listens for incoming MMS messages -->
-        <receiver
-            android:name=".receiver.MmsReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_WAP_PUSH" >
-            <intent-filter>
-                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
-                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
-                <data android:mimeType="application/vnd.wap.mms-message" />
+                <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
             </intent-filter>
         </receiver>
 
@@ -163,6 +145,9 @@
 
         <!-- For viewing a video or picture -->
         <activity android:name=".MediaActivity" />
+
+        <!-- For viewing a video or picture -->
+        <activity android:name=".ShareMediaActivity" />
     </application>
 
 </manifest>
