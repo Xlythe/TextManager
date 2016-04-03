@@ -207,10 +207,8 @@ public class MessageActivity extends AppCompatActivity
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
         if (mThread == null) {
-            long id = getIntent().getLongExtra(EXTRA_THREAD_ID, -1);
-            if (id != -1) {
-                mThread = mManager.getThread(id);
-            }
+            String id = getIntent().getStringExtra(EXTRA_THREAD_ID);
+            mThread = mManager.getThread(id);
         }
 
         String name = "";

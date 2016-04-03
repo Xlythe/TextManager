@@ -43,7 +43,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
             final Icon icon = getIcon(thread);
             final float score = 1.0f - ((float) recentThreads.indexOf(thread) / recentThreads.size());
             final Bundle extras = new Bundle();
-            extras.putLong(MessageActivity.EXTRA_THREAD_ID, thread.getIdAsLong());
+            extras.putString(MessageActivity.EXTRA_THREAD_ID, thread.getId());
 
             targets.add(new ChooserTarget(title, icon, score, componentName, extras));
         }
