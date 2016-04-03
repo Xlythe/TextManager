@@ -360,6 +360,11 @@ public class SendService extends IntentService {
         @Override
         public void onReceive(Context context, Intent intent) {
             String uri = intent.getStringExtra(URI_EXTRA);
+            if (uri == null) {
+                Log.w(TAG, "Uri got corrupted when marking as sent");
+                return;
+            }
+
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
