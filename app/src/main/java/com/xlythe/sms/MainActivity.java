@@ -35,7 +35,7 @@ import com.xlythe.textmanager.text.Thread;
 
 import java.util.Set;
 
-public class MainActivity extends AppCompatActivity implements ThreadAdapter.ClickListener {
+public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
             Manifest.permission.READ_CONTACTS
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Notifications.clearNotifications(getApplicationContext());
+        Notifications.dismissAllNotifications(getApplicationContext());
 
         mManager = TextManager.getInstance(getApplicationContext());
 
@@ -128,7 +128,10 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
     @Override
     protected void onDestroy() {
         mManager.unregisterObserver(mMessageObserver);
-        mAdapter.destroy();
+        if (mAdapter != null) {
+            mAdapter.destroy();
+            mAdapter = null;
+        }
         super.onDestroy();
     }
 
@@ -180,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
 
     @Override
     public void onAttachmentClicked(Thread thread) {
-        Text text = thread.getLatestMessage();
+        Text text = thread.getLatestMessage(this).get();
         if (text.getAttachment() != null) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
             i.putExtra(MediaActivity.EXTRA_TEXT, text);
@@ -215,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
         if (count == 0) {
             mActionMode.finish();
         } else {
-            mActionMode.setTitle(String.valueOf(count)+" selected");
+            mActionMode.setTitle(getString(R.string.thread_title_selection, count));
             mActionMode.invalidate();
         }
     }
@@ -240,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.Cli
             switch (item.getItemId()) {
                 case R.id.menu_remove:
                     Set<Thread> threads = mAdapter.getSelectedItems();
-                    TextManager.getInstance(getBaseContext()).delete(threads.toArray(new Thread[threads.size()]));
+                    mManager.delete(threads.toArray(new Thread[threads.size()]));
                     mAdapter.clearSelection();
                     mode.finish();
                     return true;

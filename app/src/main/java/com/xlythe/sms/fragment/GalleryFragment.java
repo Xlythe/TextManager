@@ -25,7 +25,7 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
 
-public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewHolder.ClickListener {
+public class GalleryFragment extends Fragment implements AttachmentAdapter.OnItemClickListener {
     public static final String ARG_COLOR = "color";
     public static final String ARG_MESSAGE = "message";
 
@@ -33,6 +33,15 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
             Manifest.permission.READ_EXTERNAL_STORAGE
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
+
+    public static GalleryFragment newInstance(Text text, int color) {
+        GalleryFragment fragment = new GalleryFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(ARG_MESSAGE, text);
+        args.putInt(ARG_COLOR, color);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     private int mColor;
     private Text mText;
@@ -100,7 +109,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
         mPermissionPrompt.setVisibility(View.GONE);
 
         mCursor = createCursor();
-        mAdapter = new AttachmentAdapter(this, getContext(), mCursor, mColor);
+        mAdapter = new AttachmentAdapter(getContext(), mCursor, mColor, this);
         mAttachments.setAdapter(mAdapter);
     }
 
@@ -138,7 +147,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.ViewH
     }
 
     @Override
-    public void onItemClicked(final int position, ImageView button) {
+    public void onItemClick(final int position, ImageView button) {
         if (mAdapter.isSelected(position)) {
             mAdapter.toggleSelection(position);
         } else {

@@ -17,6 +17,9 @@ import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
+import com.xlythe.textmanager.text.Mock;
+import com.xlythe.textmanager.text.Receive;
+import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.util.ContentType;
@@ -39,9 +42,14 @@ import static android.provider.Telephony.Sms.Intents.getMessagesFromIntent;
 public abstract class TextReceiver extends BroadcastReceiver {
     private final String TAG = getClass().getSimpleName();
 
+    public static final String ACTION_TEXT_RECEIVED = "com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED";
+    public static final String EXTRA_TEXT = "text";
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
+        if (ACTION_TEXT_RECEIVED.equals(intent.getAction())) {
+            onMessageReceived(context, (Text) intent.getParcelableExtra(EXTRA_TEXT));
+        } else if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             Log.v(TAG, "Received PUSH Intent: " + intent);
 
             // Hold a wake lock for 5 seconds, enough to give any

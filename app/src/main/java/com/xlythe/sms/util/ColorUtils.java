@@ -5,7 +5,7 @@ package com.xlythe.sms.util;
  */
 public class ColorUtils {
     public static int getColor(long threadId) {
-        int num = (int) threadId % 13;
+        int num = (int) (threadId % 13);
         switch (num) {
             case 0:
                 return 0xffdb4437;

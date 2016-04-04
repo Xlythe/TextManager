@@ -12,10 +12,6 @@ public class DateFormatter {
     private static final long ONE_WEEK = 7 * ONE_DAY;
     private static final long ONE_MONTH = 4 * ONE_WEEK;
 
-    public static String getFormattedDate(Thread thread) {
-        return getFormattedDate(thread.getLatestMessage());
-    }
-
     public static String getFormattedDate(Text text) {
         long date = text.getTimestamp();
         long time = System.currentTimeMillis() - date;

@@ -19,8 +19,8 @@ import com.xlythe.textmanager.text.TextManager;
 
 import java.util.ArrayList;
 
-public class ContactSearchActivity extends AppCompatActivity implements ContactAdapter.ClickListener {
-    private static final String TAG = ContactSearchActivity.class.getSimpleName();
+public class ShareMediaActivity extends AppCompatActivity implements ContactAdapter.ClickListener {
+    private static final String TAG = ShareMediaActivity.class.getSimpleName();
 
     public static final String EXTRA_CONTACTS = "contacts";
     public static final String EXTRA_CURSOR = "cursor";

@@ -1,30 +1,30 @@
 package com.xlythe.textmanager.text;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
+import android.util.Log;
 
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageThread;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.concurrency.FutureImpl;
+import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
-import java.io.Serializable;
-import java.util.List;
+import static com.xlythe.textmanager.text.TextManager.TAG;
 
 /**
  * An SMS conversation
  */
 public final class Thread implements MessageThread<Text>, Parcelable {
     private final long mThreadId;
-    private int mCount = -1; // Lazy loading
-    private int mUnreadCount = -1; // Lazy loading
-    private final Text mText;
+    private Integer mCount;
+    private Integer mUnreadCount;
+    private Text mText;
 
     // Thread id isn't always different so need to change it here only
     // Maybe just change the conversations thread id but that would be confusing
@@ -37,11 +37,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         }
     }
 
-    protected Thread(Context context, Cursor cursor) {
+    protected Thread(Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
-        Cursor textCursor = TextManager.getInstance(context).getMessageCursor(Long.toString(mThreadId));
-        textCursor.moveToLast();
-        mText = new Text(context, textCursor);
     }
 
     /**
@@ -56,8 +53,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     private Thread(Parcel in) {
         mThreadId = in.readLong();
-        mCount = in.readInt();
-        mUnreadCount = in.readInt();
+        mCount = (Integer) in.readSerializable();
+        mUnreadCount = (Integer) in.readSerializable();
         mText = in.readParcelable(Text.class.getClassLoader());
     }
 
@@ -72,25 +69,39 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     @Override
     public int getCount() {
-        if (mCount == -1) {
+        if (mCount == null) {
             throw new IllegalStateException("getCount() is an expensive call. " +
                     "Call getCount(Context) first to load the count.");
         }
         return mCount;
     }
 
-    public int getCount(Context context) {
-        String proj = String.format("%s=%s", THREAD_ID, mThreadId);
-        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-        Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
-        mCount = c.getCount();
-        c.close();
-        return getCount();
+    private synchronized void setCount(int count) {
+        mCount = count;
+    }
+
+    public synchronized Future<Integer> getCount(final Context context) {
+        if (mCount != null) {
+            return new Present<>(mCount);
+        } else {
+            return new FutureImpl<Integer>() {
+                @Override
+                public Integer get() {
+                    String proj = String.format("%s=%s", THREAD_ID, mThreadId);
+                    Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+                    Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
+                    int count = c.getCount();
+                    c.close();
+                    setCount(count);
+                    return count;
+                }
+            };
+        }
     }
 
     @Override
     public synchronized int getUnreadCount() {
-        if (mUnreadCount == -1) {
+        if (mUnreadCount == null) {
             throw new IllegalStateException("getUnreadCount() is an expensive call. " +
                     "Call getUnreadCount(Context) first to load the count.");
         }
@@ -101,46 +112,61 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         mUnreadCount = count;
     }
 
-    public int getUnreadCount(Context context) {
-        String proj = String.format("%s=%s AND %s=%s",
-                THREAD_ID, mThreadId,
-                Mock.Telephony.Sms.READ, 0);
-        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-        Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
-        setUnreadCount(c.getCount());
-        c.close();
-        return getUnreadCount();
-    }
-
-    public void getUnreadCount(final Context context, final MessageCallback<Integer> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
-            @Override
-            public void run() {
-                // getThreads is a long running operation
-                final int count = getUnreadCount(context);
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(count);
-                    }
-                });
-            }
-        }.start();
-    }
-
-    public boolean hasLoadedUnreadCount() {
-        return mUnreadCount != -1;
+    public synchronized Future<Integer> getUnreadCount(final Context context) {
+        if (mUnreadCount != null) {
+            return new Present<>(mUnreadCount);
+        } else {
+            return new FutureImpl<Integer>() {
+                @Override
+                public Integer get() {
+                    String proj = String.format("%s=%s AND %s=%s",
+                            THREAD_ID, mThreadId,
+                            Mock.Telephony.Sms.READ, 0);
+                    Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+                    Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
+                    int count = c.getCount();
+                    c.close();
+                    setUnreadCount(count);
+                    return count;
+                }
+            };
+        }
     }
 
     @Override
-    public Text getLatestMessage() {
+    public synchronized Text getLatestMessage() {
+        if (mText == null) {
+            throw new IllegalStateException("getLatestMessage() is an expensive call. " +
+                    "Call getLatestMessage(Context) first to load the text.");
+        }
         return mText;
+    }
+
+    private synchronized void setLatestMessage(Text text) {
+        mText = text;
+    }
+
+    public synchronized Future<Text> getLatestMessage(final Context context) {
+        if (mText != null) {
+            return new Present<>(mText);
+        } else {
+            return new FutureImpl<Text>() {
+                @Override
+                public Text get() {
+                    Text text;
+                    Cursor textCursor = TextManager.getInstance(context).getMessageCursor(getId());
+                    if (textCursor.moveToLast()) {
+                        text = new Text(context, textCursor);
+                    } else {
+                        Log.w(TAG, "Failed to find a text for Thread: " + getId());
+                        text = Text.EMPTY_TEXT;
+                    }
+                    textCursor.close();
+                    setLatestMessage(text);
+                    return text;
+                }
+            };
+        }
     }
 
     @Override
@@ -177,8 +203,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeLong(mThreadId);
-        out.writeInt(mCount);
-        out.writeInt(mUnreadCount);
+        out.writeSerializable(mCount);
+        out.writeSerializable(mUnreadCount);
         out.writeParcelable(mText, Utils.describeContents(mText));
     }
 
@@ -193,15 +219,12 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     };
 
     public static class ThreadCursor extends CursorWrapper {
-        private final Context mContext;
-
-        public ThreadCursor(Context context, android.database.Cursor cursor) {
+        public ThreadCursor(android.database.Cursor cursor) {
             super(cursor);
-            mContext = context.getApplicationContext();
         }
 
         public Thread getThread() {
-            return new Thread(mContext, this);
+            return new Thread(this);
         }
     }
 }

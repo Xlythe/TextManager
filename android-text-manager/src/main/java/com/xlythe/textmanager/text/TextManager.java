@@ -36,7 +36,7 @@ import java.util.Set;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
-    private static final String TAG = TextManager.class.getSimpleName();
+    static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
@@ -63,16 +63,16 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private static TextManager sTextManager;
 
-    private Context mContext;
-    private final Set<MessageObserver> mObservers = new HashSet<>();
-    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
-
     public static TextManager getInstance(Context context) {
         if (sTextManager == null) {
             sTextManager = new TextManager(context);
         }
         return sTextManager;
     }
+
+    private Context mContext;
+    private final Set<MessageObserver> mObservers = new HashSet<>();
+    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
     private TextManager(Context context) {
         mContext = context;
@@ -305,7 +305,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         Cursor c = getThreadCursor();
         if (c.moveToFirst()) {
             do {
-                threads.add(new Thread(mContext, c));
+                threads.add(new Thread(c));
             } while (c.moveToNext());
         }
         c.close();
@@ -324,7 +324,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-        return new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, null, null, order));
+        return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order));
     }
 
     @Override
@@ -350,10 +350,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }.start();
     }
 
+    public Thread getThread(long threadId) {
+        return getThread(Long.toString(threadId));
+    }
+
     @Override
     public Thread getThread(String threadId) {
         String clause = String.format("%s = %s",
-                Mock.Telephony.MmsSms._ID, threadId);
+                Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri;
         final String order;
@@ -364,32 +368,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-        Thread.ThreadCursor cursor = new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, clause, null, order));
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getThread();
-            } else {
-                return null;
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
-    public static Thread getThread(String threadId, Context context) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
-        ContentResolver contentResolver = context.getContentResolver();
-        final Uri uri;
-        final String order;
-        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
-            order = "date DESC";
-        } else {
-            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-            order = "normalized_date DESC";
-        }
-        Thread.ThreadCursor cursor = new Thread.ThreadCursor(context, contentResolver.query(uri, null, clause, null, order));
+        Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order));
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getThread();
@@ -516,13 +495,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Contact getSelf() {
         TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        // For profile
-        // Uri uri = Uri.withAppendedPath(
-        // ContactsContract.Profile.CONTENT_URI,
-        // ContactsContract.Contacts.Data.CONTENT_DIRECTORY);
-        return lookupContact(manager.getLine1Number());
+        String phoneNumber = manager.getLine1Number();
+        if (phoneNumber == null) {
+            return new Contact("???");
+        } else {
+            return lookupContact(phoneNumber);
+        }
     }
 
+    /**
+     * The default sms app. Before api 19, this returns null.
+     */
     public String getDefaultSmsPackage() {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext);
@@ -531,6 +514,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
+    /**
+     * Returns true if your package is the default SMS app. Before API 19, that means everyone.
+     */
     public boolean isDefaultSmsPackage() {
         if (android.os.Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());

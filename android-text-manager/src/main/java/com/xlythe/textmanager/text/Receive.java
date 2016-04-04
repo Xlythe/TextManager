@@ -1,19 +1,14 @@
 package com.xlythe.textmanager.text;
 
-import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,9 +19,7 @@ import com.xlythe.textmanager.text.util.HttpUtils;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,9 +36,9 @@ public class Receive {
             // For SMS only
             Mock.Telephony.Sms.ADDRESS,
             Mock.Telephony.Sms.BODY,
-            Mock.Telephony.Sms.TYPE
+            Mock.Telephony.Sms.TYPE,
+            Mock.Telephony.Sms.STATUS
     };
-
 
     // Email Address Pattern.
     private static final Pattern EMAIL_ADDRESS_PATTERN = Pattern.compile(
@@ -55,11 +48,6 @@ public class Receive {
 
     // Name Address Email Pattern.
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
-
-    private static final String[] PROJECTION = new String[] {
-            Mock.Telephony.Mms.CONTENT_LOCATION,
-            Mock.Telephony.Mms.LOCKED
-    };
 
     /**
      * HTTP request to the MMSC database
@@ -204,22 +192,18 @@ public class Receive {
     /**
      * Create thread id.
      * @param context Context
-     * @param recip Recipient
+     * @param recipient Recipient
      * @return Thread id
      */
-    public static long getOrCreateThreadId(Context context, String recip) {
-        Set<String> recipients = new HashSet<>();
-        recipients.add(recip);
+    public static long getOrCreateThreadId(Context context, String recipient) {
         Uri.Builder uriBuilder = Uri.parse("content://mms-sms/threadID").buildUpon();
-        for (String recipient : recipients) {
-            if (isEmailAddress(recipient)) {
-                recipient = extractAddrSpec(recipient);
-            }
-            uriBuilder.appendQueryParameter("recipient", recipient);
+        if (isEmailAddress(recipient)) {
+            recipient = extractAddrSpec(recipient);
         }
+        uriBuilder.appendQueryParameter("recipient", recipient);
 
         Uri uri = uriBuilder.build();
-        Cursor cursor = context.getContentResolver().query(uri, new String[]{"_id"}, null, null, null);
+        Cursor cursor = context.getContentResolver().query(uri, new String[]{Mock.Telephony.MmsSms._ID}, null, null, null);
         if (cursor != null) {
             try {
                 if (cursor.moveToFirst()) {
@@ -230,8 +214,7 @@ public class Receive {
             }
         }
 
-        Random random = new Random();
-        return random.nextLong();
+        return new Random().nextLong();
     }
 
     /**

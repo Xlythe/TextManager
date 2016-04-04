@@ -12,12 +12,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.RemoteInput;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.xlythe.sms.MainActivity;
 import com.xlythe.sms.MessageActivity;
@@ -26,136 +29,74 @@ import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Niko on 2/25/16.
- */
 public class Notifications {
-    public static final String TEXTS_VISIBLE_IN_NOTIFICATION = "texts_visible_in_notification";
-    public static final String NOTIFICATIONS = "notifications";
+    private static final String TAG = "Notifications";
+    private static final String EXTRA_INLINE_REPLY = "inline_reply";
+    private static final String EXTRA_TEXT = "text";
+    private static final String EXTRA_THREAD_ID = "thread_id";
+    private static final String TEXTS_VISIBLE_IN_NOTIFICATION = "texts_visible_in_notification";
+    private static final String NOTIFICATIONS = "notifications";
+    private static final String NOTIFICATION_IDS = "notification_ids";
     private static final int NOTIFICATION_ID = 12345;
 
-    public static void buildNotification(Context context, Text text){
-        Set<Text> texts = getVisibleTexts(context, text);
-
-        ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
-
-        Intent intent = new Intent(context, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-        NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
-        NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
-
-        if (sameSender(texts)) {
-            Text txt = texts.iterator().next();
-            intent = new Intent(context, MessageActivity.class);
-            intent.putExtra(MessageActivity.EXTRA_THREAD, TextManager.getThread(txt.getThreadId(), context));
-            stackBuilder.addParentStack(MessageActivity.class);
-            builder.setLargeIcon(drawableToBitmap(icon));
+    public static void buildNotification(Context context, Text text) {
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            Log.v(TAG, "Using Android N");
+            // For Android N and above, we can build separate texts for each thread and group them together
+            Set<Text> texts = getVisibleTexts(context, text);
+            buildNotification(context, getTextsFromSameSender(text, texts), text.getThreadId().hashCode());
         } else {
-            stackBuilder.addParentStack(MainActivity.class);
+            Log.v(TAG, "Using legacy support");
+            // Before N, we just group all threads together
+            Set<Text> texts = getVisibleTexts(context, text);
+            buildNotification(context, texts, NOTIFICATION_ID);
         }
+    }
 
-        // Only one message, can be text or Image/Video thumbnail
-        if (texts.size() == 1) {
-            Text txt = texts.iterator().next();
+    public static void buildNotification(Context context, Set<Text> texts, int id) {
+        Log.v(TAG, "Building a notification");
+        context = context.getApplicationContext();
+        addNotificationId(context, id);
 
-            if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
-                try {
-                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.picture) + "</i>");
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), txt.getAttachment().getUri());
-                    builder.setLargeIcon(bitmap)
-                            .setContentTitle(txt.getSender().getDisplayName())
-                            .setContentText(s)
-                            .setStyle(pictureStyle);
-                    pictureStyle.setBigContentTitle(txt.getSender().getDisplayName())
-                            .bigLargeIcon(drawableToBitmap(icon))
-                            .setSummaryText(s)
-                            .bigPicture(bitmap);
-                } catch (IOException ioe) {
-                    ioe.printStackTrace();
-                }
-
-            } else {
-                builder.setContentTitle(txt.getSender().getDisplayName())
-                        .setStyle(textStyle);
-                textStyle.setBigContentTitle(txt.getSender().getDisplayName());
-                // Maybe add video too, but we have a problem with thumbnails without glide
-                if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
-                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.video) + "</i>");
-                    builder.setContentText(s);
-                    textStyle.bigText(s);
-                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
-                    Spanned s = Html.fromHtml("<i>" + context.getString(R.string.voice) + "</i>");
-                    builder.setContentText(s);
-                    textStyle.bigText(s);
-                } else {
-                    builder.setContentText(txt.getBody());
-                    textStyle.bigText(txt.getBody());
-                }
-            }
-        }
-
-        // Multiple messages, should all look the same unless its only one conversation
-        else {
-            Set<String> names = new HashSet<>();
-            inboxStyle.setBigContentTitle(texts.size() + context.getString(R.string.new_message));
-            List<Text> sortedTexts = new ArrayList<>(texts);
-            Collections.sort(sortedTexts);
-            for (Text txt: sortedTexts) {
-                if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VIDEO) {
-                    String s = "<i>" + context.getString(R.string.video) + "</i>";
-                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
-                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.VOICE) {
-                    String s = "<i>" + context.getString(R.string.voice) + "</i>";
-                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
-                } else if (txt.getAttachment() != null && txt.getAttachment().getType() == Attachment.Type.IMAGE) {
-                    String s = "<i>" + context.getString(R.string.picture) + "</i>";
-                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + s));
-                } else {
-                    inboxStyle.addLine(Html.fromHtml("<b>" + txt.getSender().getDisplayName() + " </b>" + txt.getBody()));
-                }
-                names.add(txt.getSender().getDisplayName());
-            }
-            builder.setContentTitle(texts.size() + context.getString(R.string.new_message))
-                    .setContentText(TextUtils.join(", ", names))
-                    .setStyle(inboxStyle);
-        }
-
-        Intent dismissIntent = new Intent(context.getApplicationContext(), OnDismissReceiver.class);
-        PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), NOTIFICATION_ID, dismissIntent, 0);
-        stackBuilder.addNextIntent(intent);
-        PendingIntent onClickPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
-
-        builder.setSmallIcon(R.drawable.fetch_icon_notif)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(context.getResources().getColor(R.color.colorPrimary))
                 .setAutoCancel(true)
-                .setDeleteIntent(onDismissPendingIntent)
+                .setDeleteIntent(buildOnDismissIntent(context, texts))
+                .setContentIntent(buildOnClickIntent(context, texts))
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setCategory(Notification.CATEGORY_MESSAGE)
-                .setContentIntent(onClickPendingIntent);
+                .setGroup(TAG);
+
+        if (sameSender(texts)) {
+            Log.v(TAG, "All texts are from the same sender");
+            Text randomText = texts.iterator().next();
+            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context));
+            builder.setLargeIcon(drawableToBitmap(icon))
+                    .addAction(buildReplyAction(context, randomText));
+        }
+
+        if (texts.size() == 1) {
+            Log.v(TAG, "There's only one text");
+            buildDetailedNotification(context, texts.iterator().next(), builder);
+        } else {
+            buildSummaryNotification(context, texts, builder);
+        }
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
-    }
-
-    public static class OnDismissReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            clearNotifications(context);
-        }
+        notificationManager.notify(id, builder.build());
     }
 
     private static boolean sameSender(Set<Text> texts) {
@@ -171,22 +112,113 @@ public class Notifications {
         return true;
     }
 
-    public static void clearNotifications(Context context) {
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+    /**
+     * Dismisses all notifications for the given thread
+     */
+    public static void dismissNotification(Context context, Thread thread) {
+        dismissNotification(context, thread.getId());
+    }
+
+    /**
+     * Dismisses all notifications for the given thread
+     */
+    public static void dismissNotification(Context context, String threadId) {
+        // Clean up any data regarding this thread
+        clearNotification(context, threadId);
+
+        // Dismiss the notification, if needed
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            // On Android N+, we show separate notifications per thread, so we can just dismiss that notification
+            notificationManager.cancel(threadId.hashCode());
+        } else {
+            // Before Android N, we show one notification. See if we should dismiss the notification (because we cleared everything shown)
+            Set<Text> texts = getVisibleTexts(context);
+            if (texts.isEmpty()) {
+                notificationManager.cancel(NOTIFICATION_ID);
+            }
+        }
+    }
+
+    /**
+     * Dismisses all notifications
+     */
+    public static void dismissAllNotifications(Context context) {
+        // Dismiss any notifications we've created
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        for (int id : getNotificationIds(context)) {
+            notificationManager.cancel(id);
+        }
+
+        // Stop persisting the data from those notifications
+        clearAllNotifications(context);
+    }
+
+    /**
+     * Stops persisting any notifications related to the given thread
+     */
+    private static void clearNotification(Context context, Thread thread) {
+        clearNotification(context, thread.getId());
+    }
+
+    /**
+     * Stops persisting any notifications related to the given thread
+     */
+    private static void clearNotification(Context context, String threadId) {
+        // Grab all the notifications
+        SharedPreferences prefs = getSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
+
+        // Loop over them and remove any that have the same id as the thread
+        Iterator<String> iterator = dataSet.iterator();
+        while (iterator.hasNext()) {
+            String serializedData = iterator.next();
+            Text text = Text.fromBytes(Utils.hexToBytes(serializedData));
+
+            if (threadId.equals(text.getThreadId())) {
+                iterator.remove();
+            }
+        }
+
+        // Re-save the notifications
+        editor.putStringSet(NOTIFICATIONS, dataSet);
+        editor.apply();
+    }
+
+    /**
+     * Stops persisting notification data
+     */
+    private static void clearAllNotifications(Context context) {
+        context = context.getApplicationContext();
+        SharedPreferences prefs = getSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
     }
 
+    /**
+     * Returns the texts we're currently showing in the notification.
+     */
+    private static Set<Text> getVisibleTexts(Context context) {
+        return getVisibleTexts(context, null);
+    }
+
+    /**
+     * Returns the texts we're currently showing in the notification. Text, if not null, is added to that set.
+     */
     private static Set<Text> getVisibleTexts(Context context, Text text) {
         Set<Text> texts = new HashSet<>();
 
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
         Set<String> dataSet = prefs.getStringSet(NOTIFICATIONS, new HashSet<String>());
-        dataSet.add(Utils.bytesToHex(text.toBytes()));
-        editor.putStringSet(NOTIFICATIONS, dataSet);
-        editor.apply();
+
+        if (text != null) {
+            dataSet.add(Utils.bytesToHex(text.toBytes()));
+            editor.putStringSet(NOTIFICATIONS, dataSet);
+            editor.apply();
+        }
 
         for (String serializedData : dataSet) {
             texts.add(Text.fromBytes(Utils.hexToBytes(serializedData)));
@@ -195,7 +227,39 @@ public class Notifications {
         return texts;
     }
 
-    private static Bitmap drawableToBitmap (Drawable drawable) {
+    private static void addNotificationId(Context context, int id) {
+        SharedPreferences prefs = getSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Set<String> idsAsStrings = prefs.getStringSet(NOTIFICATION_IDS, new HashSet<String>());
+        idsAsStrings.add(Integer.toString(id));
+        editor.putStringSet(NOTIFICATION_IDS, idsAsStrings);
+        editor.apply();
+    }
+
+    private static Set<Integer> getNotificationIds(Context context) {
+        Set<Integer> ids = new HashSet<>();
+
+        SharedPreferences prefs = getSharedPreferences(context);
+        Set<String> idsAsStrings = prefs.getStringSet(NOTIFICATION_IDS, new HashSet<String>());
+
+        for (String string : idsAsStrings) {
+            ids.add(Integer.parseInt(string));
+        }
+
+        return ids;
+    }
+
+    private static Set<Text> getTextsFromSameSender(Text original, Set<Text> texts) {
+        Set<Text> sameGroup = new HashSet<>();
+        for (Text text : texts) {
+            if (text.getThreadIdAsLong() == original.getThreadIdAsLong()) {
+                sameGroup.add(text);
+            }
+        }
+        return sameGroup;
+    }
+
+    private static Bitmap drawableToBitmap(Drawable drawable) {
         Bitmap bitmap;
 
         if (drawable instanceof BitmapDrawable) {
@@ -215,5 +279,182 @@ public class Notifications {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    private static PendingIntent buildOnClickIntent(Context context, Set<Text> texts) {
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+
+        Intent intent;
+        if (sameSender(texts)) {
+            intent = new Intent(context, MessageActivity.class);
+            stackBuilder.addParentStack(MessageActivity.class);
+
+            String threadId = texts.iterator().next().getThreadId();
+            intent.putExtra(MessageActivity.EXTRA_THREAD_ID, threadId);
+        } else {
+            intent = new Intent(context, MainActivity.class);
+            stackBuilder.addParentStack(MainActivity.class);
+        }
+
+        stackBuilder.addNextIntent(intent);
+        return stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+    }
+
+    private static PendingIntent buildOnDismissIntent(Context context, Set<Text> texts) {
+        Intent dismissIntent = new Intent(context, OnDismissReceiver.class);
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            // All texts are by the same sender, so grab one of the threads
+            String threadId = texts.iterator().next().getThreadId();
+            dismissIntent.putExtra(EXTRA_THREAD_ID, threadId);
+        }
+        return PendingIntent.getBroadcast(context, NOTIFICATION_ID, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private static NotificationCompat.Action buildReplyAction(Context context, Text text) {
+        RemoteInput remoteInput = new RemoteInput.Builder(EXTRA_INLINE_REPLY)
+                .setLabel(context.getString(R.string.action_reply))
+                .build();
+        Intent replyIntent = new Intent(context, OnReplyReceiver.class);
+        replyIntent.putExtra(EXTRA_TEXT, text);
+        PendingIntent onReplyPendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_ID, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return new NotificationCompat.Action.Builder(R.drawable.ic_send, context.getString(R.string.action_reply), onReplyPendingIntent)
+                .addRemoteInput(remoteInput)
+                .build();
+    }
+
+    /**
+     * Only one message, can be text or Image/Video thumbnail
+     */
+    private static void buildDetailedNotification(Context context, Text text, NotificationCompat.Builder builder) {
+        builder.setContentTitle(text.getSender().getDisplayName());
+        if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.IMAGE) {
+            NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
+            try {
+                Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_picture)));
+                ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), text.getAttachment().getUri());
+                builder.setLargeIcon(bitmap)
+                        .setContentText(s)
+                        .setStyle(pictureStyle);
+                pictureStyle.setBigContentTitle(text.getSender().getDisplayName())
+                        .bigLargeIcon(drawableToBitmap(icon))
+                        .setSummaryText(s)
+                        .bigPicture(bitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
+            builder.setStyle(textStyle);
+            textStyle.setBigContentTitle(text.getSender().getDisplayName());
+            // Maybe add video too, but we have a problem with thumbnails without glide
+            if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.VIDEO) {
+                Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_video)));
+                builder.setContentText(s);
+                textStyle.bigText(s);
+            } else if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.VOICE) {
+                Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_voice)));
+                builder.setContentText(s);
+                textStyle.bigText(s);
+            } else {
+                builder.setContentText(text.getBody());
+                textStyle.bigText(text.getBody());
+            }
+        }
+    }
+
+    /**
+     * Multiple messages, should all look the same unless its only one conversation
+     */
+    private static void buildSummaryNotification(Context context, Set<Text> texts, NotificationCompat.Builder builder) {
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+        Set<String> names = new HashSet<>();
+        inboxStyle.setBigContentTitle(context.getString(R.string.notification_label_new_messages, texts.size()));
+        List<Text> sortedTexts = new ArrayList<>(texts);
+        Collections.sort(sortedTexts);
+        for (Text text: sortedTexts) {
+            if (text.getAttachment() != null) {
+                int typeString = 0;
+                switch(text.getAttachment().getType()) {
+                    case IMAGE:
+                        typeString = R.string.notification_label_picture;
+                        break;
+                    case VIDEO:
+                        typeString = R.string.notification_label_video;
+                        break;
+                    case VOICE:
+                        typeString = R.string.notification_label_voice;
+                        break;
+                }
+                inboxStyle.addLine(Html.fromHtml(
+                        bold(text.getSender().getDisplayName()) + " " + italic(context.getString(typeString))));
+            } else {
+                inboxStyle.addLine(Html.fromHtml(
+                        bold(text.getSender().getDisplayName()) + " " + text.getBody()));
+            }
+            names.add(text.getSender().getDisplayName());
+        }
+        builder.setContentTitle(context.getString(R.string.notification_label_new_messages, texts.size()))
+                .setContentText(TextUtils.join(", ", names))
+                .setStyle(inboxStyle);
+    }
+
+    private static String italic(String string) {
+        return "<i>" + string + "</i>";
+    }
+
+    private static String bold(String string) {
+        return "<b>" + string + "</b>";
+    }
+
+    private static SharedPreferences getSharedPreferences(Context context) {
+        return context.getApplicationContext().getSharedPreferences(TEXTS_VISIBLE_IN_NOTIFICATION, Context.MODE_PRIVATE);
+    }
+
+    public static final class OnReplyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            CharSequence reply = getMessageText(intent);
+            Text text = getText(intent);
+            if (!TextUtils.isEmpty(reply)) {
+                Log.d(TAG, "Sending reply");
+                TextManager.getInstance(context).send(new Text.Builder()
+                        .message(reply.toString())
+                        .addRecipients(text.getMembersExceptMe(context))
+                        .build());
+            } else {
+                Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " +text.getThreadId());
+                Intent startActivity = new Intent(context, MessageActivity.class);
+                startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity.putExtra(MessageActivity.EXTRA_THREAD_ID, text.getThreadId());
+                context.startActivity(startActivity);
+            }
+            Notifications.dismissNotification(context, text.getThreadId());
+        }
+
+        private CharSequence getMessageText(Intent intent) {
+            Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+            if (remoteInput != null) {
+                return remoteInput.getCharSequence(EXTRA_INLINE_REPLY);
+            }
+            return null;
+        }
+
+        private Text getText(Intent intent) {
+            return intent.getParcelableExtra(EXTRA_TEXT);
+        }
+    }
+
+    public static final class OnDismissReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG, "Clearing notifications");
+            if (intent.hasExtra(EXTRA_THREAD_ID)) {
+                String threadId = intent.getStringExtra(EXTRA_THREAD_ID);
+                Notifications.clearNotification(context, threadId);
+            } else {
+                Notifications.clearAllNotifications(context);
+            }
+        }
     }
 }

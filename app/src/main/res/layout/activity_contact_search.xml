@@ -3,24 +3,26 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <EditText
+    android:layout_height="match_parent"
+    android:divider="@drawable/divider_compose"
+    android:showDividers="middle">
+    <com.xlythe.sms.view.ContactEditText
         android:transitionName="edit_text"
         android:id="@+id/field"
         android:layout_width="match_parent"
         android:layout_height="58dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:singleLine="true"
         android:background="@android:color/transparent"
         android:textColorHint="#6B000000"
         android:textSize="16sp"
-        android:hint="To"
-        android:imeOptions="actionDone">
+        android:hint="@string/compose_hint"
+        android:imeOptions="actionDone|flagNoExtractUi">
         <requestFocus/>
-    </EditText>
-    <View
-        style="@style/Divider"/>
+    </com.xlythe.sms.view.ContactEditText>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"

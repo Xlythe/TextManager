@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.Context;
@@ -49,38 +50,14 @@ import java.util.concurrent.TimeUnit;
 // TODO: Mark message as failed when service is killed
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
-    private static final String URI_EXTRA = "uri_extra";
     private static final String PREAMBLE = "com.xlythe.textmanager.text.";
     private static final String SMS_SENT = PREAMBLE + "SMS_SENT";
     private static final String SMS_DELIVERED = PREAMBLE + "SMS_DELIVERED";
     private static final String MMS_SENT = PREAMBLE + "MMS_SENT";
     public static final String TEXT_EXTRA = "text_extra";
 
-    private SmsSentReceiver mSmsSentReceiver = new SmsSentReceiver();
-    private SmsDeliveredReceiver mSmsDeliveredReceiver = new SmsDeliveredReceiver();
-    private MmsSentReceiver mMmsSentReceiver = new MmsSentReceiver();
-
     public SendService() {
         super("SendService");
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // Set up receivers for marking sms/mms as sent
-        registerReceiver(mSmsSentReceiver, new IntentFilter(SMS_SENT));
-        registerReceiver(mSmsDeliveredReceiver, new IntentFilter(SMS_DELIVERED));
-        registerReceiver(mMmsSentReceiver, new IntentFilter(MMS_SENT));
-    }
-
-    @Override
-    public void onDestroy() {
-        unregisterReceiver(mSmsSentReceiver);
-        unregisterReceiver(mSmsDeliveredReceiver);
-        unregisterReceiver(mMmsSentReceiver);
-
-        super.onDestroy();
     }
 
     @Override
@@ -94,7 +71,7 @@ public class SendService extends IntentService {
 
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
-            address = text.getMembers().iterator().next().getNumber();
+            address = text.getMembers().iterator().next().getNumber(context).get();
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
             values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -108,26 +85,33 @@ public class SendService extends IntentService {
                 if (!address.isEmpty()) {
                     address += ";";
                 }
-                address += member.getNumber();
+                address += member.getNumber(context).get();
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context));
+            } else {
+                throw new RuntimeException("Not supported before Lollipop");
             }
         }
     }
 
     private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri) {
-        Intent intent = new Intent(SMS_SENT);
-        intent.putExtra(URI_EXTRA, uri);
-        return PendingIntent.getBroadcast(context, 0, intent, 0);
+        Intent intent = new Intent(context, SmsSentReceiver.class);
+        intent.setAction(SMS_SENT);
+        intent.setData(uri);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newSmsDeliveredPendingIntent(Context context) {
-        return PendingIntent.getBroadcast(context, 0, new Intent(SMS_DELIVERED), 0);
+        Intent intent = new Intent(context, SmsDeliveredReceiver.class);
+        intent.setAction(SMS_DELIVERED);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newMmsSentPendingIntent(Context context) {
-        return PendingIntent.getBroadcast(context, 0, new Intent(MMS_SENT), 0);
+        Intent intent = new Intent(context, MmsSentReceiver.class);
+        intent.setAction(MMS_SENT);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     @TargetApi(21)
@@ -192,7 +176,7 @@ public class SendService extends IntentService {
                                 final String address,
                                 final String subject,
                                 final String body,
-                                final Attachment attachment){
+                                final Attachment attachment) {
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
@@ -202,17 +186,17 @@ public class SendService extends IntentService {
             Uri uri = attachment.getUri();
             switch (type) {
                 case IMAGE:
-                    try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
-                        byte[] imageBytes = bitmapToByteArray(bitmap);
-                        part = new MMSPart();
-                        part.MimeType = "image/jpeg";
-                        part.Name = "image" + i;
-                        part.Data = imageBytes;
-                        data.add(part);
-                    } catch (IOException e) {
-                        Log.e(TAG, "File not found", e);
+                    Bitmap bitmap = ((ImageAttachment) attachment).getBitmap(context).get();
+                    if (bitmap == null) {
+                        Log.e(TAG, "Error getting bitmap from attachment");
+                        break;
                     }
+                    byte[] imageBytes = bitmapToByteArray(bitmap);
+                    part = new MMSPart();
+                    part.MimeType = "image/jpeg";
+                    part.Name = "image" + i;
+                    part.Data = imageBytes;
+                    data.add(part);
                     break;
                 case VIDEO:
                     try {
@@ -252,7 +236,7 @@ public class SendService extends IntentService {
             data.add(part);
         }
 
-        return getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+        return getBytes(context, address.split(";"), data.toArray(new MMSPart[data.size()]), subject);
     }
 
     public static void sendData(Context context, byte[] pdu, PendingIntent sentMmsPendingIntent, Uri uri) {
@@ -276,7 +260,7 @@ public class SendService extends IntentService {
     private static void notify(PendingIntent pendingIntent, Context context, int result, Uri uri) {
         try {
             Intent intent = new Intent();
-            intent.putExtra(URI_EXTRA, uri.toString());
+            intent.setData(uri);
             pendingIntent.send(context, result, intent);
         } catch (PendingIntent.CanceledException ex) {
             Log.e(TAG, "Failed to notified mms sent", ex);
@@ -372,24 +356,26 @@ public class SendService extends IntentService {
         public byte[] Data;
     }
 
-    private static final class SmsSentReceiver extends BroadcastReceiver {
+    public static final class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String uri = intent.getStringExtra(URI_EXTRA);
+            Uri uri = intent.getData();
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
+                    Log.d(TAG, "SMS sent");
                     values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                     break;
                 default:
+                    Log.d(TAG, "SMS failed to send");
                     values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                     break;
             }
-            context.getContentResolver().update(Uri.parse(uri), values, null, null);
+            context.getContentResolver().update(uri, values, null, null);
         }
     }
 
-    private static final class SmsDeliveredReceiver extends BroadcastReceiver {
+    public static final class SmsDeliveredReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (getResultCode()) {
@@ -403,10 +389,10 @@ public class SendService extends IntentService {
         }
     }
 
-    private static final class MmsSentReceiver extends BroadcastReceiver {
+    public static final class MmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String uri = intent.getStringExtra(URI_EXTRA);
+            Uri uri = intent.getData();
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
@@ -416,7 +402,7 @@ public class SendService extends IntentService {
                     values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                     break;
             }
-            context.getContentResolver().update(Uri.parse(uri), values, null, null);
+            context.getContentResolver().update(uri, values, null, null);
         }
     }
 }

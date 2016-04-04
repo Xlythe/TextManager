@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
@@ -20,28 +19,28 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.TextView;
 
-import com.commonsware.cwac.camera.CameraHost;
-import com.commonsware.cwac.camera.CameraHostProvider;
-import com.commonsware.cwac.camera.PictureTransaction;
-import com.commonsware.cwac.camera.SimpleCameraHost;
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
+import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
-import com.xlythe.sms.view.ICameraView;
 import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Attachment;
@@ -53,10 +52,13 @@ import com.xlythe.textmanager.text.Thread;
 import java.util.Set;
 
 public class MessageActivity extends AppCompatActivity
-        implements MessageAdapter.FailedViewHolder.ClickListener, LegacyCameraView.HostProvider /* legacy support */ {
+        implements MessageAdapter.OnClickListener, LegacyCameraView.HostProvider /* legacy support */ {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
+
     public static final String EXTRA_THREAD = "thread";
+    /* ChooserTargetService cannot send Parcelables, so we make do with just the id */
+    public static final String EXTRA_THREAD_ID = "thread_id";
 
     // Keyboard hack
     private int mScreenSize;
@@ -75,8 +77,29 @@ public class MessageActivity extends AppCompatActivity
     private final MessageObserver mMessageObserver = new MessageObserver() {
         @Override
         public void notifyDataChanged() {
+            boolean scroll = isScrolledToBottom(mRecyclerView);
             mAdapter.swapCursor(mManager.getMessageCursor(mThread));
             mManager.markAsRead(mThread);
+            if (scroll) {
+                mRecyclerView.scrollToPosition(mAdapter.getItemCount() - 1);
+            }
+        }
+
+        private boolean isScrolledToBottom(RecyclerView recyclerView) {
+            if (recyclerView.getAdapter().getItemCount() != 0) {
+                int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+                if (lastVisibleItemPosition != RecyclerView.NO_POSITION) {
+                    if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
+                        // The last item is fully visible. Fully scrolled.
+                        return true;
+                    }
+                    if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 2) {
+                        // The 2nd to last item is fully visible. Mostly scrolled.
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     };
 
@@ -94,8 +117,6 @@ public class MessageActivity extends AppCompatActivity
         setContentView(R.layout.activity_message);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        Notifications.clearNotifications(getApplicationContext());
 
         final Window rootWindow = getWindow();
         final View root = rootWindow.getDecorView().findViewById(android.R.id.content);
@@ -128,16 +149,22 @@ public class MessageActivity extends AppCompatActivity
         mEditText = (ExtendedEditText) findViewById(R.id.edit_text);
         mSendButton = (ImageView) findViewById(R.id.send);
 
+        setSendable(false);
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mManager.send(new Text.Builder()
-                                .message(mEditText.getText().toString())
-                                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getApplicationContext()))
-                                .build()
-                );
-                mEditText.setText(null);
-                setSendable(false);
+                send();
+            }
+        });
+
+        mEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    send();
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -179,12 +206,16 @@ public class MessageActivity extends AppCompatActivity
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
-        final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-        upArrow.setColorFilter(getResources().getColor(R.color.icon_color), PorterDuff.Mode.SRC_ATOP);
-        getSupportActionBar().setHomeAsUpIndicator(upArrow);
+        if (mThread == null) {
+            String id = getIntent().getStringExtra(EXTRA_THREAD_ID);
+            mThread = mManager.getThread(id);
+        }
+        if (DEBUG) {
+            Log.d(TAG, "Opening Activity for thread " + mThread);
+        }
 
         String name = "";
-        for (Contact member : mThread.getLatestMessage().getMembersExceptMe(this)) {
+        for (Contact member : mThread.getLatestMessage(this).get().getMembersExceptMe(this)) {
             if (!name.isEmpty()){
                 name += ", ";
             }
@@ -192,6 +223,7 @@ public class MessageActivity extends AppCompatActivity
         }
         getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" + name + " </font>"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBarUtils.grayUpArrow(this);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(ColorUtils.getDarkColor(mThread.getIdAsLong()));
@@ -230,14 +262,22 @@ public class MessageActivity extends AppCompatActivity
         mMicAttachments = (ImageView) findViewById(R.id.mic);
 
         // TODO: Unhide when support is ready
-        mStickerAttachments.setVisibility(View.INVISIBLE);
-        mMicAttachments.setVisibility(View.INVISIBLE);
+        mMicAttachments.setVisibility(View.GONE);
+
+        Notifications.dismissNotification(getApplicationContext(), mThread);
+
+        if (savedInstanceState == null) {
+            // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.
+            Intent intent = getIntent();
+            String body = MessageUtils.getBody(intent);
+            mEditText.setText(body);
+        }
     }
 
     public void setSendable(boolean sendable){
         mSendButton.setEnabled(sendable);
         if (sendable) {
-            mSendButton.setColorFilter(ColorUtils.getColor(Long.parseLong(mThread.getId())), PorterDuff.Mode.SRC_ATOP);
+            mSendButton.setColorFilter(ColorUtils.getColor(mThread.getIdAsLong()), PorterDuff.Mode.SRC_ATOP);
         } else {
             mSendButton.clearColorFilter();
         }
@@ -255,23 +295,16 @@ public class MessageActivity extends AppCompatActivity
         ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        Fragment fragment;
-        Bundle args = new Bundle();
-        args.putInt(GalleryFragment.ARG_COLOR, color);
-        args.putParcelable(GalleryFragment.ARG_MESSAGE, mThread.getLatestMessage());
+        Text text = mThread.getLatestMessage(this).get();
         switch (view.getId()) {
             case R.id.gallery:
-                fragment = new GalleryFragment();
-                fragment.setArguments(args);
-                transaction.replace(R.id.fragment_container, fragment).commit();
+                transaction.replace(R.id.fragment_container, GalleryFragment.newInstance(text, color)).commit();
                 break;
             case R.id.camera:
-                fragment = new CameraFragment();
-                fragment.setArguments(args);
-                transaction.replace(R.id.fragment_container, fragment).commit();
+                transaction.replace(R.id.fragment_container, CameraFragment.newInstance(text)).commit();
                 break;
             case R.id.sticker:
-                transaction.replace(R.id.fragment_container, new StickerFragment()).commit();
+                transaction.replace(R.id.fragment_container, StickerFragment.newInstance(text)).commit();
                 break;
             case R.id.mic:
                 transaction.replace(R.id.fragment_container, new MicFragment()).commit();
@@ -403,6 +436,15 @@ public class MessageActivity extends AppCompatActivity
         if (DEBUG) {
             Log.d(TAG, message);
         }
+    }
+
+    protected void send() {
+        mManager.send(new Text.Builder()
+                .message(mEditText.getText().toString())
+                .addRecipients(mThread.getLatestMessage(this).get().getMembersExceptMe(getApplicationContext()))
+                .build()
+        );
+        mEditText.setText(null);
     }
 
     @Override

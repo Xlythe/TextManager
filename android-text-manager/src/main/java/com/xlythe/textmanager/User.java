@@ -1,6 +1,7 @@
 package com.xlythe.textmanager;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Parcelable;
 
 /**
@@ -8,5 +9,5 @@ import android.os.Parcelable;
  */
 public interface User {
     String getDisplayName();
-    Bitmap getPhoto();
+    Uri getPhotoUri();
 }

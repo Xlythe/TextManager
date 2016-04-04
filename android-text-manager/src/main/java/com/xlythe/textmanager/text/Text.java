@@ -17,6 +17,7 @@ import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
     private static final long TYPE_SENDER = 137;
+
+    static final Text EMPTY_TEXT = new Text();
 
     private long mId;
     private long mThreadId;
@@ -69,32 +72,13 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
         for (String address : mMemberAddresses) {
             Contact addr = TextManager.getInstance(context).lookupContact(address);
-            if (!equal(addr.getNumber(), TextManager.getInstance(context).getSelf().getNumber())) {
-                mMembers.add(addr);
-            }
+            mMembers.add(addr);
         }
         if (isIncoming()) {
             mSender = TextManager.getInstance(context).lookupContact(mSenderAddress);
         } else {
             mSender = TextManager.getInstance(context).getSelf();
         }
-    }
-
-    public boolean equal(String number1, String number2) {
-        return number1.length() >= 10
-                && number2.length() >= 10
-                &&(normalizeNumber(number1).contains(number2)
-                || normalizeNumber(number2).contains(number1));
-    }
-
-    public String normalizeNumber(String number) {
-        String clean = "";
-        for (char c: number.toCharArray()) {
-            if (Character.isDigit(c)){
-                clean += c;
-            }
-        }
-        return clean;
     }
 
     private Text(Parcel in) {
@@ -269,6 +253,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public Set<Contact> getMembersExceptMe(Context context) {
         Set<Contact> members = new HashSet<>(mMembers);
+        if (members.size() == 1) {
+            // It's possible to text yourself. To account for that, don't remove yourself if there's only one memeber.
+            return members;
+        }
         members.remove(TextManager.getInstance(context).getSelf());
         return members;
     }
@@ -353,10 +341,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     @Override
     public int compareTo(Text text) {
         if (text.getTimestamp() > getTimestamp()) {
-            return 1;
+            return -1;
         }
         if(text.getTimestamp() < getTimestamp()) {
-            return -1;
+            return 1;
         }
         return 0;
     }
@@ -442,7 +430,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             return this;
         }
 
-        public Builder addRecipients(Set<Contact> addresses) {
+        public Builder addRecipients(Collection<Contact> addresses) {
             mRecipients.addAll(addresses);
             return this;
         }
@@ -475,6 +463,33 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 text.mIsMms = true;
             }
             text.mDate = System.currentTimeMillis();
+            return text;
+        }
+    }
+
+    /**
+     * Visible for testing
+     */
+    static class DebugBuilder extends Builder {
+        private Contact mSender;
+        private long mThreadId;
+
+        public DebugBuilder setSender(String contact) {
+            mSender = new Contact(contact);
+            return this;
+        }
+
+        public DebugBuilder setThreadId(long threadId) {
+            mThreadId = threadId;
+            return this;
+        }
+
+        public Text build() {
+            Text text = super.build();
+            if (mSender != null) {
+                text.mSender = mSender;
+            }
+            text.mThreadId = mThreadId;
             return text;
         }
     }

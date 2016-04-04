@@ -30,63 +30,47 @@
         android:theme="@style/AppTheme"
         android:largeHeap="true">
 
-        <!-- BroadcastReceiver that listens for incoming SMS messages -->
-        <receiver
-            android:name=".receiver.SmsReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS" >
+        <!-- BroadcastReceiver that listens for incoming messages -->
+        <receiver android:name=".receiver.MessageReceiver">
             <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_DELIVER" />
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- BroadcastReceiver that listens for incoming MMS messages -->
-        <receiver
-            android:name=".receiver.MmsReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_WAP_PUSH" >
-            <intent-filter>
-                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
-                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
-
-                <data android:mimeType="application/vnd.wap.mms-message" />
+                <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
             </intent-filter>
         </receiver>
 
         <!-- BroadcastReceiver that listens for deletion of notification -->
-        <receiver
-            android:name=".receiver.Notifications$OnDismissReceiver">
-        </receiver>
+        <receiver android:name=".receiver.Notifications$OnDismissReceiver" />
 
-        <!-- Activity that allows the user to send new SMS/MMS messages -->
+        <!-- BroadcastReceiver that listens for replies to notifications -->
+        <receiver android:name=".receiver.Notifications$OnReplyReceiver" />
+
+        <!-- Shows all the user's texts -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar.Main" >
+            android:theme="@style/AppTheme.Main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- See ComposeActivity. This Activity helps select a contact -->
         <activity
             android:name=".ContactSearchActivity"
-            android:theme="@style/AppTheme.NoActionBar.Compose.Edit"
+            android:theme="@style/AppTheme.Compose.Edit"
             android:windowSoftInputMode="stateVisible|adjustNothing" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.ComposeActivity" />
         </activity>
 
-        <!-- Activity that allows the user to send new SMS/MMS messages -->
+        <!-- For sending messages to a new contact -->
         <activity
             android:name=".ComposeActivity"
-            android:label="@string/compose"
-            android:theme="@style/AppTheme.NoActionBar.Compose" >
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.Compose" >
+
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
@@ -104,39 +88,67 @@
                 <data android:scheme="mms" />
                 <data android:scheme="mmsto" />
             </intent-filter>
-        </activity>
 
-        <!-- Activity that allows the user to send new SMS/MMS messages -->
-
-        <!-- Service that delivers messages from the phone "quick response" -->
-        <service
-            android:name=".service.HeadlessSmsSendService"
-            android:exported="true"
-            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
             <intent-filter>
-                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SENDTO" />
 
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".service.FetchChooserTargetService" />
+
+        </activity>
+
+        <!-- On Android M+, you can share directly to contacts -->
+        <service
+            android:name=".service.FetchChooserTargetService"
+            android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.chooser.ChooserTargetService" />
             </intent-filter>
         </service>
 
+        <!-- For sending messages -->
         <activity
             android:name=".MessageActivity"
             android:label="@string/title_activity_message"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustNothing"
-            android:theme="@style/AppTheme.NoActionBar.Compose" >
+            android:theme="@style/AppTheme.Compose" >
+
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity" />
+
         </activity>
-        <activity android:name=".MediaActivity" >
+
+        <!-- For viewing a video or picture -->
+        <activity android:name=".MediaActivity" />
+
+        <!-- For sharing a video or picture -->
+        <activity android:name=".ShareMediaActivity" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SENDTO" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".service.FetchChooserTargetService" />
+
         </activity>
+
     </application>
 
 </manifest>

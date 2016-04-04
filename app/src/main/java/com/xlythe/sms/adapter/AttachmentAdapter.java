@@ -13,7 +13,6 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
-import android.support.v4.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -24,26 +23,26 @@ import java.io.File;
 public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdapter.ViewHolder> {
     private static final String TAG = AttachmentAdapter.class.getSimpleName();
 
-    private ViewHolder.ClickListener mClickListener;
+    private AttachmentAdapter.OnItemClickListener mClickListener;
     private Context mContext;
     private Cursor mCursor;
     private int mColor;
 
-    public AttachmentAdapter(Fragment fragment, Context context, Cursor cursor, int color) {
-        mClickListener = (ViewHolder.ClickListener) fragment;
+    public AttachmentAdapter(Context context, Cursor cursor, int color, AttachmentAdapter.OnItemClickListener listener) {
         mContext = context;
         mCursor = cursor;
         mColor = color;
+        mClickListener = listener;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private ClickListener mListener;
+        private OnItemClickListener mListener;
         private ImageView mImage;
         private ImageView mButton;
         private ImageView mButtonShape;
         private Context mContext;
 
-        public ViewHolder(View view, ClickListener listener, Context context) {
+        public ViewHolder(View view, OnItemClickListener listener, Context context) {
             super(view);
             mContext = context;
             mListener = listener;
@@ -92,14 +91,11 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
 
         @Override
         public void onClick(View v) {
-            mListener.onItemClicked(getAdapterPosition(), (ImageView) v.findViewById(R.id.button));
-        }
-
-        public interface ClickListener {
-            void onItemClicked(int position, ImageView button);
+            mListener.onItemClick(getAdapterPosition(), (ImageView) v.findViewById(R.id.button));
         }
     }
 
+    @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.attach_icon, parent, false);
         return new ViewHolder(layout, mClickListener, mContext);
@@ -119,5 +115,9 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
     @Override
     public int getItemCount() {
         return mCursor.getCount();
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position, ImageView button);
     }
 }

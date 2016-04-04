@@ -7,10 +7,10 @@ public interface MessageCallback<T> {
     /**
      * The operation was successful
      * */
-    public void onSuccess(T t);
+    void onSuccess(T t);
 
     /**
      * An error occurred.
      * */
-    public void onFailure(Exception e);
+    void onFailure(Exception e);
 }

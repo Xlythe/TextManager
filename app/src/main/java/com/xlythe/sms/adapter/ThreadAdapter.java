@@ -6,6 +6,8 @@ import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -58,11 +60,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
-    private ClickListener mClickListener;
+    private OnClickListener mClickListener;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
 
     public ThreadAdapter(Context context, Thread.ThreadCursor cursor) {
-        mClickListener = (ClickListener) context;
+        mClickListener = (OnClickListener) context;
         mContext = context;
         mCursor = cursor;
     }
@@ -113,11 +115,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public final TextView date;
         public final RoundedImageView attachment;
         public final ImageView videoLabel;
-        public final LinearLayout card;
+        public final ViewGroup card;
         public final ImageView profile;
-        private ClickListener mListener;
+        private OnClickListener mListener;
 
-        public ThreadViewHolder(View view, ClickListener listener) {
+        public ThreadViewHolder(View view, OnClickListener listener) {
             super(view);
             title = (TextView) view.findViewById(R.id.sender);
             unread = (TextView) view.findViewById(R.id.unread);
@@ -125,7 +127,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             date = (TextView) view.findViewById(R.id.date);
             attachment = (RoundedImageView) view.findViewById(R.id.attachment);
             videoLabel = (ImageView) view.findViewById(R.id.video_label);
-            card = (LinearLayout) view.findViewById(R.id.card);
+            card = (ViewGroup) view.findViewById(R.id.card);
             profile = (ImageView) view.findViewById(R.id.profile_image);
 
             mListener = listener;
@@ -148,29 +150,22 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             String body = "";
             String time = "";
             String address = "";
-            Uri uri = null;
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
-            Text latest = getThread().getLatestMessage();
+            Text latest = getThread().getLatestMessage(getContext()).get();
 
             if (latest != null) {
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
                 for (Contact member: latest.getMembersExceptMe(getContext())) {
-                    // TODO: Fix icon for group messaging
                     if (!address.isEmpty()) {
                         address += ", ";
                     }
                     address += member.getDisplayName();
-                    uri = member.getPhotoUri();
                 }
-                if (!getThread().hasLoadedUnreadCount()) {
-                    unreadCount = getThread().getUnreadCount(getContext());
-                } else {
-                    unreadCount = getThread().getUnreadCount();
-                }
-                color = ColorUtils.getColor(Long.parseLong(getThread().getId()));
+                unreadCount = getThread().getUnreadCount(getContext()).get();
+                color = ColorUtils.getColor(getThread().getIdAsLong());
             }
             if (message != null) {
                 message.setText(body);
@@ -194,7 +189,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             if (unreadCount > 0) {
                 title.setText(address);
                 unread.setVisibility(View.VISIBLE);
-                unread.setText(unreadCount + " new");
+                unread.setText(getContext().getString(R.string.thread_unread_messages, unreadCount));
                 unread.setTextColor(color);
                 unread.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_IN);
                 unread.getBackground().setAlpha(25);
@@ -220,11 +215,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setBackgroundResource(R.drawable.selector);
             } else {
                 profile.setBackgroundResource(android.R.color.transparent);
-                if (!address.equals("")) {
-                    if (latest != null) {
-                        ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
-                        profile.setImageDrawable(profileDrawable);
-                    }
+                if (!TextUtils.isEmpty(address) && latest != null) {
+                    ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
+                    profile.setImageDrawable(profileDrawable);
+                } else {
+                    profile.setImageDrawable(null);
                 }
             }
 
@@ -275,7 +270,8 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     @Override
     public int getItemViewType(int position) {
-        if (getThread(position).getLatestMessage().getAttachment() != null) {
+        Text text = getThread(position).getLatestMessage(mContext).get();
+        if (text != null && text.getAttachment() != null) {
             return TYPE_ATTACHMENT;
         }
         return TYPE_TEXT;
@@ -315,7 +311,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     public long getHeaderId(int position) {
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage().getTimestamp();
+        long date = thread.getLatestMessage(mContext).get().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
             return 1;
@@ -340,16 +336,16 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         String title = "";
 
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage().getTimestamp();
+        long date = thread.getLatestMessage(mContext).get().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
-            title = "Today";
+            title = mContext.getString(R.string.thread_title_today);
         } else if (time < 2 * ONE_DAY) {
-            title = "Yesterday";
+            title = mContext.getString(R.string.thread_title_yesterday);
         } else if (time < ONE_WEEK) {
-            title = "This week";
+            title = mContext.getString(R.string.thread_title_week);
         } else if (time < ONE_MONTH) {
-            title = "This month";
+            title = mContext.getString(R.string.thread_title_month);
         } else {
             SimpleDateFormat formatter = new SimpleDateFormat("MMMM yyyy");
             title = formatter.format(date);
@@ -358,7 +354,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         holder.title.setText(title);
     }
 
-    public interface ClickListener {
+    public interface OnClickListener {
         void onProfileClicked(Thread thread);
         void onAttachmentClicked(Thread thread);
         void onItemClicked(Thread thread);

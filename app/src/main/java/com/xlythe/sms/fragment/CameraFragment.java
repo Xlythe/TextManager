@@ -27,7 +27,6 @@ import java.io.File;
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class CameraFragment extends Fragment {
-    public static final String ARG_COLOR = "color";
     public static final String ARG_MESSAGE = "message";
 
     private static final String[] REQUIRED_PERMISSIONS = {
@@ -41,8 +40,15 @@ public class CameraFragment extends Fragment {
     private View mPermissionPrompt;
     private ICameraView mCamera;
 
-    private int mColor;
     private Text mText;
+
+    public static CameraFragment newInstance(Text text) {
+        CameraFragment fragment = new CameraFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(ARG_MESSAGE, text);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     private ICameraView.CameraListener mPictureListener = new ICameraView.CameraListener() {
         @Override
@@ -102,7 +108,6 @@ public class CameraFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_camera, container, false);
 
-        mColor = getArguments().getInt(ARG_COLOR);
         mText = getArguments().getParcelable(ARG_MESSAGE);
 
         mCameraHolder = rootView.findViewById(R.id.layout_camera);

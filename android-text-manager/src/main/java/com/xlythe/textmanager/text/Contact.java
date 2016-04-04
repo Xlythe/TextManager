@@ -3,7 +3,6 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
@@ -11,11 +10,16 @@ import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.User;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.concurrency.FutureImpl;
+import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.lang.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,7 +31,7 @@ public final class Contact implements User, Parcelable {
     private static final boolean DEBUG = false;
 
     private final long mId;
-    private final String mNumber;
+    private String mNumber;
     private final String mDisplayName;
     private final String mPhotoUri;
     private final String mPhotoThumbUri;
@@ -43,16 +47,22 @@ public final class Contact implements User, Parcelable {
         mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
         // Number may not exist, so check first
         int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
-        mNumber = column != -1 ? c.getString(column) : null;
+        if (column != -1) {
+            setNumber(mNumber);
+        }
         mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
         mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
-    protected Contact(String address) {
+    protected Contact(String number) {
+        this(number, null);
+    }
+
+    protected Contact(String number, String displayName) {
         mId = -1;
-        mNumber = address;
-        mDisplayName = null;
+        setNumber(number);
+        mDisplayName = displayName;
         mPhotoUri = null;
         mPhotoThumbUri = null;
     }
@@ -73,7 +83,25 @@ public final class Contact implements User, Parcelable {
         return mId;
     }
 
-    public String getNumber() {
+    public synchronized Future<String> getNumber(final Context context) {
+        if (mNumber != null) {
+            return new Present<>(mNumber);
+        } else {
+            return new FutureImpl<String>() {
+                @Override
+                public String get() {
+                    return setNumber(getNumbers(context).get(0));
+                }
+            };
+        }
+    }
+
+    private synchronized String setNumber(String number) {
+        if (number != null) {
+            // Sanitize the number
+            number = number.replaceAll("[^\\d+]", "");
+        }
+        mNumber = number;
         return mNumber;
     }
 
@@ -141,32 +169,27 @@ public final class Contact implements User, Parcelable {
         return phoneNumbers;
     }
 
+    @Override
     public String getDisplayName() {
-        return hasName() ? mDisplayName : getNumber();
+        if (hasName()) {
+            return mDisplayName;
+        } else {
+            // Guaranteed to have a number if the name is null.
+            return PhoneNumberUtils.formatNumber(getNumber(null /*context*/).get());
+        }
     }
 
     public boolean hasName() {
         return mDisplayName != null;
     }
 
-    public Bitmap getPhoto() {
-        return null;
+    @Override
+    public Uri getPhotoUri() {
+        return mPhotoUri != null ? Uri.parse(mPhotoUri) : null;
     }
 
-    public Uri getPhotoThumbUri(){
+    public Uri getThumbnailUri() {
         return mPhotoThumbUri != null ? Uri.parse(mPhotoThumbUri) : null;
-    }
-
-    public Uri getPhotoUri(){
-        return mPhotoUri!=null ? Uri.parse(mPhotoUri) : null;
-    }
-
-    public Drawable getPhotoThumbDrawable(){
-        return null;
-    }
-
-    public Drawable getPhotoDrawable(){
-        return null;
     }
 
     @Override

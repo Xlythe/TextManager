@@ -1,12 +1,12 @@
-package com.xlythe.sms.service;
+package com.xlythe.textmanager.text.service;
 
 import android.app.IntentService;
 import android.content.Intent;
 import android.telephony.TelephonyManager;
 
-import com.xlythe.sms.util.MessageUtils;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.util.MessageUtils;
 
 public class HeadlessSmsSendService extends IntentService {
 

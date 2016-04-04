@@ -3,9 +3,62 @@
     package="com.xlythe.textmanager">
 
     <application>
+        <service android:name=".text.SendService" />
+        <receiver android:name=".text.SendService$SmsSentReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.SMS_SENT" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".text.SendService$SmsDeliveredReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.SMS_DELIVERED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".text.SendService$MmsSentReceiver">
+            <intent-filter>
+                <action android:name="com.xlythe.textmanager.text.MMS_SENT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver that listens for incoming SMS messages -->
+        <receiver
+            android:name=".text.receiver.SmsReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_DELIVER" />
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver that listens for incoming MMS messages -->
+        <receiver
+            android:name=".text.receiver.MmsReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_WAP_PUSH" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
+                <action android:name="android.provider.Telephony.WAP_PUSH_RECEIVED" />
+                <data android:mimeType="application/vnd.wap.mms-message" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Service that delivers messages from the phone "quick response" -->
         <service
-            android:name=".text.SendService"
-            android:exported="false"/>
+            android:name=".text.service.HeadlessSmsSendService"
+            android:exported="true"
+            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
+            <intent-filter>
+                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sms" />
+                <data android:scheme="smsto" />
+                <data android:scheme="mms" />
+                <data android:scheme="mmsto" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
