@@ -10,6 +10,8 @@
     <string name="action_reply">Reply</string>
     <string name="action_delete">Delete</string>
 
+    <string name="thread_title_selection">%s selected</string>
+
     <string name="thread_title_today">Today</string>
     <string name="thread_title_yesterday">Yesterday</string>
     <string name="thread_title_week">This week</string>

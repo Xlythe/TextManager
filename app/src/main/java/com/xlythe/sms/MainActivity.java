@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         if (count == 0) {
             mActionMode.finish();
         } else {
-            mActionMode.setTitle(String.valueOf(count)+" selected");
+            mActionMode.setTitle(getString(R.string.thread_title_selection, count));
             mActionMode.invalidate();
         }
     }
