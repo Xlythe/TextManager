@@ -96,7 +96,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="text/plain" />
-                <data android:mimeType="image/*" />
             </intent-filter>
 
             <meta-data
@@ -131,8 +130,25 @@
         <!-- For viewing a video or picture -->
         <activity android:name=".MediaActivity" />
 
-        <!-- For viewing a video or picture -->
-        <activity android:name=".ShareMediaActivity" />
+        <!-- For sharing a video or picture -->
+        <activity android:name=".ShareMediaActivity" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SENDTO" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".service.FetchChooserTargetService" />
+
+        </activity>
+
     </application>
 
 </manifest>
