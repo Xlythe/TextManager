@@ -199,28 +199,17 @@ public class SendService extends IntentService {
                     data.add(part);
                     break;
                 case VIDEO:
-                    try {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        FileInputStream fis = new FileInputStream(new File(uri.getPath()));
-
-                        byte[] buf = new byte[1024];
-                        int n;
-                        while (-1 != (n = fis.read(buf)))
-                            baos.write(buf, 0, n);
-
-                        byte[] videoBytes = baos.toByteArray();
-
-                        part = new MMSPart();
-                        part.MimeType = "video/mpeg";
-                        part.Name = "video" + i;
-                        part.Data = videoBytes;
-                        data.add(part);
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException("Uri doesn't exist", e);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    byte[] videoBytes = ((VideoAttachment) attachment).getBytes(context).get();
+                    if (videoBytes == null) {
+                        Log.e(TAG, "Error getting bytes from attachment");
+                        break;
                     }
 
+                    part = new MMSPart();
+                    part.MimeType = "video/mpeg";
+                    part.Name = "video" + i;
+                    part.Data = videoBytes;
+                    data.add(part);
                 case VOICE:
                     //TODO: Voice support
                     break;
