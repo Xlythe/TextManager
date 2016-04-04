@@ -151,7 +151,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
-            Text latest = getThread().getLatestMessage();
+            Text latest = getThread().getLatestMessage(getContext()).get();
 
             if (latest != null) {
                 body = latest.getBody();
@@ -162,11 +162,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                     }
                     address += member.getDisplayName();
                 }
-                if (!getThread().hasLoadedUnreadCount()) {
-                    unreadCount = getThread().getUnreadCount(getContext());
-                } else {
-                    unreadCount = getThread().getUnreadCount();
-                }
+                unreadCount = getThread().getUnreadCount(getContext()).get();
                 color = ColorUtils.getColor(getThread().getIdAsLong());
             }
             if (message != null) {
@@ -272,7 +268,8 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     @Override
     public int getItemViewType(int position) {
-        if (getThread(position).getLatestMessage().getAttachment() != null) {
+        Text text = getThread(position).getLatestMessage(mContext).get();
+        if (text != null && text.getAttachment() != null) {
             return TYPE_ATTACHMENT;
         }
         return TYPE_TEXT;
@@ -312,7 +309,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     public long getHeaderId(int position) {
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage().getTimestamp();
+        long date = thread.getLatestMessage(mContext).get().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
             return 1;
@@ -337,7 +334,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         String title = "";
 
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage().getTimestamp();
+        long date = thread.getLatestMessage(mContext).get().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
             title = mContext.getString(R.string.thread_title_today);

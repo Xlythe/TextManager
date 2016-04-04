@@ -36,7 +36,7 @@ import java.util.Set;
  * Manages sms and mms messages
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
-    private static final String TAG = TextManager.class.getSimpleName();
+    static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
@@ -305,7 +305,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         Cursor c = getThreadCursor();
         if (c.moveToFirst()) {
             do {
-                threads.add(new Thread(mContext, c));
+                threads.add(new Thread(c));
             } while (c.moveToNext());
         }
         c.close();
@@ -324,7 +324,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-        return new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, null, null, order));
+        return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order));
     }
 
     @Override
@@ -368,7 +368,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-        Thread.ThreadCursor cursor = new Thread.ThreadCursor(mContext, contentResolver.query(uri, null, clause, null, order));
+        Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order));
         try {
             if (cursor.moveToFirst()) {
                 return cursor.getThread();

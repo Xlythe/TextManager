@@ -106,6 +106,10 @@ public class ProfileDrawable extends Drawable {
     @Override
     public void draw(Canvas canvas) {
         switch (mBitmaps.length) {
+            case 0:
+                // Something went wrong
+                Log.w(TAG, "Attempted to draw but no contacts set");
+                break;
             case 1:
                 canvas.drawBitmap(mBitmaps[0], 0, 0, null);
                 break;

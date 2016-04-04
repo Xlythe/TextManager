@@ -90,8 +90,9 @@ public final class Contact implements User, Parcelable {
             return new FutureImpl<String>() {
                 @Override
                 public String get() {
-                    setNumber(getNumbers(context).get(0));
-                    return mNumber;
+                    String result = getNumbers(context).get(0);
+                    setNumber(result);
+                    return result;
                 }
             };
         }
