@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
     @Override
     public void onAttachmentClicked(Thread thread) {
-        Text text = thread.getLatestMessage();
+        Text text = thread.getLatestMessage(this).get();
         if (text.getAttachment() != null) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
             i.putExtra(MediaActivity.EXTRA_TEXT, text);

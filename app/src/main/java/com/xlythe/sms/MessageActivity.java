@@ -295,7 +295,7 @@ public class MessageActivity extends AppCompatActivity
         ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        Text text = mThread.getLatestMessage();
+        Text text = mThread.getLatestMessage(this).get();
         switch (view.getId()) {
             case R.id.gallery:
                 transaction.replace(R.id.fragment_container, GalleryFragment.newInstance(text, color)).commit();
@@ -441,7 +441,7 @@ public class MessageActivity extends AppCompatActivity
     protected void send() {
         mManager.send(new Text.Builder()
                 .message(mEditText.getText().toString())
-                .addRecipients(mThread.getLatestMessage().getMembersExceptMe(getApplicationContext()))
+                .addRecipients(mThread.getLatestMessage(this).get().getMembersExceptMe(getApplicationContext()))
                 .build()
         );
         mEditText.setText(null);

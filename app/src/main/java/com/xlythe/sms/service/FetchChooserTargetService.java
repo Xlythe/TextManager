@@ -53,7 +53,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private String getTitle(Thread thread) {
         String title = "";
-        for (Contact member : thread.getLatestMessage().getMembersExceptMe(this)) {
+        for (Contact member : thread.getLatestMessage(this).get().getMembersExceptMe(this)) {
             if (!title.isEmpty()){
                 title += ", ";
             }
@@ -63,7 +63,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private Icon getIcon(Thread thread) {
-        ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage().getMembersExceptMe(this));
+        ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage(this).get().getMembersExceptMe(this));
 
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -77,7 +77,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
         Thread.ThreadCursor cursor = mManager.getThreadCursor();
         try {
             while (cursor.moveToNext() && recentThreads.size() < SIZE) {
-                if (cursor.getThread().getLatestMessage().getMembersExceptMe(this).size() == 0) {
+                if (cursor.getThread().getLatestMessage(this).get().getMembersExceptMe(this).size() == 0) {
                     // Ignore corrupted texts
                     continue;
                 }
