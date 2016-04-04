@@ -272,6 +272,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public Set<Contact> getMembersExceptMe(Context context) {
         Set<Contact> members = new HashSet<>(mMembers);
+        if (members.size() == 1) {
+            // It's possible to text yourself. To account for that, don't remove yourself if there's only one memeber.
+            return members;
+        }
         members.remove(TextManager.getInstance(context).getSelf());
         return members;
     }

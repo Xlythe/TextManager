@@ -6,6 +6,8 @@ import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -213,11 +215,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setBackgroundResource(R.drawable.selector);
             } else {
                 profile.setBackgroundResource(android.R.color.transparent);
-                if (!address.equals("")) {
-                    if (latest != null) {
-                        ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
-                        profile.setImageDrawable(profileDrawable);
-                    }
+                if (!TextUtils.isEmpty(address) && latest != null) {
+                    ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
+                    profile.setImageDrawable(profileDrawable);
+                } else {
+                    profile.setImageDrawable(null);
                 }
             }
 

@@ -53,8 +53,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     private Thread(Parcel in) {
         mThreadId = in.readLong();
-        mCount = in.readInt();
-        mUnreadCount = in.readInt();
+        mCount = (Integer) in.readSerializable();
+        mUnreadCount = (Integer) in.readSerializable();
         mText = in.readParcelable(Text.class.getClassLoader());
     }
 
@@ -203,8 +203,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeLong(mThreadId);
-        out.writeInt(mCount);
-        out.writeInt(mUnreadCount);
+        out.writeSerializable(mCount);
+        out.writeSerializable(mUnreadCount);
         out.writeParcelable(mText, Utils.describeContents(mText));
     }
 
