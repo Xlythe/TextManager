@@ -15,8 +15,16 @@ public abstract class FutureImpl<T> implements Future<T> {
     }
 
     // This handler posts to the thread it's created on.
-    private final Handler mForegroundHandler = new Handler();
+    private final Handler mForegroundHandler;
     private final Handler mBackgroundHandler = new Handler(sBackgroundThread.getLooper());
+
+    public FutureImpl() {
+        if (Looper.myLooper() != null) {
+            mForegroundHandler = new Handler();
+        } else {
+            mForegroundHandler = null;
+        }
+    }
 
     @Override
     public void get(final Callback<T> callback) {
@@ -26,13 +34,18 @@ public abstract class FutureImpl<T> implements Future<T> {
                 // We got the result, but we're still on the background thread.
                 final T result = get();
 
-                // Post to get back to the calling thread.
-                mForegroundHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.get(result);
-                    }
-                });
+                // If we know how to, post to get back to the calling thread.
+                if (mForegroundHandler != null) {
+                    mForegroundHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.get(result);
+                        }
+                    });
+                } else {
+                    // Otherwise, return from our background thread.
+                    callback.get(result);
+                }
             }
         });
     }
