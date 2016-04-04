@@ -97,19 +97,19 @@ public class SendService extends IntentService {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(SMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, 0, intent, 0);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newSmsDeliveredPendingIntent(Context context) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(SMS_DELIVERED);
-        return PendingIntent.getBroadcast(context, 0, intent, 0);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newMmsSentPendingIntent(Context context) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(MMS_SENT);
-        return PendingIntent.getBroadcast(context, 0, intent, 0);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     @TargetApi(21)

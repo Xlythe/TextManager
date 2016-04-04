@@ -307,7 +307,7 @@ public class Notifications {
             String threadId = texts.iterator().next().getThreadId();
             dismissIntent.putExtra(EXTRA_THREAD_ID, threadId);
         }
-        return PendingIntent.getBroadcast(context, NOTIFICATION_ID, dismissIntent, 0);
+        return PendingIntent.getBroadcast(context, NOTIFICATION_ID, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private static NotificationCompat.Action buildReplyAction(Context context, Text text) {
@@ -316,7 +316,7 @@ public class Notifications {
                 .build();
         Intent replyIntent = new Intent(context, OnReplyReceiver.class);
         replyIntent.putExtra(EXTRA_TEXT, text);
-        PendingIntent onReplyPendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_ID, replyIntent, 0);
+        PendingIntent onReplyPendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_ID, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return new NotificationCompat.Action.Builder(R.drawable.ic_send, context.getString(R.string.action_reply), onReplyPendingIntent)
                 .addRemoteInput(remoteInput)
                 .build();
@@ -416,22 +416,20 @@ public class Notifications {
         public void onReceive(Context context, Intent intent) {
             CharSequence reply = getMessageText(intent);
             Text text = getText(intent);
-            TextManager textManager = TextManager.getInstance(context);
-            Thread thread = textManager.getThread(text.getThreadId());
             if (!TextUtils.isEmpty(reply)) {
                 Log.d(TAG, "Sending reply");
-                textManager.send(new Text.Builder()
+                TextManager.getInstance(context).send(new Text.Builder()
                         .message(reply.toString())
                         .addRecipients(text.getMembersExceptMe(context))
                         .build());
             } else {
-                Log.w(TAG, "Was told to send a reply, but there was no message");
+                Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " +text.getThreadId());
                 Intent startActivity = new Intent(context, MessageActivity.class);
                 startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity.putExtra(MessageActivity.EXTRA_THREAD, thread);
+                startActivity.putExtra(MessageActivity.EXTRA_THREAD_ID, text.getThreadId());
                 context.startActivity(startActivity);
             }
-            Notifications.clearNotification(context, thread);;
+            Notifications.dismissNotification(context, text.getThreadId());
         }
 
         private CharSequence getMessageText(Intent intent) {

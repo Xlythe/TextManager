@@ -210,9 +210,12 @@ public class MessageActivity extends AppCompatActivity
             String id = getIntent().getStringExtra(EXTRA_THREAD_ID);
             mThread = mManager.getThread(id);
         }
+        if (DEBUG) {
+            Log.d(TAG, "Opening Activity for thread " + mThread);
+        }
 
         String name = "";
-        for (Contact member : mThread.getLatestMessage().getMembersExceptMe(this)) {
+        for (Contact member : mThread.getLatestMessage(this).get().getMembersExceptMe(this)) {
             if (!name.isEmpty()){
                 name += ", ";
             }

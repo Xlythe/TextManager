@@ -341,10 +341,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     @Override
     public int compareTo(Text text) {
         if (text.getTimestamp() > getTimestamp()) {
-            return 1;
+            return -1;
         }
         if(text.getTimestamp() < getTimestamp()) {
-            return -1;
+            return 1;
         }
         return 0;
     }
