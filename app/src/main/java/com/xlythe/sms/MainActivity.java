@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             switch (item.getItemId()) {
                 case R.id.menu_remove:
                     Set<Thread> threads = mAdapter.getSelectedItems();
-                    TextManager.getInstance(getBaseContext()).delete(threads.toArray(new Thread[threads.size()]));
+                    mManager.delete(threads.toArray(new Thread[threads.size()]));
                     mAdapter.clearSelection();
                     mode.finish();
                     return true;
