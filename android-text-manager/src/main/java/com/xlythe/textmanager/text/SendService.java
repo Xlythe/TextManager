@@ -89,6 +89,8 @@ public class SendService extends IntentService {
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), Arrays.asList(new Attachment[]{attachment}), newMmsSentPendingIntent(context));
+            } else {
+                throw new RuntimeException("Not supported before Lollipop");
             }
         }
     }
@@ -174,7 +176,7 @@ public class SendService extends IntentService {
                                 final String address,
                                 final String subject,
                                 final String body,
-                                final List<Attachment> attachments){
+                                final List<Attachment> attachments) {
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
@@ -184,17 +186,17 @@ public class SendService extends IntentService {
             Uri uri = attachment.getUri();
             switch(type) {
                 case IMAGE:
-                    try {
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
-                        byte[] imageBytes = bitmapToByteArray(bitmap);
-                        part = new MMSPart();
-                        part.MimeType = "image/jpeg";
-                        part.Name = "image" + i;
-                        part.Data = imageBytes;
-                        data.add(part);
-                    } catch (IOException e) {
-                        Log.e(TAG, "File not found", e);
+                    Bitmap bitmap = ((ImageAttachment) attachment).getBitmap(context).get();
+                    if (bitmap == null) {
+                        Log.e(TAG, "Error getting bitmap from attachment");
+                        break;
                     }
+                    byte[] imageBytes = bitmapToByteArray(bitmap);
+                    part = new MMSPart();
+                    part.MimeType = "image/jpeg";
+                    part.Name = "image" + i;
+                    part.Data = imageBytes;
+                    data.add(part);
                     break;
                 case VIDEO:
                     try {
@@ -235,7 +237,7 @@ public class SendService extends IntentService {
             data.add(part);
         }
 
-        return getBytes(context, address.split(" "), data.toArray(new MMSPart[data.size()]), subject);
+        return getBytes(context, address.split(";"), data.toArray(new MMSPart[data.size()]), subject);
     }
 
     public static void sendData(Context context, byte[] pdu, PendingIntent sentMmsPendingIntent, Uri uri) {

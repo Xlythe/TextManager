@@ -19,7 +19,7 @@ import com.xlythe.textmanager.text.TextManager;
 
 public class StickerFragment extends Fragment {
     private static final String TAG = StickerFragment.class.getSimpleName();
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public static final String ARG_MESSAGE = "message";
 

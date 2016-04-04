@@ -90,20 +90,19 @@ public final class Contact implements User, Parcelable {
             return new FutureImpl<String>() {
                 @Override
                 public String get() {
-                    String result = getNumbers(context).get(0);
-                    setNumber(result);
-                    return result;
+                    return setNumber(getNumbers(context).get(0));
                 }
             };
         }
     }
 
-    private synchronized void setNumber(String number) {
+    private synchronized String setNumber(String number) {
         if (number != null) {
             // Sanitize the number
             number = number.replaceAll("[^\\d+]", "");
         }
         mNumber = number;
+        return mNumber;
     }
 
     public List<String> getEmails(Context context) {
