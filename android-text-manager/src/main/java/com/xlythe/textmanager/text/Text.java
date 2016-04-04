@@ -72,32 +72,13 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
         for (String address : mMemberAddresses) {
             Contact addr = TextManager.getInstance(context).lookupContact(address);
-            if (!equal(addr.getNumber(context).get(), TextManager.getInstance(context).getSelf().getNumber(context).get())) {
-                mMembers.add(addr);
-            }
+            mMembers.add(addr);
         }
         if (isIncoming()) {
             mSender = TextManager.getInstance(context).lookupContact(mSenderAddress);
         } else {
             mSender = TextManager.getInstance(context).getSelf();
         }
-    }
-
-    public boolean equal(String number1, String number2) {
-        return number1.length() >= 10
-                && number2.length() >= 10
-                &&(normalizeNumber(number1).contains(number2)
-                || normalizeNumber(number2).contains(number1));
-    }
-
-    public String normalizeNumber(String number) {
-        String clean = "";
-        for (char c: number.toCharArray()) {
-            if (Character.isDigit(c)){
-                clean += c;
-            }
-        }
-        return clean;
     }
 
     private Text(Parcel in) {
