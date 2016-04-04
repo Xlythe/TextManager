@@ -220,7 +220,7 @@ public class SendService extends IntentService {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    break;
+
                 case VOICE:
                     //TODO: Voice support
                     break;

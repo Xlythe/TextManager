@@ -268,9 +268,15 @@ public class MessageActivity extends AppCompatActivity
 
         if (savedInstanceState == null) {
             // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.
-            Intent intent = getIntent();
-            String body = MessageUtils.getBody(intent);
-            mEditText.setText(body);
+            Text text = MessageUtils.parse(this, getIntent());
+            if (text != null) {
+                if (text.getAttachment() != null) {
+                    // The text has an attachment. Send immediately.
+                    mManager.send(text);
+                } else {
+                    mEditText.setText(text.getBody());
+                }
+            }
         }
     }
 
