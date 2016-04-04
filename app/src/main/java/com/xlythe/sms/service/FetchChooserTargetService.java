@@ -2,6 +2,7 @@ package com.xlythe.sms.service;
 
 import android.annotation.TargetApi;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -15,9 +16,11 @@ import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @TargetApi(23)
 public class FetchChooserTargetService extends ChooserTargetService {
@@ -44,6 +47,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
             final float score = 1.0f - ((float) recentThreads.indexOf(thread) / recentThreads.size());
             final Bundle extras = new Bundle();
             extras.putString(MessageActivity.EXTRA_THREAD_ID, thread.getId());
+            extras.putString(Intent.EXTRA_PHONE_NUMBER, getRecipients(thread));
 
             targets.add(new ChooserTarget(title, icon, score, componentName, extras));
         }
@@ -87,5 +91,15 @@ public class FetchChooserTargetService extends ChooserTargetService {
             cursor.close();
         }
         return recentThreads;
+    }
+
+    private String getRecipients(Thread thread) {
+        Set<Contact> contacts = thread.getLatestMessage(this).get().getMembersExceptMe(this);
+        return Utils.join(';', contacts, new Utils.Rule<Contact>() {
+            @Override
+            public String toString(Contact contact) {
+                return contact.getNumber(getBaseContext()).get();
+            }
+        });
     }
 }

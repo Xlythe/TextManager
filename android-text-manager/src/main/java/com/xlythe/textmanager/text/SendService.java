@@ -219,6 +219,8 @@ public class SendService extends IntentService {
                         throw new RuntimeException("Uri doesn't exist", e);
                     } catch (IOException e){
                         e.printStackTrace();
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
                     }
                     break;
                 case VOICE:

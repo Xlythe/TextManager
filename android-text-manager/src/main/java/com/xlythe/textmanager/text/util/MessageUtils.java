@@ -9,7 +9,10 @@ import android.support.v4.app.RemoteInput;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.xlythe.textmanager.text.Attachment;
+import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -21,15 +24,20 @@ public class MessageUtils {
 
     @Nullable
     public static Text parse(Context context, Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+
         String[] recipients = getRecipients(intent);
         String message = getBody(intent);
+        Attachment attachment = getAttachment(intent);
 
         if (recipients == null) {
             Log.w(TAG, "Parsing intent, but found no recipients");
             return null;
         }
 
-        if (TextUtils.isEmpty(message)) {
+        if (TextUtils.isEmpty(message) && attachment == null) {
             Log.w(TAG, "Parsing intent, but found no message");
             return null;
         }
@@ -37,6 +45,7 @@ public class MessageUtils {
         return new Text.Builder()
                 .message(message)
                 .addRecipients(context, recipients)
+                .attach(attachment)
                 .build();
     }
 
@@ -53,6 +62,10 @@ public class MessageUtils {
             if (!recipients.isEmpty()) {
                 return TextUtils.split(recipients, ";");
             }
+        }
+
+        if (intent.hasExtra(Intent.EXTRA_PHONE_NUMBER)) {
+            return intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER).split(";");
         }
 
         final boolean haveAddress = !TextUtils.isEmpty(intent.getStringExtra(ADDRESS));
@@ -138,6 +151,29 @@ public class MessageUtils {
         }
 
         // I give up. I tried.
+        return null;
+    }
+
+    public static Attachment getAttachment(Intent intent) {
+        Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        String type = intent.getType();
+
+        if (uri == null) {
+            uri = intent.getData();
+        }
+
+        if (uri == null || type == null) {
+            return null;
+        }
+
+        if (type.startsWith("image")) {
+            return new ImageAttachment(uri);
+        }
+
+        if (type.startsWith("video")) {
+            return new VideoAttachment(uri);
+        }
+
         return null;
     }
 }

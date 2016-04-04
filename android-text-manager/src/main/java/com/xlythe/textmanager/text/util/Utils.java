@@ -1,6 +1,9 @@
 package com.xlythe.textmanager.text.util;
 
 import android.os.Parcelable;
+import android.util.Log;
+
+import java.util.Collection;
 
 public class Utils {
     private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -48,5 +51,20 @@ public class Utils {
         } else {
             return a.describeContents();
         }
+    }
+
+    public static <T> String join(char separator, Collection<T> collection, Rule<T> rule) {
+        StringBuilder builder = new StringBuilder();
+        for (T obj : collection) {
+            if (builder.length() > 0) {
+                builder.append(separator);
+            }
+            builder.append(rule.toString(obj));
+        }
+        return builder.toString();
+    }
+
+    public interface Rule<T> {
+        String toString(T t);
     }
 }
