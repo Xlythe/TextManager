@@ -1,4 +1,4 @@
-package com.xlythe.sms.util;
+package com.xlythe.textmanager.text.util;
 
 import android.content.Context;
 import android.content.Intent;

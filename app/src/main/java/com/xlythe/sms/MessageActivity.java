@@ -39,7 +39,7 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.sms.util.MessageUtils;
+import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;

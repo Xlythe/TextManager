@@ -14,7 +14,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.xlythe.sms.util.ActionBarUtils;
-import com.xlythe.sms.util.MessageUtils;
+import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
