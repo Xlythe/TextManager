@@ -1,8 +1,8 @@
 package com.xlythe.sms.util;
 
-/**
- * Created by Niko on 5/26/15.
- */
+import android.text.Html;
+import android.text.Spanned;
+
 public class ColorUtils {
     public static int getColor(long threadId) {
         int num = (int) (threadId % 13);
@@ -70,5 +70,9 @@ public class ColorUtils {
             default:
                 return 0xff424242;
         }
+    }
+
+    public static Spanned color(int color, String text) {
+        return Html.fromHtml("<font color='#" + Integer.toHexString(color) + "'>" + text + " </font>");
     }
 }

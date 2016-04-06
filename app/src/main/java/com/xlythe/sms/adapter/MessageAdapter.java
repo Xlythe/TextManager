@@ -27,6 +27,7 @@ import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -108,8 +109,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     public static boolean failed(Text text) {
         // This is kinda hacky because is the app force closes then the message status isnt updated
-        Log.d(TAG, "Time stamp: " + text.getTimestamp());
-        Log.d(TAG, "System time: " + System.currentTimeMillis());
         return text.getStatus() == Status.FAILED
                 || (text.getStatus() == Status.PENDING
                 && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
@@ -222,10 +221,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public void setProfile() {
             if (mProfile != null) {
-                Set<Contact> sender = new HashSet<>();
-                sender.add(getMessage().getSender());
-                ProfileDrawable border = new ProfileDrawable(getContext(), sender);
-                mProfile.setImageDrawable(border);
+                getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
+                    @Override
+                    public void get(Contact instance) {
+                        mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
+                    }
+                });
             }
         }
     }
@@ -288,10 +289,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public void setProfile() {
             if (mProfile != null) {
-                Set<Contact> sender = new HashSet<>();
-                sender.add(getMessage().getSender());
-                ProfileDrawable border = new ProfileDrawable(getContext(), sender);
-                mProfile.setImageDrawable(border);
+                getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
+                    @Override
+                    public void get(Contact instance) {
+                        mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
+                    }
+                });
             }
         }
     }

@@ -54,6 +54,10 @@ public class Utils {
     }
 
     public static <T> String join(char separator, Collection<T> collection, Rule<T> rule) {
+        return join(Character.toString(separator), collection, rule);
+    }
+
+    public static <T> String join(String separator, Collection<T> collection, Rule<T> rule) {
         StringBuilder builder = new StringBuilder();
         for (T obj : collection) {
             if (builder.length() > 0) {

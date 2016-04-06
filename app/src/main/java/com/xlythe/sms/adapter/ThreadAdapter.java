@@ -29,6 +29,8 @@ import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.util.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -158,12 +160,12 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             if (latest != null) {
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
-                for (Contact member: latest.getMembersExceptMe(getContext())) {
-                    if (!address.isEmpty()) {
-                        address += ", ";
+                address = Utils.join(", ", latest.getMembersExceptMe(getContext()).get(), new Utils.Rule<Contact>() {
+                    @Override
+                    public String toString(Contact contact) {
+                        return contact.getDisplayName();
                     }
-                    address += member.getDisplayName();
-                }
+                });
                 unreadCount = getThread().getUnreadCount(getContext()).get();
                 color = ColorUtils.getColor(getThread().getIdAsLong());
             }
@@ -216,8 +218,12 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             } else {
                 profile.setBackgroundResource(android.R.color.transparent);
                 if (!TextUtils.isEmpty(address) && latest != null) {
-                    ProfileDrawable profileDrawable = new ProfileDrawable(getContext(), latest.getMembersExceptMe(getContext()));
-                    profile.setImageDrawable(profileDrawable);
+                    latest.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                        @Override
+                        public void get(Set<Contact> instance) {
+                            profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
+                        }
+                    });
                 } else {
                     profile.setImageDrawable(null);
                 }

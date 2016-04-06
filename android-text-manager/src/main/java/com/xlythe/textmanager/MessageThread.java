@@ -11,7 +11,6 @@ import java.util.List;
  */
 public interface MessageThread<M extends Message> {
     String getId();
-    M getLatestMessage();
     int getUnreadCount();
     int getCount();
 }

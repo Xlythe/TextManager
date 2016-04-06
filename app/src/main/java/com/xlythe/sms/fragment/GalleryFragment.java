@@ -20,10 +20,14 @@ import com.xlythe.sms.decoration.GalleryItemDecoration;
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.AttachmentAdapter;
 import com.xlythe.textmanager.text.Attachment;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
+import com.xlythe.textmanager.text.concurrency.Future;
+
+import java.util.Set;
 
 public class GalleryFragment extends Fragment implements AttachmentAdapter.OnItemClickListener {
     public static final String ARG_COLOR = "color";
@@ -157,11 +161,15 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TextManager.getInstance(getContext()).send(new Text.Builder()
-                                .addRecipients(mText.getMembersExceptMe(getContext()))
+                mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                    @Override
+                    public void get(Set<Contact> instance) {
+                        TextManager.getInstance(getContext()).send(new Text.Builder()
+                                .addRecipients(instance)
                                 .attach(buildAttachment(position))
-                                .build()
-                );
+                                .build());
+                    }
+                });
                 mContainer.setVisibility(View.GONE);
             }
         });

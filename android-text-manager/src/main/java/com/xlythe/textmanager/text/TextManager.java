@@ -20,6 +20,8 @@ import android.util.LruCache;
 import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
@@ -63,7 +65,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private static TextManager sTextManager;
 
-    public static TextManager getInstance(Context context) {
+    public static synchronized TextManager getInstance(Context context) {
         if (sTextManager == null) {
             sTextManager = new TextManager(context);
         }
@@ -125,28 +127,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             wl.release();
         }
     }
-    @Override
-    public void getMessages(final Thread thread, final MessageCallback<List<Text>> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
-            @Override
-            public void run() {
-                // getMessages is a long running operation
-                final List<Text> threads = getMessages(thread);
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(threads);
-                    }
-                });
-            }
-        }.start();
-    }
 
     public void registerObserver(MessageObserver observer) {
         mObservers.add(observer);
@@ -154,32 +134,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public void unregisterObserver(MessageObserver observer) {
         mObservers.remove(observer);
-    }
-
-    public List<Text> search(String text) {
-        return new LinkedList<>(); // TODO
-    }
-
-    public void search(final String text, final MessageCallback<List<Text>> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
-            @Override
-            public void run() {
-                // search is a long running operation
-                final List<Text> threads = search(text);
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(threads);
-                    }
-                });
-            }
-        }.start();
     }
 
     private class TextObserver extends ContentObserver {
@@ -207,17 +161,26 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         mContext.startService(sendService);
     }
 
+    public Future<List<Text>> search(String text) {
+        throw new RuntimeException("Unsupported");
+    }
+
     @Override
-    public List<Text> getMessages(Thread thread) {
-        List<Text> messages = new ArrayList<>();
-        Text.TextCursor c = getMessageCursor(thread);
-        if (c.moveToFirst()) {
-            do {
-                messages.add(c.getText());
-            } while (c.moveToNext());
-        }
-        c.close();
-        return messages;
+    public Future<List<Text>> getMessages(final Thread thread) {
+        return new FutureImpl<List<Text>>() {
+            @Override
+            public List<Text> get() {
+                List<Text> messages = new ArrayList<>();
+                Text.TextCursor c = getMessageCursor(thread);
+                if (c.moveToFirst()) {
+                    do {
+                        messages.add(c.getText());
+                    } while (c.moveToNext());
+                }
+                c.close();
+                return messages;
+            }
+        };
     }
 
     @Override
@@ -234,82 +197,45 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
-    public void getMessage(final String id, final MessageCallback<Text> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
+    public Future<Text> getMessage(final String messageId) {
+        return new FutureImpl<Text>() {
             @Override
-            public void run() {
-                // getMessage is a long running operation
-                final Text text = getMessage(id);
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(text);
+            public Text get() {
+                String clause = String.format("%s = %s",
+                        Mock.Telephony.MmsSms._ID, messageId);
+                ContentResolver contentResolver = mContext.getContentResolver();
+                final String[] projection = PROJECTION;
+                Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
+                Text.TextCursor cursor = new Text.TextCursor(mContext, contentResolver.query(uri, projection, clause, null, null));
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getText();
+                    } else {
+                        return null;
                     }
-                });
+                } finally {
+                    cursor.close();
+                }
             }
-        }.start();
+        };
     }
 
     @Override
-    public Text getMessage(String messageId) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms._ID, messageId);
-        ContentResolver contentResolver = mContext.getContentResolver();
-        final String[] projection = PROJECTION;
-        Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
-        String order = "normalized_date ASC";
-        Text.TextCursor cursor = new Text.TextCursor(mContext, contentResolver.query(uri, projection, clause, null, order));
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getText();
-            } else {
-                return null;
-            }
-        } finally {
-            cursor.close();
-        }
-    }
-
-    @Override
-    public void getThreads(final MessageCallback<List<Thread>> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
+    public Future<List<Thread>> getThreads() {
+        return new FutureImpl<List<Thread>>() {
             @Override
-            public void run() {
-                // getThreads is a long running operation
-                final List<Thread> threads = getThreads();
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(threads);
-                    }
-                });
+            public List<Thread> get() {
+                List<Thread> threads = new ArrayList<>();
+                Cursor c = getThreadCursor();
+                if (c.moveToFirst()) {
+                    do {
+                        threads.add(new Thread(c));
+                    } while (c.moveToNext());
+                }
+                c.close();
+                return threads;
             }
-        }.start();
-    }
-
-    @Override
-    public List<Thread> getThreads() {
-        List<Thread> threads = new ArrayList<>();
-        Cursor c = getThreadCursor();
-        if (c.moveToFirst()) {
-            do {
-                threads.add(new Thread(c));
-            } while (c.moveToNext());
-        }
-        c.close();
-        return threads;
+        };
     }
 
     @Override
@@ -327,57 +253,39 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order));
     }
 
-    @Override
-    public void getThread(final String id, final MessageCallback<Thread> callback) {
-        // Create a handler so we call back on the same thread we were called on
-        final Handler handler = new Handler();
-
-        // Then start a background thread
-        new java.lang.Thread() {
-            @Override
-            public void run() {
-                // getThread is a long running operation
-                final Thread thread = getThread(id);
-
-                // Return the list in the callback
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onSuccess(thread);
-                    }
-                });
-            }
-        }.start();
-    }
-
-    public Thread getThread(long threadId) {
+    public Future<Thread> getThread(long threadId) {
         return getThread(Long.toString(threadId));
     }
 
     @Override
-    public Thread getThread(String threadId) {
-        String clause = String.format("%s = %s",
-                Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
-        ContentResolver contentResolver = mContext.getContentResolver();
-        final Uri uri;
-        final String order;
-        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-            uri = Uri.parse("content://mms-sms/conversations/?simple=true");
-            order = "date DESC";
-        } else {
-            uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-            order = "normalized_date DESC";
-        }
-        Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order));
-        try {
-            if (cursor.moveToFirst()) {
-                return cursor.getThread();
-            } else {
-                return null;
+    public Future<Thread> getThread(final String threadId) {
+        return new FutureImpl<Thread>() {
+            @Override
+            public Thread get() {
+                String clause = String.format("%s = %s",
+                        Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
+                ContentResolver contentResolver = mContext.getContentResolver();
+                final Uri uri;
+                final String order;
+                if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+                    uri = Uri.parse("content://mms-sms/conversations/?simple=true");
+                    order = "date DESC";
+                } else {
+                    uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+                    order = "normalized_date DESC";
+                }
+                Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order));
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getThread();
+                    } else {
+                        return null;
+                    }
+                } finally {
+                    cursor.close();
+                }
             }
-        } finally {
-            cursor.close();
-        }
+        };
     }
 
     public void delete(Collection<Text> messages) {

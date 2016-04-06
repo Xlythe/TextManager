@@ -39,6 +39,8 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
+import com.xlythe.textmanager.text.ImageAttachment;
+import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.sms.view.LegacyCameraView;
@@ -48,6 +50,7 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
@@ -208,20 +211,19 @@ public class MessageActivity extends AppCompatActivity
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
         if (mThread == null) {
             String id = getIntent().getStringExtra(EXTRA_THREAD_ID);
-            mThread = mManager.getThread(id);
+            mThread = mManager.getThread(id).get();
         }
         if (DEBUG) {
             Log.d(TAG, "Opening Activity for thread " + mThread);
         }
 
-        String name = "";
-        for (Contact member : mThread.getLatestMessage(this).get().getMembersExceptMe(this)) {
-            if (!name.isEmpty()){
-                name += ", ";
+        String name = Utils.join(", ", mThread.getLatestMessage(this).get().getMembersExceptMe(this).get(), new Utils.Rule<Contact>() {
+            @Override
+            public String toString(Contact contact) {
+                return contact.getDisplayName();
             }
-            name += member.getDisplayName();
-        }
-        getSupportActionBar().setTitle(Html.fromHtml("<font color='#212121'>" + name + " </font>"));
+        });
+        getSupportActionBar().setTitle(ColorUtils.color(0x212121, name));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ActionBarUtils.grayUpArrow(this);
 
@@ -445,11 +447,21 @@ public class MessageActivity extends AppCompatActivity
     }
 
     protected void send() {
-        mManager.send(new Text.Builder()
-                .message(mEditText.getText().toString())
-                .addRecipients(mThread.getLatestMessage(this).get().getMembersExceptMe(getApplicationContext()))
-                .build()
-        );
+        mThread.getLatestMessage(getBaseContext()).get(new Future.Callback<Text>() {
+            @Override
+            public void get(Text instance) {
+                instance.getMembersExceptMe(getBaseContext()).get(new Future.Callback<Set<Contact>>() {
+                    @Override
+                    public void get(Set<Contact> instance) {
+                        mManager.send(new Text.Builder()
+                                .message(mEditText.getText().toString())
+                                .addRecipients(instance)
+                                .build());
+                    }
+                });
+            }
+        });
+
         mEditText.setText(null);
     }
 

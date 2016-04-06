@@ -57,7 +57,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private String getTitle(Thread thread) {
         String title = "";
-        for (Contact member : thread.getLatestMessage(this).get().getMembersExceptMe(this)) {
+        for (Contact member : thread.getLatestMessage(this).get().getMembersExceptMe(this).get()) {
             if (!title.isEmpty()){
                 title += ", ";
             }
@@ -67,7 +67,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private Icon getIcon(Thread thread) {
-        ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage(this).get().getMembersExceptMe(this));
+        ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage(this).get().getMembersExceptMe(this).get());
 
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -81,7 +81,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
         Thread.ThreadCursor cursor = mManager.getThreadCursor();
         try {
             while (cursor.moveToNext() && recentThreads.size() < SIZE) {
-                if (cursor.getThread().getLatestMessage(this).get().getMembersExceptMe(this).size() == 0) {
+                if (cursor.getThread().getLatestMessage(this).get().getMembersExceptMe(this).get().size() == 0) {
                     // Ignore corrupted texts
                     continue;
                 }
@@ -94,7 +94,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private String getRecipients(Thread thread) {
-        Set<Contact> contacts = thread.getLatestMessage(this).get().getMembersExceptMe(this);
+        Set<Contact> contacts = thread.getLatestMessage(this).get().getMembersExceptMe(this).get();
         return Utils.join(';', contacts, new Utils.Rule<Contact>() {
             @Override
             public String toString(Contact contact) {

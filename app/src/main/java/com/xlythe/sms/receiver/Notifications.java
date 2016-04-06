@@ -83,7 +83,7 @@ public class Notifications {
         if (sameSender(texts)) {
             Log.v(TAG, "All texts are from the same sender");
             Text randomText = texts.iterator().next();
-            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context));
+            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context).get());
             builder.setLargeIcon(drawableToBitmap(icon))
                     .addAction(buildReplyAction(context, randomText));
         }
@@ -326,17 +326,17 @@ public class Notifications {
      * Only one message, can be text or Image/Video thumbnail
      */
     private static void buildDetailedNotification(Context context, Text text, NotificationCompat.Builder builder) {
-        builder.setContentTitle(text.getSender().getDisplayName());
+        builder.setContentTitle(text.getSender(context).get().getDisplayName());
         if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.IMAGE) {
             NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
             try {
                 Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_picture)));
-                ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context));
+                ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context).get());
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), text.getAttachment().getUri());
                 builder.setLargeIcon(bitmap)
                         .setContentText(s)
                         .setStyle(pictureStyle);
-                pictureStyle.setBigContentTitle(text.getSender().getDisplayName())
+                pictureStyle.setBigContentTitle(text.getSender(context).get().getDisplayName())
                         .bigLargeIcon(drawableToBitmap(icon))
                         .setSummaryText(s)
                         .bigPicture(bitmap);
@@ -346,7 +346,7 @@ public class Notifications {
         } else {
             NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
             builder.setStyle(textStyle);
-            textStyle.setBigContentTitle(text.getSender().getDisplayName());
+            textStyle.setBigContentTitle(text.getSender(context).get().getDisplayName());
             // Maybe add video too, but we have a problem with thumbnails without glide
             if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.VIDEO) {
                 Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_video)));
@@ -387,12 +387,12 @@ public class Notifications {
                         break;
                 }
                 inboxStyle.addLine(Html.fromHtml(
-                        bold(text.getSender().getDisplayName()) + " " + italic(context.getString(typeString))));
+                        bold(text.getSender(context).get().getDisplayName()) + " " + italic(context.getString(typeString))));
             } else {
                 inboxStyle.addLine(Html.fromHtml(
-                        bold(text.getSender().getDisplayName()) + " " + text.getBody()));
+                        bold(text.getSender(context).get().getDisplayName()) + " " + text.getBody()));
             }
-            names.add(text.getSender().getDisplayName());
+            names.add(text.getSender(context).get().getDisplayName());
         }
         builder.setContentTitle(context.getString(R.string.notification_label_new_messages, texts.size()))
                 .setContentText(TextUtils.join(", ", names))
@@ -420,7 +420,7 @@ public class Notifications {
                 Log.d(TAG, "Sending reply");
                 TextManager.getInstance(context).send(new Text.Builder()
                         .message(reply.toString())
-                        .addRecipients(text.getMembersExceptMe(context))
+                        .addRecipients(text.getMembersExceptMe(context).get())
                         .build());
             } else {
                 Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " +text.getThreadId());

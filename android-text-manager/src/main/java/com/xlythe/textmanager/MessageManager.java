@@ -2,6 +2,8 @@ package com.xlythe.textmanager;
 
 import android.database.Cursor;
 
+import com.xlythe.textmanager.text.concurrency.Future;
+
 import java.util.List;
 
 /**
@@ -11,96 +13,71 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
 
     /**
      * Returns all messages for the given thread
-     * */
-    List<M> getMessages(T thread);
-
-    /**
-     * Returns all messages for the given thread
-     * */
-    void getMessages(T thread, MessageCallback<List<M>> callback);
+     */
+    Future<List<M>> getMessages(T thread);
 
     /**
      * Returns a message cursor for the given thread
-     * */
+     */
     Cursor getMessageCursor(T thread);
 
     /**
      * Returns a message given an id
-     * */
-    M getMessage(String id);
-
-    /**
-     * Returns a message given an id
-     * */
-    void getMessage(String id, MessageCallback<M> callback);
+     */
+    Future<M> getMessage(String id);
 
     /**
      * Return all threads
-     * */
-    List<T> getThreads();
-
-    /**
-     * Return all threads
-     * */
-    void getThreads(MessageCallback<List<T>> callback);
+     */
+    Future<List<T>> getThreads();
 
     /**
      * Returns a thread cursor
-     * */
+     */
     Cursor getThreadCursor();
 
     /**
      * Returns a thread given an id
-     * */
-    T getThread(String id);
-
-    /**
-     * Returns a thread given an id
-     * */
-    void getThread(String threadId, MessageCallback<T> callback);
+     */
+    Future<T> getThread(String id);
 
     /**
      * Deletes a message
-     * */
+     */
     void delete(M... message);
 
     /**
      * Deletes a thread
-     * */
+     */
     void delete(T... thread);
 
     /**
      * Marks a message as read
-     * */
+     */
     void markAsRead(M message);
 
     /**
      * Marks all messages in a thread as read
-     * */
+     */
     void markAsRead(T thread);
 
     /**
      * Sends a message
-     * */
+     */
     void send(M message);
 
     /**
      * Return all messages containing the text.
-     * */
-    List<M> search(String text);
-
-    /**
-     * Return all messages containing the text.
-     * */
-    void search(String text, MessageCallback<List<M>> callback);
+     */
+    Future<List<M>> search(String text);
 
     /**
      * Register an observer to get callbacks every time messages are added, deleted, or changed.
-     * */
+     */
     void registerObserver(MessageObserver observer);
 
     /**
      * Remove a registered observer
-     * */
+     */
     void unregisterObserver(MessageObserver observer);
 }

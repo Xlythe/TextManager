@@ -14,6 +14,9 @@ import android.util.Log;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.User;
+import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.textmanager.text.concurrency.FutureImpl;
+import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
@@ -22,6 +25,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.xlythe.textmanager.text.TextManager.TAG;
 
 /**
  * Either an sms or an mms
@@ -46,20 +51,17 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private long mMmsId;
     private int mStatus;
     private String mBody;
-    private String mDeviceNumber;
     private boolean mIncoming;
     private boolean mIsMms = false;
     private String mSenderAddress;
     private Contact mSender;
-    private HashSet<String> mMemberAddresses = new HashSet<>();
-    private HashSet<Contact> mMembers = new HashSet<>();
+    private Set<String> mMemberAddresses = new HashSet<>();
+    private Set<Contact> mMembers = new HashSet<>();
     private Attachment mAttachment;
 
     private Text() {}
 
     protected Text(Context context, Cursor cursor) {
-        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        mDeviceNumber = manager.getLine1Number();
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             mIsMms = false;
@@ -69,15 +71,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             parseMmsMessage(cursor, context);
         } else {
             Log.w("TelephonyProvider", "Unknown Message Type");
-        }
-        for (String address : mMemberAddresses) {
-            Contact addr = TextManager.getInstance(context).lookupContact(address);
-            mMembers.add(addr);
-        }
-        if (isIncoming()) {
-            mSender = TextManager.getInstance(context).lookupContact(mSenderAddress);
-        } else {
-            mSender = TextManager.getInstance(context).getSelf();
         }
     }
 
@@ -89,7 +82,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mStatus = in.readInt();
         mSenderAddress = in.readString();
         mBody = in.readString();
-        mDeviceNumber = in.readString();
         mIncoming = in.readByte() != 0;
         mIsMms = in.readByte() != 0;
         mSender = in.readParcelable(Contact.class.getClassLoader());
@@ -246,19 +238,65 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return mSender;
     }
 
+    private synchronized void setSender(Contact sender) {
+        mSender = sender;
+    }
+
+    public synchronized Future<Contact> getSender(final Context context) {
+        if (mSender != null) {
+            return new Present<>(mSender);
+        } else {
+            return new FutureImpl<Contact>() {
+                @Override
+                public Contact get() {
+                    TextManager manager = TextManager.getInstance(context);
+                    Contact sender = isIncoming() ? manager.lookupContact(mSenderAddress) : manager.getSelf();
+                    setSender(sender);
+                    return sender;
+                }
+            };
+        }
+    }
+
     @Override
     public Set<Contact> getMembers() {
         return mMembers;
     }
 
-    public Set<Contact> getMembersExceptMe(Context context) {
-        Set<Contact> members = new HashSet<>(mMembers);
-        if (members.size() == 1) {
-            // It's possible to text yourself. To account for that, don't remove yourself if there's only one memeber.
-            return members;
+    private synchronized void addMember(Contact member) {
+        mMembers.add(member);
+    }
+
+    public synchronized Future<Set<Contact>> getMembers(final Context context) {
+        if (!mMembers.isEmpty()) {
+            return new Present<>(mMembers);
+        } else {
+            return new FutureImpl<Set<Contact>>() {
+                @Override
+                public Set<Contact> get() {
+                    TextManager manager = TextManager.getInstance(context);
+                    for (String address : mMemberAddresses) {
+                        addMember(manager.lookupContact(address));
+                    }
+                    return mMembers;
+                }
+            };
         }
-        members.remove(TextManager.getInstance(context).getSelf());
-        return members;
+    }
+
+    public synchronized Future<Set<Contact>> getMembersExceptMe(final Context context) {
+        return new FutureImpl<Set<Contact>>() {
+            @Override
+            public Set<Contact> get() {
+                Set<Contact> members = new HashSet<>(getMembers(context).get());
+                if (members.size() == 1) {
+                    // It's possible to text yourself. To account for that, don't remove yourself if there's only one memeber.
+                    return members;
+                }
+                members.remove(TextManager.getInstance(context).getSelf());
+                return members;
+            }
+        };
     }
 
     @Override
@@ -303,7 +341,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                     && Utils.equals(mMmsId, a.mMmsId)
                     && Utils.equals(mSenderAddress, a.mSenderAddress)
                     && Utils.equals(mBody, a.mBody)
-                    && Utils.equals(mDeviceNumber, a.mDeviceNumber)
                     && Utils.equals(mIncoming, a.mIncoming)
                     && Utils.equals(mIsMms, a.mIsMms)
                     && Utils.equals(mSender, a.mSender)
@@ -321,7 +358,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 + Utils.hashCode(mMmsId)
                 + Utils.hashCode(mSenderAddress)
                 + Utils.hashCode(mBody)
-                + Utils.hashCode(mDeviceNumber)
                 + Utils.hashCode(mIncoming)
                 + Utils.hashCode(mIsMms)
                 + Utils.hashCode(mSender)
@@ -331,10 +367,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     @Override
     public String toString() {
-        return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s," +
-                        "device_number=%s, incoming=%s, is_mms=%s, sender=%s, recipient=%s," +
-                        "attachment=%s}",
-                mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mDeviceNumber, mIncoming, mIsMms,
+        return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s, " +
+                        "incoming=%s, is_mms=%s, sender=%s, recipient=%s, attachment=%s}",
+                mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mIncoming, mIsMms,
                 mSender, mMembers, mAttachment);
     }
 
@@ -361,11 +396,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         out.writeLong(mDate);
         out.writeLong(mMmsId);
         out.writeInt(mStatus);
-        // TODO: can probably remove the string addresses
-        // Should probably not even be a global variable
         out.writeString(mSenderAddress);
         out.writeString(mBody);
-        out.writeString(mDeviceNumber);
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeParcelable(mSender, flags);

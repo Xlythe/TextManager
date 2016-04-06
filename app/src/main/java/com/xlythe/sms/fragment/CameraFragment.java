@@ -17,12 +17,15 @@ import android.widget.ImageView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.view.ICameraView;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
+import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.io.File;
+import java.util.Set;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
@@ -52,23 +55,31 @@ public class CameraFragment extends Fragment {
 
     private ICameraView.CameraListener mPictureListener = new ICameraView.CameraListener() {
         @Override
-        public void onCaptured(File file) {
-            TextManager.getInstance(getContext()).send(new Text.Builder()
-                    .addRecipients(mText.getMembersExceptMe(getContext()))
-                    .attach(new ImageAttachment(Uri.fromFile(file)))
-                    .build()
-            );
+        public void onCaptured(final File file) {
+            mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                @Override
+                public void get(Set<Contact> instance) {
+                    TextManager.getInstance(getContext()).send(new Text.Builder()
+                            .addRecipients(instance)
+                            .attach(new ImageAttachment(Uri.fromFile(file)))
+                            .build());
+                }
+            });
         }
     };
 
     private ICameraView.CameraListener mVideoListener = new ICameraView.CameraListener() {
         @Override
-        public void onCaptured(File file) {
-            TextManager.getInstance(getContext()).send(new Text.Builder()
-                    .addRecipients(mText.getMembersExceptMe(getContext()))
-                    .attach(new VideoAttachment(Uri.fromFile(file)))
-                    .build()
-            );
+        public void onCaptured(final File file) {
+            mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                @Override
+                public void get(Set<Contact> instance) {
+                    TextManager.getInstance(getContext()).send(new Text.Builder()
+                            .addRecipients(instance)
+                            .attach(new ImageAttachment(Uri.fromFile(file)))
+                            .build());
+                }
+            });
         }
     };
 

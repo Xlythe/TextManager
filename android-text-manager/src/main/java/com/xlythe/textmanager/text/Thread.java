@@ -39,6 +39,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     protected Thread(Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
+//        mText = new Text(cursor);
     }
 
     /**
@@ -131,15 +132,6 @@ public final class Thread implements MessageThread<Text>, Parcelable {
                 }
             };
         }
-    }
-
-    @Override
-    public synchronized Text getLatestMessage() {
-        if (mText == null) {
-            throw new IllegalStateException("getLatestMessage() is an expensive call. " +
-                    "Call getLatestMessage(Context) first to load the text.");
-        }
-        return mText;
     }
 
     private synchronized void setLatestMessage(Text text) {

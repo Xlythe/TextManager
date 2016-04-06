@@ -13,9 +13,13 @@ import android.view.ViewGroup;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.concurrency.Future;
+
+import java.util.Set;
 
 public class StickerFragment extends Fragment {
     private static final String TAG = StickerFragment.class.getSimpleName();
@@ -41,12 +45,16 @@ public class StickerFragment extends Fragment {
         RecyclerView gridView = (RecyclerView) rootView.findViewById(R.id.content);
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(Drawable drawable) {
-                TextManager.getInstance(getContext()).send(new Text.Builder()
-                        .addRecipients(mText.getMembersExceptMe(getContext()))
-                        .attach(new ImageAttachment(getContext(), "sticker", drawable))
-                        .build()
-                );
+            public void onItemClick(final Drawable drawable) {
+                mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                    @Override
+                    public void get(Set<Contact> instance) {
+                        TextManager.getInstance(getContext()).send(new Text.Builder()
+                                .addRecipients(instance)
+                                .attach(new ImageAttachment(getContext(), "sticker", drawable))
+                                .build());
+                    }
+                });
             }
         }));
         gridView.setLayoutManager(new GridAutofitLayoutManager(getContext()));
