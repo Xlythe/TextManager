@@ -32,6 +32,7 @@ import com.xlythe.textmanager.text.pdu.RetrieveConf;
 import com.xlythe.textmanager.text.util.EncodedStringValue;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 import static android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
@@ -95,7 +96,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
             byte[] location = notif.getContentLocation();
             String loc = new String (location);
-            Log.d(TAG, "Content location: " + loc);
+            final CountDownLatch pduDownloaded = new CountDownLatch(1);
             Receive.getPdu(loc, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
@@ -121,6 +122,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         Log.e(TAG, "unable to persist message");
                         onFail();
                     }
+                    pduDownloaded.countDown();
                 }
 
                 @Override
@@ -129,11 +131,16 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     try {
                         p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
                     } catch (MmsException e) {
-                        Log.e(TAG, "persisting pdu failed");
-                        e.printStackTrace();
+                        Log.e(TAG, "Persisting pdu failed", e);
                     }
+                    pduDownloaded.countDown();
                 }
             });
+            try {
+                pduDownloaded.await();
+            } catch (InterruptedException e) {
+                java.lang.Thread.currentThread().interrupt();
+            }
             wl.release();
             return null;
         }
