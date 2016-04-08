@@ -38,6 +38,11 @@ public class FetchChooserTargetService extends ChooserTargetService {
     public List<ChooserTarget> onGetChooserTargets(ComponentName targetActivityName, IntentFilter matchedFilter) {
         final List<ChooserTarget> targets = new ArrayList<>();
 
+        if (!mManager.isDefaultSmsPackage()) {
+            // If we can't send texts, then don't have targets.
+            return targets;
+        }
+
         final ComponentName componentName = new ComponentName(this, MessageActivity.class);
 
         List<Thread> recentThreads = getRecentThreads();

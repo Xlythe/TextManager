@@ -61,7 +61,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     private Text() {}
 
-    protected Text(Context context, Cursor cursor) {
+    Text(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
             mIsMms = false;
@@ -290,7 +290,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             public Set<Contact> get() {
                 Set<Contact> members = new HashSet<>(getMembers(context).get());
                 if (members.size() == 1) {
-                    // It's possible to text yourself. To account for that, don't remove yourself if there's only one memeber.
+                    // It's possible to text yourself. To account for that, don't remove yourself if there's only one member.
                     return members;
                 }
                 members.remove(TextManager.getInstance(context).getSelf());
@@ -435,14 +435,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public static class Builder {
         private String mMessage;
-        private Contact mSender;
         private HashSet<Contact> mRecipients = new HashSet<>();
         private Attachment mAttachment;
-
-        public Builder setSender(Context context) {
-            mSender = TextManager.getInstance(context).getSelf();
-            return this;
-        }
 
         public Builder addRecipient(Context context, String address) {
             mRecipients.add(TextManager.getInstance(context).lookupContact(address));
@@ -485,7 +479,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         public Text build() {
             Text text = new Text();
             text.mBody = mMessage;
-            text.mSender = mSender;
             text.mMembers.addAll(mRecipients);
             if (mRecipients.size() > 1) {
                 text.mIsMms = true;
@@ -506,8 +499,15 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         private Contact mSender;
         private long mThreadId;
 
+        public DebugBuilder setSender(Contact contact) {
+            mSender = contact;
+            addRecipient(contact);
+            return this;
+        }
+
         public DebugBuilder setSender(String contact) {
             mSender = new Contact(contact);
+            addRecipient(mSender);
             return this;
         }
 

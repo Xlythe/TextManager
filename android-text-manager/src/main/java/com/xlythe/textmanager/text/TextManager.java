@@ -14,6 +14,7 @@ import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 
@@ -392,6 +393,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     contact = new Contact(c);
                 } else {
                     contact = new Contact(phoneNumber);
+                    if (TextUtils.isEmpty(contact.getNumber(mContext).get())) {
+                        contact = Contact.UNKNOWN;
+                    }
                 }
             } finally {
                 if (c != null) c.close();
@@ -405,7 +409,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
         String phoneNumber = manager.getLine1Number();
         if (phoneNumber == null) {
-            return new Contact("???");
+            return Contact.UNKNOWN;
         } else {
             return lookupContact(phoneNumber);
         }

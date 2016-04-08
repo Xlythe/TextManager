@@ -81,7 +81,12 @@ public class ComposeActivity extends AppCompatActivity {
                 String body = MessageUtils.getBody(intent);
 
                 if (recipients != null) {
-                    mContacts.setText(TextUtils.join(";", recipients));
+                    String address = TextUtils.join(";", recipients);
+                    if (!TextUtils.isEmpty(address) && !address.endsWith(";")) {
+                        address += ";";
+                    }
+                    mContacts.setText(address);
+                    mContacts.setSelection(address.length());
                 }
                 mMessage.setText(body);
             }

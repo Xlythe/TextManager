@@ -17,6 +17,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -400,15 +401,17 @@ public class MessageActivity extends AppCompatActivity
                     mode.finish();
                     return true;
                 case R.id.menu_copy:
-                    String copy = "";
+                    StringBuilder copy = new StringBuilder();
                     for (Text text : texts) {
-                        if (!copy.isEmpty()) {
-                            copy += "\n";
+                        if (copy.length() > 0) {
+                            copy.append("\n");
                         }
-                        copy += text.getBody();
+                        if (!TextUtils.isEmpty(text.getBody())) {
+                            copy.append(text.getBody());
+                        }
                     }
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText("simple text", copy);
+                    ClipData clip = ClipData.newPlainText(getString(R.string.app_name), copy);
                     clipboard.setPrimaryClip(clip);
                     return true;
                 default:

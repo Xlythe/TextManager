@@ -30,6 +30,8 @@ public final class Contact implements User, Parcelable {
     private static final String TAG = Contact.class.getSimpleName();
     private static final boolean DEBUG = false;
 
+    static final Contact UNKNOWN = new Contact(null, "???");
+
     private final long mId;
     private String mNumber;
     private final String mDisplayName;
@@ -90,7 +92,12 @@ public final class Contact implements User, Parcelable {
             return new FutureImpl<String>() {
                 @Override
                 public String get() {
-                    return setNumber(getNumbers(context).get(0));
+                    List<String> numbers = getNumbers(context);
+                    if (numbers.isEmpty()) {
+                        return null;
+                    } else {
+                        return setNumber(numbers.get(0));
+                    }
                 }
             };
         }

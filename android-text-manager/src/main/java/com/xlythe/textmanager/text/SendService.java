@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.exception.MmsException;
@@ -72,6 +73,10 @@ public class SendService extends IntentService {
         if (!text.isMms()) {
             SmsManager sms = SmsManager.getDefault();
             address = text.getMembers(context).get().iterator().next().getNumber(context).get();
+            if (TextUtils.isEmpty(address)) {
+                Log.w(TAG, "Attempted to send a message with no address");
+                return;
+            }
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
             values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -85,7 +90,14 @@ public class SendService extends IntentService {
                 if (!address.isEmpty()) {
                     address += ";";
                 }
-                address += member.getNumber(context).get();
+                String phoneNumber = member.getNumber(context).get();
+                if (!TextUtils.isEmpty(phoneNumber)) {
+                    address += phoneNumber;
+                }
+            }
+            if (TextUtils.isEmpty(address)) {
+                Log.w(TAG, "Attempted to send a message with no address");
+                return;
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context));

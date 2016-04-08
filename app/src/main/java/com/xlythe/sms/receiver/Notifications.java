@@ -389,8 +389,10 @@ public class Notifications {
                 inboxStyle.addLine(Html.fromHtml(
                         bold(text.getSender(context).get().getDisplayName()) + " " + italic(context.getString(typeString))));
             } else {
+                String body = text.getBody();
+                if (body == null) body = "";
                 inboxStyle.addLine(Html.fromHtml(
-                        bold(text.getSender(context).get().getDisplayName()) + " " + text.getBody()));
+                        bold(text.getSender(context).get().getDisplayName()) + " " + body));
             }
             names.add(text.getSender(context).get().getDisplayName());
         }
