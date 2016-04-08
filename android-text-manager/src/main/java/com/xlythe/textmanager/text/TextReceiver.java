@@ -41,18 +41,17 @@ import static android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION;
 import static android.provider.Telephony.Sms.Intents.getMessagesFromIntent;
 
 public abstract class TextReceiver extends BroadcastReceiver {
-    private final String TAG = getClass().getSimpleName();
+    private static final String TAG = TextReceiver.class.getSimpleName();
 
     public static final String ACTION_TEXT_RECEIVED = "com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED";
     public static final String EXTRA_TEXT = "text";
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d(TAG, "onReceive{action=" + intent.getAction() + "}");
         if (ACTION_TEXT_RECEIVED.equals(intent.getAction())) {
             onMessageReceived(context, (Text) intent.getParcelableExtra(EXTRA_TEXT));
         } else if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
-            Log.v(TAG, "Received PUSH Intent: " + intent);
-
             // Hold a wake lock for 5 seconds, enough to give any
             // services we start time to take their own wake locks.
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -82,8 +81,6 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Intent intent = intents[0];
 
             byte[] pushData = intent.getByteArrayExtra("data");
-            String pd = new String(pushData);
-            Log.d("pushData", pd + "");
 
             final PduParser parser = new PduParser(pushData, true);
             final GenericPdu pdu = parser.parse();
@@ -119,8 +116,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         c.close();
                         onMessageReceived(mContext, text);
                     } catch (MmsException e) {
-                        Log.e(TAG, "unable to persist message");
+                        Log.e(TAG, "Unable to persist message", e);
                         onFail();
+                        return;
                     }
                     pduDownloaded.countDown();
                 }
