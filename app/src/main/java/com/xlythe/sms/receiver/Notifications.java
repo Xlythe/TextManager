@@ -48,20 +48,17 @@ public class Notifications {
     private static final String TEXTS_VISIBLE_IN_NOTIFICATION = "texts_visible_in_notification";
     private static final String NOTIFICATIONS = "notifications";
     private static final String NOTIFICATION_IDS = "notification_ids";
-    private static final int NOTIFICATION_ID = 12345;
+    private static final int GROUP_SUMMARY_ID = 12345;
 
     public static void buildNotification(Context context, Text text) {
-        if (android.os.Build.VERSION.SDK_INT >= 24) {
-            Log.v(TAG, "Using Android N");
-            // For Android N and above, we can build separate texts for each thread and group them together
-            Set<Text> texts = getVisibleTexts(context, text);
-            buildNotification(context, getTextsFromSameSender(text, texts), text.getThreadId().hashCode());
-        } else {
-            Log.v(TAG, "Using legacy support");
-            // Before N, we just group all threads together
-            Set<Text> texts = getVisibleTexts(context, text);
-            buildNotification(context, texts, NOTIFICATION_ID);
+        if (MessageActivity.isVisible(text.getThreadId())) {
+            Log.w(TAG, "This thread is already visible to the user");
+            return;
         }
+
+        Set<Text> texts = getVisibleTexts(context, text);
+        buildNotification(context, getTextsFromSameSender(text, texts), text.getThreadId().hashCode());
+        buildGroupSummary(context, texts, GROUP_SUMMARY_ID);
     }
 
     public static void buildNotification(Context context, Set<Text> texts, int id) {
@@ -72,8 +69,8 @@ public class Notifications {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(context.getResources().getColor(R.color.colorPrimary))
                 .setAutoCancel(true)
-                .setDeleteIntent(buildOnDismissIntent(context, texts))
-                .setContentIntent(buildOnClickIntent(context, texts))
+                .setDeleteIntent(buildOnDismissIntent(context, id, texts, false /*dismissAll*/))
+                .setContentIntent(buildOnClickIntent(context, id, texts))
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(Notification.DEFAULT_SOUND)
                 .setPriority(Notification.PRIORITY_HIGH)
@@ -85,7 +82,43 @@ public class Notifications {
             Text randomText = texts.iterator().next();
             ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context).get());
             builder.setLargeIcon(drawableToBitmap(icon))
-                    .addAction(buildReplyAction(context, randomText));
+                    .addAction(buildReplyAction(context, id, randomText));
+        }
+
+        if (texts.size() == 1) {
+            Log.v(TAG, "There's only one text");
+            buildDetailedNotification(context, texts.iterator().next(), builder);
+        } else {
+            buildSummaryNotification(context, texts, builder);
+        }
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(id, builder.build());
+    }
+
+    public static void buildGroupSummary(Context context, Set<Text> texts, int id) {
+        Log.v(TAG, "Building group summary");
+        context = context.getApplicationContext();
+        addNotificationId(context, id);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
+                .setColor(context.getResources().getColor(R.color.colorPrimary))
+                .setAutoCancel(true)
+                .setDeleteIntent(buildOnDismissIntent(context, id, texts, true /*dismissAll*/))
+                .setContentIntent(buildOnClickIntent(context, id, texts))
+                .setLights(Color.WHITE, 500, 1500)
+                .setDefaults(Notification.DEFAULT_SOUND)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setCategory(Notification.CATEGORY_MESSAGE)
+                .setGroup(TAG)
+                .setGroupSummary(true);
+
+        if (sameSender(texts)) {
+            Log.v(TAG, "All texts are from the same sender");
+            Text randomText = texts.iterator().next();
+            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context).get());
+            builder.setLargeIcon(drawableToBitmap(icon))
+                    .addAction(buildReplyAction(context, id, randomText));
         }
 
         if (texts.size() == 1) {
@@ -126,17 +159,14 @@ public class Notifications {
         // Clean up any data regarding this thread
         clearNotification(context, threadId);
 
-        // Dismiss the notification, if needed
+        // Dismiss the notification for the thread
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (android.os.Build.VERSION.SDK_INT >= 24) {
-            // On Android N+, we show separate notifications per thread, so we can just dismiss that notification
-            notificationManager.cancel(threadId.hashCode());
-        } else {
-            // Before Android N, we show one notification. See if we should dismiss the notification (because we cleared everything shown)
-            Set<Text> texts = getVisibleTexts(context);
-            if (texts.isEmpty()) {
-                notificationManager.cancel(NOTIFICATION_ID);
-            }
+        notificationManager.cancel(threadId.hashCode());
+
+        // If there are no notifications left, dismiss the summary too
+        Set<Text> texts = getVisibleTexts(context);
+        if (texts.isEmpty()) {
+            notificationManager.cancel(GROUP_SUMMARY_ID);
         }
     }
 
@@ -144,21 +174,12 @@ public class Notifications {
      * Dismisses all notifications
      */
     public static void dismissAllNotifications(Context context) {
-        // Dismiss any notifications we've created
+        // Dismiss all notifications we've created
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        for (int id : getNotificationIds(context)) {
-            notificationManager.cancel(id);
-        }
+        notificationManager.cancelAll();
 
         // Stop persisting the data from those notifications
         clearAllNotifications(context);
-    }
-
-    /**
-     * Stops persisting any notifications related to the given thread
-     */
-    private static void clearNotification(Context context, Thread thread) {
-        clearNotification(context, thread.getId());
     }
 
     /**
@@ -281,7 +302,7 @@ public class Notifications {
         return bitmap;
     }
 
-    private static PendingIntent buildOnClickIntent(Context context, Set<Text> texts) {
+    private static PendingIntent buildOnClickIntent(Context context, int requestCode, Set<Text> texts) {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
 
         Intent intent;
@@ -297,26 +318,26 @@ public class Notifications {
         }
 
         stackBuilder.addNextIntent(intent);
-        return stackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+        return stackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent buildOnDismissIntent(Context context, Set<Text> texts) {
+    private static PendingIntent buildOnDismissIntent(Context context, int requestCode, Set<Text> texts, boolean dismissAll) {
         Intent dismissIntent = new Intent(context, OnDismissReceiver.class);
-        if (android.os.Build.VERSION.SDK_INT >= 24) {
+        if (!dismissAll) {
             // All texts are by the same sender, so grab one of the threads
             String threadId = texts.iterator().next().getThreadId();
             dismissIntent.putExtra(EXTRA_THREAD_ID, threadId);
         }
-        return PendingIntent.getBroadcast(context, NOTIFICATION_ID, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(context, requestCode, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private static NotificationCompat.Action buildReplyAction(Context context, Text text) {
+    private static NotificationCompat.Action buildReplyAction(Context context, int requestCode, Text text) {
         RemoteInput remoteInput = new RemoteInput.Builder(EXTRA_INLINE_REPLY)
                 .setLabel(context.getString(R.string.action_reply))
                 .build();
         Intent replyIntent = new Intent(context, OnReplyReceiver.class);
         replyIntent.putExtra(EXTRA_TEXT, text);
-        PendingIntent onReplyPendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_ID, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent onReplyPendingIntent = PendingIntent.getBroadcast(context, requestCode, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return new NotificationCompat.Action.Builder(R.drawable.ic_send, context.getString(R.string.action_reply), onReplyPendingIntent)
                 .addRemoteInput(remoteInput)
                 .build();

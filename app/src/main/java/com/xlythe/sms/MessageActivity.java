@@ -64,6 +64,15 @@ public class MessageActivity extends AppCompatActivity
     /* ChooserTargetService cannot send Parcelables, so we make do with just the id */
     public static final String EXTRA_THREAD_ID = "thread_id";
 
+    private static Thread sActiveThread = null;
+
+    public static boolean isVisible(String threadId) {
+        if (sActiveThread != null) {
+            return threadId.equals(sActiveThread.getId());
+        }
+        return false;
+    }
+
     // Keyboard hack
     private int mScreenSize;
     private int mKeyboardSize;
@@ -95,10 +104,6 @@ public class MessageActivity extends AppCompatActivity
                 if (lastVisibleItemPosition != RecyclerView.NO_POSITION) {
                     if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
                         // The last item is fully visible. Fully scrolled.
-                        return true;
-                    }
-                    if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 2) {
-                        // The 2nd to last item is fully visible. Mostly scrolled.
                         return true;
                     }
                 }
@@ -441,6 +446,13 @@ public class MessageActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         mManager.markAsRead(mThread);
+        sActiveThread = mThread;
+    }
+
+    @Override
+    protected void onPause() {
+        sActiveThread = null;
+        super.onPause();
     }
 
     public void log(String message){
@@ -450,6 +462,7 @@ public class MessageActivity extends AppCompatActivity
     }
 
     protected void send() {
+        final String message = mEditText.getText().toString();
         mThread.getLatestMessage(getBaseContext()).get(new Future.Callback<Text>() {
             @Override
             public void get(Text instance) {
@@ -457,7 +470,7 @@ public class MessageActivity extends AppCompatActivity
                     @Override
                     public void get(Set<Contact> instance) {
                         mManager.send(new Text.Builder()
-                                .message(mEditText.getText().toString())
+                                .message(message)
                                 .addRecipients(instance)
                                 .build());
                     }

@@ -77,6 +77,13 @@ public class SendService extends IntentService {
                 Log.w(TAG, "Attempted to send a message with no address");
                 return;
             }
+            if (TextUtils.isEmpty(text.getBody())) {
+                Log.w(TAG, "Attempted to send an empty message");
+                return;
+            }
+            if (TextManager.DEBUG) {
+                Log.d(TAG, "Sending SMS: " + text);
+            }
             ContentValues values = new ContentValues();
             Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
             values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -98,6 +105,9 @@ public class SendService extends IntentService {
             if (TextUtils.isEmpty(address)) {
                 Log.w(TAG, "Attempted to send a message with no address");
                 return;
+            }
+            if (TextManager.DEBUG) {
+                Log.d(TAG, "Sending MMS: " + text);
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context));

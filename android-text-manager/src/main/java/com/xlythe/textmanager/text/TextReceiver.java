@@ -50,6 +50,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive{action=" + intent.getAction() + "}");
         if (ACTION_TEXT_RECEIVED.equals(intent.getAction())) {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TEXT_RECEIVED");
+            wl.acquire(1000);
             onMessageReceived(context, (Text) intent.getParcelableExtra(EXTRA_TEXT));
         } else if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             // Hold a wake lock for 5 seconds, enough to give any

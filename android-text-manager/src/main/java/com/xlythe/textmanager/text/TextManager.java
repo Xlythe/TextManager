@@ -40,7 +40,7 @@ import java.util.Set;
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
     static final String TAG = TextManager.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    static final boolean DEBUG = true;
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
     public static final String[] PROJECTION = new String[] {
