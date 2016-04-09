@@ -382,17 +382,26 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     public Contact lookupContact(String phoneNumber) {
         Contact contact = mContactCache.get(phoneNumber);
         if (contact == null) {
-            ContentResolver contentResolver = mContext.getContentResolver();
-            Uri uri = Uri.withAppendedPath(
-                    ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode(phoneNumber));
+            Cursor c;
+            if (phoneNumber.matches(".*\\d+.*")) {
+                // Found a phone number (probably)
+                ContentResolver contentResolver = mContext.getContentResolver();
+                Uri uri = Uri.withAppendedPath(
+                        ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                        Uri.encode(phoneNumber));
 
-            Cursor c = contentResolver.query(uri, null, null, null, null);
+                c = contentResolver.query(uri, null, null, null, null);
+            } else {
+                // This isn't a phone number! This is a name!
+                c = getContactCursor(phoneNumber);
+            }
+
             try {
                 if (c != null && c.moveToFirst()) {
                     contact = new Contact(c);
                 } else {
                     contact = new Contact(phoneNumber);
+
                     if (TextUtils.isEmpty(contact.getNumber(mContext).get())) {
                         contact = Contact.UNKNOWN;
                     }
