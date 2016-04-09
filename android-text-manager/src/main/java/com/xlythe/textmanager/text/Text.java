@@ -88,6 +88,11 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         int membersSize = in.readInt();
         for (int i = 0; i < membersSize; i++) {
+            mMemberAddresses.add(in.readString());
+        }
+
+        membersSize = in.readInt();
+        for (int i = 0; i < membersSize; i++) {
             mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
         }
 
@@ -401,6 +406,11 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         out.writeByte((byte) (mIncoming ? 1 : 0));
         out.writeByte((byte) (mIsMms ? 1 : 0));
         out.writeParcelable(mSender, flags);
+
+        out.writeInt(mMemberAddresses.size());
+        for (String member : mMemberAddresses){
+            out.writeString(member);
+        }
 
         out.writeInt(mMembers.size());
         for (Contact member : mMembers){
