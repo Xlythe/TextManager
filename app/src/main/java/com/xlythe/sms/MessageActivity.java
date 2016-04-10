@@ -16,7 +16,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
-import android.text.Html;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -31,6 +30,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
@@ -40,7 +40,6 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
@@ -383,7 +382,7 @@ public class MessageActivity extends AppCompatActivity
         if (count == 0) {
             mActionMode.finish();
         } else {
-            mActionMode.setTitle(String.valueOf(count)+" selected");
+            mActionMode.setTitle(getString(R.string.title_selection, count));
             mActionMode.invalidate();
         }
     }
@@ -393,7 +392,7 @@ public class MessageActivity extends AppCompatActivity
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate (R.menu.menu_message, menu);
-            menu.findItem(R.id.menu_remove).setVisible(TextManager.getInstance(getBaseContext()).isDefaultSmsPackage());
+            menu.findItem(R.id.menu_remove).setVisible(mManager.isDefaultSmsPackage());
             return true;
         }
 
@@ -409,7 +408,7 @@ public class MessageActivity extends AppCompatActivity
             Set<Text> texts = mAdapter.getSelectedItems();
             switch (item.getItemId()) {
                 case R.id.menu_remove:
-                    TextManager.getInstance(getBaseContext()).delete(texts);
+                    mManager.delete(texts);
                     mAdapter.clearSelection();
                     mode.finish();
                     return true;
@@ -426,6 +425,8 @@ public class MessageActivity extends AppCompatActivity
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(getString(R.string.app_name), copy);
                     clipboard.setPrimaryClip(clip);
+                    Toast.makeText(getBaseContext(), R.string.message_text_copied, Toast.LENGTH_SHORT).show();
+                    mode.finish();
                     return true;
                 default:
                     return false;
