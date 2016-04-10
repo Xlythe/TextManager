@@ -41,6 +41,7 @@ import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.ImageAttachment;
+import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
@@ -350,6 +351,8 @@ public class MessageActivity extends AppCompatActivity
     public void onItemClicked(Text text) {
         if (mActionMode != null) {
             toggleSelection(text);
+        } else if (text.getStatus() == Status.FAILED) {
+            // TODO resend
         }
     }
 
