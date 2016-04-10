@@ -492,6 +492,9 @@ public class CameraView extends TextureView implements ICameraView {
                         mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
+                    } catch (IllegalStateException e) {
+                        // Crashes on rotation. However, it does restore itself.
+                        e.printStackTrace();
                     }
                 }
 
