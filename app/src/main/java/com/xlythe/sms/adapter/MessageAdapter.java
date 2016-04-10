@@ -29,11 +29,6 @@ import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.concurrency.Future;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import de.hdodenhof.circleimageview.CircleImageView;
-
 public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
     private static final boolean DEBUG = false;
@@ -57,21 +52,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private static final int TYPE_ATTACHMENT_TOP_RIGHT      = 11;
     private static final int TYPE_ATTACHMENT_MIDDLE_RIGHT   = 12;
     private static final int TYPE_ATTACHMENT_BOTTOM_RIGHT   = 13;
-    private static final int TYPE_FAILED_TOP_LEFT           = 14;
-    private static final int TYPE_FAILED_MIDDLE_LEFT        = 15;
-    private static final int TYPE_FAILED_BOTTOM_LEFT        = 16;
-    private static final int TYPE_FAILED_SINGLE_LEFT        = 16;
     private static final int TYPE_ATTACHMENT_SINGLE_LEFT    = 17;
     private static final int TYPE_ATTACHMENT_SINGLE_RIGHT   = 18;
-
-    // TODO:
-    // need to account for group messages, they'll show up as failed
-    // as long with messages with a subject, video, and audio
-    // These should not ever happen, but they'll stay for now
-    private static final int TYPE_FAILED_TOP_RIGHT          = 19;
-    private static final int TYPE_FAILED_MIDDLE_RIGHT       = 20;
-    private static final int TYPE_FAILED_BOTTOM_RIGHT       = 21;
-    private static final int TYPE_FAILED_SINGLE_RIGHT       = 22;
 
     private static final SparseIntArray LAYOUT_MAP = new SparseIntArray();
 
@@ -92,14 +74,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         LAYOUT_MAP.put(TYPE_ATTACHMENT_MIDDLE_RIGHT, R.layout.right_attachment_middle);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_BOTTOM_RIGHT, R.layout.right_attachment_bottom);
         LAYOUT_MAP.put(TYPE_ATTACHMENT_SINGLE_RIGHT, R.layout.right_attachment_single);
-        LAYOUT_MAP.put(TYPE_FAILED_TOP_LEFT, R.layout.left_top);
-        LAYOUT_MAP.put(TYPE_FAILED_MIDDLE_LEFT, R.layout.left_middle);
-        LAYOUT_MAP.put(TYPE_FAILED_BOTTOM_LEFT, R.layout.left_bottom);
-        LAYOUT_MAP.put(TYPE_FAILED_SINGLE_LEFT, R.layout.left_single);
-        LAYOUT_MAP.put(TYPE_FAILED_TOP_RIGHT, R.layout.right_top);
-        LAYOUT_MAP.put(TYPE_FAILED_MIDDLE_RIGHT, R.layout.right_middle);
-        LAYOUT_MAP.put(TYPE_FAILED_BOTTOM_RIGHT, R.layout.right_bottom);
-        LAYOUT_MAP.put(TYPE_FAILED_SINGLE_RIGHT, R.layout.right_single);
     }
 
     private Text.TextCursor mCursor;
@@ -107,8 +81,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
-    public static boolean failed(Text text) {
-        // This is kinda hacky because is the app force closes then the message status isnt updated
+    public static boolean hasFailed(Text text) {
+        // This is kinda hacky because is the app force closes then the message status isn't updated
         return text.getStatus() == Status.FAILED
                 || (text.getStatus() == Status.PENDING
                 && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
@@ -117,7 +91,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
         private Context mContext;
-        private MessageAdapter.OnClickListener mListener;
+        MessageAdapter.OnClickListener mListener;
         public TextView mDate;
 
         public MessageViewHolder(View v, MessageAdapter.OnClickListener listener) {
@@ -176,10 +150,23 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             setBodyText(text.getBody());
             if (selected) {
                 setColor(tintColor(Color.WHITE));
-            } else if (text.getStatus() == Status.FAILED) {
-                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 setColor(context.getResources().getColor(android.R.color.white));
+            }
+
+            if (hasFailed(text)) {
+                mFrame.setAlpha(0.4f);
+            } else {
+                mFrame.setAlpha(1f);
+            }
+
+            if (mDate != null) {
+                if (hasFailed(text)) {
+                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+                    mDate.setText(R.string.message_failed_to_send);
+                } else {
+                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
+                }
             }
         }
 
@@ -194,12 +181,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     public static class LeftViewHolder extends ViewHolder {
         public FrameLayout mFrame;
-        private CircleImageView mProfile;
+        private ImageView mProfile;
 
         public LeftViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mFrame = (FrameLayout) v.findViewById(R.id.frame);
-            mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
+            mProfile = (ImageView) v.findViewById(R.id.profile_image);
         }
 
         @Override
@@ -207,11 +194,19 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             super.setMessage(context, text, selected);
             if (selected) {
                 setColor(tintColor(ColorUtils.getColor(text.getThreadIdAsLong())));
-            } else if (failed(text)) {
-                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
+
+            if (mDate != null) {
+                if (hasFailed(text)) {
+                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+                    mDate.setText(R.string.message_failed_to_receive);
+                } else {
+                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
+                }
+            }
+
             setProfile();
         }
 
@@ -239,6 +234,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
             mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
+
+            mImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mListener != null) {
+                        mListener.onAttachmentClicked(getMessage());
+                    }
+                }
+            });
         }
 
         @Override
@@ -247,8 +251,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             setImage();
             if (selected) {
                 setColor(context.getResources().getColor(R.color.select_tint));
-            }  else if (failed(text)) {
-                setColor(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 mImageView.clearColorFilter();
             }
@@ -274,11 +276,11 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     public static class LeftAttachmentViewHolder extends AttachmentViewHolder {
-        private CircleImageView mProfile;
+        private ImageView mProfile;
 
         public LeftAttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
-            mProfile = (CircleImageView) v.findViewById(R.id.profile_image);
+            mProfile = (ImageView) v.findViewById(R.id.profile_image);
         }
 
         @Override
@@ -296,19 +298,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                     }
                 });
             }
-        }
-    }
-
-    public static class FailedViewHolder extends LeftViewHolder {
-
-        public FailedViewHolder(View v, MessageAdapter.OnClickListener listener) {
-            super(v, listener);
-        }
-
-        @Override
-        public void setMessage(Context context, Text text, boolean selected) {
-            super.setMessage(context, text, selected);
-            mTextView.setText("New attachment to download");
         }
     }
 
@@ -346,11 +335,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             case TYPE_ATTACHMENT_BOTTOM_RIGHT:
             case TYPE_ATTACHMENT_SINGLE_RIGHT:
                 return new AttachmentViewHolder(layout, mClickListener);
-            case TYPE_FAILED_TOP_LEFT:
-            case TYPE_FAILED_MIDDLE_LEFT:
-            case TYPE_FAILED_BOTTOM_LEFT:
             default:
-                return new FailedViewHolder(layout, mClickListener);
+                return new ViewHolder(layout, mClickListener);
         }
     }
 
@@ -409,7 +395,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_TOP_RIGHT;
                 }
-//                return TYPE_FAILED_TOP_RIGHT;
             }
             return TYPE_TOP_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)) {
@@ -417,7 +402,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_MIDDLE_RIGHT;
                 }
-//                return TYPE_FAILED_MIDDLE_RIGHT;
             }
             return TYPE_MIDDLE_RIGHT;
         } else if (!userCurrent && (!userPrevious && !largePC)) {
@@ -425,7 +409,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_BOTTOM_RIGHT;
                 }
-//                return TYPE_FAILED_BOTTOM_RIGHT;
             }
             return TYPE_BOTTOM_RIGHT;
         } else if (!userCurrent) {
@@ -433,7 +416,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_SINGLE_RIGHT;
                 }
-//                return TYPE_FAILED_SINGLE_RIGHT;
             }
             return TYPE_SINGLE_RIGHT;
         } else if ((!userPrevious || largePC) && (userNext && !largeCN)) {
@@ -441,7 +423,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_TOP_LEFT;
                 }
-//                return TYPE_FAILED_TOP_LEFT;
             }
             return TYPE_TOP_LEFT;
         } else if ((userPrevious && !largePC) && (userNext && !largeCN)) {
@@ -449,7 +430,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_MIDDLE_LEFT;
                 }
-//                return TYPE_FAILED_MIDDLE_LEFT;
             }
             return TYPE_MIDDLE_LEFT;
         } else if (userPrevious && !largePC) {
@@ -457,7 +437,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_BOTTOM_LEFT;
                 }
-//                return TYPE_FAILED_BOTTOM_LEFT;
             }
             return TYPE_BOTTOM_LEFT;
         } else {
@@ -465,7 +444,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 if (text.getAttachment() != null) {
                     return TYPE_ATTACHMENT_SINGLE_LEFT;
                 }
-//                return TYPE_FAILED_SINGLE_LEFT;
             }
             return TYPE_SINGLE_LEFT;
         }
@@ -525,5 +503,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     public interface OnClickListener {
         void onItemClicked(Text text);
         boolean onItemLongClicked(Text text);
+        void onAttachmentClicked(Text text);
     }
 }

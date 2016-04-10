@@ -3,35 +3,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/message_vertical_margin"
+    android:paddingRight="@dimen/message_vertical_margin"
+    android:paddingTop="@dimen/message_outside_margin"
+    android:paddingBottom="@dimen/message_outside_margin"
+    android:background="?selectableItemBackground">
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:layout_height="wrap_content">
 
         <de.hdodenhof.circleimageview.CircleImageView
-            xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/profile_image"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="@dimen/message_profile_dimen"
+            android:layout_height="@dimen/message_profile_dimen"
             android:src="@color/colorPrimary"
+            android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
-            android:layout_marginEnd="8dp"
             app:civ_border_width="0dp"
             app:civ_border_color="#00ffffff"/>
 
         <FrameLayout
-            android:layout_gravity="start"
+            android:layout_gravity="left"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
+
             <com.makeramen.roundedimageview.RoundedImageView
                 android:id="@+id/image"
                 android:scaleType="centerCrop"
-                android:layout_width="240dp"
-                android:layout_height="240dp"
-                app:riv_corner_radius="8dp"/>
+                android:layout_width="@dimen/message_attachment_dimen"
+                android:layout_height="@dimen/message_attachment_dimen"
+                app:riv_corner_radius="@dimen/message_attachment_radius"/>
+
             <ImageView
                 android:id="@+id/video_label"
                 android:visibility="gone"
@@ -39,17 +44,18 @@
                 android:layout_gravity="center"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
+
         </FrameLayout>
 
     </LinearLayout>
 
     <TextView
-        android:layout_marginLeft="56dp"
-        android:layout_marginStart="56dp"
-        style="@style/Date"
-        android:layout_gravity="start"
         android:id="@+id/date"
+        android:layout_marginLeft="@dimen/message_date_margin_left"
+        android:layout_marginRight="@dimen/message_date_margin_left"
+        android:layout_gravity="left"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        style="@style/Date" />
 
 </LinearLayout>

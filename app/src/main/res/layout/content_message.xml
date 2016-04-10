@@ -13,8 +13,6 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
-        android:padding="16dp"
-        android:clipToPadding="false"
         android:layout_width="match_parent"
         android:layout_weight="1"
         android:layout_height="0dp"/>
@@ -35,6 +33,7 @@
             android:background="@android:color/transparent"
             android:textSize="13sp"
             android:inputType="textAutoCorrect|textCapSentences"
+            android:imeOptions="flagNoExtractUi"
             android:textColorHint="#9e9e9e"
             android:hint="@string/compose_msg_hint_long"
             android:layout_width="match_parent"

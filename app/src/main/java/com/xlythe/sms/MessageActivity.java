@@ -350,7 +350,12 @@ public class MessageActivity extends AppCompatActivity
     public void onItemClicked(Text text) {
         if (mActionMode != null) {
             toggleSelection(text);
-        } else if (text.getAttachment() != null
+        }
+    }
+
+    @Override
+    public void onAttachmentClicked(Text text) {
+        if (text.getAttachment() != null
                 && (text.getAttachment().getType() == Attachment.Type.IMAGE
                 || text.getAttachment().getType() == Attachment.Type.VIDEO)) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);

@@ -3,21 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/message_vertical_margin"
+    android:paddingRight="@dimen/message_vertical_margin"
+    android:paddingTop="@dimen/message_inside_margin"
+    android:paddingBottom="@dimen/message_inside_margin"
+    android:background="?selectableItemBackground">
 
     <FrameLayout
         android:layout_marginLeft="48dp"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="4dp"
-        android:layout_gravity="start"
+        android:layout_marginRight="48dp"
+        android:layout_gravity="left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
+
         <com.makeramen.roundedimageview.RoundedImageView
             android:id="@+id/image"
             android:scaleType="centerCrop"
-            android:layout_width="240dp"
-            android:layout_height="240dp"
-            app:riv_corner_radius="8dp"/>
+            android:layout_width="@dimen/message_attachment_dimen"
+            android:layout_height="@dimen/message_attachment_dimen"
+            app:riv_corner_radius="@dimen/message_attachment_radius"/>
+
         <ImageView
             android:id="@+id/video_label"
             android:visibility="gone"
@@ -25,6 +31,7 @@
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
     </FrameLayout>
 
 </LinearLayout>

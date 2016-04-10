@@ -3,4 +3,16 @@
     <dimen name="fab_margin">16dp</dimen>
 
     <dimen name="keyboard_height">263.3333dp</dimen>
+
+    <dimen name="message_profile_dimen">40dp</dimen>
+    <dimen name="message_attachment_dimen">240dp</dimen>
+    <dimen name="message_attachment_radius">8dp</dimen>
+    <dimen name="message_attachment_margin_left">48dp</dimen>
+    <dimen name="message_attachment_margin_right">8dp</dimen>
+    <dimen name="message_date_margin_left">56dp</dimen>
+    <dimen name="message_date_margin_right">16dp</dimen>
+    <dimen name="message_vertical_margin">16dp</dimen>
+    <dimen name="message_inside_margin">3dp</dimen>
+    <dimen name="message_outside_margin">8dp</dimen>
+
 </resources>

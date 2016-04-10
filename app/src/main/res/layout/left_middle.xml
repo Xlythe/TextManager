@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/message_vertical_margin"
+    android:paddingRight="@dimen/message_vertical_margin"
+    android:paddingTop="@dimen/message_inside_margin"
+    android:paddingBottom="@dimen/message_inside_margin"
+    android:background="?selectableItemBackground">
 
     <FrameLayout
         android:id="@+id/frame"
         android:layout_marginLeft="40dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="4dp"
-        android:layout_gravity="start"
+        android:layout_marginRight="40dp"
+        android:layout_gravity="left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/left_middle">
 
         <TextView
-            style="@style/Body.Left"
             android:id="@+id/message"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            style="@style/Body.Left" />
 
     </FrameLayout>
 
