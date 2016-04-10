@@ -13,25 +13,26 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
+        android:clipToPadding="false"
         android:layout_width="match_parent"
         android:layout_weight="1"
         android:layout_height="0dp"/>
 
     <!--75dp-->
     <LinearLayout
-        android:paddingTop="8dp"
         android:background="@android:color/white"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <com.xlythe.sms.view.ExtendedEditText
+            android:paddingTop="16dp"
             android:paddingBottom="8dp"
             android:id="@+id/edit_text"
             android:paddingLeft="14dp"
             android:paddingRight="14dp"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:textSize="13sp"
+            android:textSize="16sp"
             android:inputType="textAutoCorrect|textCapSentences"
             android:imeOptions="flagNoExtractUi"
             android:textColorHint="#9e9e9e"
