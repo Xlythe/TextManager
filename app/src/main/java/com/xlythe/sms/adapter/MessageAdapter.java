@@ -105,7 +105,11 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public void setMessage(Context context, Text text, boolean selected) {
             mText = text;
             mContext = context;
-            setDateText(DateFormatter.getFormattedDate(text));
+            if (mText.getStatus() == Status.PENDING) {
+                setDateText(getContext().getString(R.string.message_pending));
+            } else {
+                setDateText(DateFormatter.getFormattedDate(text));
+            }
         }
 
         public void setDateText(String dateText) {

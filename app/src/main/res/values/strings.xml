@@ -21,6 +21,7 @@
     <string name="compose_msg_hint">Message</string>
     <string name="compose_msg_hint_long">Type a message</string>
 
+    <string name="message_pending">Sending</string>
     <string name="message_failed_to_send">Failed to send</string>
     <string name="message_failed_to_receive">Failed to download</string>
 
