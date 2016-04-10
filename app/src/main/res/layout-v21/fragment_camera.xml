@@ -20,7 +20,7 @@
             android:layout_marginBottom="48dp" />
         <ImageView
             android:id="@+id/btn_toggle_camera"
-            android:src="@drawable/attach"
+            android:src="@drawable/camera_back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="left|top"

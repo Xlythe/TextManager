@@ -1,7 +1,6 @@
 <resources>
 
     <dimen name="fab_margin">16dp</dimen>
-    <dimen name="card_margin_horizontal">-3dp</dimen>
 
     <dimen name="keyboard_height">263.3333dp</dimen>
 </resources>

@@ -1,14 +1,12 @@
 <resources>
     <string name="app_name">Fetch</string>
     <string name="title_activity_message">MessageActivity</string>
-    <string name="compose">Compose</string>
 
     <string name="action_search">Search</string>
     <string name="action_send">Send</string>
     <string name="action_remove">Delete</string>
     <string name="action_copy">Copy text</string>
     <string name="action_reply">Reply</string>
-    <string name="action_delete">Delete</string>
 
     <string name="thread_title_selection">%s selected</string>
 

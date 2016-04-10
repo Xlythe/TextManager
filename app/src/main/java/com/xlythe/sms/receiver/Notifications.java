@@ -99,7 +99,6 @@ public class Notifications {
     public static void buildGroupSummary(Context context, Set<Text> texts, int id) {
         Log.v(TAG, "Building group summary");
         context = context.getApplicationContext();
-        addNotificationId(context, id);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(context.getResources().getColor(R.color.colorPrimary))
