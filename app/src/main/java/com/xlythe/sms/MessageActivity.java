@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -269,6 +270,8 @@ public class MessageActivity extends AppCompatActivity
         mStickerAttachments = (ImageView) findViewById(R.id.sticker);
         mMicAttachments = (ImageView) findViewById(R.id.mic);
 
+        // Hide the camera fragment if the device has no camera
+        mCameraAttachments.setVisibility(getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) ? View.VISIBLE : View.GONE);
         // TODO: Unhide when support is ready
         mMicAttachments.setVisibility(View.GONE);
 

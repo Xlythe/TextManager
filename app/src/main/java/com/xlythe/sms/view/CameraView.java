@@ -528,9 +528,7 @@ public class CameraView extends TextureView implements ICameraView {
 
     private String getDefaultCamera() throws CameraAccessException {
         for (String cameraId : mCameraManager.getCameraIdList()) {
-            CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
-            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-            if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+            if (isBackFacing(cameraId)) {
                 return cameraId;
             }
         }
@@ -541,11 +539,8 @@ public class CameraView extends TextureView implements ICameraView {
     public boolean hasFrontFacingCamera() {
         try {
             for (String cameraId : mCameraManager.getCameraIdList()) {
-                CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    return true;
-                }
+                boolean frontFacing = isFrontFacing(cameraId);
+                if (frontFacing) return true;
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -556,13 +551,27 @@ public class CameraView extends TextureView implements ICameraView {
     @Override
     public boolean isFrontFacing() {
         try {
-            CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(getActiveCamera());
-            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-            if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                return true;
-            }
+            return isFrontFacing(getActiveCamera());
         } catch (CameraAccessException e) {
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean isFrontFacing(String cameraId) throws CameraAccessException {
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
+        Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+        if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isBackFacing(String cameraId) throws CameraAccessException {
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
+        Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+        if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+            return true;
         }
         return false;
     }
