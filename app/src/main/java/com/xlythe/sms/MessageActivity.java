@@ -106,6 +106,9 @@ public class MessageActivity extends AppCompatActivity
                     if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
                         // The last item is fully visible. Fully scrolled.
                         return true;
+                    } if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 2) {
+                        // The second-to-last item is fully visible.
+                        return true;
                     }
                 }
             }
