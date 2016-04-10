@@ -124,12 +124,14 @@ public class CameraFragment extends Fragment {
         mCameraHolder = rootView.findViewById(R.id.layout_camera);
         mCamera = (ICameraView) rootView.findViewById(R.id.camera);
 
-        View toggleCamera = mCameraHolder.findViewById(R.id.btn_toggle_camera);
+        final ImageView toggleCamera = (ImageView) mCameraHolder.findViewById(R.id.btn_toggle_camera);
         toggleCamera.setVisibility(mCamera.hasFrontFacingCamera() ? View.VISIBLE : View.GONE);
+        toggleCamera.setImageResource(mCamera.isFrontFacing() ? R.drawable.camera_back : R.drawable.camera_front);
         toggleCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mCamera.toggleCamera();
+                toggleCamera.setImageResource(mCamera.isFrontFacing() ? R.drawable.camera_back : R.drawable.camera_front);
             }
         });
 

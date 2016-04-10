@@ -39,6 +39,8 @@ public interface ICameraView {
 
     boolean hasFrontFacingCamera();
 
+    boolean isFrontFacing();
+
     void toggleCamera();
 
     interface CameraListener {

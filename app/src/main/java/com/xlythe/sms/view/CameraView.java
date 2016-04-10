@@ -61,6 +61,8 @@ public class CameraView extends TextureView implements ICameraView {
         PREVIEW, WAITING_LOCK, WAITING_PRECAPTURE, WAITING_NON_PRECAPTURE, PICTURE_TAKEN;
     }
 
+    private final CameraManager mCameraManager;
+
     /**
      * The cameraId that's currently active. If null, use the default camera id.
      */
@@ -233,6 +235,7 @@ public class CameraView extends TextureView implements ICameraView {
 
     public CameraView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        mCameraManager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
     }
 
     @Override
@@ -366,9 +369,13 @@ public class CameraView extends TextureView implements ICameraView {
         return mVideoSurface.mIsRecordingVideo;
     }
 
+    private String getActiveCamera() throws CameraAccessException {
+        return mActiveCamera == null ? getDefaultCamera() : mActiveCamera;
+    }
+
     private void openCamera(int width, int height) {
         try {
-            String cameraId = mActiveCamera == null ? getDefaultCamera() : mActiveCamera;
+            String cameraId = getActiveCamera();
             openCamera(cameraId, width, height);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -384,8 +391,7 @@ public class CameraView extends TextureView implements ICameraView {
 
         mActiveCamera = cameraId;
 
-        CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
-        CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+        CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
         StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
         for (CameraSurface surface : mCameraSurfaces) {
@@ -393,7 +399,7 @@ public class CameraView extends TextureView implements ICameraView {
         }
 
         configureTransform(width, height);
-        manager.openCamera(cameraId, mStateCallback, mBackgroundHandler);
+        mCameraManager.openCamera(cameraId, mStateCallback, mBackgroundHandler);
     }
 
     /**
@@ -521,23 +527,21 @@ public class CameraView extends TextureView implements ICameraView {
     }
 
     private String getDefaultCamera() throws CameraAccessException {
-        CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
-        for (String cameraId : manager.getCameraIdList()) {
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+        for (String cameraId : mCameraManager.getCameraIdList()) {
+            CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
             Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
             if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
                 return cameraId;
             }
         }
-        return manager.getCameraIdList()[0];
+        return mCameraManager.getCameraIdList()[0];
     }
 
     @Override
     public boolean hasFrontFacingCamera() {
-        CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+            for (String cameraId : mCameraManager.getCameraIdList()) {
+                CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraId);
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     return true;
@@ -550,18 +554,31 @@ public class CameraView extends TextureView implements ICameraView {
     }
 
     @Override
+    public boolean isFrontFacing() {
+        try {
+            CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(getActiveCamera());
+            Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+            if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                return true;
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
     public void toggleCamera() {
         int position = 0;
 
-        CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
-            for (String cameraId : manager.getCameraIdList()) {
+            for (String cameraId : mCameraManager.getCameraIdList()) {
                 if (cameraId.equals(mActiveCamera)) {
                     break;
                 }
                 position++;
             }
-            openCamera(manager.getCameraIdList()[(position + 1) % manager.getCameraIdList().length], getWidth(), getHeight());
+            openCamera(mCameraManager.getCameraIdList()[(position + 1) % mCameraManager.getCameraIdList().length], getWidth(), getHeight());
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }

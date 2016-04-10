@@ -17,14 +17,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
-            android:layout_marginBottom="48dp" />
+            android:layout_marginBottom="8dp" />
         <ImageView
             android:id="@+id/btn_toggle_camera"
-            android:src="@drawable/camera_back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left|top"
-            android:layout_margin="8dp" />
+            android:layout_gravity="left|bottom"
+            android:layout_margin="8dp"/>
     </FrameLayout>
     <include layout="@layout/content_permission_error" />
 </FrameLayout>

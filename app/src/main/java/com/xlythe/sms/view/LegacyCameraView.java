@@ -74,6 +74,11 @@ public class LegacyCameraView extends com.commonsware.cwac.camera.CameraView imp
     }
 
     @Override
+    public boolean isFrontFacing() {
+        return false;
+    }
+
+    @Override
     public void toggleCamera() {
     }
 
