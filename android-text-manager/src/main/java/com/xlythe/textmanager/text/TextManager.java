@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -439,10 +440,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
      * Returns true if your package is the default SMS app. Before API 19, that means everyone.
      */
     public boolean isDefaultSmsPackage() {
-        if (android.os.Build.VERSION.SDK_INT >= 19) {
+        if (android.os.Build.VERSION.SDK_INT >= 19 && supportsSms()) {
             return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());
         } else {
-            return true;
+            return supportsSms();
         }
+    }
+
+    public boolean supportsSms() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 }
