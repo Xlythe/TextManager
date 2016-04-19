@@ -70,4 +70,16 @@ public class CameraView extends BaseCameraView {
     public void toggleCamera() {
         mCameraModule.toggleCamera();
     }
+
+    @Override
+    public void setOnImageCapturedListener(OnImageCapturedListener l) {
+        super.setOnImageCapturedListener(l);
+        mCameraModule.setOnImageCapturedListener(l);
+    }
+
+    @Override
+    public void setOnVideoCapturedListener(OnVideoCapturedListener l) {
+        super.setOnVideoCapturedListener(l);
+        mCameraModule.setOnVideoCapturedListener(l);
+    }
 }

@@ -24,27 +24,6 @@ public class LegacyCameraModule extends ICameraModule {
         super(view);
     }
 
-    /**
-     * Configures the necessary {@link Matrix} transformation.
-     *
-     * @param viewWidth  The width of `mTextureView`
-     * @param viewHeight The height of `mTextureView`
-     */
-    private void configureTransform(int viewWidth, int viewHeight, int previewWidth, int previewHeight) {
-        Matrix matrix = new Matrix();
-
-        float ratio;
-        if (previewHeight >= previewWidth) {
-            ratio = (float) previewHeight / (float) previewWidth;
-        } else {
-            ratio = (float) previewWidth / (float) previewHeight;
-        }
-
-        matrix.postScale(1f, ratio);
-
-        setTransform(matrix);
-    }
-
     @Override
     public void open() {
         Log.d(TAG, "onOpen() activeCamera="+getActiveCamera());
@@ -63,7 +42,8 @@ public class LegacyCameraModule extends ICameraModule {
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
             mCamera.setParameters(parameters);
 
-            configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height);
+            int cameraOrientation = getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), true);
+            configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height, cameraOrientation);
 
             mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
 
@@ -129,6 +109,12 @@ public class LegacyCameraModule extends ICameraModule {
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(getActiveCamera(), info);
         return info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT;
+    }
+
+    private int getSensorOrientation() {
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.getCameraInfo(getActiveCamera(), info);
+        return info.orientation;
     }
 
     private int getActiveCamera() {

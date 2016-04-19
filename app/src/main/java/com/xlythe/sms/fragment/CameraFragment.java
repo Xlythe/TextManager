@@ -2,7 +2,6 @@ package com.xlythe.sms.fragment;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,14 +15,13 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.xlythe.sms.CameraActivity;
 import com.xlythe.sms.R;
-import com.xlythe.sms.view.ICameraView;
 import com.xlythe.sms.view.camera.BaseCameraView;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.VideoAttachment;
 import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.io.File;
@@ -31,7 +29,7 @@ import java.util.Set;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
-public class CameraFragment extends Fragment implements BaseCameraView.OnVideoCapturedListener {
+public class CameraFragment extends Fragment implements BaseCameraView.OnImageCapturedListener, BaseCameraView.OnVideoCapturedListener {
     public static final String ARG_MESSAGE = "message";
 
     private static final String[] REQUIRED_PERMISSIONS = {
@@ -55,20 +53,18 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnVideoCa
         return fragment;
     }
 
-    private ICameraView.CameraListener mPictureListener = new ICameraView.CameraListener() {
-        @Override
-        public void onCaptured(final File file) {
-            mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-                @Override
-                public void get(Set<Contact> instance) {
-                    TextManager.getInstance(getContext()).send(new Text.Builder()
-                            .addRecipients(instance)
-                            .attach(new ImageAttachment(Uri.fromFile(file)))
-                            .build());
-                }
-            });
-        }
-    };
+    @Override
+    public void onImageCaptured(final File file) {
+        mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+            @Override
+            public void get(Set<Contact> instance) {
+                TextManager.getInstance(getContext()).send(new Text.Builder()
+                        .addRecipients(instance)
+                        .attach(new ImageAttachment(Uri.fromFile(file)))
+                        .build());
+            }
+        });
+    }
 
     @Override
     public void onVideoCaptured(final File file) {
@@ -77,7 +73,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnVideoCa
             public void get(Set<Contact> instance) {
                 TextManager.getInstance(getContext()).send(new Text.Builder()
                         .addRecipients(instance)
-                        .attach(new ImageAttachment(Uri.fromFile(file)))
+                        .attach(new VideoAttachment(Uri.fromFile(file)))
                         .build());
             }
         });
@@ -124,6 +120,9 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnVideoCa
         mCameraHolder = rootView.findViewById(R.id.layout_camera);
         mCamera = (BaseCameraView) rootView.findViewById(R.id.camera);
 
+        mCamera.setOnImageCapturedListener(this);
+        mCamera.setOnVideoCapturedListener(this);
+
         final ImageView toggleCamera = (ImageView) mCameraHolder.findViewById(R.id.btn_toggle_camera);
         toggleCamera.setVisibility(mCamera.hasFrontFacingCamera() ? View.VISIBLE : View.GONE);
         toggleCamera.setImageResource(mCamera.isUsingFrontFacingCamera() ? R.drawable.camera_back : R.drawable.camera_front);
@@ -163,13 +162,12 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnVideoCa
             };
 
             private void onTap() {
-                startActivity(new Intent(getContext(), CameraActivity.class));
-//                mCamera.takePicture(mPictureListener);
+                mCamera.takePicture(new File(getContext().getCacheDir(), "TODO.jpg"));
             }
 
             private void onHold() {
                 vibrate();
-                mCamera.startRecording(new File("TODO"));
+                mCamera.startRecording(new File(getContext().getCacheDir(), "TODO.mp4"));
             }
 
             private void onRelease() {
