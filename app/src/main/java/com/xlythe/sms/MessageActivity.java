@@ -45,7 +45,6 @@ import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
-import com.xlythe.sms.view.LegacyCameraView;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
@@ -56,8 +55,7 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
-public class MessageActivity extends AppCompatActivity
-        implements MessageAdapter.OnClickListener, LegacyCameraView.HostProvider /* legacy support */ {
+public class MessageActivity extends AppCompatActivity implements MessageAdapter.OnClickListener {
     private static final String TAG = TextManager.class.getSimpleName();
     private static final boolean DEBUG = true;
 
@@ -101,13 +99,10 @@ public class MessageActivity extends AppCompatActivity
 
         private boolean isScrolledToBottom(RecyclerView recyclerView) {
             if (recyclerView.getAdapter().getItemCount() != 0) {
-                int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+                int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
                 if (lastVisibleItemPosition != RecyclerView.NO_POSITION) {
                     if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 1) {
-                        // The last item is fully visible. Fully scrolled.
-                        return true;
-                    } if (lastVisibleItemPosition == recyclerView.getAdapter().getItemCount() - 2) {
-                        // The second-to-last item is fully visible.
+                        // The last item is visible. Fully (or at least mostly) scrolled.
                         return true;
                     }
                 }
@@ -265,8 +260,6 @@ public class MessageActivity extends AppCompatActivity
         // TODO: Unhide when support is ready
         mMicAttachments.setVisibility(View.GONE);
 
-        Notifications.dismissNotification(getApplicationContext(), mThread);
-
         if (savedInstanceState == null) {
             // This is the first time this Activity is launched. Lets check the intent to prepopulate the message.
             Text text = MessageUtils.parse(this, getIntent());
@@ -320,7 +313,10 @@ public class MessageActivity extends AppCompatActivity
     }
 
     public void onAttachmentHidden(){
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new Fragment()).commit();
+        Fragment activeFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        if (activeFragment != null) {
+            getSupportFragmentManager().beginTransaction().remove(activeFragment).commit();
+        }
         mAttachView.setVisibility(View.GONE);
         clearAttachmentSelection();
     }
@@ -447,8 +443,12 @@ public class MessageActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Notifications.dismissNotification(getApplicationContext(), mThread);
         mManager.markAsRead(mThread);
         sActiveThread = mThread;
+        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container) == null) {
+            onAttachmentHidden();
+        }
     }
 
     @Override
@@ -481,10 +481,5 @@ public class MessageActivity extends AppCompatActivity
         });
 
         mEditText.setText(null);
-    }
-
-    @Override
-    public LegacyCameraView.Host getCameraHost() {
-        return new LegacyCameraView.Host(this);
     }
 }

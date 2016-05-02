@@ -4,12 +4,15 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
@@ -55,6 +58,16 @@ public class StickerFragment extends Fragment {
                                 .build());
                     }
                 });
+            }
+
+            @Override
+            public void onItemLongClick(Drawable drawable) {
+                ImageView imageView = new ImageView(getContext());
+                imageView.setImageDrawable(drawable);
+                AlertDialog alertDialog = new AlertDialog.Builder(getContext()).setView(imageView).show();
+                alertDialog.getWindow().setLayout(
+                        getResources().getDimensionPixelSize(R.dimen.sticker_dialog_width),
+                        getResources().getDimensionPixelSize(R.dimen.sticker_dialog_height));
             }
         }));
         gridView.setLayoutManager(new GridAutofitLayoutManager(getContext()));

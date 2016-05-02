@@ -15,4 +15,7 @@
     <dimen name="message_inside_margin">3dp</dimen>
     <dimen name="message_outside_margin">8dp</dimen>
 
+    <dimen name="sticker_dialog_width">250dp</dimen>
+    <dimen name="sticker_dialog_height">250dp</dimen>
+
 </resources>

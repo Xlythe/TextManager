@@ -37,7 +37,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
             R.drawable.sticker_shocked,
             R.drawable.sticker_shy,
             R.drawable.sticker_stressed,
-            R.drawable.sticker_suspiscious,
+            R.drawable.sticker_suspicious,
             R.drawable.sticker_thinking,
     };
 
@@ -65,7 +65,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
         return STICKERS.length;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private StickerAdapter.OnItemClickListener mClickListener;
         private ImageView mImage;
 
@@ -74,6 +74,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
             mClickListener = listener;
             mImage = (ImageView) view.findViewById(R.id.image);
             view.setOnClickListener(this);
+            view.setOnLongClickListener(this);
         }
 
         void setImage(int resId) {
@@ -84,9 +85,16 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
         public void onClick(View v) {
             mClickListener.onItemClick(mImage.getDrawable());
         }
+
+        @Override
+        public boolean onLongClick(View v) {
+            mClickListener.onItemLongClick(mImage.getDrawable());
+            return true;
+        }
     }
 
     public interface OnItemClickListener {
         void onItemClick(Drawable drawable);
+        void onItemLongClick(Drawable drawable);
     }
 }

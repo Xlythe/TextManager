@@ -90,7 +90,7 @@ public class SendService extends IntentService {
             values.put(Mock.Telephony.Sms.BODY, text.getBody());
             values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
             uri = context.getContentResolver().insert(uri, values);
-            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri), newSmsDeliveredPendingIntent(context));
+            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri), newSmsDeliveredPendingIntent(context, uri));
         } else {
             Attachment attachment = text.getAttachment();
             for (Contact member : text.getMembers(context).get()) {
@@ -110,7 +110,7 @@ public class SendService extends IntentService {
                 Log.d(TAG, "Sending MMS: " + text);
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context));
+                sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context, null /* TODO Uri */));
             } else {
                 throw new RuntimeException("Not supported before Lollipop");
             }
@@ -124,15 +124,17 @@ public class SendService extends IntentService {
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent newSmsDeliveredPendingIntent(Context context) {
+    private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(SMS_DELIVERED);
+        intent.setData(uri);
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent newMmsSentPendingIntent(Context context) {
+    private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(MMS_SENT);
+        intent.setData(uri);
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
@@ -273,8 +275,8 @@ public class SendService extends IntentService {
             Intent intent = new Intent();
             intent.setData(uri);
             pendingIntent.send(context, result, intent);
-        } catch (PendingIntent.CanceledException ex) {
-            Log.e(TAG, "Failed to notified mms sent", ex);
+        } catch (PendingIntent.CanceledException e) {
+            Log.e(TAG, "Failed to notified mms sent", e);
         }
     }
 
@@ -283,7 +285,6 @@ public class SendService extends IntentService {
         // create send request addresses
         for (int i = 0; i < recipients.length; i++) {
             final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipients[i]);
-            Log.d(TAG, recipients[i]);
             if (phoneNumbers != null && phoneNumbers.length > 0) {
                 sendRequest.addTo(phoneNumbers[0]);
             }

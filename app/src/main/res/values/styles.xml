@@ -29,7 +29,7 @@
     <style name="AppTheme.Compose.Edit"/>
 
     <style name="Date">
-        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginTop">6dp</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/date_text_color</item>
     </style>
@@ -40,6 +40,7 @@
         <item name="android:paddingLeft">12dp</item>
         <item name="android:paddingRight">12dp</item>
         <item name="android:textSize">14sp</item>
+        <item name="android:autoLink">web|phone</item>
     </style>
 
     <style name="Body.Left">
