@@ -1,6 +1,7 @@
 package com.xlythe.sms.view.camera;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 
 import java.io.File;
@@ -69,6 +70,11 @@ public class CameraView extends BaseCameraView {
     @Override
     public void toggleCamera() {
         mCameraModule.toggleCamera();
+    }
+
+    @Override
+    public void focus(Rect focus, Rect metering) {
+        mCameraModule.focus(focus, metering);
     }
 
     @Override

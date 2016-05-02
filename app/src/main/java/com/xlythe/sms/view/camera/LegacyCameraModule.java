@@ -1,6 +1,7 @@
 package com.xlythe.sms.view.camera;
 
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
@@ -10,6 +11,7 @@ import android.view.Surface;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -20,6 +22,8 @@ public class LegacyCameraModule extends ICameraModule {
     private int mActiveCamera = INVALID_CAMERA_ID;
     private Camera mCamera;
     private Camera.Size mPreviewSize;
+
+    private final Rect mFocusRect = new Rect();
 
     private MediaRecorder mVideoRecorder;
     private File mVideoFile;
@@ -125,6 +129,29 @@ public class LegacyCameraModule extends ICameraModule {
         close();
         mActiveCamera = (mActiveCamera + 1) % Camera.getNumberOfCameras();
         open();
+    }
+
+    @Override
+    public void focus(Rect focus, Rect metering) {
+        if (mCamera != null) {
+            mCamera.cancelAutoFocus();
+
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+            parameters.setFocusAreas(Arrays.asList(new Camera.Area(focus, 1000)));
+
+            if (parameters.getMaxNumMeteringAreas() > 0) {
+                parameters.setMeteringAreas(Arrays.asList(new Camera.Area(metering, 1000)));
+            }
+
+            mCamera.setParameters(parameters);
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    Log.d(TAG, "AutoFocus: " + success);
+                }
+            });
+        }
     }
 
     @Override

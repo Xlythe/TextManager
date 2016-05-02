@@ -1,11 +1,16 @@
 package com.xlythe.sms.view.camera;
 
 import android.content.Context;
+import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.TextureView;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
 import java.io.File;
@@ -55,6 +60,8 @@ public abstract class BaseCameraView extends TextureView {
     private Status mStatus = Status.CLOSED;
     private OnImageCapturedListener mOnImageCapturedListener;
     private OnVideoCapturedListener mOnVideoCapturedListener;
+
+    private final Matrix mFocusMatrix = new Matrix();
 
     public BaseCameraView(Context context) {
         this(context, null);
@@ -132,6 +139,51 @@ public abstract class BaseCameraView extends TextureView {
     public abstract boolean hasFrontFacingCamera();
 
     public abstract boolean isUsingFrontFacingCamera();
+
+    public abstract void focus(Rect focus, Rect metering);
+
+    private long start;
+
+    private long delta() {
+        return System.currentTimeMillis() - start;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                start = System.currentTimeMillis();
+                break;
+            case MotionEvent.ACTION_UP:
+                if (delta() < ViewConfiguration.getLongPressTimeout()) {
+                    focus(calculateTapArea(event.getX(), event.getY(), 1f), calculateTapArea(event.getX(), event.getY(), 1.5f));
+                }
+                break;
+        }
+        return true;
+    }
+
+    private Rect calculateTapArea(float x, float y, float coefficient) {
+        int areaSize = Float.valueOf(500 * coefficient).intValue();
+
+        int left = clamp((int) x - areaSize / 2, 0, getWidth() - areaSize);
+        int top = clamp((int) y - areaSize / 2, 0, getHeight() - areaSize);
+
+        RectF rectF = new RectF(left, top, left + areaSize, top + areaSize);
+        mFocusMatrix.mapRect(rectF);
+
+        return new Rect(Math.round(rectF.left), Math.round(rectF.top), Math.round(rectF.right), Math.round(rectF.bottom));
+    }
+
+    private int clamp(int x, int min, int max) {
+        if (x > max) {
+            return max;
+        }
+        if (x < min) {
+            return min;
+        }
+        return x;
+    }
 
     protected void onOpen() {}
 

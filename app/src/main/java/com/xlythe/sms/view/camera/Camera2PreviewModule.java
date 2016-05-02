@@ -2,6 +2,7 @@ package com.xlythe.sms.view.camera;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -193,6 +194,11 @@ public class Camera2PreviewModule extends ICameraModule {
     @Override
     public boolean isRecording() {
         throw new RuntimeException("Unsupported Operation");
+    }
+
+    @Override
+    public void focus(Rect focus, Rect metering) {
+        // TODO
     }
 
     protected void startPreview() {

@@ -1,6 +1,7 @@
 package com.xlythe.sms.view.camera;
 
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.view.Surface;
@@ -145,6 +146,8 @@ public abstract class ICameraModule {
     public abstract boolean hasFrontFacingCamera();
 
     public abstract boolean isUsingFrontFacingCamera();
+
+    public abstract void focus(Rect focus, Rect metering);
 
     public void setOnImageCapturedListener(BaseCameraView.OnImageCapturedListener l) {
         mOnImageCapturedListener = l;
