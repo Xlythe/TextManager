@@ -1,9 +1,12 @@
 package com.xlythe.sms.view.camera;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
-import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,12 +29,14 @@ public class LegacyPictureListener implements Camera.PictureCallback {
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
+        data = manuallyRotateImage(data);
+
         try {
             FileOutputStream fos = new FileOutputStream(mFile);
             fos.write(data);
             fos.close();
 
-            rotateImage();
+//            rotateImage();
 
             mListener.onImageCaptured(mFile);
         } catch (IOException e) {
@@ -61,5 +66,17 @@ public class LegacyPictureListener implements Camera.PictureCallback {
         ExifInterface exif = new ExifInterface(mFile.getAbsolutePath());
         exif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(orientation));
         exif.saveAttributes();
+    }
+
+    private byte[] manuallyRotateImage(byte[] data) {
+        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(mOrientation);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        return stream.toByteArray();
     }
 }
