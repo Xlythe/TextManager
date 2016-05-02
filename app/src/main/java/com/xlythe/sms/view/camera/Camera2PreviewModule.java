@@ -28,7 +28,13 @@ import java.util.List;
 public class Camera2PreviewModule extends ICameraModule {
 
     protected enum State {
-        PREVIEW, RECORDING, WAITING_LOCK, WAITING_PRECAPTURE, WAITING_NON_PRECAPTURE, PICTURE_TAKEN;
+        PREVIEW,
+        RECORDING,
+        WAITING_LOCK,
+        WAITING_PRECAPTURE,
+        WAITING_NON_PRECAPTURE,
+        PICTURE_TAKEN,
+        WAITING_UNLOCK;
     }
 
     private final CameraManager mCameraManager;

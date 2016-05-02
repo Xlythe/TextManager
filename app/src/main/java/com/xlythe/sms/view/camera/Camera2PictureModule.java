@@ -13,6 +13,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
 
@@ -45,6 +46,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         private void process(CaptureResult result) {
+            Log.d(TAG, "CaptureCallback: " + getState());
             switch (getState()) {
                 case PREVIEW: {
                     // We have nothing to do when the camera preview is working normally.
@@ -68,6 +70,10 @@ public class Camera2PictureModule extends Camera2PreviewModule {
                     }
                     break;
                 }
+                case WAITING_UNLOCK:
+                    // After this, the camera will go back to the normal state of preview.
+                    startPreview();
+                    break;
                 case WAITING_PRECAPTURE: {
                     // CONTROL_AE_STATE can be null on some devices
                     Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
@@ -152,6 +158,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * we get a response in {@link #mCaptureCallback} from {@link #lockFocus()}.
      */
     private void runPrecaptureSequence() {
+        Log.d(TAG, "runPrecaptureSequence");
         try {
             // This is how to tell the camera to trigger.
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -168,6 +175,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * {@link #mCaptureCallback} from both {@link #lockFocus()}.
      */
     private void captureStillPicture() {
+        Log.d(TAG, "captureStillPicture");
         try {
             // This is the CaptureRequest.Builder that we use to take a picture.
             final CaptureRequest.Builder captureBuilder = getCameraDevice().createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -180,7 +188,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
             // Orientation
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(getDisplayRotation()));
 
-            CameraCaptureSession.CaptureCallback CaptureCallback = new CameraCaptureSession.CaptureCallback() {
+            CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session,
                                                @NonNull CaptureRequest request,
@@ -190,7 +198,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
             };
 
             getCaptureSession().stopRepeating();
-            getCaptureSession().capture(captureBuilder.build(), CaptureCallback, null);
+            getCaptureSession().capture(captureBuilder.build(), captureCallback, getBackgroundHandler());
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -200,6 +208,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * Lock the focus as the first step for a still image capture.
      */
     private void lockFocus() {
+        Log.d(TAG, "lockFocus");
         try {
             // This is how to tell the camera to lock focus.
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,  CameraMetadata.CONTROL_AF_TRIGGER_START);
@@ -216,13 +225,13 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * finished.
      */
     private void unlockFocus() {
+        Log.d(TAG, "unlockFocus");
         try {
             // Reset the auto-focus trigger
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
 //            setAutoFlash(mPreviewRequestBuilder); TODO
+            setState(State.WAITING_UNLOCK);
             getCaptureSession().capture(mCaptureRequestBuilder.build(), mCaptureCallback, getBackgroundHandler());
-            // After this, the camera will go back to the normal state of preview.
-            startPreview();
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -268,8 +277,13 @@ public class Camera2PictureModule extends Camera2PreviewModule {
                 mCameraView.getBackgroundHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        new ImageSaver(reader.acquireNextImage(), mFile).run();
-                        onPictureTaken();
+                        if (mFile != null) {
+                            new ImageSaver(reader.acquireNextImage(), mFile).run();
+                            onPictureTaken();
+                            mFile = null;
+                        } else {
+                            Log.w(TAG, "OnImageAvailable called but no file to write to");
+                        }
                     }
                 });
             }

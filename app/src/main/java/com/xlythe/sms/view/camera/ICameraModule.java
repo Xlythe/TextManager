@@ -29,7 +29,22 @@ public abstract class ICameraModule {
     }
 
     public int getDisplayRotation() {
-        return mView.getDisplayRotation();
+        int displayRotation = mView.getDisplayRotation();
+        switch (displayRotation) {
+            case 0:
+                displayRotation = 0;
+                break;
+            case 1:
+                displayRotation = 90;
+                break;
+            case 2:
+                displayRotation = 180;
+                break;
+            case 3:
+                displayRotation = 270;
+                break;
+        }
+        return displayRotation;
     }
 
     public SurfaceTexture getSurfaceTexture() {
@@ -47,12 +62,11 @@ public abstract class ICameraModule {
     protected void configureTransform(int viewWidth, int viewHeight, int previewWidth, int previewHeight, int cameraOrientation) {
         if (DEBUG) {
             Log.d(TAG, String.format("Configuring SurfaceView matrix: "
-                            + "viewWidth=%s, viewHeight=%s, previewWidth=%s, previewHeight=%s",
-                    viewWidth, viewHeight, previewWidth, previewHeight));
+                            + "viewWidth=%s, viewHeight=%s, previewWidth=%s, previewHeight=%s, cameraOrientation=%s",
+                    viewWidth, viewHeight, previewWidth, previewHeight, cameraOrientation));
         }
-        int rotation = getDisplayRotation();
 
-        if (cameraOrientation == 90 || cameraOrientation == 180) {
+        if (cameraOrientation == 90 || cameraOrientation == 270) {
             int temp = previewWidth;
             previewWidth = previewHeight;
             previewHeight = temp;
@@ -61,8 +75,8 @@ public abstract class ICameraModule {
         double aspectRatio = (double) previewHeight / (double) previewWidth;
         int newWidth, newHeight;
 
-        if (getHeight() > (int) (viewWidth * aspectRatio)) {
-            newWidth = (int)(viewHeight / aspectRatio);
+        if (getHeight() > viewWidth * aspectRatio) {
+            newWidth = (int) (viewHeight / aspectRatio);
             newHeight = viewHeight;
         } else {
             newWidth = viewWidth;
@@ -81,15 +95,7 @@ public abstract class ICameraModule {
 
         txform.setScale(xscale, yscale);
 
-        switch(rotation) {
-            case Surface.ROTATION_90:
-                txform.postRotate(270, newWidth / 2, newHeight / 2);
-                break;
-
-            case Surface.ROTATION_270:
-                txform.postRotate(90, newWidth / 2, newHeight / 2);
-                break;
-        }
+        // TODO rotate?
 
         txform.postTranslate(xoff, yoff);
 
@@ -156,10 +162,9 @@ public abstract class ICameraModule {
         return mOnVideoCapturedListener;
     }
 
-    //http://stackoverflow.com/questions/31839021/how-do-i-determine-the-default-orientation-of-camera-preview-frames
-    // Legacy Camera.CameraInfo.orientation, compensateForMirroring = true
-    // Camera2 CameraCharacteristics#get(CameraCharacteristics.SENSOR_ORIENTATION), compensateForMirroring = false
     static int getRelativeImageOrientation(int displayRotation, int sensorOrientation, boolean isFrontFacing, boolean compensateForMirroring) {
+        Log.d(TAG, String.format("getRelativeImageOrientation displayRotation=%s, sensorOrientation=%s, isFrontFacing=%s, compensateForMirroring=%s",
+                displayRotation, sensorOrientation, isFrontFacing, compensateForMirroring));
         int result;
         if (isFrontFacing) {
             result = (sensorOrientation + displayRotation) % 360;

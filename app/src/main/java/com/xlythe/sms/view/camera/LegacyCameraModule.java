@@ -2,6 +2,8 @@ package com.xlythe.sms.view.camera;
 
 import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.util.Log;
 import android.view.Surface;
 
@@ -17,8 +19,10 @@ public class LegacyCameraModule extends ICameraModule {
 
     private int mActiveCamera = INVALID_CAMERA_ID;
     private Camera mCamera;
-    private List<Camera.Size> mSupportedPreviewSizes;
     private Camera.Size mPreviewSize;
+
+    private MediaRecorder mVideoRecorder;
+    private File mVideoFile;
 
     LegacyCameraModule(CameraView view) {
         super(view);
@@ -33,19 +37,12 @@ public class LegacyCameraModule extends ICameraModule {
             mCamera.setPreviewTexture(getSurfaceTexture());
 
             Camera.Parameters parameters = mCamera.getParameters();
-            if(getDisplayRotation() == Surface.ROTATION_0) {
-                mCamera.setDisplayOrientation(90);
-            } else if(getDisplayRotation() == Surface.ROTATION_270) {
-                mCamera.setDisplayOrientation(180);
-            }
+            int cameraOrientation = getCameraOrientation();
+            mCamera.setDisplayOrientation(cameraOrientation);
             mPreviewSize = chooseOptimalPreviewSize(mCamera.getParameters().getSupportedPreviewSizes(), getWidth(), getHeight());
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
             mCamera.setParameters(parameters);
-
-            int cameraOrientation = getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), true);
             configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height, cameraOrientation);
-
-            mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
 
             mCamera.startPreview();
         } catch (IOException e) {
@@ -65,22 +62,62 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     public void takePicture(File file) {
-        mCamera.takePicture(null, null, new LegacyPictureListener(file));
+        mCamera.takePicture(null, null, new LegacyPictureListener(file, getCameraOrientation(), getOnImageCapturedListener()));
     }
 
     @Override
     public void startRecording(File file) {
+        mVideoFile = file;
+        mVideoRecorder = new MediaRecorder();
 
+        mCamera.unlock();
+        mVideoRecorder.setCamera(mCamera);
+
+        mVideoRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+        mVideoRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
+        CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+        mVideoRecorder.setProfile(cpHigh);
+        mVideoRecorder.setOutputFile(file.getAbsolutePath());
+        mVideoRecorder.setMaxDuration(30000); // 30 seconds
+        mVideoRecorder.setMaxFileSize(10000000); // Approximately 10 megabytes
+        mVideoRecorder.setOrientationHint(getCameraOrientation());
+        mVideoRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+            @Override
+            public void onInfo(MediaRecorder mr, int what, int extra) {
+                switch (what) {
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED:
+                        Log.w(TAG, "Max duration for recording reached");
+                        break;
+                    case MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED:
+                        Log.w(TAG, "Max filesize for recording reached");
+                        break;
+                }
+            }
+        });
+
+        try {
+            mVideoRecorder.prepare();
+            mVideoRecorder.start();
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            mVideoRecorder = null;
+        }
     }
 
     @Override
     public void stopRecording() {
-
+        if (mVideoRecorder != null) {
+            mVideoRecorder.stop();
+            mVideoRecorder = null;
+        }
+        if (getOnVideoCapturedListener() != null) {
+            getOnVideoCapturedListener().onVideoCaptured(mVideoFile);
+        }
     }
 
     @Override
     public boolean isRecording() {
-        return false;
+        return mVideoRecorder != null;
     }
 
     @Override
@@ -109,6 +146,10 @@ public class LegacyCameraModule extends ICameraModule {
         Camera.CameraInfo info = new Camera.CameraInfo();
         Camera.getCameraInfo(getActiveCamera(), info);
         return info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT;
+    }
+
+    private int getCameraOrientation() {
+        return getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), true);
     }
 
     private int getSensorOrientation() {
