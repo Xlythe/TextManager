@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
                     | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
                     | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP;
 
+    private static final int TOOLBAR_SCROLL_FLAGS_SELECT = 0;
+
     private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
 
     private TextManager mManager;
@@ -233,6 +235,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         @Override
         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
+            params.setScrollFlags(TOOLBAR_SCROLL_FLAGS_SELECT);
+            mToolbar.setLayoutParams(params);
             mRecyclerView.setNestedScrollingEnabled(false);
             mAppbar.setExpanded(true);
             return false;
@@ -257,6 +262,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             mode.finish();
             mAdapter.clearSelection();
             mActionMode = null;
+            AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
+            params.setScrollFlags(TOOLBAR_SCROLL_FLAGS);
+            mToolbar.setLayoutParams(params);
             mRecyclerView.setNestedScrollingEnabled(true);
         }
     }
