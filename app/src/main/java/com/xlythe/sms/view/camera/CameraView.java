@@ -20,11 +20,11 @@ public class CameraView extends BaseCameraView {
 
     public CameraView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
-            mCameraModule = new Camera2Module(this);
-        } else {
+//        if (android.os.Build.VERSION.SDK_INT >= 21) {
+//            mCameraModule = new Camera2Module(this);
+//        } else {
             mCameraModule = new LegacyCameraModule(this);
-        }
+//        }
     }
 
     @Override
