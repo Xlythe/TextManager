@@ -217,7 +217,7 @@ public class SendService extends IntentService {
                     }
                     byte[] imageBytes = bitmapToByteArray(bitmap);
                     part = new MMSPart();
-                    part.MimeType = "image/jpeg";
+                    part.MimeType = "image/png";
                     part.Name = "image" + i;
                     part.Data = imageBytes;
                     data.add(part);
@@ -228,7 +228,6 @@ public class SendService extends IntentService {
                         Log.e(TAG, "Error getting bytes from attachment");
                         break;
                     }
-
                     part = new MMSPart();
                     part.MimeType = "video/mpeg";
                     part.Name = "video" + i;
@@ -358,7 +357,7 @@ public class SendService extends IntentService {
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        image.compress(Bitmap.CompressFormat.PNG, 90, stream);
         return stream.toByteArray();
     }
 
