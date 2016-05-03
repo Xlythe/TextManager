@@ -82,7 +82,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
 
     public static boolean hasFailed(Text text) {
-        // This is kinda hacky because is the app force closes then the message status isn't updated
+        // This is kinda hacky because if the app force closes then the message status isn't updated
         return text.getStatus() == Status.FAILED
                 || (text.getStatus() == Status.PENDING
                 && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
@@ -109,6 +109,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setDateText(getContext().getString(R.string.message_pending));
             } else {
                 setDateText(DateFormatter.getFormattedDate(text));
+            }
+
+            if (mDate != null) {
+                if (hasFailed(text)) {
+                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+                    mDate.setText(R.string.message_failed_to_send);
+                } else {
+                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
+                }
             }
         }
 
@@ -163,15 +172,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else {
                 mFrame.setAlpha(1f);
             }
-
-            if (mDate != null) {
-                if (hasFailed(text)) {
-                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
-                    mDate.setText(R.string.message_failed_to_send);
-                } else {
-                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
-                }
-            }
         }
 
         public void setColor(int color) {
@@ -202,14 +202,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
 
-            if (mDate != null) {
-                if (hasFailed(text)) {
-                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
-                    mDate.setText(R.string.message_failed_to_receive);
-                } else {
-                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
-                }
-            }
+            // TODO: This may make more sense
+//            if (mDate != null) {
+//                if (hasFailed(text)) {
+//                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+//                    mDate.setText("Message failed to download");
+//                } else {
+//                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
+//                }
+//            }
 
             setProfile();
         }

@@ -339,14 +339,21 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     public void onItemClicked(Text text) {
         if (mActionMode != null) {
             toggleSelection(text);
-        } else if (text.getStatus() == Status.FAILED) {
-            // TODO resend
+        } else if (MessageAdapter.hasFailed(text)) {
+            mManager.send(text);
         }
     }
 
     @Override
     public void onAttachmentClicked(Text text) {
-        if (text.getAttachment() != null
+        if (MessageAdapter.hasFailed(text)) {
+            // TODO resend / redownload
+            if (text.isIncoming()) {
+               // redownload
+            } else {
+                mManager.send(text);
+            }
+        } else if (text.getAttachment() != null
                 && (text.getAttachment().getType() == Attachment.Type.IMAGE
                 || text.getAttachment().getType() == Attachment.Type.VIDEO)) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);

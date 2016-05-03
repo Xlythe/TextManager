@@ -83,52 +83,57 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         context.getContentResolver().registerContentObserver(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, true, new TextObserver(new Handler()));
     }
 
-    public void downloadAttachment(Text text){
-        if (text.isMms()) {
-            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
-            wl.acquire();
-            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId());
-            Cursor cursor = mContext.getContentResolver().query(uri, PROJECTION, null, null, null);
-            String url = "";
+    public void redownload() {
 
-            if (cursor != null) {
-                try {
-                    if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                        url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                    }
-                } finally {
-                    cursor.close();
-                }
-            }
-            Receive.getPdu(url, mContext, new Receive.DataCallback() {
-                @Override
-                public void onSuccess(byte[] result) {
-                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
-
-                    PduPersister persister = PduPersister.getPduPersister(mContext);
-                    Uri msgUri;
-                    try {
-                        msgUri = persister.persist(retrieveConf, uri, true, true, null);
-
-                        // Use local time instead of PDU time
-                        ContentValues values = new ContentValues(1);
-                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                        mContext.getContentResolver().update(msgUri, values, null, null);
-                    } catch (MmsException e) {
-                        Log.e("MMS", "unable to persist message");
-                        onFail();
-                    }
-                }
-
-                @Override
-                public void onFail() {
-                    // this maybe useful
-                }
-            });
-            wl.release();
-        }
     }
+
+    //TODO: NO... just no...
+//    public void downloadAttachment(Text text){
+//        if (text.isMms()) {
+//            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+//            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+//            wl.acquire();
+//            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId());
+//            Cursor cursor = mContext.getContentResolver().query(uri, PROJECTION, null, null, null);
+//            String url = "";
+//
+//            if (cursor != null) {
+//                try {
+//                    if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
+//                        url = cursor.getString(COLUMN_CONTENT_LOCATION);
+//                    }
+//                } finally {
+//                    cursor.close();
+//                }
+//            }
+//            Receive.getPdu(url, mContext, new Receive.DataCallback() {
+//                @Override
+//                public void onSuccess(byte[] result) {
+//                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+//
+//                    PduPersister persister = PduPersister.getPduPersister(mContext);
+//                    Uri msgUri;
+//                    try {
+//                        msgUri = persister.persist(retrieveConf, uri, true, true, null);
+//
+//                        // Use local time instead of PDU time
+//                        ContentValues values = new ContentValues(1);
+//                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+//                        mContext.getContentResolver().update(msgUri, values, null, null);
+//                    } catch (MmsException e) {
+//                        Log.e("MMS", "unable to persist message");
+//                        onFail();
+//                    }
+//                }
+//
+//                @Override
+//                public void onFail() {
+//                    // this maybe useful
+//                }
+//            });
+//            wl.release();
+//        }
+//    }
 
     public void registerObserver(MessageObserver observer) {
         mObservers.add(observer);

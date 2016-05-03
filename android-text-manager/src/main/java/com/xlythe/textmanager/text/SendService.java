@@ -89,8 +89,18 @@ public class SendService extends IntentService {
             values.put(Mock.Telephony.Sms.ADDRESS, address);
             values.put(Mock.Telephony.Sms.BODY, text.getBody());
             values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-            uri = context.getContentResolver().insert(uri, values);
-            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri), newSmsDeliveredPendingIntent(context, uri));
+
+            String clause = String.format("%s = %s", Mock.Telephony.Sms._ID, text.getId());
+            int rowsUpdated = context.getContentResolver().update(uri, values, clause, null);
+
+            // Nothing was updated so insert a new one
+            if (rowsUpdated == 0) {
+                uri = context.getContentResolver().insert(uri, values);
+            } else {
+                uri = Uri.withAppendedPath(uri, text.getId());
+            }
+
+            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
         } else {
             Attachment attachment = text.getAttachment();
             for (Contact member : text.getMembers(context).get()) {
@@ -110,44 +120,40 @@ public class SendService extends IntentService {
                 Log.d(TAG, "Sending MMS: " + text);
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMediaMessage(context, address, " ", text.getBody(), attachment, newMmsSentPendingIntent(context, null /* TODO Uri */));
+                // Store the pending message in the database
+                Set set = storeData(context, address, " ", text.getBody(), attachment);
+                sendMediaMessage(context, set, newMmsSentPendingIntent(context, set.messageUri, text.getId()));
             } else {
                 throw new RuntimeException("Not supported before Lollipop");
             }
         }
     }
 
-    private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri) {
+    private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(SMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri) {
+    private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(SMS_DELIVERED);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
-    private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri) {
+    private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(MMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     @TargetApi(21)
     public static void sendMediaMessage(final Context context,
-                                        final String address,
-                                        final String subject,
-                                        final String body,
-                                        final Attachment attachment,
+                                        final Set set,
                                         final PendingIntent sentMmsPendingIntent) {
-
-        // Store the pending message in the database
-        Set set = storeData(context, address, subject, body, attachment);
 
         // Collect the data we're going to send to the server
         final byte[] pdu = set.data;
@@ -189,7 +195,7 @@ public class SendService extends IntentService {
             e.printStackTrace();
         }
         if (!success) {
-            Log.d(TAG, "Mark Failed");
+            Log.d(TAG, "MMS failed to send");
             values = new ContentValues();
             values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             context.getContentResolver().update(uri, values, null, null);
@@ -407,9 +413,11 @@ public class SendService extends IntentService {
             ContentValues values = new ContentValues();
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
+                    Log.d(TAG, "MMS sent");
                     values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                     break;
                 default:
+                    Log.d(TAG, "MMS failed to send");
                     values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                     break;
             }
