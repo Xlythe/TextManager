@@ -42,6 +42,7 @@ import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Status;
+import com.xlythe.textmanager.text.TextReceiver;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
@@ -361,9 +362,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     @Override
     public void onAttachmentClicked(Text text) {
         if (MessageAdapter.hasFailed(text)) {
-            // TODO resend / redownload
             if (text.isIncoming()) {
-               // redownload
+                mManager.downloadAttachment(text);
             } else {
                 mManager.send(text);
             }

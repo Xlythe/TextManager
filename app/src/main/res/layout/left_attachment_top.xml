@@ -16,7 +16,6 @@
         android:layout_width="@dimen/message_profile_dimen"
         android:layout_height="@dimen/message_profile_dimen"
         android:src="@color/colorPrimary"
-        android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         app:civ_border_width="0dp"
         app:civ_border_color="#00ffffff"/>
