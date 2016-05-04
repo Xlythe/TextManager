@@ -88,8 +88,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
-            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId());
-            Cursor cursor = mContext.getContentResolver().query(uri, PROJECTION, null, null, null);
+            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.Inbox.CONTENT_URI, text.getId());
+
+            final String[] proj = new String[] {
+                    Mock.Telephony.Mms.CONTENT_LOCATION
+            };
+
+            Cursor cursor = mContext.getContentResolver().query(uri, proj, null, null, null);
             String url = "";
 
             if (cursor != null) {
@@ -101,6 +106,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     cursor.close();
                 }
             }
+
             Receive.getPdu(url, mContext, new Receive.DataCallback() {
                 @Override
                 public void onSuccess(byte[] result) {
@@ -114,6 +120,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
                         values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
                         Log.e("MMS", "unable to persist message");

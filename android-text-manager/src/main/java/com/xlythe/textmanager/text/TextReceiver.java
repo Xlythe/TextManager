@@ -109,7 +109,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
                         // Use local time instead of PDU time
                         ContentValues values = new ContentValues(1);
-                        values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
 
                         Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
@@ -130,7 +130,13 @@ public abstract class TextReceiver extends BroadcastReceiver {
                 public void onFail() {
                     PduPersister p = PduPersister.getPduPersister(mContext);
                     try {
-                        p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                        Uri uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+                        // can't the status via pdu, so update with the content resolver
+                        ContentValues values = new ContentValues(1);
+                        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                        mContext.getContentResolver().update(uri, values, null, null);
+
+
                     } catch (MmsException e) {
                         Log.e(TAG, "Persisting pdu failed", e);
                     }

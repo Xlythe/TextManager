@@ -355,7 +355,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         if (mActionMode != null) {
             toggleSelection(text);
         } else if (MessageAdapter.hasFailed(text)) {
-            mManager.send(text);
+            if (text.isIncoming()) {
+                mManager.downloadAttachment(text);
+            } else {
+                mManager.send(text);
+            }
         }
     }
 

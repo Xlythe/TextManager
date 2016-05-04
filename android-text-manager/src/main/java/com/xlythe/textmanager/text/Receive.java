@@ -65,19 +65,22 @@ public class Receive {
         final NetworkRequest networkRequest = builder.build();
         final CountDownLatch latch = new CountDownLatch(1);
         boolean success = false;
+
+        final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(Network network) {
+                super.onAvailable(network);
+                latch.countDown();
+                ConnectivityManager.setProcessDefaultNetwork(network);
+                receive(context, uri, callback);
+                connectivityManager.unregisterNetworkCallback(this);
+            }
+        };
+
         new java.lang.Thread(new Runnable() {
             @Override
             public void run() {
-                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(Network network) {
-                        super.onAvailable(network);
-                        latch.countDown();
-                        ConnectivityManager.setProcessDefaultNetwork(network);
-                        receive(context, uri, callback);
-                        connectivityManager.unregisterNetworkCallback(this);
-                    }
-                });
+                connectivityManager.requestNetwork(networkRequest, networkCallback);
             }
         }).start();
         try {
@@ -87,6 +90,7 @@ public class Receive {
         }
         if (!success) {
             Log.e("MMS","failed to establish a data network connection");
+            connectivityManager.unregisterNetworkCallback(networkCallback);
             callback.onFail();
         }
     }

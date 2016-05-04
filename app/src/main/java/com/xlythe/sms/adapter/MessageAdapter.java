@@ -167,6 +167,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setColor(context.getResources().getColor(android.R.color.white));
             }
 
+            // We set this here because of attachments
             if (hasFailed(text)) {
                 mFrame.setAlpha(0.4f);
             } else {
@@ -179,7 +180,11 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
 
         public void setBodyText(String body) {
-            mTextView.setText(body);
+            if (body == null) {
+                mTextView.setText("Tap to retry");
+            } else {
+                mTextView.setText(body);
+            }
         }
     }
 
@@ -202,15 +207,15 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
 
-            // TODO: This may make more sense
-//            if (mDate != null) {
-//                if (hasFailed(text)) {
-//                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
-//                    mDate.setText("Message failed to download");
-//                } else {
-//                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
-//                }
-//            }
+            // could move this to left attachment, but doesn't matter
+            if (mDate != null) {
+                if (hasFailed(text)) {
+                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+                    mDate.setText("Message failed to download");
+                } else {
+                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
+                }
+            }
 
             setProfile();
         }
