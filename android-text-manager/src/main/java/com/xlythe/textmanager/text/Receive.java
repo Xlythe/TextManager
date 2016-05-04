@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +63,8 @@ public class Receive {
         builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
 
         final NetworkRequest networkRequest = builder.build();
-
+        final CountDownLatch latch = new CountDownLatch(1);
+        boolean success = false;
         new java.lang.Thread(new Runnable() {
             @Override
             public void run() {
@@ -69,6 +72,7 @@ public class Receive {
                     @Override
                     public void onAvailable(Network network) {
                         super.onAvailable(network);
+                        latch.countDown();
                         ConnectivityManager.setProcessDefaultNetwork(network);
                         receive(context, uri, callback);
                         connectivityManager.unregisterNetworkCallback(this);
@@ -76,6 +80,15 @@ public class Receive {
                 });
             }
         }).start();
+        try {
+            success = latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (!success) {
+            Log.e("MMS","failed to establish a data network connection");
+            callback.onFail();
+        }
     }
 
     public static void receive(final Context context, String uri, final DataCallback callback){
@@ -89,7 +102,7 @@ public class Receive {
                     apnParameters.getProxyPort());
             callback.onSuccess(data);
         } catch (IOException ioe){
-            Log.e("MMS","download failed due to network");
+            Log.e("MMS","download failed due to network error");
             callback.onFail();
         }
     }
