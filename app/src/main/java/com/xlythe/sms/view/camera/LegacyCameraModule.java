@@ -41,7 +41,7 @@ public class LegacyCameraModule extends ICameraModule {
             mCamera.setPreviewTexture(getSurfaceTexture());
 
             Camera.Parameters parameters = mCamera.getParameters();
-            int cameraOrientation = getCameraOrientation();
+            int cameraOrientation = getRelativeCameraOrientation();
             mCamera.setDisplayOrientation(cameraOrientation);
             mPreviewSize = chooseOptimalPreviewSize(mCamera.getParameters().getSupportedPreviewSizes(), getWidth(), getHeight());
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
@@ -66,7 +66,7 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     public void takePicture(File file) {
-        mCamera.takePicture(null, null, new LegacyPictureListener(file, getCameraOrientation(), getOnImageCapturedListener()));
+        mCamera.takePicture(null, null, new LegacyPictureListener(file, getRelativeCameraOrientation(), getOnImageCapturedListener()));
     }
 
     @Override
@@ -84,7 +84,7 @@ public class LegacyCameraModule extends ICameraModule {
         mVideoRecorder.setOutputFile(file.getAbsolutePath());
         mVideoRecorder.setMaxDuration(30000); // 30 seconds
         mVideoRecorder.setMaxFileSize(10000000); // Approximately 10 megabytes
-        mVideoRecorder.setOrientationHint(getCameraOrientation());
+        mVideoRecorder.setOrientationHint(getRelativeCameraOrientation());
         mVideoRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mr, int what, int extra) {
@@ -133,12 +133,15 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     public void focus(Rect focus, Rect metering) {
+        Log.d(TAG, String.format("Focus: focus=%s, metering=%s", focus, metering));
         if (mCamera != null) {
             mCamera.cancelAutoFocus();
 
             Camera.Parameters parameters = mCamera.getParameters();
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-            parameters.setFocusAreas(Arrays.asList(new Camera.Area(focus, 1000)));
+            if (parameters.getMaxNumFocusAreas() > 0) {
+                parameters.setFocusAreas(Arrays.asList(new Camera.Area(focus, 1000)));
+            }
 
             if (parameters.getMaxNumMeteringAreas() > 0) {
                 parameters.setMeteringAreas(Arrays.asList(new Camera.Area(metering, 1000)));
@@ -175,7 +178,8 @@ public class LegacyCameraModule extends ICameraModule {
         return info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT;
     }
 
-    private int getCameraOrientation() {
+    @Override
+    protected int getRelativeCameraOrientation() {
         return getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), true);
     }
 

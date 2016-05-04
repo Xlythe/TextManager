@@ -88,4 +88,9 @@ public class CameraView extends BaseCameraView {
         super.setOnVideoCapturedListener(l);
         mCameraModule.setOnVideoCapturedListener(l);
     }
+
+    @Override
+    protected int getRelativeCameraOrientation() {
+        return mCameraModule.getRelativeCameraOrientation();
+    }
 }

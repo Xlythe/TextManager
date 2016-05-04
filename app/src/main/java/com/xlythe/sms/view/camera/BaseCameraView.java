@@ -61,7 +61,9 @@ public abstract class BaseCameraView extends TextureView {
     private OnImageCapturedListener mOnImageCapturedListener;
     private OnVideoCapturedListener mOnVideoCapturedListener;
 
-    private final Matrix mFocusMatrix = new Matrix();
+    // For tap-to-focus
+    private final Rect mFocusingRect = new Rect();
+    private final Rect mMeteringRect = new Rect();
 
     public BaseCameraView(Context context) {
         this(context, null);
@@ -142,6 +144,8 @@ public abstract class BaseCameraView extends TextureView {
 
     public abstract void focus(Rect focus, Rect metering);
 
+    protected abstract int getRelativeCameraOrientation();
+
     private long start;
 
     private long delta() {
@@ -156,33 +160,70 @@ public abstract class BaseCameraView extends TextureView {
                 break;
             case MotionEvent.ACTION_UP:
                 if (delta() < ViewConfiguration.getLongPressTimeout()) {
-                    focus(calculateTapArea(event.getX(), event.getY(), 1f), calculateTapArea(event.getX(), event.getY(), 1.5f));
+                    focus(calculateTapArea(mFocusingRect, event.getX(), event.getY(), 1f),
+                            calculateTapArea(mMeteringRect, event.getX(), event.getY(), 1.5f));
                 }
                 break;
         }
         return true;
     }
 
-    private Rect calculateTapArea(float x, float y, float coefficient) {
-        int areaSize = Float.valueOf(500 * coefficient).intValue();
+    /**
+     * The area must be between -1000,-1000 and 1000,1000
+     */
+    private Rect calculateTapArea(Rect rect, float x, float y, float coefficient) {
+        // Default to 300 (1/6th the total area) and scale by the coefficient
+        int areaSize = Float.valueOf(300 * coefficient).intValue();
 
-        int left = clamp((int) x - areaSize / 2, 0, getWidth() - areaSize);
-        int top = clamp((int) y - areaSize / 2, 0, getHeight() - areaSize);
+        // Rotate the coordinates if the camera orientation is different
+        int width = getWidth();
+        int height = getHeight();
 
-        RectF rectF = new RectF(left, top, left + areaSize, top + areaSize);
-        mFocusMatrix.mapRect(rectF);
+        int relativeCameraOrientation = getRelativeCameraOrientation();
+        int temp = -1;
+        float tempf = -1f;
+        switch (relativeCameraOrientation) {
+            case 90:
+                // Fall through
+            case 270:
+                // We're horizontal. Swap width/height. Swap x/y.
+                temp = width;
+                width = height;
+                height = temp;
 
-        return new Rect(Math.round(rectF.left), Math.round(rectF.top), Math.round(rectF.right), Math.round(rectF.bottom));
-    }
-
-    private int clamp(int x, int min, int max) {
-        if (x > max) {
-            return max;
+                tempf = x;
+                x = y;
+                y = tempf;
+                break;
         }
-        if (x < min) {
-            return min;
+        switch (relativeCameraOrientation) {
+            case 180:
+                // Fall through
+            case 270:
+                // We're up side down. Fix x/y.
+                x = width - x;
+                y = height - y;
+                break;
         }
-        return x;
+
+        // Grab the x, y position from within the View and normalize it to -1000 to 1000
+        x = -1000 + 2000 * (x / width);
+        y = -1000 + 2000 * (y / height);
+
+
+        // Modify the rect to the bounding area
+        rect.top = (int) y - areaSize / 2;
+        rect.left = (int) x - areaSize / 2;
+        rect.bottom = rect.top + areaSize;
+        rect.right = rect.left + areaSize;
+
+        // Cap at -1000 to 1000
+        rect.top = Math.max(rect.top, -1000);
+        rect.left = Math.max(rect.left, -1000);
+        rect.bottom = Math.min(rect.bottom, 1000);
+        rect.right = Math.min(rect.right, 1000);
+
+        return rect;
     }
 
     protected void onOpen() {}

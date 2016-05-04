@@ -104,7 +104,7 @@ public class Camera2PreviewModule extends ICameraModule {
                 surface.initialize(map);
             }
 
-            int cameraOrientation = getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(getActiveCamera()), isUsingFrontFacingCamera(), false);
+            int cameraOrientation = getRelativeCameraOrientation();
             configureTransform(getWidth(), getHeight(), mPreviewSurface.getWidth(), mPreviewSurface.getHeight(), cameraOrientation);
 
             mCameraManager.openCamera(mActiveCamera, mStateCallback, mBackgroundHandler);
@@ -128,6 +128,16 @@ public class Camera2PreviewModule extends ICameraModule {
         }
 
         stopBackgroundThread();
+    }
+
+    @Override
+    protected int getRelativeCameraOrientation() {
+        try {
+            return getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(getActiveCamera()), isUsingFrontFacingCamera(), false);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     protected String getActiveCamera() throws CameraAccessException {

@@ -149,6 +149,8 @@ public abstract class ICameraModule {
 
     public abstract void focus(Rect focus, Rect metering);
 
+    protected abstract int getRelativeCameraOrientation();
+
     public void setOnImageCapturedListener(BaseCameraView.OnImageCapturedListener l) {
         mOnImageCapturedListener = l;
     }
