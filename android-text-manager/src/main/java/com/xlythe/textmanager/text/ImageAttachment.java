@@ -3,6 +3,10 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
@@ -28,8 +32,11 @@ public final class ImageAttachment extends Attachment {
     private static Bitmap toBitmap(Drawable drawable) {
         Log.d(TAG, "Drawing drawable to bitmap with width=" + drawable.getIntrinsicWidth() + ", height=" + drawable.getIntrinsicHeight());
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
         Canvas canvas = new Canvas(bitmap);
+        canvas.drawARGB(0, 0, 0, 0);
         drawable.draw(canvas);
+
         return bitmap;
     }
 
@@ -39,7 +46,8 @@ public final class ImageAttachment extends Attachment {
 
         try {
             FileOutputStream out = new FileOutputStream(file);
-            image.compress(Bitmap.CompressFormat.PNG, 100, out);
+            // quality is ignored for png
+            image.compress(Bitmap.CompressFormat.PNG, 0, out);
             out.flush();
             out.close();
         } catch (FileNotFoundException e) {

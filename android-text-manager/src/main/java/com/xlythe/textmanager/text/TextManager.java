@@ -83,10 +83,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         context.getContentResolver().registerContentObserver(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, true, new TextObserver(new Handler()));
     }
 
-    public void redownload() {
-
-    }
-
     //TODO: NO... just no...
 //    public void downloadAttachment(Text text){
 //        if (text.isMms()) {

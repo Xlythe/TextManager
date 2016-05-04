@@ -45,7 +45,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     static final Text EMPTY_TEXT = new Text();
 
-    private long mId;
+    private long mId = -1;
     private long mThreadId;
     private long mDate;
     private long mMmsId;

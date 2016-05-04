@@ -250,6 +250,20 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
         mManager.registerObserver(mMessageObserver);
 
+        // It bothers me when the keyboard doesnt collapse, remove it if you want
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState > 0) {
+                    InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
+                    mEditText.clearFocus();
+                    onAttachmentHidden();
+                }
+            }
+        });
+
         mGalleryAttachments = (ImageView) findViewById(R.id.gallery);
         mCameraAttachments = (ImageView) findViewById(R.id.camera);
         mStickerAttachments = (ImageView) findViewById(R.id.sticker);

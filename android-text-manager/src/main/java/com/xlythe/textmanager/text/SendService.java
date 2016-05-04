@@ -103,12 +103,13 @@ public class SendService extends IntentService {
             sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
         } else {
             Attachment attachment = text.getAttachment();
-            for (Contact member : text.getMembers(context).get()) {
+            for (Contact member : text.getMembersExceptMe(context).get()) {
                 if (!address.isEmpty()) {
                     address += ";";
                 }
                 String phoneNumber = member.getNumber(context).get();
                 if (!TextUtils.isEmpty(phoneNumber)) {
+                    Log.d(TAG, phoneNumber);
                     address += phoneNumber;
                 }
             }
@@ -121,7 +122,7 @@ public class SendService extends IntentService {
             }
             if (android.os.Build.VERSION.SDK_INT >= 21) {
                 // Store the pending message in the database
-                Set set = storeData(context, address, " ", text.getBody(), attachment);
+                Set set = storeData(context, address, " ", text.getBody(), attachment, text.getId());
                 sendMediaMessage(context, set, newMmsSentPendingIntent(context, set.messageUri, text.getId()));
             } else {
                 throw new RuntimeException("Not supported before Lollipop");
@@ -133,21 +134,21 @@ public class SendService extends IntentService {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(SMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(SMS_DELIVERED);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(MMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, Integer.parseInt(id), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     @TargetApi(21)
@@ -206,14 +207,14 @@ public class SendService extends IntentService {
                                 final String address,
                                 final String subject,
                                 final String body,
-                                final Attachment attachment) {
+                                final Attachment attachment,
+                                final String id) {
         ArrayList<MMSPart> data = new ArrayList<>();
 
         int i = 0;
         MMSPart part;
         if (attachment != null) {
             Attachment.Type type = attachment.getType();
-            Uri uri = attachment.getUri();
             switch (type) {
                 case IMAGE:
                     Bitmap bitmap = ((ImageAttachment) attachment).getBitmap(context).get();
@@ -254,7 +255,7 @@ public class SendService extends IntentService {
             data.add(part);
         }
 
-        return getBytes(context, address.split(";"), data.toArray(new MMSPart[data.size()]), subject);
+        return getBytes(context, address.split(";"), data.toArray(new MMSPart[data.size()]), subject, id);
     }
 
     public static void sendData(Context context, byte[] pdu, PendingIntent sentMmsPendingIntent, Uri uri) {
@@ -285,7 +286,7 @@ public class SendService extends IntentService {
         }
     }
 
-    public static Set getBytes(Context context, String[] recipients, MMSPart[] parts, String subject) {
+    public static Set getBytes(Context context, String[] recipients, MMSPart[] parts, String subject, String id) {
         final SendReq sendRequest = new SendReq();
         // create send request addresses
         for (int i = 0; i < recipients.length; i++) {
@@ -332,9 +333,17 @@ public class SendService extends IntentService {
         sendRequest.setMessageSize(size);
 
         PduPersister p = PduPersister.getPduPersister(context);
+        Log.d(TAG, "ID: " + id);
         Uri uri;
+        // TODO:
+        // this probably isnt safe...
+        if (Long.parseLong(id) != -1) {
+            uri = Uri.withAppendedPath(Mock.Telephony.Mms.Sent.CONTENT_URI, id);
+        } else {
+            uri = Mock.Telephony.Mms.Sent.CONTENT_URI;
+        }
         try {
-            uri = p.persist(sendRequest, Mock.Telephony.Mms.Sent.CONTENT_URI, true, true, null);
+            uri = p.persist(sendRequest, uri, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
             uri = null;
@@ -363,7 +372,9 @@ public class SendService extends IntentService {
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.PNG, 90, stream);
+        // TODO: compress if too large
+        // pngs are lossless cant compress with quality, shrink image instead
+        image.compress(Bitmap.CompressFormat.PNG, 0, stream);
         return stream.toByteArray();
     }
 

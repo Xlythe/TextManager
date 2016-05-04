@@ -5,7 +5,7 @@
     <dimen name="keyboard_height">263.3333dp</dimen>
 
     <dimen name="message_profile_dimen">40dp</dimen>
-    <dimen name="message_attachment_dimen">240dp</dimen>
+    <dimen name="message_attachment_dimen">133dp</dimen>
     <dimen name="message_attachment_radius">8dp</dimen>
     <dimen name="message_attachment_margin_left">48dp</dimen>
     <dimen name="message_attachment_margin_right">8dp</dimen>
