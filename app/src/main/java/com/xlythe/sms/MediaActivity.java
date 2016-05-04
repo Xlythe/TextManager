@@ -4,7 +4,10 @@ import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
@@ -23,8 +26,22 @@ public class MediaActivity extends AppCompatActivity {
 
         mText = getIntent().getParcelableExtra(EXTRA_TEXT);
 
-        VideoView video = (VideoView) findViewById(R.id.video);
+        final VideoView video = (VideoView) findViewById(R.id.video);
+        Button play = (Button) findViewById(R.id.play);
+        TextView duration = (TextView) findViewById(R.id.duration);
+        SeekBar seek = (SeekBar) findViewById(R.id.seek);
         SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
+
+        play.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (video.isPlaying()) {
+                    video.pause();
+                } else {
+                    video.start();
+                }
+            }
+        });
 
         Uri uri = mText.getAttachment().getUri();
 
@@ -33,6 +50,8 @@ public class MediaActivity extends AppCompatActivity {
             video.setVisibility(View.VISIBLE);
             video.setVideoURI(uri);
             video.start();
+            duration.setText(video.getDuration() + "");
+//            video.getCurrentPosition();
         } else {
             video.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);

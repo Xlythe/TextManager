@@ -1,7 +1,6 @@
 package com.xlythe.sms.receiver;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,6 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.RemoteInput;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.Html;
@@ -92,7 +92,7 @@ public class Notifications {
             buildSummaryNotification(context, texts, builder);
         }
 
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(id, builder.build());
     }
 
@@ -127,7 +127,7 @@ public class Notifications {
             buildSummaryNotification(context, texts, builder);
         }
 
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(id, builder.build());
     }
 
@@ -159,7 +159,7 @@ public class Notifications {
         clearNotification(context, threadId);
 
         // Dismiss the notification for the thread
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.cancel(threadId.hashCode());
 
         // If there are no notifications left, dismiss the summary too
@@ -174,7 +174,7 @@ public class Notifications {
      */
     public static void dismissAllNotifications(Context context) {
         // Dismiss all notifications we've created
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.cancelAll();
 
         // Stop persisting the data from those notifications
