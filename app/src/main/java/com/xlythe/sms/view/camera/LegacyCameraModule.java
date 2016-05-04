@@ -133,12 +133,20 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     public void focus(Rect focus, Rect metering) {
-        Log.d(TAG, String.format("Focus: focus=%s, metering=%s", focus, metering));
+        if (DEBUG) {
+            Log.d(TAG, String.format("Focus: focus=%s, metering=%s", focus, metering));
+        }
         if (mCamera != null) {
             mCamera.cancelAutoFocus();
 
             Camera.Parameters parameters = mCamera.getParameters();
+            if (!parameters.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                Log.w(TAG, "Focus not available on this camera");
+                return;
+            }
+
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+
             if (parameters.getMaxNumFocusAreas() > 0) {
                 parameters.setFocusAreas(Arrays.asList(new Camera.Area(focus, 1000)));
             }
@@ -151,7 +159,9 @@ public class LegacyCameraModule extends ICameraModule {
             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                 @Override
                 public void onAutoFocus(boolean success, Camera camera) {
-                    Log.d(TAG, "AutoFocus: " + success);
+                    if (DEBUG) {
+                        Log.d(TAG, "AutoFocus: " + success);
+                    }
                 }
             });
         }
