@@ -6,9 +6,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -38,7 +36,8 @@ import java.util.Set;
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.READ_SMS,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.CHANGE_NETWORK_STATE,
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private static final int REQUEST_CODE_WRITE_SETTINGS = 1001;
@@ -118,12 +117,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         } else {
             markHasRequestedPermissions();
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= 23 && !Settings.System.canWrite(this)) {
-            startActivityForResult(
-                    new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
-                    REQUEST_CODE_WRITE_SETTINGS);
         }
     }
 
