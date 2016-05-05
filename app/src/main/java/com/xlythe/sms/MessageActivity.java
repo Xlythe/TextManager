@@ -207,6 +207,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                     if (!mAdjustNothing) {
                         onAttachmentHidden();
                     } else {
+                        // Just because it has focus doesnt mean the keyboard actually opened
+                        // This seems like an easier fix than not showing the attachview
+                        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        mgr.showSoftInput(mEditText, 0);
                         mAttachView.setVisibility(View.VISIBLE);
                     }
                 }
