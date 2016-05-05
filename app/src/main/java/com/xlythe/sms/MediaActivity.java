@@ -27,10 +27,10 @@ public class MediaActivity extends AppCompatActivity {
         mText = getIntent().getParcelableExtra(EXTRA_TEXT);
 
         final VideoView video = (VideoView) findViewById(R.id.video);
-        Button play = (Button) findViewById(R.id.play);
-        TextView duration = (TextView) findViewById(R.id.duration);
-        SeekBar seek = (SeekBar) findViewById(R.id.seek);
-        SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
+        final Button play = (Button) findViewById(R.id.play);
+        final TextView duration = (TextView) findViewById(R.id.duration);
+        final SeekBar seek = (SeekBar) findViewById(R.id.seek);
+        final SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
 
         play.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,7 +51,21 @@ public class MediaActivity extends AppCompatActivity {
             video.setVideoURI(uri);
             video.start();
             duration.setText(video.getDuration() + "");
-//            video.getCurrentPosition();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (video.getCurrentPosition() < video.getDuration()) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            return;
+                        } catch (Exception e) {
+                            return;
+                        }
+                        seek.setProgress(video.getCurrentPosition());
+                    }
+                }
+            });
         } else {
             video.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);
