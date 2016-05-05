@@ -118,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         } else {
             markHasRequestedPermissions();
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+            // We do this on 6.0 because this issue is resolved in 6.0.1
             if (android.os.Build.VERSION.RELEASE.equals("6.0") && !Settings.System.canWrite(this)) {
                 startActivityForResult(
                         new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
