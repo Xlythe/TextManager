@@ -81,6 +81,9 @@ public class MediaActivity extends AppCompatActivity {
 
         } else {
             video.setVisibility(View.GONE);
+            play.setVisibility(View.GONE);
+            duration.setVisibility(View.GONE);
+            seek.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);
             image.setImage(ImageSource.uri(mText.getAttachment().getUri()));
         }
