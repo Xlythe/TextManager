@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -238,12 +239,23 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     public static class AttachmentViewHolder extends MessageViewHolder {
         private RoundedImageView mImageView;
+        private ImageButton mShare;
         private ImageView mVideoLabel;
 
         public AttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
             mImageView = (RoundedImageView) v.findViewById(R.id.image);
+            mShare = (ImageButton) v.findViewById(R.id.share);
             mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
+
+            mShare.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mListener != null) {
+                        mListener.onShareClicked(getMessage());
+                    }
+                }
+            });
 
             mImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -514,5 +526,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         void onItemClicked(Text text);
         boolean onItemLongClicked(Text text);
         void onAttachmentClicked(Text text);
+        void onShareClicked(Text text);
     }
 }

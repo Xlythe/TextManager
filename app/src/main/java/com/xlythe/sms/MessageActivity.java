@@ -395,6 +395,22 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     }
 
     @Override
+    public void onShareClicked(Text text) {
+        if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.IMAGE) {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("image/png");
+            share.putExtra(Intent.EXTRA_STREAM, text.getAttachment().getUri());
+            startActivity(Intent.createChooser(share, "Share Image"));
+        } else if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.VIDEO) {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("video/mpeg");
+            share.putExtra(Intent.EXTRA_STREAM, text.getAttachment().getUri());
+            startActivity(Intent.createChooser(share, "Share Video"));
+        }
+
+    }
+
+    @Override
     public boolean onItemLongClicked(Text text) {
         if (mActionMode == null) {
             mActionMode = startSupportActionMode(mActionModeCallback);
