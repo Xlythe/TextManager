@@ -317,7 +317,7 @@ public class Notifications {
         }
 
         stackBuilder.addNextIntent(intent);
-        return stackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
+        return stackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private static PendingIntent buildOnDismissIntent(Context context, int requestCode, Set<Text> texts, boolean dismissAll) {
