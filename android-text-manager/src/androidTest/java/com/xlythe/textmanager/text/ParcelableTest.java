@@ -69,7 +69,12 @@ public class ParcelableTest extends TestCase {
 
     public void testText() {
         // Set up the Parcelable object.
-        Parcelable original = new Text.Builder().build();
+        Parcelable original = new Text.DebugBuilder()
+                .setSender("123-456-7890")
+                .setThreadId(1000l)
+                .message("Hello World")
+                .addRecipient("098-765-4321")
+                .build();
 
         // Write the data.
         Parcel parcel = createParcel(original);

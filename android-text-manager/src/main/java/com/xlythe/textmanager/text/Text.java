@@ -8,6 +8,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
+import android.support.annotation.VisibleForTesting;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -509,10 +510,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
     }
 
-    /**
-     * Visible for testing
-     */
-    static class DebugBuilder extends Builder {
+    @VisibleForTesting
+    public static class DebugBuilder extends Builder {
         private Contact mSender;
         private long mThreadId;
 
@@ -528,8 +527,50 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             return this;
         }
 
+        public DebugBuilder addRecipient(String contact) {
+            addRecipient(new Contact(contact));
+            return this;
+        }
+
         public DebugBuilder setThreadId(long threadId) {
             mThreadId = threadId;
+            return this;
+        }
+
+        @Override
+        public DebugBuilder addRecipient(Context context, String address) {
+            super.addRecipient(context, address);
+            return this;
+        }
+
+        @Override
+        public DebugBuilder addRecipient(Contact address) {
+            super.addRecipient(address);
+            return this;
+        }
+
+        public DebugBuilder addRecipients(Context context, String... addresses) {
+            super.addRecipients(context, addresses);
+            return this;
+        }
+
+        public DebugBuilder addRecipients(Collection<Contact> addresses) {
+            super.addRecipients(addresses);
+            return this;
+        }
+
+        public DebugBuilder addRecipients(Contact... addresses) {
+            super.addRecipients(addresses);
+            return this;
+        }
+
+        public DebugBuilder attach(Attachment attachment) {
+            super.attach(attachment);
+            return this;
+        }
+
+        public DebugBuilder message(String message) {
+            super.message(message);
             return this;
         }
 

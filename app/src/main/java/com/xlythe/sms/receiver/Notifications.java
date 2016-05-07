@@ -61,7 +61,7 @@ public class Notifications {
         buildGroupSummary(context, texts, GROUP_SUMMARY_ID);
     }
 
-    public static void buildNotification(Context context, Set<Text> texts, int id) {
+    private static void buildNotification(Context context, Set<Text> texts, int id) {
         Log.v(TAG, "Building a notification");
         context = context.getApplicationContext();
         addNotificationId(context, id);
@@ -96,7 +96,7 @@ public class Notifications {
         notificationManager.notify(id, builder.build());
     }
 
-    public static void buildGroupSummary(Context context, Set<Text> texts, int id) {
+    private static void buildGroupSummary(Context context, Set<Text> texts, int id) {
         Log.v(TAG, "Building group summary");
         context = context.getApplicationContext();
 

@@ -1,22 +1,19 @@
 package com.xlythe.textmanager.text.concurrency;
 
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Represents a variable that needs to be loaded.
  */
 public abstract class FutureImpl<T> implements Future<T> {
-    private static final HandlerThread sBackgroundThread = new HandlerThread("FutureBackgroundThread");
-
-    static {
-        sBackgroundThread.start();
-    }
+    private static final ExecutorService sExecutorService = Executors.newSingleThreadExecutor();
 
     // This handler posts to the thread it's created on.
     private final Handler mForegroundHandler;
-    private final Handler mBackgroundHandler = new Handler(sBackgroundThread.getLooper());
 
     public FutureImpl() {
         if (Looper.myLooper() != null) {
@@ -28,7 +25,7 @@ public abstract class FutureImpl<T> implements Future<T> {
 
     @Override
     public void get(final Callback<T> callback) {
-        mBackgroundHandler.post(new Runnable() {
+        sExecutorService.submit(new Runnable() {
             @Override
             public void run() {
                 // We got the result, but we're still on the background thread.

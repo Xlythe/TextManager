@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.app.IntentService;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -19,7 +18,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 
-import com.xlythe.textmanager.MessageCallback;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -32,7 +30,6 @@ import com.xlythe.textmanager.text.pdu.RetrieveConf;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
