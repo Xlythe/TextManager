@@ -26,7 +26,6 @@
         <TextView
             android:layout_margin="16dp"
             android:id="@+id/duration"
-            android:text="0:07"
             android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -35,21 +34,22 @@
             android:layout_alignParentEnd="true"/>
 
         <ImageButton
-            android:layout_margin="8dp"
-            android:padding="16dp"
             android:id="@+id/play"
-            android:background="@drawable/ic_pause"
+            android:src="@drawable/ic_pause"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_centerVertical="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_margin="8dp"
+            android:scaleType="fitXY"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
     </RelativeLayout>
 
     <ProgressBar
         android:id="@+id/seek"
-        style="@android:style/Widget.ProgressBar.Horizontal"
         android:progressDrawable="@drawable/progress_drawable"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
-        android:layout_height="2dp"/>
+        android:layout_height="2dp"
+        style="@android:style/Widget.ProgressBar.Horizontal"/>
 
 </RelativeLayout>

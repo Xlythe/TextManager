@@ -47,10 +47,10 @@ public class MediaActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (video.isPlaying()) {
                     video.pause();
-                    play.setBackgroundResource(R.drawable.ic_play);
+                    play.setImageResource(R.drawable.ic_play);
                 } else {
                     video.start();
-                    play.setBackgroundResource(R.drawable.ic_pause);
+                    play.setImageResource(R.drawable.ic_pause);
                 }
             }
         });
@@ -74,6 +74,9 @@ public class MediaActivity extends AppCompatActivity {
                             String millis = milliFormat.format(video.getCurrentPosition());
                             duration.setText(millis);
                             mHandler.post(this);
+
+                            // Update the play button (in case the video has reached the end)
+                            play.setImageResource(video.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
                         }
                     });
                 }
