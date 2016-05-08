@@ -79,8 +79,7 @@ public class LegacyCameraModule extends ICameraModule {
 
         mVideoRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         mVideoRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
-        CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
-        mVideoRecorder.setProfile(cpHigh);
+        mVideoRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_720P));
         mVideoRecorder.setOutputFile(file.getAbsolutePath());
         mVideoRecorder.setMaxDuration(30000); // 30 seconds
         mVideoRecorder.setMaxFileSize(10000000); // Approximately 10 megabytes

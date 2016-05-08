@@ -18,6 +18,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -31,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -384,7 +388,25 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new Contact.ContactCursor(contentResolver.query(uri, null, clause, null, sortOrder.getKey()));
     }
 
+    /**
+     * Santizies a phone number, stripping out any extensions and country codes.
+     *
+     * WARNING: If you then try to send a text to this number (and it was international),
+     * the text will not send. The country code was stripped out.
+     */
+    private String sanitizeNumber(String phoneNumber) {
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        try {
+            Phonenumber.PhoneNumber numberProto = phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry());
+            return Long.toString(numberProto.getNationalNumber());
+        } catch (NumberParseException e) {
+            e.printStackTrace();
+        }
+        return phoneNumber;
+    }
+
     public Contact lookupContact(String phoneNumber) {
+        phoneNumber = sanitizeNumber(phoneNumber);
         Contact contact = mContactCache.get(phoneNumber);
         if (contact == null) {
             Cursor c;
@@ -425,14 +447,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         if (phoneNumber == null) {
             return Contact.UNKNOWN;
         } else {
-            if (phoneNumber.charAt(0) == '+' && phoneNumber.charAt(1) == '1') {
-                return lookupContact(phoneNumber.substring(2));
-            } else if (phoneNumber.charAt(0) == '1') {
-                return lookupContact(phoneNumber.substring(1));
-            } else {
-                return lookupContact(phoneNumber);
-            }
-
+            return lookupContact(phoneNumber);
         }
     }
 

@@ -282,14 +282,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 public Set<Contact> get() {
                     TextManager manager = TextManager.getInstance(context);
                     for (String address : mMemberAddresses) {
-                        Log.d(TAG, "address" + address);
-                        if (address.charAt(0) == '+' && address.charAt(1) == '1') {
-                            addMember(manager.lookupContact(address.substring(2)));
-                        } else if (address.charAt(0) == '1') {
-                            addMember(manager.lookupContact(address.substring(1)));
-                        } else {
-                            addMember(manager.lookupContact(address));
-                        }
+                        addMember(manager.lookupContact(address));
                     }
                     return mMembers;
                 }
