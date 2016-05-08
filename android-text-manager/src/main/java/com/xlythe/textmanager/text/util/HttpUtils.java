@@ -185,8 +185,10 @@ public class HttpUtils {
                     Log.d("httputils", response.getAllHeaders()[i].toString());
                 }
             }
-            if (status.getStatusCode() != 200) { // HTTP 200 is success.
-                throw new IOException("HTTP error: " + status.getReasonPhrase());
+
+            // HTTP 200 is success.
+            if (status.getStatusCode() != 200 && status.getStatusCode() != 201) {
+                throw new IOException(String.format("HTTP error[%d]: %s", status.getStatusCode(), status.getReasonPhrase()));
             }
 
             HttpEntity entity = response.getEntity();
