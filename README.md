@@ -8,7 +8,7 @@ Download
 --------
 ```groovy
 dependencies {
-  compile 'com.xlythe:android-text-manager:0.0.1'
+  compile 'com.xlythe:android-text-manager:0.0.2'
 }
 ```
 
