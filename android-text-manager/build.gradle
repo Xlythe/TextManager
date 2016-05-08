@@ -13,7 +13,7 @@ ext {
     siteUrl = 'https://github.com/Xlythe/AndroidTextManager'
     gitUrl = 'https://github.com/Xlythe/AndroidTextManager.git'
 
-    libraryVersion = '0.0.1'
+    libraryVersion = '0.0.2'
 
     developerId = 'bourdakos1'
     developerName = 'Nicholas Bourdakos'
