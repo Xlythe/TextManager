@@ -173,6 +173,8 @@ public class Notifications {
         Set<Text> texts = getVisibleTexts(context);
         if (texts.isEmpty()) {
             notificationManager.cancel(GROUP_SUMMARY_ID);
+        } else {
+            buildGroupSummary(context, texts, GROUP_SUMMARY_ID);
         }
     }
 
@@ -452,7 +454,7 @@ public class Notifications {
                         .addRecipients(text.getMembersExceptMe(context).get())
                         .build());
             } else {
-                Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " +text.getThreadId());
+                Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " + text.getThreadId());
                 Intent startActivity = new Intent(context, MessageActivity.class);
                 startActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity.putExtra(MessageActivity.EXTRA_THREAD_ID, text.getThreadId());
@@ -480,9 +482,9 @@ public class Notifications {
             Log.v(TAG, "Clearing notifications");
             if (intent.hasExtra(EXTRA_THREAD_ID)) {
                 String threadId = intent.getStringExtra(EXTRA_THREAD_ID);
-                Notifications.clearNotification(context, threadId);
+                Notifications.dismissNotification(context, threadId);
             } else {
-                Notifications.clearAllNotifications(context);
+                Notifications.dismissAllNotifications(context);
             }
         }
     }
