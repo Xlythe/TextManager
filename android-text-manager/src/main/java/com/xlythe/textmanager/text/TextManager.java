@@ -406,16 +406,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public Contact lookupContact(String phoneNumber) {
-        phoneNumber = sanitizeNumber(phoneNumber);
-        Contact contact = mContactCache.get(phoneNumber);
+        String sanitizedNumber = sanitizeNumber(phoneNumber);
+        Contact contact = mContactCache.get(sanitizedNumber);
         if (contact == null) {
             Cursor c;
             if (phoneNumber.matches(".*\\d+.*")) {
-                // Found a phone number (probably)
+                // Found a phone number (probably). We'll look up using the sanitized number,
+                // as that will match even if the international number is stored as a contact.
                 ContentResolver contentResolver = mContext.getContentResolver();
                 Uri uri = Uri.withAppendedPath(
                         ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                        Uri.encode(phoneNumber));
+                        Uri.encode(sanitizedNumber));
 
                 c = contentResolver.query(uri, null, null, null, null);
             } else {
@@ -427,6 +428,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 if (c != null && c.moveToFirst()) {
                     contact = new Contact(c);
                 } else {
+                    // There was no contact with this number. Use the full (unsanitized) number
+                    // so that we don't lose any information (such as country code).
                     contact = new Contact(phoneNumber);
 
                     if (TextUtils.isEmpty(contact.getNumber(mContext).get())) {
@@ -436,7 +439,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } finally {
                 if (c != null) c.close();
             }
-            mContactCache.put(phoneNumber, contact);
+            // Save the contact in the cache with the sanitized number, in case they're looking up
+            // the contact both with and without country codes.
+            mContactCache.put(sanitizedNumber, contact);
         }
         return contact;
     }
