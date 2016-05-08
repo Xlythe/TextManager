@@ -147,6 +147,13 @@ public class Notifications {
     /**
      * Dismisses all notifications for the given thread
      */
+    public static void dismissNotification(Context context, long threadId) {
+        dismissNotification(context, Long.toString(threadId));
+    }
+
+    /**
+     * Dismisses all notifications for the given thread
+     */
     public static void dismissNotification(Context context, Thread thread) {
         dismissNotification(context, thread.getId());
     }
