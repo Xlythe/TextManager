@@ -23,27 +23,28 @@ TextManager manager = TextManager.getInstance(context);
 To get a list of conversations aka "threads"
 ```java
 List<Thread> threads = manager.getThreads().get();
+
+// You can also get a cursor of threads
+Thread.ThreadCursor threads = manager.getThreadCursor();
 ```
 
-You can also get a cursor of threads
+To get a list of messages
 ```java
-Thread.ThreadCursor cursor = manager.getThreadCursor();
+List<Text> texts = manager.getMessages(thread).get();
+
+// You can also get a cursor of messages
+Text.TextCursor texts = manager.getMessageCursor(thread)
 ```
 
-```java
-manager.getMessageCursor(thread)
-```
-
-With a thread you can get the latest message and get more info from there
+With a thread you can get the latest message
 ```java
 Text text = thread.getLatestMessage(context).get();
-text.getThreadId()
-text.getTimestamp();
+
+// And with a text you can get more info
+text.getSender();
 text.getBody();
 text.getAttachment();
-text.sender();
-text.getMembersExceptMe(context).get();
-// and the list goes on...
+text.getTimestamp();
 ```
 
 ### Sending Messages
