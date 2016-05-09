@@ -520,21 +520,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     protected void send() {
         final String message = mEditText.getText().toString();
-        mThread.getLatestMessage(getBaseContext()).get(new Future.Callback<Text>() {
-            @Override
-            public void get(Text instance) {
-                instance.getMembersExceptMe(getBaseContext()).get(new Future.Callback<Set<Contact>>() {
-                    @Override
-                    public void get(Set<Contact> instance) {
-                        mManager.send(new Text.Builder()
-                                .message(message)
-                                .addRecipients(instance)
-                                .build());
-                    }
-                });
-            }
-        });
-
+        mManager.send(message).to(mThread);
         mEditText.setText(null);
     }
 }

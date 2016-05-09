@@ -161,15 +161,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-                    @Override
-                    public void get(Set<Contact> instance) {
-                        TextManager.getInstance(getContext()).send(new Text.Builder()
-                                .addRecipients(instance)
-                                .attach(buildAttachment(position))
-                                .build());
-                    }
-                });
+                TextManager.getInstance(getContext()).send(buildAttachment(position)).to(mText);
                 mContainer.setVisibility(View.GONE);
             }
         });

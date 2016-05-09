@@ -55,28 +55,12 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
 
     @Override
     public void onImageCaptured(final File file) {
-        mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-            @Override
-            public void get(Set<Contact> instance) {
-                TextManager.getInstance(getContext()).send(new Text.Builder()
-                        .addRecipients(instance)
-                        .attach(new ImageAttachment(Uri.fromFile(file)))
-                        .build());
-            }
-        });
+        TextManager.getInstance(getContext()).send(new ImageAttachment(Uri.fromFile(file))).to(mText);
     }
 
     @Override
     public void onVideoCaptured(final File file) {
-        mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-            @Override
-            public void get(Set<Contact> instance) {
-                TextManager.getInstance(getContext()).send(new Text.Builder()
-                        .addRecipients(instance)
-                        .attach(new VideoAttachment(Uri.fromFile(file)))
-                        .build());
-            }
-        });
+        TextManager.getInstance(getContext()).send(new VideoAttachment(Uri.fromFile(file))).to(mText);
     }
 
     @Override

@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
@@ -49,15 +48,7 @@ public class StickerFragment extends Fragment {
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(final Drawable drawable) {
-                mText.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-                    @Override
-                    public void get(Set<Contact> instance) {
-                        TextManager.getInstance(getContext()).send(new Text.Builder()
-                                .addRecipients(instance)
-                                .attach(new ImageAttachment(getContext(), "sticker", drawable))
-                                .build());
-                    }
-                });
+                TextManager.getInstance(getContext()).send(new ImageAttachment(getContext(), "sticker", drawable)).to(mText);
             }
 
             @Override

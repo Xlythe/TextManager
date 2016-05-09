@@ -120,10 +120,7 @@ public class ComposeActivity extends AppCompatActivity {
 
         if (id == R.id.action_send) {
             if (!TextUtils.isEmpty(mMessage.getText().toString()) && !TextUtils.isEmpty(mContacts.getText().toString())) {
-                mManager.send(new Text.Builder()
-                        .message(mMessage.getText().toString())
-                        .addRecipients(mContacts.getContacts())
-                        .build());
+                mManager.send(mMessage.getText().toString()).to(mContacts.getContacts());
                 finish();
             }
             return true;

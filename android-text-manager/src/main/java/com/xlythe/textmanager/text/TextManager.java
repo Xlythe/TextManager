@@ -32,6 +32,7 @@ import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -166,9 +167,96 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public void send(final Text text) {
+        //TODO: deprecate this
         Intent sendService = new Intent(mContext, SendService.class);
         sendService.putExtra(SendService.TEXT_EXTRA, text);
         mContext.startService(sendService);
+    }
+
+    public static class Builder {
+        Context mContext;
+        String mMessage;
+        Attachment mAttachment;
+
+        private Builder(Context context, String message) {
+            mContext = context;
+            mMessage = message;
+        }
+
+        private Builder(Context context, Attachment attachment) {
+            mContext = context;
+            mAttachment = attachment;
+        }
+
+        private Builder(Context context, String message, Attachment attachment) {
+            mContext = context;
+            mMessage = message;
+            mAttachment = attachment;
+        }
+
+        private void send(Text.Builder builder) {
+            if (mMessage != null) {
+                builder.message(mMessage);
+            }
+            if (mAttachment != null) {
+                builder.attach(mAttachment);
+            }
+            Intent sendService = new Intent(mContext, SendService.class);
+            sendService.putExtra(SendService.TEXT_EXTRA, builder.build());
+            mContext.startService(sendService);
+        }
+
+        public void to(String... addresses) {
+            Text.Builder builder = new Text.Builder().addRecipients(mContext, addresses);
+            send(builder);
+        }
+
+        public void to(Collection<Contact> addresses) {
+            Text.Builder builder = new Text.Builder().addRecipients(addresses);
+            send(builder);
+        }
+
+        public void to(Contact... addresses) {
+            Text.Builder builder = new Text.Builder().addRecipients(addresses);
+            send(builder);
+        }
+
+        public void to(Text text) {
+            text.getMembersExceptMe(mContext).get(new Future.Callback<Set<Contact>>() {
+                        @Override
+                        public void get(Set<Contact> instance) {
+                            Text.Builder builder = new Text.Builder().addRecipients(instance);
+                                    send(builder);
+                        }
+                    });
+        }
+
+        public void to(Thread thread) {
+            thread.getLatestMessage(mContext).get(new Future.Callback<Text>() {
+                @Override
+                public void get(Text instance) {
+                    instance.getMembersExceptMe(mContext).get(new Future.Callback<Set<Contact>>() {
+                        @Override
+                        public void get(Set<Contact> instance) {
+                            Text.Builder builder = new Text.Builder().addRecipients(instance);
+                                    send(builder);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    public Builder send(String message) {
+        return new Builder(mContext, message);
+    }
+
+    public Builder send(String message, Attachment attachment) {
+        return new Builder(mContext, message, attachment);
+    }
+
+    public Builder send(Attachment attachment) {
+        return new Builder(mContext, attachment);
     }
 
     public Future<List<Text>> search(String text) {
