@@ -4,22 +4,23 @@ Android Text Manager
 Our goal is to make sending SMS and MMS easier on the Android OS.
 
 
-Download
---------
+Where to Download
+-----------------
 ```groovy
 dependencies {
   compile 'com.xlythe:android-text-manager:0.0.3'
 }
 ```
 
-Usage
------
+Getting Started
+---------------
 First thing to do is grab an instance of TextManager
 ```java
 TextManager manager = TextManager.getInstance(context);
 ```
 
-### Reading Messages
+Reading Messages
+----------------
 To get a list of conversations aka "threads"
 ```java
 List<Thread> threads = manager.getThreads().get();
@@ -40,14 +41,15 @@ With a thread you can get the latest message
 ```java
 Text text = thread.getLatestMessage(context).get();
 
-// And with a text you can get more info
+// With a text you can get more info
 text.getSender();
 text.getBody();
 text.getAttachment();
 text.getTimestamp();
 ```
 
-### Sending Messages
+Sending Messages
+----------------
 To send a message:
 ```java
 manager.send("Hello World").to("1234567890");
@@ -61,27 +63,29 @@ manager.send("Hello World").to(thread);
 manager.send("Hello World").to(text);
 ```
 
-### Receiving and Storing Messages
+Receiving and Storing Messages
+------------------------------
 Just extend our TextReceiver
 ```java
 public class MessageReceiver extends TextReceiver {
-  @Override
-    public void onMessageReceived(Context context, Text text) {
+    @Override
+        public void onMessageReceived(Context context, Text text) {
     
-  }
+    }
 }
 ```
 And add the receiver to your manifest
 ```xml
 <receiver android:name=".receiver.MessageReceiver">
-  <intent-filter>
-    <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
-  </intent-filter>
+    <intent-filter>
+        <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
+    </intent-filter>
 </receiver>
 ```
 
-### Permissions
-And lastly, but very import PERMISSIONS!
+Permissions
+-----------
+Lastly, but very import, don't forget to add permissions to the manifest
 ```xml
 <uses-permission android:name="android.permission.SEND_SMS" />
 <uses-permission android:name="android.permission.SEND_MMS" />
@@ -103,7 +107,7 @@ And lastly, but very import PERMISSIONS!
 ```
 
 License
---------
+-------
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
