@@ -20,6 +20,7 @@ TextManager manager = TextManager.getInstance(context);
 ```
 
 
+
 To get a list of conversations aka "threads"
 ```java
 List<Thread> threads = manager.getThreads().get();
@@ -29,6 +30,7 @@ You can also get a cursor of threads
 ```java
 Thread.ThreadCursor cursor = manager.getThreadCursor();
 ```
+
 
 
 With a thread you can get the latest message and get more info from there
@@ -44,6 +46,7 @@ text.getMembersExceptMe(context).get();
 ```
 
 
+
 To send a message:
 - use Text Builder to build your message
 - and send using TextManger
@@ -56,6 +59,7 @@ manager.send(new Text.Builder()
                 .build()
 );
 ```
+
 
 
 To reply to a thread of messages given a thread id (This handles group messaging):
