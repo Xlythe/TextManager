@@ -8,7 +8,7 @@ Download
 --------
 ```groovy
 dependencies {
-  compile 'com.xlythe:android-text-manager:0.0.2'
+  compile 'com.xlythe:android-text-manager:0.0.3'
 }
 ```
 
@@ -44,52 +44,37 @@ text.getMembersExceptMe(context).get();
 
 ### Sending Messages
 To send a message:
-  * use Text Builder to build your message
-  * and send using TextManger
 ```java
-manager.send(new Text.Builder()
-                .message("HIII!!!!")
-                .addRecipient(context, "1234567890")
-                .attach(new ImageAttachment(uri))
-                .attach(new VideoAttachment(uri))
-                .build()
-);
+manager.send("HIII!!!!").to("1234567890");
+manager.send(new ImageAttachment(uri)).to("1234567890", "9998881234");
+manager.send("HIII!!!!", new VideoAttachment(uri)).to(contact);
 ```
 
-To reply to a thread of messages given a thread id (This handles group messaging):
-  * use TextManager to grab the Thread
-  * get the latest message in the thread using getLatestMessage
-  * get all the members in the conversation minus yourself
+To reply to a thread or message (This handles group messaging):
 ```java
-// There are a few ways to do this.
-// This example uses callbacks, but you can get all the same data for the Builder from the methods above
-Thread thread = manager.getThread(id).get()
-thread.getLatestMessage(context).get(new Future.Callback<Text>() {
-            @Override
-            public void get(Text instance) {
-                instance.getMembersExceptMe(context).get(new Future.Callback<Set<Contact>>() {
-                    @Override
-                    public void get(Set<Contact> instance) {
-                        manager.send(new Text.Builder()
-                                .message("HIII!!!!")
-                                .addRecipients(instance)
-                                .build());
-                    }
-                });
-            }
-        });
+manager.send("HIII!!!!").to(text);
+manager.send("HIII!!!!").to(thread);
 ```
 
 ### Receiving and Storing Messages
 Just extend our TextReceiver
 ```java
 public class MessageReceiver extends TextReceiver {
-    @Override
+  @Override
     public void onMessageReceived(Context context, Text text) {
     
-    }
+  }
 }
 ```
+And add the receiver to your manifest
+```xml
+<receiver android:name=".receiver.MessageReceiver">
+  <intent-filter>
+    <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
+  </intent-filter>
+</receiver>
+```
+
 ### Permissions
 And lastly, but very import PERMISSIONS!
 ```xml
