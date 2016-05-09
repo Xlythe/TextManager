@@ -19,6 +19,7 @@ First thing to do is grab an instance of TextManager
 TextManager manager = TextManager.getInstance(context);
 ```
 
+
 To get a list of conversations aka "threads"
 ```java
 List<Thread> threads = manager.getThreads().get();
@@ -28,6 +29,7 @@ You can also get a cursor of threads
 ```java
 Thread.ThreadCursor cursor = manager.getThreadCursor();
 ```
+
 
 With a thread you can get the latest message and get more info from there
 ```java
@@ -41,7 +43,8 @@ text.getMembersExceptMe(context).get();
 // and the list goes on...
 ```
 
-To simply send a message all that is needed is to:
+
+To send a message:
 - use Text Builder to build your message
 - and send using TextManger
 ```java
@@ -54,7 +57,8 @@ manager.send(new Text.Builder()
 );
 ```
 
-In order to reply to a thread of messages given a thread id (This handles group messaging):
+
+To reply to a thread of messages given a thread id (This handles group messaging):
 - use TextManager to grab the Thread
 - get the latest message in the thread using getLatestMessage
 - get all the members in the conversation minus yourself
