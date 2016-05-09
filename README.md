@@ -51,14 +51,14 @@ text.getTimestamp();
 To send a message:
 ```java
 manager.send("Hello World").to("1234567890");
-manager.send(new ImageAttachment(uri)).to("1234567890", "9998881234");
+manager.send(new ImageAttachment(uri)).to("1234567890", "9998881234", "1112223456"...);
 manager.send("Hello World", new VideoAttachment(uri)).to(contact);
 ```
 
 To reply to a thread or message (This handles group messaging):
 ```java
-manager.send("Hello World").to(text);
 manager.send("Hello World").to(thread);
+manager.send("Hello World").to(text);
 ```
 
 ### Receiving and Storing Messages
