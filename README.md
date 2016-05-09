@@ -14,16 +14,68 @@ dependencies {
 
 Usage
 -----
+First thing to do is grab an instance of TextManager
 ```java
-mManager = TextManager.getInstance(context);
-mManager.send(new Text.Builder()
+TextManager manager = TextManager.getInstance(context);
+```
+
+To get a list of conversations aka "threads"
+```java
+List<Thread> threads = manager.getThreads().get();
+```
+
+You can also get a cursor of threads
+```java
+Thread.ThreadCursor cursor = manager.getThreadCursor();
+```
+
+With a thread you can get the latest message and get more info from there
+```java
+Text text = thread.getLatestMessage(context).get();
+text.getThreadId()
+text.getTimestamp();
+text.getBody();
+text.getAttachment();
+text.sender();
+text.getMembersExceptMe(context).get();
+// and the list goes on...
+```
+
+To simply send a message all that is needed is to:
+- use Text Builder to build your message
+- and send using TextManger
+```java
+manager.send(new Text.Builder()
                 .message("HIII!!!!")
                 .recipient("1234567890")
-                .attach(bmp1)
-                .attach(bmp2)
-                .attach(bmp3)
+                .attach(new ImageAttachment(uri))
+                .attach(new VideoAttachment(uri))
                 .build()
 );
+```
+
+In order to reply to a thread of messages given a thread id (This handles group messaging):
+- use TextManager to grab the Thread
+- get the latest message in the thread using getLatestMessage
+- get all the members in the conversation minus yourself
+```java
+// There are a few ways to do this.
+// This example uses callbacks, but you can get all the same data for the Builder from the methods above
+Thread thread = manager.getThread(id).get()
+thread.getLatestMessage(context).get(new Future.Callback<Text>() {
+            @Override
+            public void get(Text instance) {
+                instance.getMembersExceptMe(context).get(new Future.Callback<Set<Contact>>() {
+                    @Override
+                    public void get(Set<Contact> instance) {
+                        manager.send(new Text.Builder()
+                                .message("HIII!!!!")
+                                .addRecipients(instance)
+                                .build());
+                    }
+                });
+            }
+        });
 ```
 
 Limitations
