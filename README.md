@@ -69,7 +69,7 @@ Just extend our TextReceiver
 ```java
 public class MessageReceiver extends TextReceiver {
     @Override
-        public void onMessageReceived(Context context, Text text) {
+    public void onMessageReceived(Context context, Text text) {
     
     }
 }
