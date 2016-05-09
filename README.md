@@ -103,6 +103,7 @@ Lastly, but very import, don't forget to add permissions to the manifest
 
 <!-- Used to get your information to know which messages are yours -->
 <uses-permission android:name="android.permission.READ_PROFILE" />
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
 <!-- Mms uses data network to send -->
 <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
@@ -112,8 +113,6 @@ Lastly, but very import, don't forget to add permissions to the manifest
 
 <!-- Keeps the phone awake while downloading messages -->
 <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
 
 License
