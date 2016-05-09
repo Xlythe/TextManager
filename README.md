@@ -19,6 +19,7 @@ First thing to do is grab an instance of TextManager
 TextManager manager = TextManager.getInstance(context);
 ```
 
+### Reading Messages
 To get a list of conversations aka "threads"
 ```java
 List<Thread> threads = manager.getThreads().get();
@@ -41,6 +42,7 @@ text.getMembersExceptMe(context).get();
 // and the list goes on...
 ```
 
+### Sending Messages
 To send a message:
   * use Text Builder to build your message
   * and send using TextManger
@@ -78,8 +80,8 @@ thread.getLatestMessage(context).get(new Future.Callback<Text>() {
         });
 ```
 
-The above shows you how to read and send messages
-To receive and store messages just extend our TextReceiver for both an sms and mms receiver
+### Receiving and Storing Messages
+Just extend our TextReceiver for both an sms and mms receiver
 ```java
 public class SmsReceiver extends TextReceiver {
     @Override
@@ -97,7 +99,7 @@ public class MmsReceiver extends TextReceiver {
     }
 }
 ```
-
+### Permissions
 And lastly, but very import PERMISSIONS!
 ```xml
 <uses-permission android:name="android.permission.SEND_SMS" />
