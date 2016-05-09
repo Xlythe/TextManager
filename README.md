@@ -102,7 +102,6 @@ Lastly, but very import, don't forget to add permissions to the manifest
 <uses-permission android:name="android.permission.READ_PROFILE" />
 <uses-permission android:name="android.permission.WAKE_LOCK" />
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-<!-- Thats a lot and I probably forgot some -->
 <!-- You may not need all of these, depending on what you are doing -->
 ```
 
