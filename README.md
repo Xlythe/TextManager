@@ -63,8 +63,8 @@ manager.send("Hello World").to(thread);
 manager.send("Hello World").to(text);
 ```
 
-Receiving and Storing Messages
-------------------------------
+Receiving Messages
+------------------
 Just extend our TextReceiver
 ```java
 public class MessageReceiver extends TextReceiver {
@@ -87,22 +87,33 @@ Permissions
 -----------
 Lastly, but very import, don't forget to add permissions to the manifest
 ```xml
+<!-- You may not need all of these, depending on what you are doing -->
+
+<!-- Used to send and receive messages -->
 <uses-permission android:name="android.permission.SEND_SMS" />
 <uses-permission android:name="android.permission.SEND_MMS" />
 <uses-permission android:name="android.permission.RECEIVE_SMS" />
 <uses-permission android:name="android.permission.RECEIVE_MMS" />
 <uses-permission android:name="android.permission.READ_SMS" />
 <uses-permission android:name="android.permission.WRITE_SMS" />
+
+<!-- Used to get contact information to send messages -->
 <uses-permission android:name="android.permission.READ_CONTACTS" />
 <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
+<!-- Used to get your information to know which messages are yours -->
+<uses-permission android:name="android.permission.READ_PROFILE" />
+
+<!-- Mms uses data network to send -->
 <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.READ_PROFILE" />
+
+<!-- Keeps the phone awake while downloading messages -->
 <uses-permission android:name="android.permission.WAKE_LOCK" />
+
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-<!-- You may not need all of these, depending on what you are doing -->
 ```
 
 License
