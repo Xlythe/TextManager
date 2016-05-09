@@ -49,7 +49,7 @@ To send a message:
 ```java
 manager.send(new Text.Builder()
                 .message("HIII!!!!")
-                .recipient("1234567890")
+                .addRecipient(context, "1234567890")
                 .attach(new ImageAttachment(uri))
                 .attach(new VideoAttachment(uri))
                 .build()
@@ -81,21 +81,12 @@ thread.getLatestMessage(context).get(new Future.Callback<Text>() {
 ```
 
 ### Receiving and Storing Messages
-Just extend our TextReceiver for both an sms and mms receiver
+Just extend our TextReceiver
 ```java
-public class SmsReceiver extends TextReceiver {
+public class MessageReceiver extends TextReceiver {
     @Override
     public void onMessageReceived(Context context, Text text) {
-
-    }
-}
-```
-
-```java
-public class MmsReceiver extends TextReceiver {
-    @Override
-    public void onMessageReceived(Context context, Text text) {
-
+    
     }
 }
 ```
