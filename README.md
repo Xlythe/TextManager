@@ -30,6 +30,10 @@ You can also get a cursor of threads
 Thread.ThreadCursor cursor = manager.getThreadCursor();
 ```
 
+```java
+manager.getMessageCursor(thread)
+```
+
 With a thread you can get the latest message and get more info from there
 ```java
 Text text = thread.getLatestMessage(context).get();
