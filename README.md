@@ -45,15 +45,15 @@ text.getMembersExceptMe(context).get();
 ### Sending Messages
 To send a message:
 ```java
-manager.send("HIII!!!!").to("1234567890");
+manager.send("Hello World").to("1234567890");
 manager.send(new ImageAttachment(uri)).to("1234567890", "9998881234");
-manager.send("HIII!!!!", new VideoAttachment(uri)).to(contact);
+manager.send("Hello World", new VideoAttachment(uri)).to(contact);
 ```
 
 To reply to a thread or message (This handles group messaging):
 ```java
-manager.send("HIII!!!!").to(text);
-manager.send("HIII!!!!").to(thread);
+manager.send("Hello World").to(text);
+manager.send("Hello World").to(thread);
 ```
 
 ### Receiving and Storing Messages
@@ -96,13 +96,6 @@ And lastly, but very import PERMISSIONS!
 <!-- Thats a lot and I probably forgot some -->
 <!-- You may not need all of these, depending on what you are doing -->
 ```
-
-Limitations
------------
-* Re-downloading a failed MMS not yet implemented
-* Dual sim support not yet added
-* Demo app not yet finished
-
 
 License
 --------
