@@ -42,8 +42,8 @@ text.getMembersExceptMe(context).get();
 ```
 
 To send a message:
-⋅⋅* use Text Builder to build your message
-⋅⋅* and send using TextManger
+  * use Text Builder to build your message
+  * and send using TextManger
 ```java
 manager.send(new Text.Builder()
                 .message("HIII!!!!")
@@ -55,9 +55,9 @@ manager.send(new Text.Builder()
 ```
 
 To reply to a thread of messages given a thread id (This handles group messaging):
-⋅⋅* use TextManager to grab the Thread
-⋅⋅* get the latest message in the thread using getLatestMessage
-⋅⋅* get all the members in the conversation minus yourself
+  * use TextManager to grab the Thread
+  * get the latest message in the thread using getLatestMessage
+  * get all the members in the conversation minus yourself
 ```java
 // There are a few ways to do this.
 // This example uses callbacks, but you can get all the same data for the Builder from the methods above
