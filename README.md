@@ -42,8 +42,8 @@ text.getMembersExceptMe(context).get();
 ```
 
 To send a message:
-  - use Text Builder to build your message
-  - and send using TextManger
+⋅⋅* use Text Builder to build your message
+⋅⋅* and send using TextManger
 ```java
 manager.send(new Text.Builder()
                 .message("HIII!!!!")
@@ -55,9 +55,9 @@ manager.send(new Text.Builder()
 ```
 
 To reply to a thread of messages given a thread id (This handles group messaging):
-  - use TextManager to grab the Thread
-  - get the latest message in the thread using getLatestMessage
-  - get all the members in the conversation minus yourself
+⋅⋅* use TextManager to grab the Thread
+⋅⋅* get the latest message in the thread using getLatestMessage
+⋅⋅* get all the members in the conversation minus yourself
 ```java
 // There are a few ways to do this.
 // This example uses callbacks, but you can get all the same data for the Builder from the methods above
@@ -76,6 +76,45 @@ thread.getLatestMessage(context).get(new Future.Callback<Text>() {
                 });
             }
         });
+```
+
+The above shows you how to read and send messages
+To receive and store messages just extend our TextReceiver for both an sms and mms receiver
+```java
+public class SmsReceiver extends TextReceiver {
+    @Override
+    public void onMessageReceived(Context context, Text text) {
+
+    }
+}
+```
+
+```java
+public class MmsReceiver extends TextReceiver {
+    @Override
+    public void onMessageReceived(Context context, Text text) {
+
+    }
+}
+```
+
+And lastly, but very import PERMISSIONS!
+```xml
+<uses-permission android:name="android.permission.SEND_SMS" />
+<uses-permission android:name="android.permission.SEND_MMS" />
+<uses-permission android:name="android.permission.RECEIVE_SMS" />
+<uses-permission android:name="android.permission.RECEIVE_MMS" />
+<uses-permission android:name="android.permission.READ_SMS" />
+<uses-permission android:name="android.permission.WRITE_SMS" />
+<uses-permission android:name="android.permission.READ_CONTACTS" />
+<uses-permission android:name="android.permission.WRITE_CONTACTS" />
+<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+<uses-permission android:name="android.permission.WRITE_SETTINGS" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.READ_PROFILE" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
 
 Limitations
