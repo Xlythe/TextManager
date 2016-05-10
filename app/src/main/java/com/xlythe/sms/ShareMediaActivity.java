@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ContactAdapter;
+import com.xlythe.sms.adapter.ShareMediaAdapter;
 import com.xlythe.sms.decoration.DividerItemDecoration;
 import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
@@ -19,18 +20,14 @@ import com.xlythe.textmanager.text.TextManager;
 
 import java.util.ArrayList;
 
-public class ShareMediaActivity extends AppCompatActivity {//implements ContactAdapter.ClickListener {
+public class ShareMediaActivity extends AppCompatActivity {
     private static final String TAG = ShareMediaActivity.class.getSimpleName();
-
-    public static final String EXTRA_CONTACTS = "contacts";
-    public static final String EXTRA_CURSOR = "cursor";
 
     private TextManager mManager;
 
-//    private ContactEditText mInputField;
-//    private RecyclerView mRecyclerView;
-//
-//    private ContactAdapter mAdapter;
+    private RecyclerView mRecyclerView;
+
+    private ShareMediaAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +62,11 @@ public class ShareMediaActivity extends AppCompatActivity {//implements ContactA
 //            }
 //        });
 //
-//        mRecyclerView = (RecyclerView) findViewById(R.id.list);
-//        mRecyclerView.setHasFixedSize(true);
-//        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        mAdapter = new ContactAdapter(this, mManager.getContactCursor(""));
-//        mRecyclerView.setAdapter(mAdapter);
-//        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
+        mRecyclerView = (RecyclerView) findViewById(R.id.list);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mAdapter = new ShareMediaAdapter(this, mManager.getThreadCursor());
+        mRecyclerView.setAdapter(mAdapter);
 //
 //        if (getIntent().hasExtra(EXTRA_CONTACTS)) {
 //            ArrayList<Contact> contacts = getIntent().getParcelableArrayListExtra(EXTRA_CONTACTS);

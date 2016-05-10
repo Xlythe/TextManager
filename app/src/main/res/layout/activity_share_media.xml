@@ -24,62 +24,11 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-
-    <LinearLayout
-        android:orientation="horizontal"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/list"
+        android:clipToPadding="false"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/checked"
-            android:layout_margin="16dp"
-            android:layout_width="40dp"
-            android:layout_height="40dp"/>
-        <TextView
-            android:textSize="16sp"
-            android:textColor="#212121"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:text="Will Harmon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <CheckBox
-            android:layout_margin="16dp"
-            android:layout_gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/checked"
-            android:layout_margin="16dp"
-            android:layout_width="40dp"
-            android:layout_height="40dp"/>
-        <TextView
-            android:textSize="16sp"
-            android:textColor="#212121"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="1"
-            android:text="Will Harmon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <CheckBox
-            android:layout_margin="16dp"
-            android:layout_gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    </LinearLayout>
-
-    <View
         android:layout_weight="1"
-        android:layout_width="0dp"
         android:layout_height="0dp"/>
 
     <LinearLayout
