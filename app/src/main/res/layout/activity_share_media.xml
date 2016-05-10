@@ -17,6 +17,7 @@
             android:layout_height="80dp"/>
         <EditText
             android:id="@+id/message"
+            android:inputType="textAutoCorrect|textCapSentences"
             android:background="@android:color/transparent"
             android:scrollbars="vertical"
             android:gravity="top|left"

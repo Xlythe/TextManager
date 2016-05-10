@@ -99,8 +99,10 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         public void createView() {
             if (getIsSelected()) {
                 checkBox.setChecked(true);
+                title.setTextColor(getContext().getResources().getColor(R.color.colorPrimary));
             } else {
                 checkBox.setChecked(false);
+                title.setTextColor(getContext().getResources().getColor(R.color.titleText));
             }
 
             String address = "";
