@@ -125,7 +125,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
-                        Log.e("MMS", "unable to persist message");
+                        Log.e(TAG, "unable to persist message");
                         onFail();
                     }
                 }

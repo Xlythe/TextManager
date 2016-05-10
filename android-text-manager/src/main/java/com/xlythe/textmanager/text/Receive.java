@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Receive {
+    private static final String TAG = Receive.class.getSimpleName();
 
     public static final String[] SMS_PROJECTION = new String[] {
             // Base item ID
@@ -70,10 +71,10 @@ public class Receive {
             @Override
             public void onAvailable(Network network) {
                 super.onAvailable(network);
-                latch.countDown();
                 ConnectivityManager.setProcessDefaultNetwork(network);
                 receive(context, uri, callback);
                 connectivityManager.unregisterNetworkCallback(this);
+                latch.countDown();
             }
         };
 
@@ -89,7 +90,7 @@ public class Receive {
             e.printStackTrace();
         }
         if (!success) {
-            Log.e("MMS","failed to establish a data network connection");
+            Log.e(TAG,"failed to establish a data network connection");
             connectivityManager.unregisterNetworkCallback(networkCallback);
             callback.onFail();
         }
@@ -106,7 +107,7 @@ public class Receive {
                     apnParameters.getProxyPort());
             callback.onSuccess(data);
         } catch (IOException ioe){
-            Log.e("MMS","download failed due to network error");
+            Log.e(TAG,"download failed due to network error");
             callback.onFail();
         }
     }
