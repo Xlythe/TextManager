@@ -2,7 +2,6 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,7 +96,6 @@ public class ContactIconAdapter extends RecyclerView.Adapter<ContactIconAdapter.
 
         public void createView() {
             profile.setImageDrawable(new ProfileDrawable(getContext(), getContacts()));
-            Log.d("TAG", getContacts().toString());
             profile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
