@@ -44,31 +44,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/checked"
-            android:layout_margin="6dp"
-            android:layout_width="48dp"
-            android:layout_height="48dp"/>
-
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/checked"
-            android:layout_margin="6dp"
-            android:layout_width="48dp"
-            android:layout_height="48dp"/>
-
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/checked"
-            android:layout_margin="6dp"
-            android:layout_width="48dp"
-            android:layout_height="48dp"/>
-
-        <View
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/icon_list"
+            android:clipToPadding="false"
+            android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"/>
+            android:layout_height="60dp"/>
 
         <ImageButton
             android:id="@+id/send"

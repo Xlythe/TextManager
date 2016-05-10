@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
@@ -24,7 +25,9 @@ public class ShareMediaActivity extends AppCompatActivity {
 
     private TextManager mManager;
     private RecyclerView mRecyclerView;
+    private RecyclerView mIconRecyclerView;
     private ShareMediaAdapter mAdapter;
+    private ContactIconAdapter mContactAdapter;
     private ImageView mImageView;
     private EditText mEditText;
     private ImageButton mSend;
@@ -37,6 +40,7 @@ public class ShareMediaActivity extends AppCompatActivity {
         mManager = TextManager.getInstance(getBaseContext());
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
+        mIconRecyclerView = (RecyclerView) findViewById(R.id.icon_list);
         mImageView = (ImageView) findViewById(R.id.media);
         mEditText = (EditText) findViewById(R.id.message);
         mSend = (ImageButton) findViewById(R.id.send);
@@ -47,10 +51,26 @@ public class ShareMediaActivity extends AppCompatActivity {
         mAdapter.setOnClickListener(new ShareMediaAdapter.OnClickListener() {
             @Override
             public void onClick(Set<Contact> contacts) {
+                // Toggles the original adapters data so everything is in sync
                 mAdapter.toggleSelection(contacts);
+                mContactAdapter.updateData(mAdapter.getSelectedItems());
             }
         });
         mRecyclerView.setAdapter(mAdapter);
+
+        mIconRecyclerView.setHasFixedSize(true);
+        //TODO: maybe change to true for RTL
+        mIconRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        mContactAdapter = new ContactIconAdapter(this, mAdapter.getSelectedItems());
+        mContactAdapter.setOnClickListener(new ContactIconAdapter.OnClickListener() {
+            @Override
+            public void onClick(Set<Contact> contacts) {
+                // Toggles the original adapters data so everything is in sync
+                mAdapter.toggleSelection(contacts);
+                mContactAdapter.updateData(mAdapter.getSelectedItems());
+            }
+        });
+        mIconRecyclerView.setAdapter(mContactAdapter);
 
         final Attachment attachment = MessageUtils.getAttachment(getIntent());
 
@@ -77,7 +97,5 @@ public class ShareMediaActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
-
 }
