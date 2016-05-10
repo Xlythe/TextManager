@@ -12,8 +12,6 @@ import android.widget.TextView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
-import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
