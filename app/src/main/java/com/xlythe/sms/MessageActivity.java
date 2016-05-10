@@ -316,22 +316,19 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         Text text = mThread.getLatestMessage(this).get();
 
+        view.setEnabled(false);
         switch (view.getId()) {
             case R.id.gallery:
                 transaction.replace(R.id.fragment_container, GalleryFragment.newInstance(text, color)).commit();
-                mGalleryAttachments.setEnabled(false);
                 break;
             case R.id.camera:
                 transaction.replace(R.id.fragment_container, CameraFragment.newInstance(text)).commit();
-                mCameraAttachments.setEnabled(false);
                 break;
             case R.id.sticker:
                 transaction.replace(R.id.fragment_container, StickerFragment.newInstance(text)).commit();
-                mStickerAttachments.setEnabled(false);
                 break;
             case R.id.mic:
                 transaction.replace(R.id.fragment_container, new MicFragment()).commit();
-                mMicAttachments.setEnabled(false);
                 break;
         }
     }
