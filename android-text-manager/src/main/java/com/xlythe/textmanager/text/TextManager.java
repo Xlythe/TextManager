@@ -223,12 +223,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         public void to(Text text) {
             text.getMembersExceptMe(mContext).get(new Future.Callback<Set<Contact>>() {
-                        @Override
-                        public void get(Set<Contact> instance) {
-                            Text.Builder builder = new Text.Builder().addRecipients(instance);
-                                    send(builder);
-                        }
-                    });
+                @Override
+                public void get(Set<Contact> instance) {
+                    Text.Builder builder = new Text.Builder().addRecipients(instance);
+                        send(builder);
+                }
+            });
         }
 
         public void to(Thread thread) {
@@ -239,7 +239,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         @Override
                         public void get(Set<Contact> instance) {
                             Text.Builder builder = new Text.Builder().addRecipients(instance);
-                                    send(builder);
+                                send(builder);
                         }
                     });
                 }
