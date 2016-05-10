@@ -7,6 +7,7 @@ import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,29 +21,40 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
-public class ShareMediaAdapter extends RecyclerView.Adapter<ShareMediaAdapter.ViewHolder> {
+public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMediaAdapter.ViewHolder> {
     private static final int CACHE_SIZE = 50;
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
+    private OnClickListener mOnClickListener;
 
     public ShareMediaAdapter(Context context, Thread.ThreadCursor cursor) {
         mContext = context;
         mCursor = cursor;
     }
 
-    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+    public void setOnClickListener(OnClickListener onClickListener) {
+        mOnClickListener = onClickListener;
+    }
+
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder implements ShareMediaAdapter.OnClickListener {
         private Thread mThread;
         private Context mContext;
+        private OnClickListener mOnClickListener;
+        private boolean mIsSelected;
+        private boolean mSelectMode;
 
         public ViewHolder(View view) {
             super(view);
         }
 
-        public void setThread(Context context, Thread thread) {
+        public void setThread(Context context, Thread thread, OnClickListener onClickListener, boolean isSelected, boolean selectMode) {
             mThread = thread;
             mContext = context;
+            mOnClickListener = onClickListener;
+            mIsSelected = isSelected;
+            mSelectMode = selectMode;
         }
 
         public Thread getThread() {
@@ -52,25 +64,45 @@ public class ShareMediaAdapter extends RecyclerView.Adapter<ShareMediaAdapter.Vi
         public Context getContext() {
             return mContext;
         }
+
+        public OnClickListener getOnClickListener() {
+            return mOnClickListener;
+        }
+
+        public boolean getIsSelected() {
+            return mIsSelected;
+        }
+
+        public boolean getSelectMode() {
+            return mSelectMode;
+        }
     }
 
     public static class ThreadViewHolder extends ViewHolder {
         public final TextView title;
         public final ImageView profile;
+        public final CheckBox checkBox;
 
         public ThreadViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.name);
             profile = (ImageView) view.findViewById(R.id.icon);
+            checkBox = (CheckBox) view.findViewById(R.id.checkbox);
         }
 
         @Override
-        public void setThread(Context context, Thread thread) {
-            super.setThread(context, thread);
+        public void setThread(Context context, Thread thread, OnClickListener onClickListener, boolean isSelected, boolean selectMode) {
+            super.setThread(context, thread, onClickListener, isSelected, selectMode);
             createView();
         }
 
         public void createView() {
+            if (getIsSelected()) {
+                checkBox.setChecked(true);
+            } else {
+                checkBox.setChecked(false);
+            }
+
             String address = "";
             Text latest = getThread().getLatestMessage(getContext()).get();
 
@@ -96,6 +128,20 @@ public class ShareMediaAdapter extends RecyclerView.Adapter<ShareMediaAdapter.Vi
             } else {
                 profile.setImageDrawable(null);
             }
+
+            ((ViewGroup) title.getParent()).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    getOnClickListener().onClick(getThread()
+                            .getLatestMessage(getContext()).get()
+                            .getMembersExceptMe(getContext()).get());
+                }
+            });
+        }
+
+        @Override
+        public void onClick(Set<Contact> contacts) {
+
         }
     }
 
@@ -106,7 +152,11 @@ public class ShareMediaAdapter extends RecyclerView.Adapter<ShareMediaAdapter.Vi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        holder.setThread(mContext, getThread(position));
+        Set<Contact> contacts = getThread(position).getLatestMessage(mContext).get().getMembersExceptMe(mContext).get();
+        boolean isSelected = isSelected(contacts);
+        boolean selectMode = selectMode();
+
+        holder.setThread(mContext, getThread(position), mOnClickListener, isSelected, selectMode);
     }
 
     @Override
@@ -127,5 +177,9 @@ public class ShareMediaAdapter extends RecyclerView.Adapter<ShareMediaAdapter.Vi
     @Override
     public int getItemCount() {
         return mCursor.getCount();
+    }
+
+    public interface OnClickListener {
+        void onClick(Set<Contact> contacts);
     }
 }
