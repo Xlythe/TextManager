@@ -89,10 +89,6 @@
                 <data android:scheme="mmsto" />
             </intent-filter>
 
-            <meta-data
-                android:name="android.service.chooser.chooser_target_service"
-                android:value=".service.FetchChooserTargetService" />
-
         </activity>
 
         <!-- On Android M+, you can share directly to contacts -->

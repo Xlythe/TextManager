@@ -89,7 +89,7 @@ public class ShareMediaActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String message = mEditText.getText().toString();
                 for (Set<Contact> contacts: mAdapter.getSelectedItems()) {
-                    if (message.equals("") && attachment != null) {
+                    if (message.isEmpty() && attachment != null) {
                         mManager.send(attachment).to(contacts);
                     } else if (attachment != null) {
                         mManager.send(message, attachment).to(contacts);
