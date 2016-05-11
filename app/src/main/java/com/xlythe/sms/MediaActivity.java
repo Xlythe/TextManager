@@ -23,13 +23,11 @@ import java.util.Locale;
 
 public class MediaActivity extends AppCompatActivity {
     public static final String EXTRA_TEXT = "text";
-    private static final int SHOW_PROGRESS = 2;
+    private static final int PROGRESS = 0;
     private Text mText;
     private Handler mHandler = new MessageHandler(this);
     private ProgressBar mProgress;
     private VideoView mPlayer;
-    private StringBuilder mFormatBuilder;
-    private Formatter mFormatter;
     private ImageButton mPauseButton;
     private TextView mCurrentTime;
 
@@ -44,8 +42,6 @@ public class MediaActivity extends AppCompatActivity {
         mPlayer = (VideoView) findViewById(R.id.video);
         mPauseButton = (ImageButton) findViewById(R.id.play);
         mCurrentTime = (TextView) findViewById(R.id.duration);
-        mFormatBuilder = new StringBuilder();
-        mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
         mProgress = (ProgressBar) findViewById(R.id.seek);
         mProgress.setMax(1000);
 
@@ -78,7 +74,7 @@ public class MediaActivity extends AppCompatActivity {
 
     public void show() {
         updatePausePlay();
-        mHandler.sendEmptyMessage(SHOW_PROGRESS);
+        mHandler.sendEmptyMessage(PROGRESS);
     }
 
     private View.OnClickListener mPauseListener = new View.OnClickListener() {
@@ -95,11 +91,12 @@ public class MediaActivity extends AppCompatActivity {
         int minutes = (totalSeconds / 60) % 60;
         int hours   = totalSeconds / 3600;
 
-        mFormatBuilder.setLength(0);
+        Formatter formatter = new Formatter(Locale.getDefault());
+
         if (hours > 0) {
-            return mFormatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
+            return formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
         } else {
-            return mFormatter.format("%02d:%02d", minutes, seconds).toString();
+            return formatter.format("%02d:%02d", minutes, seconds).toString();
         }
     }
 
@@ -159,8 +156,8 @@ public class MediaActivity extends AppCompatActivity {
 
             view.setProgress();
             if (view.mPlayer.isPlaying()) {
-                msg = obtainMessage(SHOW_PROGRESS);
-                sendMessageDelayed(msg, 0);
+                msg = obtainMessage(PROGRESS);
+                sendMessage(msg);
             }
             view.updatePausePlay();
         }
