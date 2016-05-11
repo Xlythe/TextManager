@@ -10,6 +10,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
 import com.xlythe.textmanager.text.Attachment;
@@ -81,7 +83,12 @@ public class ShareMediaActivity extends AppCompatActivity {
         if (attachment == null) {
             mImageView.setVisibility(View.GONE);
         } else {
-            mImageView.setImageURI(attachment.getUri());
+            Glide.with(getBaseContext())
+                    .load(attachment.getUri())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .dontAnimate()
+                    .placeholder(R.color.loading)
+                    .into(mImageView);
         }
 
         mSend.setOnClickListener(new View.OnClickListener() {
