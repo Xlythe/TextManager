@@ -1,14 +1,17 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.xlythe.sms.R;
@@ -16,7 +19,6 @@ import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.Thread;
-import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
@@ -38,7 +40,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         mOnClickListener = onClickListener;
     }
 
-    public static abstract class ViewHolder extends RecyclerView.ViewHolder implements ShareMediaAdapter.OnClickListener {
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
         private Thread mThread;
         private Context mContext;
         private OnClickListener mOnClickListener;
@@ -78,13 +80,17 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         }
     }
 
-    public static class ThreadViewHolder extends ViewHolder {
+    public static class ThreadViewHolder extends ViewHolder implements View.OnClickListener {
+        public final LinearLayout background;
         public final TextView title;
         public final ImageView profile;
         public final CheckBox checkBox;
+        public Set<Contact> contacts;
 
         public ThreadViewHolder(View view) {
             super(view);
+            view.setOnClickListener(this);
+            background = (LinearLayout) view.findViewById(R.id.background);
             title = (TextView) view.findViewById(R.id.name);
             profile = (ImageView) view.findViewById(R.id.icon);
             checkBox = (CheckBox) view.findViewById(R.id.checkbox);
@@ -99,51 +105,36 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         public void createView() {
             if (getIsSelected()) {
                 checkBox.setChecked(true);
-                title.setTextColor(getContext().getResources().getColor(R.color.colorPrimary));
+                background.setBackgroundColor(Color.rgb(229, 244, 243));
             } else {
                 checkBox.setChecked(false);
-                title.setTextColor(getContext().getResources().getColor(R.color.titleText));
+                background.setBackgroundColor(Color.TRANSPARENT);
             }
 
-            String address = "";
             Text latest = getThread().getLatestMessage(getContext()).get();
 
-            if (latest != null) {
-                address = Utils.join(", ", latest.getMembersExceptMe(getContext()).get(), new Utils.Rule<Contact>() {
-                    @Override
-                    public String toString(Contact contact) {
-                        return contact.getDisplayName();
-                    }
-                });
-            }
+            contacts = latest.getMembersExceptMe(getContext()).get();
+
+            String address = Utils.join(", ", contacts, new Utils.Rule<Contact>() {
+                @Override
+                public String toString(Contact contact) {
+                    return contact.getDisplayName();
+                }
+            });
 
             title.setText(address);
 
             profile.setBackgroundResource(android.R.color.transparent);
-            if (!TextUtils.isEmpty(address) && latest != null) {
-                latest.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-                    @Override
-                    public void get(Set<Contact> instance) {
-                        profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                    }
-                });
+            if (!TextUtils.isEmpty(address)) {
+                profile.setImageDrawable(new ProfileDrawable(getContext(), contacts));
             } else {
                 profile.setImageDrawable(null);
             }
-
-            ((ViewGroup) title.getParent()).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    getOnClickListener().onClick(getThread()
-                            .getLatestMessage(getContext()).get()
-                            .getMembersExceptMe(getContext()).get());
-                }
-            });
         }
 
         @Override
-        public void onClick(Set<Contact> contacts) {
-
+        public void onClick(View v) {
+            getOnClickListener().onClick(contacts);
         }
     }
 
