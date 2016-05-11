@@ -72,18 +72,29 @@ public class ShareMediaActivity extends AppCompatActivity {
         mIconRecyclerView.setAdapter(mContactAdapter);
 
         final Attachment attachment = MessageUtils.getAttachment(getIntent());
+        final String incoming = MessageUtils.getBody(getIntent());
 
-        mImageView.setImageURI(attachment.getUri());
+        if (incoming != null) {
+            mEditText.setText(incoming);
+        }
+
+        if (attachment == null) {
+            mImageView.setVisibility(View.GONE);
+        } else {
+            mImageView.setImageURI(attachment.getUri());
+        }
 
         mSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String message = mEditText.getText().toString();
                 for (Set<Contact> contacts: mAdapter.getSelectedItems()) {
-                    if (message.equals("")) {
+                    if (message.equals("") && attachment != null) {
                         mManager.send(attachment).to(contacts);
-                    } else {
+                    } else if (attachment != null) {
                         mManager.send(message, attachment).to(contacts);
+                    } else {
+                        mManager.send(message).to(contacts);
                     }
                 }
                 if (mAdapter.getSelectedItemCount() == 1) {
