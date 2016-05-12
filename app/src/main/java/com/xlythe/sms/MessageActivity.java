@@ -520,4 +520,24 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mManager.send(message).to(mThread);
         mEditText.setText(null);
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_messages, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.info) {
+            Intent i = new Intent(this, InfoActivity.class);
+            startActivity(i);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
 }

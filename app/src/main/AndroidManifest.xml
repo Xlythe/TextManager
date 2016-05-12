@@ -1,57 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.xlythe.sms" >
+<manifest package="com.xlythe.sms"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.WRITE_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.SEND_MMS" />
-    <uses-permission android:name="android.permission.READ_PROFILE" />
-    <uses-permission android:name="android.permission.RECEIVE_MMS" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.WRITE_SMS"/>
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.SEND_MMS"/>
+    <uses-permission android:name="android.permission.READ_PROFILE"/>
+    <uses-permission android:name="android.permission.RECEIVE_MMS"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme"
-        android:largeHeap="true">
+        android:largeHeap="true"
+        android:theme="@style/AppTheme">
 
         <!-- BroadcastReceiver that listens for incoming messages -->
         <receiver android:name=".receiver.MessageReceiver">
             <intent-filter>
-                <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
+                <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED"/>
             </intent-filter>
         </receiver>
 
         <!-- BroadcastReceiver that listens for deletion of notification -->
-        <receiver android:name=".receiver.Notifications$OnDismissReceiver" />
+        <receiver android:name=".receiver.Notifications$OnDismissReceiver"/>
 
         <!-- BroadcastReceiver that listens for replies to notifications -->
-        <receiver android:name=".receiver.Notifications$OnReplyReceiver" />
+        <receiver android:name=".receiver.Notifications$OnReplyReceiver"/>
 
         <!-- Shows all the user's texts -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.Main" >
+            android:theme="@style/AppTheme.Main">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
 
@@ -59,36 +60,34 @@
         <activity
             android:name=".ContactSearchActivity"
             android:theme="@style/AppTheme.Compose.Edit"
-            android:windowSoftInputMode="stateVisible|adjustNothing" >
+            android:windowSoftInputMode="stateVisible|adjustNothing">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.xlythe.sms.ComposeActivity" />
+                android:value="com.xlythe.sms.ComposeActivity"/>
         </activity>
 
         <!-- For sending messages to a new contact -->
         <activity
             android:name=".ComposeActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.Compose" >
-
+            android:theme="@style/AppTheme.Compose">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.xlythe.sms.MainActivity" />
+                android:value="com.xlythe.sms.MainActivity"/>
 
             <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <action android:name="android.intent.action.SENDTO" />
-                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SENDTO"/>
+                <action android:name="android.intent.action.VIEW"/>
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
 
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
+                <data android:scheme="sms"/>
+                <data android:scheme="smsto"/>
+                <data android:scheme="mms"/>
+                <data android:scheme="mmsto"/>
             </intent-filter>
-
         </activity>
 
         <!-- On Android M+, you can share directly to contacts -->
@@ -96,7 +95,7 @@
             android:name=".service.FetchChooserTargetService"
             android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
             <intent-filter>
-                <action android:name="android.service.chooser.ChooserTargetService" />
+                <action android:name="android.service.chooser.ChooserTargetService"/>
             </intent-filter>
         </service>
 
@@ -105,39 +104,37 @@
             android:name=".MessageActivity"
             android:label="@string/app_name"
             android:parentActivityName=".MainActivity"
-            android:windowSoftInputMode="adjustNothing"
-            android:theme="@style/AppTheme.Compose" >
-
+            android:theme="@style/AppTheme.Compose"
+            android:windowSoftInputMode="adjustNothing">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.xlythe.sms.MainActivity" />
-
+                android:value="com.xlythe.sms.MainActivity"/>
         </activity>
 
         <!-- For viewing a video or picture -->
-        <activity android:name=".MediaActivity" />
+        <activity android:name=".MediaActivity"/>
 
         <!-- For sharing a video or picture -->
-        <activity android:name=".ShareMediaActivity"
-                  android:windowSoftInputMode="stateHidden">
-
+        <activity
+            android:name=".ShareMediaActivity"
+            android:windowSoftInputMode="stateHidden">
             <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <action android:name="android.intent.action.SENDTO" />
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SENDTO"/>
 
-                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.DEFAULT"/>
 
-                <data android:mimeType="image/*" />
-                <data android:mimeType="video/*" />
-                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+                <data android:mimeType="text/plain"/>
             </intent-filter>
 
             <meta-data
                 android:name="android.service.chooser.chooser_target_service"
-                android:value=".service.FetchChooserTargetService" />
-
+                android:value=".service.FetchChooserTargetService"/>
         </activity>
-
+        <activity android:name=".InfoActivity">
+        </activity>
     </application>
 
 </manifest>

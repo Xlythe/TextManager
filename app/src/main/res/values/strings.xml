@@ -3,6 +3,7 @@
     <string name="title_activity_message">MessageActivity</string>
 
     <string name="action_search">Search</string>
+    <string name="action_info">Info</string>
     <string name="action_send">Send</string>
     <string name="action_remove">Delete</string>
     <string name="action_copy">Copy text</string>
