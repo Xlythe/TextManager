@@ -116,6 +116,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setDateText(DateFormatter.getFormattedDate(text));
             }
 
+            if (hasFailed(text)) {
+                mTextView.setLinksClickable(false);
+            } else {
+                mTextView.setLinksClickable(true);
+            }
+
             if (mDate != null) {
                 if (hasFailed(text)) {
                     mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
@@ -147,12 +153,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public void setBodyText(String body) {
             if (body == null) {
-                if (hasFailed(getMessage())) {
-                    mFrame.setVisibility(View.VISIBLE);
-                    mTextView.setText("Tap to retry");
-                } else {
-                    mFrame.setVisibility(View.GONE);
-                }
+                mFrame.setVisibility(View.GONE);
             } else {
                 mFrame.setVisibility(View.VISIBLE);
                 mTextView.setText(body);
@@ -217,6 +218,20 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                         mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
                     }
                 });
+            }
+        }
+
+        public void setBodyText(String body) {
+            if (body == null) {
+                if (hasFailed(getMessage())) {
+                    mFrame.setVisibility(View.VISIBLE);
+                    mTextView.setText("Tap to retry");
+                } else {
+                    mFrame.setVisibility(View.GONE);
+                }
+            } else {
+                mFrame.setVisibility(View.VISIBLE);
+                mTextView.setText(body);
             }
         }
     }
