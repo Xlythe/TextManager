@@ -1,10 +1,17 @@
 package com.xlythe.sms;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Pair;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -14,15 +21,22 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
+import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.util.MessageUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
+
+import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
+import static com.xlythe.sms.ContactSearchActivity.EXTRA_CURSOR;
 
 public class ShareMediaActivity extends AppCompatActivity {
     private static final String TAG = ShareMediaActivity.class.getSimpleName();
+    private static final int REQUEST_CODE_CONTACT = 10001;
 
     private TextManager mManager;
     private RecyclerView mRecyclerView;
@@ -37,6 +51,9 @@ public class ShareMediaActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_share_media);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         mManager = TextManager.getInstance(getBaseContext());
 
@@ -114,5 +131,46 @@ public class ShareMediaActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == REQUEST_CODE_CONTACT) {
+            if (resultCode == RESULT_OK) {
+                // Yay! We got contacts back! Lets add them to our EditText
+                ArrayList<Contact> contacts = intent.getParcelableArrayListExtra(EXTRA_CONTACTS);
+                for (Contact contact : contacts) {
+                    Set<Contact> set = new HashSet<>();
+                    set.add(contact);
+                    mAdapter.toggleSelection(set);
+                    mContactAdapter.updateData(mAdapter.getSelectedItems());
+                }
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, intent);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_share_media, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_search) {
+            startContactSearch();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void startContactSearch() {
+        Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
+        startActivityForResult(intent, REQUEST_CODE_CONTACT);
     }
 }
