@@ -118,7 +118,8 @@
         <activity android:name=".MediaActivity" />
 
         <!-- For sharing a video or picture -->
-        <activity android:name=".ShareMediaActivity" >
+        <activity android:name=".ShareMediaActivity"
+                  android:windowSoftInputMode="stateHidden">
 
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

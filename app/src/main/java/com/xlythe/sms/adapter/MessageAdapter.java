@@ -147,7 +147,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public void setBodyText(String body) {
             if (body == null) {
-                mFrame.setVisibility(View.GONE);
+                if (hasFailed(getMessage())) {
+                    mFrame.setVisibility(View.VISIBLE);
+                    mTextView.setText("Tap to retry");
+                } else {
+                    mFrame.setVisibility(View.GONE);
+                }
             } else {
                 mFrame.setVisibility(View.VISIBLE);
                 mTextView.setText(body);
