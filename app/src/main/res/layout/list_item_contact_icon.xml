@@ -9,9 +9,4 @@
         android:layout_margin="6dp"
         android:layout_width="48dp"
         android:layout_height="48dp"/>
-    <ImageView
-        android:src="@drawable/checked_icon"
-        android:layout_margin="6dp"
-        android:layout_width="48dp"
-        android:layout_height="48dp"/>
 </FrameLayout>
