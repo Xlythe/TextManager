@@ -89,11 +89,13 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
     }
 
-    public static abstract class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+    public static class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
         private Context mContext;
         MessageAdapter.OnClickListener mListener;
         public TextView mDate;
+        public TextView mTextView;
+        public FrameLayout mFrame;
 
         public MessageViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v);
@@ -101,6 +103,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             v.setOnClickListener(this);
             v.setOnLongClickListener(this);
             mDate = (TextView) v.findViewById(R.id.date);
+            mFrame = (FrameLayout) v.findViewById(R.id.frame);
+            mTextView = (TextView) v.findViewById(R.id.message);
         }
 
         public void setMessage(Context context, Text text, boolean selected) {
@@ -119,6 +123,34 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 } else {
                     mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
                 }
+            }
+
+            setBodyText(text.getBody());
+            if (selected) {
+                setColor(tintColor(Color.WHITE));
+            } else {
+                setColor(context.getResources().getColor(android.R.color.white));
+            }
+
+            // We set this here because of attachments
+            if (hasFailed(text)) {
+                mFrame.setAlpha(0.4f);
+            } else {
+                mFrame.setAlpha(1f);
+            }
+
+        }
+
+        public void setColor(int color) {
+            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        }
+
+        public void setBodyText(String body) {
+            if (body == null) {
+                mFrame.setVisibility(View.GONE);
+            } else {
+                mFrame.setVisibility(View.VISIBLE);
+                mTextView.setText(body);
             }
         }
 
@@ -149,53 +181,11 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         }
     }
 
-    public static class ViewHolder extends MessageViewHolder {
-        public TextView mTextView;
-        public FrameLayout mFrame;
-
-        public ViewHolder(View v, MessageAdapter.OnClickListener listener) {
-            super(v, listener);
-            mFrame = (FrameLayout) v.findViewById(R.id.frame);
-            mTextView = (TextView) v.findViewById(R.id.message);
-        }
-
-        public void setMessage(Context context, Text text, boolean selected) {
-            super.setMessage(context, text, selected);
-            setBodyText(text.getBody());
-            if (selected) {
-                setColor(tintColor(Color.WHITE));
-            } else {
-                setColor(context.getResources().getColor(android.R.color.white));
-            }
-
-            // We set this here because of attachments
-            if (hasFailed(text)) {
-                mFrame.setAlpha(0.4f);
-            } else {
-                mFrame.setAlpha(1f);
-            }
-        }
-
-        public void setColor(int color) {
-            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-        }
-
-        public void setBodyText(String body) {
-            if (body == null) {
-                mTextView.setText("Tap to retry");
-            } else {
-                mTextView.setText(body);
-            }
-        }
-    }
-
-    public static class LeftViewHolder extends ViewHolder {
-        public FrameLayout mFrame;
+    public static class LeftViewHolder extends MessageViewHolder {
         private ImageView mProfile;
 
         public LeftViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
-            mFrame = (FrameLayout) v.findViewById(R.id.frame);
             mProfile = (ImageView) v.findViewById(R.id.profile_image);
         }
 
@@ -208,24 +198,13 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setColor(ColorUtils.getColor(text.getThreadIdAsLong()));
             }
 
-            // could move this to left attachment, but doesn't matter
+            // This is if a message failed to download
             if (mDate != null) {
                 if (hasFailed(text)) {
-                    mDate.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
                     mDate.setText("Message failed to download");
-                } else {
-                    mDate.setTextColor(context.getResources().getColor(R.color.date_text_color));
                 }
             }
 
-            setProfile();
-        }
-
-        public void setColor(int color) {
-            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-        }
-
-        public void setProfile() {
             if (mProfile != null) {
                 getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
                     @Override
@@ -276,8 +255,19 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else {
                 mImageView.clearColorFilter();
             }
+
+            if (selected) {
+                setColorText(tintColor(Color.WHITE));
+            } else {
+                setColorText(context.getResources().getColor(android.R.color.white));
+            }
         }
 
+        public void setColorText(int color) {
+            mFrame.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        }
+
+        @Override
         public void setColor(int color) {
             mImageView.setColorFilter(color);
         }
@@ -308,10 +298,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         @Override
         public void setMessage(Context context, Text text, boolean selected) {
             super.setMessage(context, text, selected);
-            setProfile();
-        }
+            if (selected) {
+                setColorText(tintColor(ColorUtils.getColor(text.getThreadIdAsLong())));
+            } else {
+                setColorText(ColorUtils.getColor(text.getThreadIdAsLong()));
+            }
 
-        public void setProfile() {
             if (mProfile != null) {
                 getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
                     @Override
@@ -321,6 +313,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 });
             }
         }
+
     }
 
     public MessageAdapter(Context context, Text.TextCursor cursor) {
@@ -341,7 +334,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             case TYPE_MIDDLE_RIGHT:
             case TYPE_BOTTOM_RIGHT:
             case TYPE_SINGLE_RIGHT:
-                return new ViewHolder(layout, mClickListener);
+                return new MessageViewHolder(layout, mClickListener);
             case TYPE_TOP_LEFT:
             case TYPE_MIDDLE_LEFT:
             case TYPE_BOTTOM_LEFT:
@@ -358,7 +351,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             case TYPE_ATTACHMENT_SINGLE_RIGHT:
                 return new AttachmentViewHolder(layout, mClickListener);
             default:
-                return new ViewHolder(layout, mClickListener);
+                return new MessageViewHolder(layout, mClickListener);
         }
     }
 

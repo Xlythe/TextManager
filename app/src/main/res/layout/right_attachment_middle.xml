@@ -48,4 +48,21 @@
 
     </RelativeLayout>
 
+    <FrameLayout
+        android:id="@+id/frame"
+        android:layout_marginTop="@dimen/message_inside_margin"
+        android:layout_marginBottom="@dimen/message_inside_margin"
+        android:layout_gravity="right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/right_middle">
+
+        <TextView
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/Body.Right" />
+
+    </FrameLayout>
+
 </LinearLayout>
