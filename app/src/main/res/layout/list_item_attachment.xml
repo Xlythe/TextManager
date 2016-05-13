@@ -12,6 +12,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginRight="16dp"
+        android:layout_marginEnd="16dp"
         android:src="@android:color/transparent"/>
 
     <LinearLayout
@@ -30,6 +31,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:id="@+id/sender"
                 android:paddingRight="4dp"
+                android:paddingEnd="4dp"
                 android:text="Will Harmon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
