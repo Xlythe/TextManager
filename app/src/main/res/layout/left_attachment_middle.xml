@@ -11,13 +11,14 @@
     android:background="?selectableItemBackground">
 
     <RelativeLayout
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
         <FrameLayout
             android:id="@+id/holder"
             android:layout_marginLeft="48dp"
+            android:layout_marginStart="48dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
 
@@ -40,6 +41,7 @@
 
         <ImageButton
             android:layout_toRightOf="@id/holder"
+            android:layout_toEndOf="@id/holder"
             android:id="@+id/share"
             android:layout_margin="12dp"
             android:layout_centerVertical="true"
@@ -54,7 +56,7 @@
         android:layout_marginRight="40dp"
         android:layout_marginTop="@dimen/message_inside_margin"
         android:layout_marginBottom="@dimen/message_inside_margin"
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/left_middle">

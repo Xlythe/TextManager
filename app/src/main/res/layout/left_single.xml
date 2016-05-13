@@ -25,7 +25,7 @@
 
         <FrameLayout
             android:id="@+id/frame"
-            android:layout_gravity="left"
+            android:layout_gravity="start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/left_single">
@@ -44,7 +44,7 @@
         android:id="@+id/date"
         android:layout_marginLeft="@dimen/message_date_margin_left"
         android:layout_marginRight="@dimen/message_date_margin_left"
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/Date" />
