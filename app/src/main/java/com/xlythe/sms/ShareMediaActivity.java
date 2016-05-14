@@ -45,7 +45,7 @@ public class ShareMediaActivity extends AppCompatActivity {
     private ContactIconAdapter mContactAdapter;
     private ImageView mImageView;
     private EditText mEditText;
-    private ImageButton mSend;
+    private ImageView mSend;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +61,7 @@ public class ShareMediaActivity extends AppCompatActivity {
         mIconRecyclerView = (RecyclerView) findViewById(R.id.icon_list);
         mImageView = (ImageView) findViewById(R.id.media);
         mEditText = (EditText) findViewById(R.id.message);
-        mSend = (ImageButton) findViewById(R.id.send);
+        mSend = (ImageView) findViewById(R.id.send);
 
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
