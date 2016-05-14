@@ -52,8 +52,11 @@ public class InfoActivity extends AppCompatActivity {
         }
 
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+//        LinearLayoutManager lman = new LinearLayoutManager(this);
+//        lman.setAutoMeasureEnabled(true);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setHasFixedSize(false);
+
 
         List<Attachment> attachments = new ArrayList<>();
 
