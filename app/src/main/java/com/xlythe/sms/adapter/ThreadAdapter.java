@@ -333,6 +333,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         return Integer.parseInt(formatter.format(date)) << 3;
     }
 
+    @Override
     public SectionViewHolder onCreateHeaderViewHolder(ViewGroup parent) {
         final View view = LayoutInflater.from(mContext).inflate(R.layout.section, parent, false);
         return new SectionViewHolder(view);
