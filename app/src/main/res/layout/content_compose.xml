@@ -11,19 +11,7 @@
     tools:showIn="@layout/activity_compose">
     <com.xlythe.sms.view.ContactEditText
         android:id="@+id/contacts"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:layout_width="match_parent"
-        android:layout_height="58dp"
-        android:singleLine="true"
-        android:gravity="center_vertical"
-        android:textColor="#EB000000"
-        android:textColorHint="#6B000000"
-        android:textSize="16sp"
-        android:background="@android:color/transparent"
-        android:hint="@string/compose_hint"/>
+        style="@style/Compose.To"/>
     <EditText
         android:id="@+id/message"
         android:padding="16dp"
@@ -34,5 +22,6 @@
         android:textColorHint="#6B000000"
         android:textSize="16sp"
         android:background="@android:color/transparent"
-        android:hint="@string/compose_msg_hint"/>
+        android:hint="@string/compose_msg_hint"
+        android:textAlignment="viewStart"/>
 </LinearLayout>

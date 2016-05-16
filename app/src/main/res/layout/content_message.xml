@@ -25,9 +25,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <com.xlythe.sms.view.ExtendedEditText
+            android:id="@+id/edit_text"
             android:paddingTop="16dp"
             android:paddingBottom="8dp"
-            android:id="@+id/edit_text"
             android:paddingLeft="14dp"
             android:paddingRight="14dp"
             android:layout_weight="1"
@@ -38,7 +38,8 @@
             android:textColorHint="#9e9e9e"
             android:hint="@string/compose_msg_hint_long"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:textAlignment="viewStart"/>
         <LinearLayout
             android:gravity="bottom"
             android:layout_weight="1"
@@ -46,54 +47,54 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <ImageView
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
                 android:id="@+id/gallery"
-                android:onClick="onAttachmentClicked"
-                android:tint="#bdbdbd"
                 android:src="@drawable/photo"
-                android:layout_weight="1"
+                android:onClick="onAttachmentClicked"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <ImageView
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
+                android:tint="#bdbdbd" />
+            <ImageView
                 android:id="@+id/camera"
-                android:onClick="onAttachmentClicked"
-                android:tint="#bdbdbd"
                 android:src="@drawable/camera"
-                android:layout_weight="1"
+                android:onClick="onAttachmentClicked"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <ImageView
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
+                android:tint="#bdbdbd" />
+            <ImageView
                 android:id="@+id/sticker"
-                android:onClick="onAttachmentClicked"
-                android:tint="#bdbdbd"
                 android:src="@drawable/face"
-                android:layout_weight="1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <ImageView
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:id="@+id/mic"
                 android:onClick="onAttachmentClicked"
-                android:tint="#bdbdbd"
-                android:src="@drawable/mic"
-                android:layout_weight="1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <ImageView
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
-                android:id="@+id/send"
-                android:tint="#eeeeee"
-                android:src="@drawable/ic_send"
-                android:layout_weight="1"
+                android:tint="#bdbdbd" />
+            <ImageView
+                android:id="@+id/mic"
+                android:src="@drawable/mic"
+                android:onClick="onAttachmentClicked"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:tint="#bdbdbd" />
+            <ImageView
+                android:id="@+id/send"
+                android:src="@drawable/ic_send"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:tint="#eeeeee" />
         </LinearLayout>
         <FrameLayout
             android:id="@+id/fragment_container"
