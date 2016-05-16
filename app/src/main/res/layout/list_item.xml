@@ -57,7 +57,8 @@
                 android:textColor="#212121"
                 android:fontFamily="sans-serif-medium"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:textAlignment="viewStart" />
 
             <TextView
                 android:id="@+id/date"

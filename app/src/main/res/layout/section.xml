@@ -6,9 +6,10 @@
 
     <TextView
         android:id="@+id/section_text"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="left|start|center_vertical"
+        android:textAlignment="viewStart"
+        android:layout_gravity="center_vertical"
         android:paddingLeft="16dp"
         android:paddingStart="16dp"
         android:paddingRight="16dp"

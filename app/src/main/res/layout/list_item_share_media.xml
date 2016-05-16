@@ -14,6 +14,7 @@
         android:layout_margin="16dp"
         android:layout_width="40dp"
         android:layout_height="40dp"/>
+
     <TextView
         android:id="@+id/name"
         android:textSize="16sp"
@@ -23,6 +24,7 @@
         android:text="Will Harmon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
     <CheckBox
         android:clickable="false"
         android:id="@+id/checkbox"
