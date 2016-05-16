@@ -6,6 +6,7 @@ import android.database.CursorWrapper;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.UserManager;
 import android.provider.BaseColumns;
 import android.provider.Telephony;
 import android.support.annotation.VisibleForTesting;

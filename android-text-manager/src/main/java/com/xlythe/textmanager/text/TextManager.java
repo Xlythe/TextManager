@@ -31,6 +31,7 @@ import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -349,6 +350,79 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             order = "normalized_date DESC";
         }
         return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order));
+    }
+
+    public List<Attachment> getAttachments(Thread thread) {
+        List<Attachment> attachments = new ArrayList<>();
+        List<String> ids = new ArrayList<>();
+
+        String[] MMS_PROJECTION = new String[]{
+                BaseColumns._ID,
+                Mock.Telephony.Mms.THREAD_ID,
+                Mock.Telephony.Mms.TEXT_ONLY
+        };
+
+        Uri messageUri = Mock.Telephony.Mms.CONTENT_URI;
+        Cursor inner = mContext.getContentResolver().query(
+                messageUri,
+                MMS_PROJECTION,
+                Mock.Telephony.Mms.THREAD_ID + " = " + thread.getId(),
+                null,
+                null
+        );
+
+        while (inner.moveToNext()) {
+            int contentType = inner.getInt(inner.getColumnIndex(Mock.Telephony.Mms.TEXT_ONLY));
+            if (contentType == 1) {
+                continue;
+            }
+            if (contentType == 0) {
+                ids.add(inner.getString(inner.getColumnIndex(BaseColumns._ID)));
+            }
+        }
+        inner.close();
+
+        MMS_PROJECTION = new String[]{
+                BaseColumns._ID,
+                Mock.Telephony.Mms.Part.CONTENT_TYPE,
+                Mock.Telephony.Mms.Part.MSG_ID
+        };
+
+        String[] args = new String[ids.size()];
+        args = ids.toArray(args);
+
+        String clause = Mock.Telephony.Mms.Part.MSG_ID + " = ?";
+        for (int i = 0; i < ids.size() - 1; i++) {
+            clause += " OR " + Mock.Telephony.Mms.Part.MSG_ID + " = ?";
+        }
+
+        messageUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+        inner = mContext.getContentResolver().query(
+                messageUri,
+                MMS_PROJECTION,
+                clause,
+                args,
+                null
+        );
+
+        while (inner.moveToNext()) {
+            String contentType = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
+            if (contentType == null) {
+                continue;
+            }
+
+            if (contentType.matches("image/.*")) {
+                // Find any part that is an image attachment
+                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
+                attachments.add(new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+            } else if (contentType.matches("video/.*")) {
+                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
+                attachments.add(new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+            }
+        }
+        inner.close();
+
+        return attachments;
     }
 
     public Future<Thread> getThread(long threadId) {
