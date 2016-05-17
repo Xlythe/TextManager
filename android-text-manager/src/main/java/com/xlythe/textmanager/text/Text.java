@@ -87,6 +87,14 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mAttachment = attachment;
     }
 
+    void setAttachment(Attachment attachment){
+        mAttachment = attachment;
+    }
+
+    void setBody(String body){
+        mBody = body;
+    }
+
     Text(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
