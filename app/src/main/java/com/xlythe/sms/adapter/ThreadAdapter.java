@@ -154,7 +154,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             createView(isSelected, selectMode);
         }
 
-        public void createView(boolean isSelected, boolean selectMode) {
+        public void createView(boolean isSelected, final boolean selectMode) {
             long startTime = System.currentTimeMillis();
             String body = "";
             String time = "";
@@ -179,6 +179,12 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                             });
                             title.setText(address);
                             profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
+                            if (selectMode) {
+                                profile.setImageResource(android.R.color.transparent);
+                                profile.setBackgroundResource(R.drawable.selector);
+                            } else {
+                                profile.setBackgroundResource(android.R.color.transparent);
+                            }
                         }
                     });
                 }
