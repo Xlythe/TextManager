@@ -152,14 +152,13 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         }
 
         public void createView(boolean isSelected, boolean selectMode) {
+            long startTime = System.currentTimeMillis();
             String body = "";
             String time = "";
-//            String address = "";
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
             final Text latest = getThread().getLatestMessage();
-//            Set<Contact> members = latest.getMembersExceptMe(getContext()).get();
 
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -176,12 +175,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                                 }
                             });
                             title.setText(address);
-
-                            if (!TextUtils.isEmpty(address)) {
-                                profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                            } else {
-                                profile.setImageDrawable(null);
-                            }
+                            profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
                         }
                     });
                 }
@@ -214,7 +208,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             }
 
             if (unreadCount > 0) {
-//                title.setText(address);
                 unread.setVisibility(View.VISIBLE);
                 unread.setText(getContext().getString(R.string.thread_unread_messages, unreadCount));
                 unread.setTextColor(color);
@@ -227,7 +220,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 }
                 date.setTypeface(TYPEFACE_BOLD);
             } else {
-//                title.setText(address);
                 unread.setVisibility(View.GONE);
                 title.setTextColor(getContext().getResources().getColor(R.color.headerText));
                 title.setTypeface(TYPEFACE_NORMAL);
@@ -242,11 +234,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setBackgroundResource(R.drawable.selector);
             } else {
                 profile.setBackgroundResource(android.R.color.transparent);
-//                if (!TextUtils.isEmpty(address)) {
-//                    profile.setImageDrawable(new ProfileDrawable(getContext(), members));
-//                } else {
-//                    profile.setImageDrawable(null);
-//                }
             }
 
             profile.setActivated(isSelected);
@@ -255,6 +242,8 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             } else {
                 card.setBackgroundColor(CARD_STATE_COLOR);
             }
+            long endTime = System.currentTimeMillis();
+            Log.d("TAG", "view time: " + (endTime - startTime));
         }
 
         @Override
