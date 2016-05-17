@@ -111,7 +111,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
                 background.setBackgroundColor(Color.TRANSPARENT);
             }
 
-            Text latest = getThread().getLatestMessage(getContext()).get();
+            Text latest = getThread().getLatestMessage();
 
             contacts = latest.getMembersExceptMe(getContext()).get();
 
@@ -145,7 +145,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        Set<Contact> contacts = getThread(position).getLatestMessage(mContext).get().getMembersExceptMe(mContext).get();
+        Set<Contact> contacts = getThread(position).getLatestMessage().getMembersExceptMe(mContext).get();
         boolean isSelected = isSelected(contacts);
         boolean selectMode = selectMode();
 

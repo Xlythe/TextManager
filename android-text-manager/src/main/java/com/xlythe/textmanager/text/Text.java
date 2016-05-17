@@ -63,6 +63,30 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     private Text() {}
 
+    Text(long id,
+            long threadId,
+            long date,
+            long mmsId,
+            int status,
+            String body,
+            boolean incoming,
+            boolean isMms,
+            String senderAddress,
+            Set<String> memberAddresses,
+            Attachment attachment) {
+        mId = id;
+        mThreadId = threadId;
+        mDate = date;
+        mMmsId = mmsId;
+        mStatus = status;
+        mBody = body;
+        mIncoming = incoming;
+        mIsMms = isMms;
+        mSenderAddress = senderAddress;
+        mMemberAddresses = memberAddresses;
+        mAttachment = attachment;
+    }
+
     Text(Context context, Cursor cursor) {
         String type = getMessageType(cursor);
         if (TYPE_SMS.equals(type)){
@@ -154,7 +178,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
 
         if (data2 != null) {
-            int position = data2.getPosition();
+            data2.moveToFirst();
             while (data2.moveToNext()) {
                 if (data2.getLong(data2.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == mMmsId) {
                     String contentType = data2.getString(data2.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
@@ -175,11 +199,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                     }
                 }
             }
-            data2.moveToPosition(position);
         }
     }
 
-    private static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
+    static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
         int boxId;
         if (isSMS) {
             boxId = cursor.getInt(cursor.getColumnIndexOrThrow(Mock.Telephony.Sms.TYPE));

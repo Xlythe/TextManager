@@ -45,7 +45,7 @@ public class InfoActivity extends AppCompatActivity {
         ActionBarUtils.grayUpArrow(this);
 
         Thread thread = getIntent().getParcelableExtra(MessageActivity.EXTRA_THREAD);
-        Set<Contact> contacts = thread.getLatestMessage(this).get().getMembersExceptMe(this).get();
+        Set<Contact> contacts = thread.getLatestMessage().getMembersExceptMe(this).get();
 
         final TextView name = (TextView) findViewById(R.id.name);
         final ImageView icon = (ImageView) findViewById(R.id.icon);

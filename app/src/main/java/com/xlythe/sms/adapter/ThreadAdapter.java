@@ -5,6 +5,9 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -151,21 +154,43 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public void createView(boolean isSelected, boolean selectMode) {
             String body = "";
             String time = "";
-            String address = "";
+//            String address = "";
             int unreadCount = 0;
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
-            Text latest = getThread().getLatestMessage(getContext()).get();
+            final Text latest = getThread().getLatestMessage();
+//            Set<Contact> members = latest.getMembersExceptMe(getContext()).get();
+
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+
+            Runnable myRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    latest.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                        @Override
+                        public void get(Set<Contact> instance) {
+                            String address = Utils.join(", ", instance, new Utils.Rule<Contact>() {
+                                @Override
+                                public String toString(Contact contact) {
+                                    return contact.getDisplayName();
+                                }
+                            });
+                            title.setText(address);
+
+                            if (!TextUtils.isEmpty(address)) {
+                                profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
+                            } else {
+                                profile.setImageDrawable(null);
+                            }
+                        }
+                    });
+                }
+            };
+            mainHandler.post(myRunnable);
 
             if (latest != null) {
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
-                address = Utils.join(", ", latest.getMembersExceptMe(getContext()).get(), new Utils.Rule<Contact>() {
-                    @Override
-                    public String toString(Contact contact) {
-                        return contact.getDisplayName();
-                    }
-                });
                 unreadCount = getThread().getUnreadCount();
                 color = ColorUtils.getColor(getThread().getIdAsLong());
             }
@@ -189,7 +214,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             }
 
             if (unreadCount > 0) {
-                title.setText(address);
+//                title.setText(address);
                 unread.setVisibility(View.VISIBLE);
                 unread.setText(getContext().getString(R.string.thread_unread_messages, unreadCount));
                 unread.setTextColor(color);
@@ -202,7 +227,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 }
                 date.setTypeface(TYPEFACE_BOLD);
             } else {
-                title.setText(address);
+//                title.setText(address);
                 unread.setVisibility(View.GONE);
                 title.setTextColor(getContext().getResources().getColor(R.color.headerText));
                 title.setTypeface(TYPEFACE_NORMAL);
@@ -217,16 +242,11 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 profile.setBackgroundResource(R.drawable.selector);
             } else {
                 profile.setBackgroundResource(android.R.color.transparent);
-                if (!TextUtils.isEmpty(address) && latest != null) {
-                    latest.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
-                        @Override
-                        public void get(Set<Contact> instance) {
-                            profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                        }
-                    });
-                } else {
-                    profile.setImageDrawable(null);
-                }
+//                if (!TextUtils.isEmpty(address)) {
+//                    profile.setImageDrawable(new ProfileDrawable(getContext(), members));
+//                } else {
+//                    profile.setImageDrawable(null);
+//                }
             }
 
             profile.setActivated(isSelected);
@@ -276,7 +296,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     @Override
     public int getItemViewType(int position) {
-        Text text = getThread(position).getLatestMessage(mContext).get();
+        Text text = getThread(position).getLatestMessage();
         if (text != null && text.getAttachment() != null) {
             return TYPE_ATTACHMENT;
         }
@@ -317,7 +337,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     public long getHeaderId(int position) {
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage(mContext).get().getTimestamp();
+        long date = thread.getLatestMessage().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
             return 1;
@@ -343,7 +363,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         String title = "";
 
         Thread thread = getThread(position);
-        long date = thread.getLatestMessage(mContext).get().getTimestamp();
+        long date = thread.getLatestMessage().getTimestamp();
         long time = System.currentTimeMillis() - date;
         if (time < ONE_DAY) {
             title = mContext.getString(R.string.thread_title_today);

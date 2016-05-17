@@ -227,7 +227,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             Log.d(TAG, "Opening Activity for thread " + mThread);
         }
 
-        String name = Utils.join(", ", mThread.getLatestMessage(this).get().getMembersExceptMe(this).get(), new Utils.Rule<Contact>() {
+        String name = Utils.join(", ", mThread.getLatestMessage().getMembersExceptMe(this).get(), new Utils.Rule<Contact>() {
             @Override
             public String toString(Contact contact) {
                 return contact.getDisplayName();
@@ -314,7 +314,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        Text text = mThread.getLatestMessage(this).get();
+        Text text = mThread.getLatestMessage();
 
         view.setEnabled(false);
         switch (view.getId()) {

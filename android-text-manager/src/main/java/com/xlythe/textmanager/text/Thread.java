@@ -15,6 +15,8 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.util.List;
+
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
 /**
@@ -28,7 +30,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     // Thread ID isn't always different so need to change it here only
     // Maybe just change the conversations thread ID but that would be confusing
-    private static final String THREAD_ID;
+    static final String THREAD_ID;
     static {
         if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
             THREAD_ID = BaseColumns._ID;
@@ -39,6 +41,12 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     protected Thread(Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
+
+        for (Text text : ((ThreadCursor) cursor).getTexts()) {
+            if (text.getThreadIdAsLong() == mThreadId) {
+                mText = text;
+            }
+        }
 
         Cursor data2 = ((ThreadCursor) cursor).getUnreadCursor();
         int unreadCount = 0;
@@ -120,31 +128,35 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         return mUnreadCount;
     }
 
-    private synchronized void setLatestMessage(Text text) {
-        mText = text;
-    }
+//    private synchronized void setLatestMessage(Text text) {
+//        mText = text;
+//    }
 
-    public synchronized Future<Text> getLatestMessage(final Context context) {
-        if (mText != null) {
-            return new Present<>(mText);
-        } else {
-            return new FutureImpl<Text>() {
-                @Override
-                public Text get() {
-                    Text text;
-                    Cursor textCursor = TextManager.getInstance(context).getMessageCursor(getId());
-                    if (textCursor.moveToLast()) {
-                        text = new Text(context, textCursor);
-                    } else {
-                        Log.w(TAG, "Failed to find a text for Thread: " + getId());
-                        text = Text.EMPTY_TEXT;
-                    }
-                    textCursor.close();
-                    setLatestMessage(text);
-                    return text;
-                }
-            };
-        }
+//    public synchronized Future<Text> getLatestMessage(final Context context) {
+//        if (mText != null) {
+//            return new Present<>(mText);
+//        } else {
+//            return new FutureImpl<Text>() {
+//                @Override
+//                public Text get() {
+//                    Text text;
+//                    Cursor textCursor = TextManager.getInstance(context).getMessageCursor(getId());
+//                    if (textCursor.moveToLast()) {
+//                        text = new Text(context, textCursor);
+//                    } else {
+//                        Log.w(TAG, "Failed to find a text for Thread: " + getId());
+//                        text = Text.EMPTY_TEXT;
+//                    }
+//                    textCursor.close();
+//                    setLatestMessage(text);
+//                    return text;
+//                }
+//            };
+//        }
+//    }
+
+    public Text getLatestMessage() {
+        return mText;
     }
 
     @Override
@@ -198,13 +210,19 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     public static class ThreadCursor extends CursorWrapper {
         private android.database.Cursor mUnreadCursor;
-        public ThreadCursor(android.database.Cursor cursor, android.database.Cursor unreadCursor) {
+        private List<Text> mTexts;
+        public ThreadCursor(android.database.Cursor cursor, android.database.Cursor unreadCursor, List<Text> texts) {
             super(cursor);
             mUnreadCursor = unreadCursor;
+            mTexts = texts;
         }
 
         private android.database.Cursor getUnreadCursor() {
             return mUnreadCursor;
+        }
+
+        private List<Text> getTexts() {
+            return mTexts;
         }
 
         public Thread getThread() {
