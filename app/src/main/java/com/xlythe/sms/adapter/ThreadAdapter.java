@@ -1,6 +1,7 @@
 package com.xlythe.sms.adapter;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
@@ -13,9 +14,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -321,6 +324,16 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public SectionViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.section_text);
+            Configuration config = view.getResources().getConfiguration();
+            if(config.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+                params.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
+                title.setLayoutParams(params);
+            } else {
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+                params.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+                title.setLayoutParams(params);
+            }
         }
     }
 
