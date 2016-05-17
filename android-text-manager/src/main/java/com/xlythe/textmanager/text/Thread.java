@@ -26,8 +26,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     private Integer mUnreadCount;
     private Text mText;
 
-    // Thread id isn't always different so need to change it here only
-    // Maybe just change the conversations thread id but that would be confusing
+    // Thread ID isn't always different so need to change it here only
+    // Maybe just change the conversations thread ID but that would be confusing
     private static final String THREAD_ID;
     static {
         if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
@@ -39,7 +39,18 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     protected Thread(Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
-//        mText = new Text(cursor);
+
+        Cursor data2 = ((ThreadCursor) cursor).getUnreadCursor();
+        int unreadCount = 0;
+        if (data2 != null) {
+            data2.moveToFirst();
+            while (data2.moveToNext()) {
+                if (data2.getLong(data2.getColumnIndex(THREAD_ID)) == mThreadId) {
+                    unreadCount++;
+                }
+            }
+        }
+        mUnreadCount = unreadCount;
     }
 
     /**
@@ -107,31 +118,6 @@ public final class Thread implements MessageThread<Text>, Parcelable {
                     "Call getUnreadCount(Context) first to load the count.");
         }
         return mUnreadCount;
-    }
-
-    private synchronized void setUnreadCount(int count) {
-        mUnreadCount = count;
-    }
-
-    public synchronized Future<Integer> getUnreadCount(final Context context) {
-        if (mUnreadCount != null) {
-            return new Present<>(mUnreadCount);
-        } else {
-            return new FutureImpl<Integer>() {
-                @Override
-                public Integer get() {
-                    String proj = String.format("%s=%s AND %s=%s",
-                            THREAD_ID, mThreadId,
-                            Mock.Telephony.Sms.READ, 0);
-                    Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-                    Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
-                    int count = c.getCount();
-                    c.close();
-                    setUnreadCount(count);
-                    return count;
-                }
-            };
-        }
     }
 
     private synchronized void setLatestMessage(Text text) {
@@ -211,8 +197,14 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     };
 
     public static class ThreadCursor extends CursorWrapper {
-        public ThreadCursor(android.database.Cursor cursor) {
+        private android.database.Cursor mUnreadCursor;
+        public ThreadCursor(android.database.Cursor cursor, android.database.Cursor unreadCursor) {
             super(cursor);
+            mUnreadCursor = unreadCursor;
+        }
+
+        private android.database.Cursor getUnreadCursor() {
+            return mUnreadCursor;
         }
 
         public Thread getThread() {

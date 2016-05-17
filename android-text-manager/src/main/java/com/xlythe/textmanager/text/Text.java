@@ -152,20 +152,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
-        Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
-//
-//        // Query the address information for this message
-        Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
-
-        while (addr.moveToNext()) {
-            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == mMmsId) {
-                if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER) {
-                    mSenderAddress = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
-                }
-                mMemberAddresses.add(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
-            }
-        }
-        addr.close();
 
         if (data2 != null) {
             int position = data2.getPosition();
@@ -253,6 +239,31 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return mSender;
     }
 
+    private void buildSender(Context context) {
+        Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
+
+        // Query the address information for this message
+        Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
+
+        while (addr.moveToNext()) {
+            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == mMmsId) {
+                if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER) {
+                    setSenderAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
+                }
+                setMemberAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
+            }
+        }
+        addr.close();
+    }
+
+    private synchronized void setMemberAddress(String memberAddress) {
+        mMemberAddresses.add(memberAddress);
+    }
+
+    private synchronized void setSenderAddress(String senderAddress) {
+        mSenderAddress = senderAddress;
+    }
+
     private synchronized void setSender(Contact sender) {
         mSender = sender;
     }
@@ -265,6 +276,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 @Override
                 public Contact get() {
                     TextManager manager = TextManager.getInstance(context);
+                    if (mSenderAddress == null && mIsMms) {
+                        buildSender(context);
+                    }
                     Contact sender = isIncoming() ? manager.lookupContact(mSenderAddress) : manager.getSelf();
                     setSender(sender);
                     return sender;
@@ -290,6 +304,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 @Override
                 public Set<Contact> get() {
                     TextManager manager = TextManager.getInstance(context);
+                    if (mMemberAddresses.isEmpty() && mIsMms) {
+                        buildSender(context);
+                    }
                     for (String address : mMemberAddresses) {
                         addMember(manager.lookupContact(address));
                     }
@@ -442,7 +459,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public static class TextCursor extends CursorWrapper {
         private final Context mContext;
-        public final android.database.Cursor mCursor2;
+        private final android.database.Cursor mCursor2;
 
         public TextCursor(Context context, android.database.Cursor cursor, android.database.Cursor cursor2) {
             super(cursor);
@@ -450,7 +467,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             mCursor2 = cursor2;
         }
 
-        public Cursor getMmsCursor() {
+        private Cursor getMmsCursor() {
             return mCursor2;
         }
 

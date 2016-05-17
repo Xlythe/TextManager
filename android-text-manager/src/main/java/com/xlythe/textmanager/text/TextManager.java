@@ -376,7 +376,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-        return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order));
+
+        String clause = String.format(
+                "%s=%s",
+                Mock.Telephony.Sms.READ, 0);
+
+        Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+        return new Thread.ThreadCursor(contentResolver.query(uri, null, null, null, order),
+                contentResolver.query(uri2, null, clause, null, null));
     }
 
     public List<Attachment> getAttachments(Thread thread) {
@@ -473,7 +480,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
                     order = "normalized_date DESC";
                 }
-                Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order));
+
+                String clause2 = String.format(
+                        "%s=%s",
+                        Mock.Telephony.Sms.READ, 0);
+
+                Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+
+                Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order),
+                        contentResolver.query(uri2, null, clause2, null, order));
                 try {
                     if (cursor.moveToFirst()) {
                         return cursor.getThread();

@@ -166,7 +166,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                         return contact.getDisplayName();
                     }
                 });
-                unreadCount = getThread().getUnreadCount(getContext()).get();
+                unreadCount = getThread().getUnreadCount();
                 color = ColorUtils.getColor(getThread().getIdAsLong());
             }
             if (message != null) {
