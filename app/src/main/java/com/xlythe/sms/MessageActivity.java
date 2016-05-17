@@ -170,7 +170,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    send();
+                    if (mSendButton.isEnabled()) {
+                        send();
+                    }
                     return true;
                 }
                 return false;
@@ -294,8 +296,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     }
 
     public void setSendable(boolean sendable){
-        mSendButton.setEnabled(sendable);
-        if (sendable) {
+        mSendButton.setEnabled(sendable && mManager.isDefaultSmsPackage());
+        if (sendable && mManager.isDefaultSmsPackage()) {
             mSendButton.setColorFilter(ColorUtils.getColor(mThread.getIdAsLong()), PorterDuff.Mode.SRC_ATOP);
         } else {
             mSendButton.clearColorFilter();
