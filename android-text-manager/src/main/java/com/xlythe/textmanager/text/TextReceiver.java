@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
@@ -115,8 +116,22 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
                         if (c == null) return;
                         c.moveToFirst();
-                        Text text = new Text(mContext, c);
+
+                        final String[] projection2 = new String[]{
+                                BaseColumns._ID,
+                                Mock.Telephony.Mms.Part.CONTENT_TYPE,
+                                Mock.Telephony.Mms.Part.TEXT,
+                                Mock.Telephony.Mms.Part._DATA,
+                                Mock.Telephony.Mms.Part.MSG_ID
+                        };
+                        Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+                        Cursor c2 = mContext.getContentResolver().query(uri2, projection2, null, null, null);
+                        if (c2 == null) return;
+                        c2.moveToFirst();
+
+                        Text text = new Text(mContext, c, c2);
                         c.close();
+                        c2.close();
                         onMessageReceived(mContext, text);
                     } catch (MmsException e) {
                         Log.e(TAG, "Unable to persist message", e);

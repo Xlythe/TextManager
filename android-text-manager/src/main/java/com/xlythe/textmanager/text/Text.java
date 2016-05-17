@@ -70,7 +70,20 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             parseSmsMessage(cursor);
         } else if (TYPE_MMS.equals(type)){
             mIsMms = true;
-            parseMmsMessage(cursor, context);
+            parseMmsMessage(cursor, ((TextCursor) cursor).getMmsCursor(), context);
+        } else {
+            Log.w("TelephonyProvider", "Unknown Message Type");
+        }
+    }
+
+    Text(Context context, Cursor cursor, Cursor cursor2) {
+        String type = getMessageType(cursor);
+        if (TYPE_SMS.equals(type)){
+            mIsMms = false;
+            parseSmsMessage(cursor);
+        } else if (TYPE_MMS.equals(type)){
+            mIsMms = true;
+            parseMmsMessage(cursor, cursor2, context);
         } else {
             Log.w("TelephonyProvider", "Unknown Message Type");
         }
@@ -132,7 +145,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
     }
 
-    private void parseMmsMessage(Cursor data, Context context) {
+    private void parseMmsMessage(Cursor data, Cursor data2, Context context) {
         mIncoming = isIncomingMessage(data, false);
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
         mThreadId = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.THREAD_ID));
@@ -140,48 +153,43 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
         Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
-
-        // Query the address information for this message
+//
+//        // Query the address information for this message
         Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
 
         while (addr.moveToNext()) {
-            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER){
-                mSenderAddress = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
+            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == mMmsId) {
+                if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER) {
+                    mSenderAddress = addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS));
+                }
+                mMemberAddresses.add(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
             }
-            mMemberAddresses.add(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
         }
         addr.close();
 
-        if (mIsMms) {
-            // Query all the MMS parts associated with this message
-            Uri messageUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/part");
-            Cursor inner = context.getContentResolver().query(
-                    messageUri,
-                    MMS_PROJECTION,
-                    Mock.Telephony.Mms.Part.MSG_ID + " = ?",
-                    new String[]{String.valueOf(mMmsId)},
-                    null
-            );
+        if (data2 != null) {
+            int position = data2.getPosition();
+            while (data2.moveToNext()) {
+                if (data2.getLong(data2.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == mMmsId) {
+                    String contentType = data2.getString(data2.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
+                    if (contentType == null) {
+                        continue;
+                    }
 
-            while (inner.moveToNext()) {
-                String contentType = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
-                if (contentType == null) {
-                    continue;
-                }
-
-                if (contentType.matches("image/.*")) {
-                    // Find any part that is an image attachment
-                    long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
-                } else if (contentType.matches("text/.*")) {
-                    // Find any part that is text data
-                    mBody = inner.getString(inner.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
-                } else if (contentType.matches("video/.*")) {
-                    long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                    mAttachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
+                    if (contentType.matches("image/.*")) {
+                        // Find any part that is an image attachment
+                        long partId = data2.getLong(data2.getColumnIndex(BaseColumns._ID));
+                        mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
+                    } else if (contentType.matches("text/.*")) {
+                        // Find any part that is text data
+                        mBody = data2.getString(data2.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
+                    } else if (contentType.matches("video/.*")) {
+                        long partId = data2.getLong(data2.getColumnIndex(BaseColumns._ID));
+                        mAttachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
+                    }
                 }
             }
-            inner.close();
+            data2.moveToPosition(position);
         }
     }
 
@@ -434,10 +442,16 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public static class TextCursor extends CursorWrapper {
         private final Context mContext;
+        public final android.database.Cursor mCursor2;
 
-        public TextCursor(Context context, android.database.Cursor cursor) {
+        public TextCursor(Context context, android.database.Cursor cursor, android.database.Cursor cursor2) {
             super(cursor);
             mContext = context.getApplicationContext();
+            mCursor2 = cursor2;
+        }
+
+        public Cursor getMmsCursor() {
+            return mCursor2;
         }
 
         public Text getText() {

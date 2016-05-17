@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.CursorJoiner;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -292,7 +295,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         final String[] projection = PROJECTION;
         Uri uri = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
         String order = "normalized_date ASC";
-        return new Text.TextCursor(mContext, contentResolver.query(uri, projection, null, null, order));
+
+        final String[] projection2 = new String[]{
+                BaseColumns._ID,
+                Mock.Telephony.Mms.Part.CONTENT_TYPE,
+                Mock.Telephony.Mms.Part.TEXT,
+                Mock.Telephony.Mms.Part._DATA,
+                Mock.Telephony.Mms.Part.MSG_ID
+        };
+        Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+
+        return new Text.TextCursor(mContext,
+                contentResolver.query(uri, projection, null, null, order),
+                contentResolver.query(uri2, projection2, null, null, null));
     }
 
     @Override
@@ -305,7 +320,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 ContentResolver contentResolver = mContext.getContentResolver();
                 final String[] projection = PROJECTION;
                 Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
-                Text.TextCursor cursor = new Text.TextCursor(mContext, contentResolver.query(uri, projection, clause, null, null));
+
+                final String[] projection2 = new String[]{
+                        BaseColumns._ID,
+                        Mock.Telephony.Mms.Part.CONTENT_TYPE,
+                        Mock.Telephony.Mms.Part.TEXT,
+                        Mock.Telephony.Mms.Part._DATA,
+                        Mock.Telephony.Mms.Part.MSG_ID
+                };
+                Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+
+                Text.TextCursor cursor = new Text.TextCursor(mContext,
+                        contentResolver.query(uri, projection, clause, null, null),
+                        contentResolver.query(uri2, projection2, null, null, null));
                 try {
                     if (cursor.moveToFirst()) {
                         return cursor.getText();

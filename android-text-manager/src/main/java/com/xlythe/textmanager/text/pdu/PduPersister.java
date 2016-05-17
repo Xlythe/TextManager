@@ -21,6 +21,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.exception.InvalidHeaderValueException;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.util.CharacterSets;
@@ -619,6 +620,8 @@ public class PduPersister {
             values.put(Addr.TYPE, type);
             Uri uri = Uri.parse("content://mms/" + msgId + "/addr");
             mContentResolver.insert(uri, values);
+
+            // TODO: add values to a seperate db for faster loading
         }
     }
     private static String getPartContentType(PduPart part) {
