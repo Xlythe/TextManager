@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -41,6 +42,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -125,7 +128,8 @@ public class SendService extends IntentService {
                 Set set = storeData(context, address, " ", text.getBody(), attachment, text.getId());
                 sendMediaMessage(context, set, newMmsSentPendingIntent(context, set.messageUri, text.getId()));
             } else {
-                throw new RuntimeException("Not supported before Lollipop");
+                Set set = storeData(context, address, " ", text.getBody(), attachment, text.getId());
+                sendMediaMessageTest(context, set, newMmsSentPendingIntent(context, set.messageUri, text.getId()));
             }
         }
     }
@@ -149,6 +153,71 @@ public class SendService extends IntentService {
         intent.setAction(MMS_SENT);
         intent.setData(uri);
         return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
+    }
+
+    @TargetApi(19)
+    public static void sendMediaMessageTest(final Context context,
+                                        final Set set,
+                                        final PendingIntent sentMmsPendingIntent) {
+
+        // Collect the data we're going to send to the server
+        final byte[] pdu = set.data;
+        final Uri uri = set.messageUri;
+
+        ContentValues values = new ContentValues();
+        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
+        context.getContentResolver().update(uri, values, null, null);
+
+        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+
+        if (result != 0) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            final CountDownLatch latch = new CountDownLatch(1);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(final Context context, Intent intent) {
+                    String action = intent.getAction();
+                    if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                        return;
+                    }
+
+                    NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+
+                    if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
+                        return;
+                    }
+
+                    if (!mNetworkInfo.isConnected()) {
+                        return;
+                    } else {
+                        Log.d(TAG, "mms connected");
+                        context.unregisterReceiver(this);
+                        new java.lang.Thread(new Runnable() {
+                            public void run() {
+                                sendData(context, pdu, sentMmsPendingIntent, uri);
+                                latch.countDown();
+                            }
+                        }).start();
+                    }
+                }
+            };
+            context.registerReceiver(receiver, filter);
+            try {
+                latch.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            context.unregisterReceiver(receiver);
+        } else {
+            Log.i(TAG, "mms already established");
+            new java.lang.Thread(new Runnable() {
+                public void run() {
+                    sendData(context, pdu, sentMmsPendingIntent, uri);
+                }
+            }).start();
+        }
     }
 
     @TargetApi(21)
