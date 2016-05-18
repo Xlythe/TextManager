@@ -41,9 +41,6 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.textmanager.text.Status;
-import com.xlythe.textmanager.text.TextReceiver;
-import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
@@ -301,6 +298,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             mSendButton.setColorFilter(ColorUtils.getColor(mThread.getIdAsLong()), PorterDuff.Mode.SRC_ATOP);
         } else {
             mSendButton.clearColorFilter();
+            int color = getResources().getColor(R.color.button);
+            mSendButton.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
         }
     }
 
@@ -349,6 +348,11 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mCameraAttachments.clearColorFilter();
         mStickerAttachments.clearColorFilter();
         mMicAttachments.clearColorFilter();
+        int color = getResources().getColor(R.color.date_text_color);
+        mGalleryAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        mCameraAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        mStickerAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        mMicAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
         mGalleryAttachments.setEnabled(true);
         mCameraAttachments.setEnabled(true);

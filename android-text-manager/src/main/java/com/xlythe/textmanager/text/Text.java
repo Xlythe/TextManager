@@ -275,7 +275,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         // Query the address information for this message
         Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
-
         while (addr.moveToNext()) {
             if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == mMmsId) {
                 if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER) {

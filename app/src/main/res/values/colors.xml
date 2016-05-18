@@ -11,6 +11,8 @@
     <color name="icon_color">#757575</color>
     <color name="loading">#eeeeee</color>
     <color name="date_text_color">#9e9e9e</color>
+    <color name="button">#bdbdbd</color>
+
 
     <color name="select_tint">#4d000000</color>
 
