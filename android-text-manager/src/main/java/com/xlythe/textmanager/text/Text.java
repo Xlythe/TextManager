@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -19,9 +20,22 @@ import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
+import com.xlythe.textmanager.text.exception.MmsException;
+import com.xlythe.textmanager.text.pdu.PduBody;
+import com.xlythe.textmanager.text.pdu.PduComposer;
+import com.xlythe.textmanager.text.pdu.PduPart;
+import com.xlythe.textmanager.text.pdu.PduPersister;
+import com.xlythe.textmanager.text.pdu.SendReq;
+import com.xlythe.textmanager.text.smil.SmilHelper;
+import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
+import com.xlythe.textmanager.text.util.CharacterSets;
+import com.xlythe.textmanager.text.util.ContentType;
+import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,12 +48,7 @@ import static com.xlythe.textmanager.text.TextManager.TAG;
  * Either an sms or an mms
  */
 public final class Text implements Message, Parcelable, Comparable<Text> {
-    private static final String[] MMS_PROJECTION = new String[]{
-            BaseColumns._ID,
-            Mock.Telephony.Mms.Part.CONTENT_TYPE,
-            Mock.Telephony.Mms.Part.TEXT,
-            Mock.Telephony.Mms.Part._DATA
-    };
+
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
@@ -60,6 +69,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private Set<String> mMemberAddresses = new HashSet<>();
     private Set<Contact> mMembers = new HashSet<>();
     private Attachment mAttachment;
+    private byte[] mBytesToSend;
 
     private Text() {}
 
@@ -144,6 +154,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
 
         mAttachment = in.readParcelable(Attachment.class.getClassLoader());
+
+        if (in.readInt() > 0) {
+            in.readByteArray(mBytesToSend);
+        }
     }
 
     private String getMessageType(Cursor cursor) {
@@ -372,6 +386,109 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
 
+    public SendReq getSendRequest(Context context) {
+        final PduBody pduBody = new PduBody();
+        PduPart partPdu = new PduPart();
+        long messageSize = 0;
+        byte[] nameBytes = new byte[]{};
+        byte[] typeBytes = new byte[]{};
+        byte[] dataBytes = new byte[]{};
+        if (mAttachment != null) {
+            Attachment.Type type = mAttachment.getType();
+            switch (type) {
+                case IMAGE:
+                    nameBytes = "image".getBytes();
+                    typeBytes = "image/png".getBytes();
+                    dataBytes = bitmapToByteArray(((ImageAttachment) mAttachment).getBitmap(context).get());
+                    if (dataBytes == null) {
+                        Log.e(TAG, "Error getting bitmap from attachment");
+                        break;
+                    }
+                    break;
+                case VIDEO:
+                    nameBytes = "video".getBytes();
+                    typeBytes = "video/mpeg".getBytes();
+                    dataBytes = ((VideoAttachment) mAttachment).getBytes(context).get();
+                    if (dataBytes == null) {
+                        Log.e(TAG, "Error getting bytes from attachment");
+                        break;
+                    }
+                case VOICE:
+                    //TODO: Voice support
+                    break;
+            }
+            partPdu.setName(nameBytes);
+            partPdu.setContentType(typeBytes);
+            partPdu.setData(dataBytes);
+            pduBody.addPart(partPdu);
+            messageSize += (nameBytes.length + typeBytes.length + dataBytes.length);
+        }
+
+        if (mBody != null && !mBody.isEmpty()) {
+            // add text to the end of the part and send
+            partPdu.setName("text".getBytes());
+            partPdu.setContentType("text/plain".getBytes());
+            partPdu.setData(mBody.getBytes());
+            partPdu.setCharset(CharacterSets.UTF_8);
+            pduBody.addPart(partPdu);
+            messageSize += ("text".getBytes().length + "text/plain".getBytes().length + mBody.getBytes().length);
+        }
+
+        final SendReq sendRequest = new SendReq();
+
+        for (Contact recipient : getMembersExceptMe(context).get()) {
+            final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber(context).get());
+            if (phoneNumbers != null && phoneNumbers.length > 0) {
+                sendRequest.addTo(phoneNumbers[0]);
+            }
+        }
+
+        String subject = " ";
+        sendRequest.setSubject(new EncodedStringValue(subject));
+        sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        sendRequest.setFrom(new EncodedStringValue(manager.getLine1Number()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        SmilXmlSerializer.serialize(SmilHelper.createSmilDocument(pduBody), out);
+        PduPart smilPart = new PduPart();
+        smilPart.setContentId("smil".getBytes());
+        smilPart.setContentLocation("smil.xml".getBytes());
+        smilPart.setContentType(ContentType.APP_SMIL.getBytes());
+        smilPart.setData(out.toByteArray());
+        pduBody.addPart(0, smilPart);
+        sendRequest.setBody(pduBody);
+        Log.d(TAG, "setting message size to " + messageSize + " bytes");
+        sendRequest.setMessageSize(messageSize);
+
+        final PduComposer composer = new PduComposer(context, sendRequest);
+        mBytesToSend = composer.make();
+
+        return sendRequest;
+    }
+
+    public byte[] getByteData(Context context) {
+        // create byte array which will actually be sent
+        if (mBytesToSend != null) {
+            return mBytesToSend;
+        } else {
+            final PduComposer composer = new PduComposer(context, getSendRequest(context));
+            final byte[] bytesToSend;
+            bytesToSend = composer.make();
+            return bytesToSend;
+        }
+    }
+
+    private byte[] bitmapToByteArray(Bitmap image) {
+        if (image == null) {
+            Log.v(TAG, "image is null, returning byte array of size 0");
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.PNG, 0, stream);
+        return stream.toByteArray();
+    }
+
     public byte[] toBytes() {
         Parcel parcel = Parcel.obtain();
         writeToParcel(parcel, describeContents());
@@ -475,6 +592,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
 
         out.writeParcelable(mAttachment, flags);
+
+        if (mBytesToSend == null) {
+            mBytesToSend = new byte[0];
+        }
+        out.writeInt(mBytesToSend.length);
+        out.writeByteArray(mBytesToSend);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
