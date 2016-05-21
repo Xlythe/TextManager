@@ -115,25 +115,25 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
                         mContext.getContentResolver().update(msgUri, values, null, null);
 
-                        Cursor c = mContext.getContentResolver().query(msgUri, null, null, null, null);
-                        if (c == null) return;
-                        c.moveToFirst();
+                        Cursor textCursor = mContext.getContentResolver().query(msgUri, null, null, null, null);
+                        if (textCursor == null) return;
+                        textCursor.moveToFirst();
 
-                        final String[] projection2 = new String[]{
+                        final String[] mmsProjection = new String[]{
                                 BaseColumns._ID,
                                 Mock.Telephony.Mms.Part.CONTENT_TYPE,
                                 Mock.Telephony.Mms.Part.TEXT,
                                 Mock.Telephony.Mms.Part._DATA,
                                 Mock.Telephony.Mms.Part.MSG_ID
                         };
-                        Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
-                        Cursor c2 = mContext.getContentResolver().query(uri2, projection2, null, null, null);
-                        if (c2 == null) return;
-                        c2.moveToFirst();
+                        Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+                        Cursor mmsCursor = mContext.getContentResolver().query(mmsUri, mmsProjection, null, null, null);
+                        if (mmsCursor == null) return;
+                        mmsCursor.moveToFirst();
 
-                        Text text = new Text(mContext, c, c2);
-                        c.close();
-                        c2.close();
+                        Text text = new Text(textCursor, mmsCursor);
+                        textCursor.close();
+                        mmsCursor.close();
                         onMessageReceived(mContext, text);
                     } catch (MmsException e) {
                         Log.e(TAG, "Unable to persist message", e);

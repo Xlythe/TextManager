@@ -123,7 +123,7 @@ public class Receive {
         Cursor c = context.getContentResolver().query(msg, SMS_PROJECTION, null, null, "date ASC");
         if (c == null) return null;
         c.moveToFirst();
-        Text text = new Text(context, c);
+        Text text = new Text(new Text.TextCursor(c, null));
         c.close();
         return text;
     }

@@ -285,18 +285,18 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         Uri uri = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
         String order = "normalized_date ASC";
 
-        final String[] projection2 = new String[]{
+        final String[] mmsProjection = new String[]{
                 BaseColumns._ID,
                 Mock.Telephony.Mms.Part.CONTENT_TYPE,
                 Mock.Telephony.Mms.Part.TEXT,
                 Mock.Telephony.Mms.Part._DATA,
                 Mock.Telephony.Mms.Part.MSG_ID
         };
-        Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+        Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
-        return new Text.TextCursor(mContext,
+        return new Text.TextCursor(
                 contentResolver.query(uri, projection, null, null, order),
-                contentResolver.query(uri2, projection2, null, null, null));
+                contentResolver.query(mmsUri, mmsProjection, null, null, null));
     }
 
     @Override
@@ -310,18 +310,18 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 final String[] projection = PROJECTION;
                 Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
 
-                final String[] projection2 = new String[]{
+                final String[] mmsProjection = new String[]{
                         BaseColumns._ID,
                         Mock.Telephony.Mms.Part.CONTENT_TYPE,
                         Mock.Telephony.Mms.Part.TEXT,
                         Mock.Telephony.Mms.Part._DATA,
                         Mock.Telephony.Mms.Part.MSG_ID
                 };
-                Uri uri2 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+                Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
-                Text.TextCursor cursor = new Text.TextCursor(mContext,
+                Text.TextCursor cursor = new Text.TextCursor(
                         contentResolver.query(uri, projection, clause, null, null),
-                        contentResolver.query(uri2, projection2, null, null, null));
+                        contentResolver.query(mmsUri, mmsProjection, null, null, null));
                 try {
                     if (cursor.moveToFirst()) {
                         return cursor.getText();
@@ -639,9 +639,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     order = "normalized_date DESC";
                 }
 
-                String clause2 = String.format("%s=%s", Mock.Telephony.Sms.READ, 0);
-
-                Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+                String unreadMessagesClause = String.format("%s=%s", Mock.Telephony.Sms.READ, 0);
+                Uri inboxUri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
 
                 List<Text> messages = new ArrayList<>();
                 Text.TextCursor c = getMessageCursor(threadId);
@@ -652,8 +651,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 }
                 c.close();
 
-                Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order),
-                        contentResolver.query(uri2, null, clause2, null, order),
+                Thread.ThreadCursor cursor = new Thread.ThreadCursor(
+                        contentResolver.query(uri, null, clause, null, order),
+                        contentResolver.query(inboxUri, null, unreadMessagesClause, null, order),
                         messages);
                 try {
                     if (cursor.moveToFirst()) {
