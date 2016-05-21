@@ -1,23 +1,15 @@
 package com.xlythe.textmanager.text;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
-import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
-import android.util.Log;
 
 import com.xlythe.textmanager.MessageThread;
-import com.xlythe.textmanager.text.concurrency.Future;
-import com.xlythe.textmanager.text.concurrency.FutureImpl;
-import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.List;
-
-import static com.xlythe.textmanager.text.TextManager.TAG;
 
 /**
  * An SMS conversation
@@ -48,12 +40,12 @@ public final class Thread implements MessageThread<Text>, Parcelable {
             }
         }
 
-        Cursor data2 = ((ThreadCursor) cursor).getUnreadCursor();
+        Cursor unreadCursor = ((ThreadCursor) cursor).getUnreadCursor();
         int unreadCount = 0;
-        if (data2 != null) {
-            data2.moveToFirst();
-            while (data2.moveToNext()) {
-                if (data2.getLong(data2.getColumnIndex(THREAD_ID)) == mThreadId) {
+        if (unreadCursor != null) {
+            unreadCursor.moveToFirst();
+            while (unreadCursor.moveToNext()) {
+                if (unreadCursor.getLong(unreadCursor.getColumnIndex(THREAD_ID)) == mThreadId) {
                     unreadCount++;
                 }
             }
@@ -145,9 +137,10 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     };
 
     public static class ThreadCursor extends CursorWrapper {
-        private android.database.Cursor mUnreadCursor;
+        private Cursor mUnreadCursor;
         private List<Text> mTexts;
-        public ThreadCursor(android.database.Cursor cursor, android.database.Cursor unreadCursor, List<Text> texts) {
+
+        public ThreadCursor(Cursor cursor, Cursor unreadCursor, List<Text> texts) {
             super(cursor);
             mUnreadCursor = unreadCursor;
             mTexts = texts;

@@ -7,24 +7,15 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.UserManager;
 import android.provider.BaseColumns;
-import android.provider.Telephony;
 import android.support.annotation.VisibleForTesting;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.textmanager.Message;
-import com.xlythe.textmanager.User;
-import com.xlythe.textmanager.text.concurrency.Future;
-import com.xlythe.textmanager.text.concurrency.FutureImpl;
-import com.xlythe.textmanager.text.concurrency.Present;
-import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduBody;
 import com.xlythe.textmanager.text.pdu.PduComposer;
 import com.xlythe.textmanager.text.pdu.PduPart;
-import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.SendReq;
 import com.xlythe.textmanager.text.smil.SmilHelper;
 import com.xlythe.textmanager.text.smil.SmilXmlSerializer;
@@ -34,12 +25,10 @@ import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
@@ -53,8 +42,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
     public static final long TYPE_SENDER = 137;
-
-    static final Text EMPTY_TEXT = new Text();
 
     private long mId = -1;
     private long mThreadId;
