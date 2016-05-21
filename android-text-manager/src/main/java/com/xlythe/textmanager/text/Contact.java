@@ -3,7 +3,6 @@ package com.xlythe.textmanager.text;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -19,7 +18,6 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
-import java.lang.*;
 import java.util.LinkedList;
 import java.util.List;
 

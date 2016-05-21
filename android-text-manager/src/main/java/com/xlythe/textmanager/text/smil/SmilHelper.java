@@ -2,9 +2,9 @@ package com.xlythe.textmanager.text.smil;
 
 import android.util.Log;
 
-import com.xlythe.textmanager.text.util.ContentType;
 import com.xlythe.textmanager.text.pdu.PduBody;
 import com.xlythe.textmanager.text.pdu.PduPart;
+import com.xlythe.textmanager.text.util.ContentType;
 
 public class SmilHelper {
 

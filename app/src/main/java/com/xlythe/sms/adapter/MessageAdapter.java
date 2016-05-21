@@ -19,9 +19,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
-
-import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.R;
+import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Attachment;

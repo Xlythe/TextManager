@@ -3,11 +3,8 @@ package com.xlythe.textmanager.text;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.xlythe.textmanager.text.util.Utils;
-
-import java.io.Serializable;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {

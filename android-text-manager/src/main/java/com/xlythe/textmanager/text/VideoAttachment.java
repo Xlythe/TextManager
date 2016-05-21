@@ -1,8 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import static com.xlythe.textmanager.text.TextManager.DEBUG;
-import static com.xlythe.textmanager.text.TextManager.TAG;
-
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -21,6 +18,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+
+import static com.xlythe.textmanager.text.TextManager.DEBUG;
+import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public final class VideoAttachment extends Attachment {
     private transient byte[] mBytes;

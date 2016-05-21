@@ -1,31 +1,15 @@
 package com.xlythe.sms.drawable;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.util.TypedValue;
 
-import com.xlythe.sms.R;
-import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.Receive;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
 
 public class ExtendedProfileDrawable extends Drawable {
     private static final int DRAWABLE_MARGIN_SIZE_DP = 2;

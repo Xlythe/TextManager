@@ -2,7 +2,6 @@ package com.xlythe.textmanager;
 
 import android.database.Cursor;
 
-import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.util.List;

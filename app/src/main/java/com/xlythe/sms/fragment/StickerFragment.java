@@ -15,13 +15,9 @@ import android.widget.ImageView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
-import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.concurrency.Future;
-
-import java.util.Set;
 
 public class StickerFragment extends Fragment {
     private static final String TAG = StickerFragment.class.getSimpleName();
