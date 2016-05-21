@@ -366,19 +366,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             order = "normalized_date DESC";
         }
 
-        String clause2 = String.format("%s=%s",  Mock.Telephony.Sms.READ, 0);
+        String unreadMessagesClause = String.format("%s=%s",  Mock.Telephony.Sms.READ, 0);
+        Uri inboxUri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
 
-        Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-
-
-        final String[] projection3 = new String[]{
+        final String[] mmsProjection = new String[]{
                 BaseColumns._ID,
                 Mock.Telephony.Mms.Part.CONTENT_TYPE,
                 Mock.Telephony.Mms.Part.TEXT,
                 Mock.Telephony.Mms.Part._DATA,
                 Mock.Telephony.Mms.Part.MSG_ID
         };
-        Uri uri3 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+        Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
         Cursor threads = contentResolver.query(uri, null, null, null, order);
 
@@ -386,7 +384,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         List<Text> recentTexts = new ArrayList<>();
 
         while (threads.moveToNext()) {
-
             boolean isMms;
             int typeIndex = threads.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
             if (typeIndex < 0) {
@@ -506,15 +503,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             ));
         }
 
-        String[] args3 = new String[ids.size()];
-        args3 = ids.toArray(args3);
+        String[] mmsArgs = new String[ids.size()];
+        mmsArgs = ids.toArray(mmsArgs);
 
-        String clause3 = Mock.Telephony.Mms.Part.MSG_ID + " = ?";
+        String mmsClause = Mock.Telephony.Mms.Part.MSG_ID + " = ?";
         for (int i = 0; i < ids.size() - 1; i++) {
-            clause3 += " OR " + Mock.Telephony.Mms.Part.MSG_ID + " = ?";
+            mmsClause += " OR " + Mock.Telephony.Mms.Part.MSG_ID + " = ?";
         }
 
-        Cursor mms = contentResolver.query(uri3, projection3, clause3, args3, null);
+        Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause, mmsArgs, null);
 
         for (Text text : recentTexts) {
             mms.moveToFirst();
@@ -541,7 +538,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         return new Thread.ThreadCursor(threads,
-                contentResolver.query(uri2, null, clause2, null, null),
+                contentResolver.query(inboxUri, null, unreadMessagesClause, null, null),
                 recentTexts);
     }
 
