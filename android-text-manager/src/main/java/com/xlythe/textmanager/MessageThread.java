@@ -1,9 +1,5 @@
 package com.xlythe.textmanager;
 
-import android.content.Context;
-
-import java.util.List;
-
 /**
  * Represents a series of messages.
  *

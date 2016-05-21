@@ -1,12 +1,7 @@
 package com.xlythe.textmanager;
 
 import com.xlythe.textmanager.text.Attachment;
-import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Status;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Represents a message. May contain attachments like images, voice.

@@ -24,9 +24,7 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Receive;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 

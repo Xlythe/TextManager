@@ -12,16 +12,15 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.provider.Telephony.Mms;
-import android.provider.Telephony.MmsSms;
 import android.provider.Telephony.Mms.Addr;
 import android.provider.Telephony.Mms.Part;
+import android.provider.Telephony.MmsSms;
 import android.provider.Telephony.MmsSms.PendingMessages;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.exception.InvalidHeaderValueException;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.util.CharacterSets;
@@ -41,9 +40,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

@@ -1,12 +1,10 @@
 package com.xlythe.sms.view.camera;
 
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.util.Log;
-import android.view.Surface;
 
 import java.io.File;
 import java.io.IOException;

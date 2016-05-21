@@ -17,15 +17,12 @@ import android.widget.ImageView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.view.camera.BaseCameraView;
-import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
-import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.io.File;
-import java.util.Set;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 

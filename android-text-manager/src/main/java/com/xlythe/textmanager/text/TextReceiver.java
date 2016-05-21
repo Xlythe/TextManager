@@ -1,44 +1,29 @@
 package com.xlythe.textmanager.text;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
-import android.provider.MediaStore;
-import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
-import com.xlythe.textmanager.text.Mock;
-import com.xlythe.textmanager.text.Receive;
-import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.exception.MmsException;
-import com.xlythe.textmanager.text.pdu.NotificationInd;
-import com.xlythe.textmanager.text.util.ContentType;
 import com.xlythe.textmanager.text.pdu.GenericPdu;
-import com.xlythe.textmanager.text.pdu.PduBody;
+import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.pdu.PduParser;
-import com.xlythe.textmanager.text.pdu.PduPart;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
-import com.xlythe.textmanager.text.util.EncodedStringValue;
+import com.xlythe.textmanager.text.util.ContentType;
 
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
-import static android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
-import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
-import static android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION;
+import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.getMessagesFromIntent;
 
 public abstract class TextReceiver extends BroadcastReceiver {

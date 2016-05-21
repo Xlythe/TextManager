@@ -1,13 +1,9 @@
 package com.xlythe.sms.adapter;
 
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.SparseBooleanArray;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public abstract class SelectableAdapter<S, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {

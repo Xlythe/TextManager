@@ -3,8 +3,8 @@ package com.xlythe.sms;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -14,11 +14,10 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.xlythe.sms.util.ActionBarUtils;
-import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
-import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+import com.xlythe.textmanager.text.util.MessageUtils;
 
 import java.util.ArrayList;
 

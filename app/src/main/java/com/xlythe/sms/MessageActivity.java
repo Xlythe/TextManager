@@ -35,13 +35,12 @@ import android.widget.Toast;
 
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
-import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
+import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Attachment;
@@ -49,6 +48,7 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;

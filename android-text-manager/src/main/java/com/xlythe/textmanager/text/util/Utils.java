@@ -1,7 +1,6 @@
 package com.xlythe.textmanager.text.util;
 
 import android.os.Parcelable;
-import android.util.Log;
 
 import java.util.Collection;
 

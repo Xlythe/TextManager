@@ -1,27 +1,21 @@
 package com.xlythe.sms;
 
-import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
-import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
@@ -32,7 +26,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
-import static com.xlythe.sms.ContactSearchActivity.EXTRA_CURSOR;
 
 public class ShareMediaActivity extends AppCompatActivity {
     private static final String TAG = ShareMediaActivity.class.getSimpleName();

@@ -4,8 +4,6 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
-import android.view.Surface;
-import android.view.TextureView;
 
 import java.io.File;
 
