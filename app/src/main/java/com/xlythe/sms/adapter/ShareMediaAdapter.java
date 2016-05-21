@@ -18,6 +18,7 @@ import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.util.Utils;
 
@@ -113,7 +114,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
 
             Text latest = getThread().getLatestMessage();
 
-            contacts = latest.getMembersExceptMe(getContext()).get();
+            contacts = TextManager.getInstance(getContext()).getMembersExceptMe(latest).get();
 
             String address = Utils.join(", ", contacts, new Utils.Rule<Contact>() {
                 @Override
@@ -145,7 +146,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        Set<Contact> contacts = getThread(position).getLatestMessage().getMembersExceptMe(mContext).get();
+        Set<Contact> contacts = TextManager.getInstance(mContext).getMembersExceptMe(getThread(position).getLatestMessage()).get();
         boolean isSelected = isSelected(contacts);
         boolean selectMode = selectMode();
 

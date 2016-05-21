@@ -44,8 +44,10 @@ public class InfoActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ActionBarUtils.grayUpArrow(this);
 
+        TextManager manager =  TextManager.getInstance(this);
+
         Thread thread = getIntent().getParcelableExtra(MessageActivity.EXTRA_THREAD);
-        Set<Contact> contacts = thread.getLatestMessage().getMembersExceptMe(this).get();
+        Set<Contact> contacts = manager.getMembersExceptMe(thread.getLatestMessage()).get();
 
         final TextView name = (TextView) findViewById(R.id.name);
         final ImageView icon = (ImageView) findViewById(R.id.icon);
@@ -80,7 +82,7 @@ public class InfoActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setHasFixedSize(false);
 
-        List<Attachment> attachments = TextManager.getInstance(this).getAttachments(thread);
+        List<Attachment> attachments = manager.getAttachments(thread);
         Collections.reverse(attachments);
 
         MessageAttachmentAdapter adapter = new MessageAttachmentAdapter(this, attachments);

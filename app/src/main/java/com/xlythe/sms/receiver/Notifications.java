@@ -50,12 +50,14 @@ public class Notifications {
     private static final String NOTIFICATION_IDS = "notification_ids";
     private static final int GROUP_SUMMARY_ID = 12345;
 
+    private static TextManager mManager;
+
     public static void buildNotification(Context context, Text text) {
         if (MessageActivity.isVisible(text.getThreadId())) {
             Log.w(TAG, "This thread is already visible to the user");
             return;
         }
-
+        mManager = TextManager.getInstance(context);
         Set<Text> texts = getVisibleTexts(context, text);
         buildNotification(context, getTextsFromSameSender(text, texts), text.getThreadId().hashCode());
         buildGroupSummary(context, texts, GROUP_SUMMARY_ID);
@@ -80,7 +82,7 @@ public class Notifications {
         if (sameSender(texts)) {
             Log.v(TAG, "All texts are from the same sender");
             Text randomText = texts.iterator().next();
-            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context).get());
+            ProfileDrawable icon = new ProfileDrawable(context, mManager.getMembersExceptMe(randomText).get());
             builder.setLargeIcon(drawableToBitmap(icon))
                     .addAction(buildReplyAction(context, id, randomText));
         }
@@ -115,7 +117,7 @@ public class Notifications {
         if (sameSender(texts)) {
             Log.v(TAG, "All texts are from the same sender");
             Text randomText = texts.iterator().next();
-            ProfileDrawable icon = new ProfileDrawable(context, randomText.getMembersExceptMe(context).get());
+            ProfileDrawable icon = new ProfileDrawable(context, mManager.getMembersExceptMe(randomText).get());
             builder.setLargeIcon(drawableToBitmap(icon))
                     .addAction(buildReplyAction(context, id, randomText));
         }
@@ -355,17 +357,17 @@ public class Notifications {
      * Only one message, can be text or Image/Video thumbnail
      */
     private static void buildDetailedNotification(Context context, Text text, NotificationCompat.Builder builder) {
-        builder.setContentTitle(text.getSender(context).get().getDisplayName());
+        builder.setContentTitle(mManager.getSender(text).get().getDisplayName());
         if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.IMAGE) {
             NotificationCompat.BigPictureStyle pictureStyle = new NotificationCompat.BigPictureStyle();
             try {
                 Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_picture)));
-                ProfileDrawable icon = new ProfileDrawable(context, text.getMembersExceptMe(context).get());
+                ProfileDrawable icon = new ProfileDrawable(context, mManager.getMembersExceptMe(text).get());
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), text.getAttachment().getUri());
                 builder.setLargeIcon(bitmap)
                         .setContentText(s)
                         .setStyle(pictureStyle);
-                pictureStyle.setBigContentTitle(text.getSender(context).get().getDisplayName())
+                pictureStyle.setBigContentTitle(mManager.getSender(text).get().getDisplayName())
                         .bigLargeIcon(drawableToBitmap(icon))
                         .setSummaryText(s)
                         .bigPicture(bitmap);
@@ -375,7 +377,7 @@ public class Notifications {
         } else {
             NotificationCompat.BigTextStyle textStyle = new NotificationCompat.BigTextStyle();
             builder.setStyle(textStyle);
-            textStyle.setBigContentTitle(text.getSender(context).get().getDisplayName());
+            textStyle.setBigContentTitle(mManager.getSender(text).get().getDisplayName());
             // Maybe add video too, but we have a problem with thumbnails without glide
             if (text.getAttachment() != null && text.getAttachment().getType() == Attachment.Type.VIDEO) {
                 Spanned s = Html.fromHtml(italic(context.getString(R.string.notification_label_video)));
@@ -416,14 +418,14 @@ public class Notifications {
                         break;
                 }
                 inboxStyle.addLine(Html.fromHtml(
-                        bold(text.getSender(context).get().getDisplayName()) + " " + italic(context.getString(typeString))));
+                        bold(mManager.getSender(text).get().getDisplayName()) + " " + italic(context.getString(typeString))));
             } else {
                 String body = text.getBody();
                 if (body == null) body = "";
                 inboxStyle.addLine(Html.fromHtml(
-                        bold(text.getSender(context).get().getDisplayName()) + " " + body));
+                        bold(mManager.getSender(text).get().getDisplayName()) + " " + body));
             }
-            names.add(text.getSender(context).get().getDisplayName());
+            names.add(mManager.getSender(text).get().getDisplayName());
         }
         builder.setContentTitle(context.getString(R.string.notification_label_new_messages, texts.size()))
                 .setContentText(TextUtils.join(", ", names))
@@ -449,9 +451,9 @@ public class Notifications {
             Text text = getText(intent);
             if (!TextUtils.isEmpty(reply)) {
                 Log.d(TAG, "Sending reply");
-                TextManager.getInstance(context).send(new Text.Builder()
+                mManager.send(new Text.Builder()
                         .message(reply.toString())
-                        .addRecipients(text.getMembersExceptMe(context).get())
+                        .addRecipients(mManager.getMembersExceptMe(text).get())
                         .build());
             } else {
                 Log.w(TAG, "Was told to send a reply, but there was no message. Opening activity for thread " + text.getThreadId());

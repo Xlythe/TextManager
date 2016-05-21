@@ -87,73 +87,9 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         return mThreadId;
     }
 
-    @Override
-    public int getCount() {
-        if (mCount == null) {
-            throw new IllegalStateException("getCount() is an expensive call. " +
-                    "Call getCount(Context) first to load the count.");
-        }
-        return mCount;
-    }
-
-    private synchronized void setCount(int count) {
-        mCount = count;
-    }
-
-    public synchronized Future<Integer> getCount(final Context context) {
-        if (mCount != null) {
-            return new Present<>(mCount);
-        } else {
-            return new FutureImpl<Integer>() {
-                @Override
-                public Integer get() {
-                    String proj = String.format("%s=%s", THREAD_ID, mThreadId);
-                    Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-                    Cursor c = context.getContentResolver().query(uri, null, proj, null, null);
-                    int count = c.getCount();
-                    c.close();
-                    setCount(count);
-                    return count;
-                }
-            };
-        }
-    }
-
-    @Override
-    public synchronized int getUnreadCount() {
-        if (mUnreadCount == null) {
-            throw new IllegalStateException("getUnreadCount() is an expensive call. " +
-                    "Call getUnreadCount(Context) first to load the count.");
-        }
+    int getUnreadCount() {
         return mUnreadCount;
     }
-
-//    private synchronized void setLatestMessage(Text text) {
-//        mText = text;
-//    }
-
-//    public synchronized Future<Text> getLatestMessage(final Context context) {
-//        if (mText != null) {
-//            return new Present<>(mText);
-//        } else {
-//            return new FutureImpl<Text>() {
-//                @Override
-//                public Text get() {
-//                    Text text;
-//                    Cursor textCursor = TextManager.getInstance(context).getMessageCursor(getId());
-//                    if (textCursor.moveToLast()) {
-//                        text = new Text(context, textCursor);
-//                    } else {
-//                        Log.w(TAG, "Failed to find a text for Thread: " + getId());
-//                        text = Text.EMPTY_TEXT;
-//                    }
-//                    textCursor.close();
-//                    setLatestMessage(text);
-//                    return text;
-//                }
-//            };
-//        }
-//    }
 
     public Text getLatestMessage() {
         return mText;

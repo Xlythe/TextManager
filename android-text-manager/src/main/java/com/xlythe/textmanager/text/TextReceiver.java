@@ -66,9 +66,11 @@ public abstract class TextReceiver extends BroadcastReceiver {
             SmsMessage[] messages = getMessagesFromIntent(intent);
             Text text = Receive.storeMessage(context, messages, 0);
             onMessageReceived(context, text);
-        //} else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
-            //onMessageReceived(context, text);
         }
+//        else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
+            //TODO: Build notifications for pre 19
+//            onMessageReceived(context, text);
+//        }
     }
 
     private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {

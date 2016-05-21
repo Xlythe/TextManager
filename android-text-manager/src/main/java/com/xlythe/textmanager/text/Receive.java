@@ -3,10 +3,6 @@ package com.xlythe.textmanager.text;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.telephony.SmsMessage;
@@ -20,8 +16,6 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,44 +50,17 @@ public class Receive {
      * HTTP request to the MMSC database
      */
     protected static void getPdu(final String uri, final Context context, final DataCallback callback) {
-        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkRequest.Builder builder = new NetworkRequest.Builder();
-
-        builder.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        builder.addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR);
-
-        final NetworkRequest networkRequest = builder.build();
-        final CountDownLatch latch = new CountDownLatch(1);
-        boolean success = false;
-
-        final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+        Network.forceDataConnection(context, new Network.Callback() {
             @Override
-            public void onAvailable(Network network) {
-                super.onAvailable(network);
-                ConnectivityManager.setProcessDefaultNetwork(network);
+            public void onSuccess() {
                 receive(context, uri, callback);
-                connectivityManager.unregisterNetworkCallback(this);
-                latch.countDown();
             }
-        };
 
-        new java.lang.Thread(new Runnable() {
             @Override
-            public void run() {
-                connectivityManager.requestNetwork(networkRequest, networkCallback);
+            public void onFail() {
+                callback.onFail();
             }
-        }).start();
-        try {
-            success = latch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        if (!success) {
-            Log.e(TAG,"failed to establish a data network connection");
-            connectivityManager.unregisterNetworkCallback(networkCallback);
-            callback.onFail();
-        }
+        });
     }
 
     public static void receive(final Context context, String uri, final DataCallback callback){

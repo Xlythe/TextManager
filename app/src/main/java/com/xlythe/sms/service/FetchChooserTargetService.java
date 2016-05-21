@@ -62,7 +62,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private String getTitle(Thread thread) {
         String title = "";
-        for (Contact member : thread.getLatestMessage().getMembersExceptMe(this).get()) {
+        for (Contact member : mManager.getMembersExceptMe(thread.getLatestMessage()).get()) {
             if (!title.isEmpty()){
                 title += ", ";
             }
@@ -72,7 +72,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private Icon getIcon(Thread thread) {
-        ProfileDrawable drawable = new ProfileDrawable(this, thread.getLatestMessage().getMembersExceptMe(this).get());
+        ProfileDrawable drawable = new ProfileDrawable(this, mManager.getMembersExceptMe(thread.getLatestMessage()).get());
 
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -86,7 +86,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
         Thread.ThreadCursor cursor = mManager.getThreadCursor();
         try {
             while (cursor.moveToNext() && recentThreads.size() < SIZE) {
-                if (cursor.getThread().getLatestMessage().getMembersExceptMe(this).get().size() == 0) {
+                if (mManager.getMembersExceptMe(cursor.getThread().getLatestMessage()).get().size() == 0) {
                     // Ignore corrupted texts
                     continue;
                 }
@@ -99,7 +99,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private String getRecipients(Thread thread) {
-        Set<Contact> contacts = thread.getLatestMessage().getMembersExceptMe(this).get();
+        Set<Contact> contacts = mManager.getMembersExceptMe(thread.getLatestMessage()).get();
         return Utils.join(';', contacts, new Utils.Rule<Contact>() {
             @Override
             public String toString(Contact contact) {

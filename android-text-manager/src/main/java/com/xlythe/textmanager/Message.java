@@ -16,8 +16,6 @@ public interface Message<U extends User> {
     String getThreadId();
     String getBody();
     long getTimestamp();
-    User getSender();
-    Set<U> getMembers();
     Attachment getAttachment();
     Status getStatus(); // Status.Sending, Status.Sent, Status.Failed, Status.Read, Status.Unread
 }

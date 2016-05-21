@@ -30,6 +30,7 @@ import com.xlythe.sms.util.DateFormatter;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.Utils;
@@ -158,13 +159,14 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             int color = getContext().getResources().getColor(R.color.colorPrimary);
 
             final Text latest = getThread().getLatestMessage();
+            final TextManager manager = TextManager.getInstance(getContext());
 
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
             Runnable myRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    latest.getMembersExceptMe(getContext()).get(new Future.Callback<Set<Contact>>() {
+                    manager.getMembersExceptMe(latest).get(new Future.Callback<Set<Contact>>() {
                         @Override
                         public void get(Set<Contact> instance) {
                             String address = Utils.join(", ", instance, new Utils.Rule<Contact>() {
@@ -190,7 +192,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             if (latest != null) {
                 body = latest.getBody();
                 time = DateFormatter.getFormattedDate(latest);
-                unreadCount = getThread().getUnreadCount();
+                unreadCount = manager.getUnreadCount(getThread());
                 color = ColorUtils.getColor(getThread().getIdAsLong());
             }
             if (message != null) {

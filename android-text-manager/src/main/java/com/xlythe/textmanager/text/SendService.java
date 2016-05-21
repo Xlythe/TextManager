@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.PendingIntent;
@@ -8,12 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.Context;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
-import android.net.NetworkRequest;
 import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
@@ -24,8 +17,6 @@ import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
@@ -41,28 +32,37 @@ public class SendService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Text text = intent.getParcelableExtra(TEXT_EXTRA);
+        final Text text = intent.getParcelableExtra(TEXT_EXTRA);
 
         // Send SMS
         if (!text.isMms()) {
-            Uri uri = storeSMS(this, text);
+            final Uri uri = storeSMS(this, text);
             SendSMS(this, text, uri);
         }
 
         // Send MMS
         else {
-            Uri uri = storeMMS(this, text);
-            if (android.os.Build.VERSION.SDK_INT >= 21) {
-                sendMMS(this, text, uri);
-            } else {
-                sendMMSLegacy(this, text, uri);
-            }
+            final Uri uri = storeMMS(this, text);
+            final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
+
+            Network.forceDataConnection(this, new Network.Callback() {
+                @Override
+                public void onSuccess() {
+                    sendMMS(getBaseContext(), text, sentMmsPendingIntent);
+                }
+
+                @Override
+                public void onFail() {
+                    sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
+                }
+            });
         }
     }
 
     private static Uri storeSMS(Context context, final Text text) {
         // Put together query data
-        String address = text.getMembers(context).get().iterator().next().getNumber(context).get();
+        TextManager manager = TextManager.getInstance(context);
+        String address = manager.getMembers(text).get().iterator().next().getNumber(context).get();
         ContentValues values = new ContentValues();
         Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
         values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -84,7 +84,8 @@ public class SendService extends IntentService {
 
     private static void SendSMS(Context context, Text text, Uri uri) {
         SmsManager sms = SmsManager.getDefault();
-        String address = text.getMembers(context).get().iterator().next().getNumber(context).get();
+        TextManager manager = TextManager.getInstance(context);
+        String address = manager.getMembers(text).get().iterator().next().getNumber(context).get();
         sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
     }
 
@@ -112,105 +113,10 @@ public class SendService extends IntentService {
         return uri;
     }
 
-    @TargetApi(19)
-    public static void sendMMSLegacy(final Context context, final Text text, final Uri uri) {
-        final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(context, uri, text.getId());
-
-        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
-
-        if (result != 0) {
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-            final CountDownLatch latch = new CountDownLatch(1);
-            BroadcastReceiver receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(final Context context, Intent intent) {
-                    String action = intent.getAction();
-                    if (!action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                        return;
-                    }
-
-                    NetworkInfo mNetworkInfo = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-
-                    if ((mNetworkInfo == null) || (mNetworkInfo.getType() != ConnectivityManager.TYPE_MOBILE_MMS)) {
-                        return;
-                    }
-
-                    if (!mNetworkInfo.isConnected()) {
-                        return;
-                    } else {
-                        Log.d(TAG, "mms connected");
-                        new java.lang.Thread(new Runnable() {
-                            public void run() {
-                                sendData(context, text, sentMmsPendingIntent);
-                                latch.countDown();
-                            }
-                        }).start();
-                    }
-                }
-            };
-            context.registerReceiver(receiver, filter);
-            try {
-                latch.await(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            context.unregisterReceiver(receiver);
-        } else {
-            Log.i(TAG, "mms already established");
-            new java.lang.Thread(new Runnable() {
-                public void run() {
-                    sendData(context, text, sentMmsPendingIntent);
-                }
-            }).start();
-        }
-    }
-
-    @TargetApi(21)
-    public static void sendMMS(final Context context, final Text text, final Uri uri) {
-        final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(context, uri, text.getId());
-
-        // Request a data connection
-        final ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkRequest networkRequest = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-                .build();
-
-        // Use a countdownlatch because this may never return, and we want to mark the MMS
-        // as failed in that case.
-        final CountDownLatch latch = new CountDownLatch(1);
-        boolean success = false;
-        Log.d(TAG, "Network callback");
-        new java.lang.Thread(new Runnable() {
-            public void run() {
-                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(Network network) {
-                        super.onAvailable(network);
-                        latch.countDown();
-                        ConnectivityManager.setProcessDefaultNetwork(network);
-                        sendData(context, text, sentMmsPendingIntent);
-                        connectivityManager.unregisterNetworkCallback(this);
-                    }
-                });
-            }
-        }).start();
-        try {
-            success = latch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        if (!success) {
-            notify(sentMmsPendingIntent, Activity.RESULT_CANCELED);
-        }
-    }
-
     /**
      * Send message
      */
-    public static void sendData(Context context, final Text text, final PendingIntent sentMmsPendingIntent) {
+    public static void sendMMS(Context context, final Text text, final PendingIntent sentMmsPendingIntent) {
         try {
             ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
             HttpUtils.httpConnection(
@@ -221,10 +127,10 @@ public class SendService extends IntentService {
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());
-            notify(sentMmsPendingIntent, Activity.RESULT_OK);
+            sendIntent(sentMmsPendingIntent, Activity.RESULT_OK);
         } catch(IOException e){
             Log.e(TAG, "Failed to connect to the MMS server", e);
-            notify(sentMmsPendingIntent, Activity.RESULT_CANCELED);
+            sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
         }
     }
 
@@ -234,7 +140,7 @@ public class SendService extends IntentService {
      * @param pendingIntent intent to notify
      * @param result result to be updated
      */
-    private static void notify(PendingIntent pendingIntent, int result) {
+    private static void sendIntent(PendingIntent pendingIntent, int result) {
         try {
             pendingIntent.send(result);
         } catch (PendingIntent.CanceledException e) {

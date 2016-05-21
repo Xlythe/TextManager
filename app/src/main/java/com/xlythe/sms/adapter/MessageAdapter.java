@@ -28,6 +28,7 @@ import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.concurrency.Future;
 
 public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
@@ -185,6 +186,10 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         public Context getContext() {
             return mContext;
         }
+
+        public TextManager getManager() {
+            return TextManager.getInstance(mContext);
+        }
     }
 
     public static class LeftViewHolder extends MessageViewHolder {
@@ -212,7 +217,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             }
 
             if (mProfile != null) {
-                getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
+                getManager().getSender(getMessage()).get(new Future.Callback<Contact>() {
                     @Override
                     public void get(Contact instance) {
                         mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
@@ -325,7 +330,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             }
 
             if (mProfile != null) {
-                getMessage().getSender(getContext()).get(new Future.Callback<Contact>() {
+                getManager().getSender(getMessage()).get(new Future.Callback<Contact>() {
                     @Override
                     public void get(Contact instance) {
                         mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));

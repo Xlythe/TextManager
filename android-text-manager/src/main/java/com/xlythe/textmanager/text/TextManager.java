@@ -28,6 +28,7 @@ import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
+import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
@@ -169,15 +170,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-    @Override
     public void send(final Text text) {
-        //TODO: deprecate this
         Intent sendService = new Intent(mContext, SendService.class);
         sendService.putExtra(SendService.TEXT_EXTRA, text);
         mContext.startService(sendService);
     }
 
-    public static class Builder {
+    public class Builder {
         Context mContext;
         String mMessage;
         Attachment mAttachment;
@@ -226,7 +225,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         public void to(Text text) {
-            text.getMembersExceptMe(mContext).get(new Future.Callback<Set<Contact>>() {
+            getMembersExceptMe(text).get(new Future.Callback<Set<Contact>>() {
                 @Override
                 public void get(Set<Contact> instance) {
                     Text.Builder builder = new Text.Builder().addRecipients(instance);
@@ -236,7 +235,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         public void to(Thread thread) {
-            thread.getLatestMessage().getMembersExceptMe(mContext).get(new Future.Callback<Set<Contact>>() {
+            getMembersExceptMe(thread.getLatestMessage()).get(new Future.Callback<Set<Contact>>() {
                 @Override
                 public void get(Set<Contact> instance) {
                     Text.Builder builder = new Text.Builder().addRecipients(instance);
@@ -372,9 +371,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             order = "normalized_date DESC";
         }
 
-        String clause = String.format(
-                "%s=%s",
-                Mock.Telephony.Sms.READ, 0);
+        String clause2 = String.format("%s=%s",  Mock.Telephony.Sms.READ, 0);
 
         Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
 
@@ -392,15 +389,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         List<String> ids = new ArrayList<>();
         List<Text> recentTexts = new ArrayList<>();
-
-//        Cursor smsSamsung = null;
-//        Cursor mmsSamsung = null;
-//        if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-//            Uri smsUri = Mock.Telephony.Sms.CONTENT_URI;
-//            smsSamsung = contentResolver.query(smsUri, null, null, null, order);
-//            Uri mmsUri = Mock.Telephony.Mms.CONTENT_URI;
-//            mmsSamsung = contentResolver.query(mmsUri, null, null, null, order);
-//        }
 
         while (threads.moveToNext()) {
 
@@ -442,7 +430,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
             if (!isMms) {
                 if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-//                    Uri smsUri = Uri.parse("content://mms-sms/conversations");
                     Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
                     String order5 = "normalized_date ASC";
                     String[] smsProj = new String[] {
@@ -559,7 +546,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         return new Thread.ThreadCursor(threads,
-                contentResolver.query(uri2, null, clause, null, null),
+                contentResolver.query(uri2, null, clause2, null, null),
                 recentTexts);
     }
 
@@ -645,134 +632,43 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new FutureImpl<Thread>() {
             @Override
             public Thread get() {
-                // TODO: Redo this
-//                String clause = String.format("%s = %s",
-//                        Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
-//                ContentResolver contentResolver = mContext.getContentResolver();
-//                final Uri uri;
-//                final String order;
-//                if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
-//                    uri = Uri.parse("content://mms-sms/conversations/?simple=true");
-//                    order = "date DESC";
-//                } else {
-//                    uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
-//                    order = "normalized_date DESC";
-//                }
-//
-//                String clause2 = String.format(
-//                        "%s=%s",
-//                        Mock.Telephony.Sms.READ, 0);
-//
-//                Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-//
-//
-//                final String[] projection3 = new String[]{
-//                        BaseColumns._ID,
-//                        Mock.Telephony.Mms.Part.CONTENT_TYPE,
-//                        Mock.Telephony.Mms.Part.TEXT,
-//                        Mock.Telephony.Mms.Part._DATA,
-//                        Mock.Telephony.Mms.Part.MSG_ID
-//                };
-//                Uri uri3 = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
-//
-//                Cursor mms = contentResolver.query(uri3, projection3, null, null, null);
-//
-//                Cursor threads = contentResolver.query(uri, null, clause, null, order);
-//
-//                List<Text> recentTexts = new ArrayList<>();
-//
-//                while (threads.moveToNext()) {
-//                    boolean isMms;
-//                    int typeIndex = threads.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
-//                    if (typeIndex < 0) {
-//                        // Type column not in projection, use another discriminator
-//                        String cType = null;
-//                        int cTypeIndex = threads.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE);
-//                        if (cTypeIndex >= 0) {
-//                            cType = threads.getString(threads.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
-//                        }
-//                        // If content type is present, this is an MMS message
-//                        if (cType != null) {
-//                            isMms = true;
-//                        } else {
-//                            isMms = false;
-//                        }
-//                    } else {
-//                        isMms = threads.getString(typeIndex).equals("mms");
-//                    }
-//
-//                    boolean incoming = Text.isIncomingMessage(threads, true);
-//                    long id = threads.getLong(threads.getColumnIndexOrThrow(BaseColumns._ID));
-//                    long threadId = threads.getLong(threads.getColumnIndexOrThrow(Thread.THREAD_ID));
-//                    long date = threads.getLong(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE));
-//                    Set<String> memberAddresses = new HashSet<>();
-//                    String senderAddress = null;
-//                    String body = null;
-//                    long mmsId = -1;
-//                    int status;
-//                    Attachment attachment = null;
-//
-//                    if (!isMms) {
-//                        memberAddresses.add(threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS)));
-//                        senderAddress = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
-//                        body = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
-//                        status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
-//                    } else {
-//                        date = date * 1000;
-//                        mmsId = threads.getLong(threads.getColumnIndex(Mock.Telephony.Mms._ID));
-//                        status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
-//
-//                        mms.moveToFirst();
-//                        while (mms.moveToNext()) {
-//                            if (mms.getLong(mms.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == mmsId) {
-//                                String contentType = mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
-//                                if (contentType == null) {
-//                                    continue;
-//                                }
-//
-//                                if (contentType.matches("image/.*")) {
-//                                    // Find any part that is an image attachment
-//                                    long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-//                                    attachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
-//                                } else if (contentType.matches("text/.*")) {
-//                                    // Find any part that is text data
-//                                    body = mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
-//                                } else if (contentType.matches("video/.*")) {
-//                                    long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-//                                    attachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    recentTexts.add(new Text(
-//                            id,
-//                            threadId,
-//                            date,
-//                            mmsId,
-//                            status,
-//                            body,
-//                            incoming,
-//                            isMms,
-//                            senderAddress,
-//                            memberAddresses,
-//                            attachment
-//                    ));
-//                }
-//
-//                Thread.ThreadCursor cursor = new Thread.ThreadCursor(threads,
-//                        contentResolver.query(uri2, null, clause, null, order),
-//                        recentTexts);
-//                try {
-//                    if (cursor.moveToFirst()) {
-//                        return cursor.getThread();
-//                    } else {
-//                        return null;
-//                    }
-//                } finally {
-//                    cursor.close();
-//                }
-                return null;
+                String clause = String.format("%s = %s", Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
+                ContentResolver contentResolver = mContext.getContentResolver();
+                final Uri uri;
+                final String order;
+                if (android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG) && android.os.Build.VERSION.SDK_INT < 19) {
+                    uri = Uri.parse("content://mms-sms/conversations/?simple=true");
+                    order = "date DESC";
+                } else {
+                    uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
+                    order = "normalized_date DESC";
+                }
+
+                String clause2 = String.format("%s=%s", Mock.Telephony.Sms.READ, 0);
+
+                Uri uri2 = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+
+                List<Text> messages = new ArrayList<>();
+                Text.TextCursor c = getMessageCursor(threadId);
+                if (c.moveToFirst()) {
+                    do {
+                        messages.add(c.getText());
+                    } while (c.moveToNext());
+                }
+                c.close();
+
+                Thread.ThreadCursor cursor = new Thread.ThreadCursor(contentResolver.query(uri, null, clause, null, order),
+                        contentResolver.query(uri2, null, clause2, null, order),
+                        messages);
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getThread();
+                    } else {
+                        return null;
+                    }
+                } finally {
+                    cursor.close();
+                }
             }
         };
     }
@@ -933,6 +829,93 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         } else {
             return lookupContact(phoneNumber);
         }
+    }
+
+    private void buildSender(Text text) {
+        Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, text.getId() + "/addr");
+
+        // Query the address information for this message
+        Cursor addr = mContext.getContentResolver().query(addressUri, null, null, null, null);
+        while (addr.moveToNext()) {
+            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == text.getMmsId()) {
+                if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == Text.TYPE_SENDER) {
+                    text.setSenderAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
+                }
+                text.setMemberAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
+            }
+        }
+        addr.close();
+    }
+
+    @Override
+    public synchronized Future<Contact> getSender(final Text text) {
+        final Contact sender = text.getSender();
+        if (sender != null) {
+            return new Present<>(sender);
+        } else {
+            return new FutureImpl<Contact>() {
+                @Override
+                public Contact get() {
+                    if (text.getSenderAddress() == null && text.isMms()) {
+                        buildSender(text);
+                    }
+                    Contact sender = text.isIncoming() ? lookupContact(text.getSenderAddress()) : getSelf();
+                    text.setSender(sender);
+                    return sender;
+                }
+            };
+        }
+    }
+
+    @Override
+    public synchronized Future<Set<Contact>> getMembers(final Text text) {
+        final Set<Contact> members = text.getMembers();
+        if (members != null && !members.isEmpty()) {
+            return new Present<>(text.getMembers());
+        } else {
+            return new FutureImpl<Set<Contact>>() {
+                @Override
+                public Set<Contact> get() {
+                    if (text.getMemberAddresses().isEmpty() && text.isMms()) {
+                        buildSender(text);
+                    }
+                    for (String address : text.getMemberAddresses()) {
+                        text.addMember(lookupContact(address));
+                    }
+                    return members;
+                }
+            };
+        }
+    }
+
+    public synchronized Future<Set<Contact>> getMembersExceptMe(final Text text) {
+        return new FutureImpl<Set<Contact>>() {
+            @Override
+            public Set<Contact> get() {
+                Set<Contact> members = new HashSet<>(getMembers(text).get());
+                if (members.size() == 1) {
+                    // It's possible to text yourself. To account for that, don't remove yourself if there's only one member.
+                    return members;
+                }
+                members.remove(getSelf());
+                return members;
+            }
+        };
+    }
+
+    @Override
+    public int getUnreadCount(Thread thread) {
+        return thread.getUnreadCount();
+    }
+
+    @Override
+    public int getCount(Thread thread) {
+        String proj = String.format("%s=%s", Thread.THREAD_ID, thread.getId());
+        Uri uri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+        Cursor c = mContext.getContentResolver().query(uri, null, proj, null, null);
+        int count = c.getCount();
+        c.close();
+        return count;
     }
 
     /**

@@ -52,7 +52,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private static final String TYPE_SMS = "sms";
     private static final String TYPE_MMS = "mms";
     private static final long SEC_TO_MILLI = 1000;
-    private static final long TYPE_SENDER = 137;
+    public static final long TYPE_SENDER = 137;
 
     static final Text EMPTY_TEXT = new Text();
 
@@ -224,6 +224,39 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
     }
 
+    Set<String> getMemberAddresses() {
+        return mMemberAddresses;
+    }
+
+    String getSenderAddress() {
+        return mSenderAddress;
+    }
+
+
+    Set<Contact> getMembers() {
+        return mMembers;
+    }
+
+    Contact getSender() {
+        return mSender;
+    }
+
+    synchronized void setMemberAddress(String memberAddress) {
+        mMemberAddresses.add(memberAddress);
+    }
+
+    synchronized void setSenderAddress(String senderAddress) {
+        mSenderAddress = senderAddress;
+    }
+
+    synchronized void setSender(Contact sender) {
+        mSender = sender;
+    }
+
+    synchronized void addMember(Contact member) {
+        mMembers.add(member);
+    }
+
     static boolean isIncomingMessage(Cursor cursor, boolean isSMS) {
         int boxId;
         if (isSMS) {
@@ -249,6 +282,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     @Override
     public String getId() {
         return Long.toString(mId);
+    }
+
+    public long getMmsId() {
+        return mMmsId;
     }
 
     public long getIdAsLong() {
@@ -280,102 +317,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     }
 
     @Override
-    public Contact getSender() {
-        return mSender;
-    }
-
-    private void buildSender(Context context) {
-        Uri addressUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, mId + "/addr");
-
-        // Query the address information for this message
-        Cursor addr = context.getContentResolver().query(addressUri, null, null, null, null);
-        while (addr.moveToNext()) {
-            if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.MSG_ID)) == mMmsId) {
-                if (addr.getLong(addr.getColumnIndex(Mock.Telephony.Mms.Addr.TYPE)) == TYPE_SENDER) {
-                    setSenderAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
-                }
-                setMemberAddress(addr.getString(addr.getColumnIndex(Mock.Telephony.Mms.Addr.ADDRESS)));
-            }
-        }
-        addr.close();
-    }
-
-    private synchronized void setMemberAddress(String memberAddress) {
-        mMemberAddresses.add(memberAddress);
-    }
-
-    private synchronized void setSenderAddress(String senderAddress) {
-        mSenderAddress = senderAddress;
-    }
-
-    private synchronized void setSender(Contact sender) {
-        mSender = sender;
-    }
-
-    public synchronized Future<Contact> getSender(final Context context) {
-        if (mSender != null) {
-            return new Present<>(mSender);
-        } else {
-            return new FutureImpl<Contact>() {
-                @Override
-                public Contact get() {
-                    TextManager manager = TextManager.getInstance(context);
-                    if (mSenderAddress == null && mIsMms) {
-                        buildSender(context);
-                    }
-                    Contact sender = isIncoming() ? manager.lookupContact(mSenderAddress) : manager.getSelf();
-                    setSender(sender);
-                    return sender;
-                }
-            };
-        }
-    }
-
-    @Override
-    public Set<Contact> getMembers() {
-        return mMembers;
-    }
-
-    private synchronized void addMember(Contact member) {
-        mMembers.add(member);
-    }
-
-    public synchronized Future<Set<Contact>> getMembers(final Context context) {
-        if (!mMembers.isEmpty()) {
-            return new Present<>(mMembers);
-        } else {
-            return new FutureImpl<Set<Contact>>() {
-                @Override
-                public Set<Contact> get() {
-                    TextManager manager = TextManager.getInstance(context);
-                    if (mMemberAddresses.isEmpty() && mIsMms) {
-                        buildSender(context);
-                    }
-                    for (String address : mMemberAddresses) {
-                        addMember(manager.lookupContact(address));
-                    }
-                    return mMembers;
-                }
-            };
-        }
-    }
-
-    public synchronized Future<Set<Contact>> getMembersExceptMe(final Context context) {
-        return new FutureImpl<Set<Contact>>() {
-            @Override
-            public Set<Contact> get() {
-                Set<Contact> members = new HashSet<>(getMembers(context).get());
-                if (members.size() == 1) {
-                    // It's possible to text yourself. To account for that, don't remove yourself if there's only one member.
-                    return members;
-                }
-                members.remove(TextManager.getInstance(context).getSelf());
-                return members;
-            }
-        };
-    }
-
-    @Override
     public Status getStatus() {
         if (mStatus == Mock.Telephony.Sms.STATUS_COMPLETE)
                 return Status.COMPLETE;
@@ -386,7 +327,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
 
-    public SendReq getSendRequest(Context context) {
+    SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
         PduPart partPdu = new PduPart();
         long messageSize = 0;
@@ -436,7 +377,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         final SendReq sendRequest = new SendReq();
 
-        for (Contact recipient : getMembersExceptMe(context).get()) {
+        for (Contact recipient : TextManager.getInstance(context).getMembersExceptMe(this).get()) {
             final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber(context).get());
             if (phoneNumbers != null && phoneNumbers.length > 0) {
                 sendRequest.addTo(phoneNumbers[0]);
@@ -457,7 +398,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         smilPart.setData(out.toByteArray());
         pduBody.addPart(0, smilPart);
         sendRequest.setBody(pduBody);
-        Log.d(TAG, "setting message size to " + messageSize + " bytes");
         sendRequest.setMessageSize(messageSize);
 
         final PduComposer composer = new PduComposer(context, sendRequest);
@@ -466,7 +406,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return sendRequest;
     }
 
-    public byte[] getByteData(Context context) {
+    byte[] getByteData(Context context) {
         // create byte array which will actually be sent
         if (mBytesToSend != null) {
             return mBytesToSend;

@@ -226,7 +226,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             Log.d(TAG, "Opening Activity for thread " + mThread);
         }
 
-        String name = Utils.join(", ", mThread.getLatestMessage().getMembersExceptMe(this).get(), new Utils.Rule<Contact>() {
+        String name = Utils.join(", ", mManager.getMembersExceptMe(mThread.getLatestMessage()).get(), new Utils.Rule<Contact>() {
             @Override
             public String toString(Contact contact) {
                 return contact.getDisplayName();

@@ -2,9 +2,11 @@ package com.xlythe.textmanager;
 
 import android.database.Cursor;
 
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.concurrency.Future;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A generic interface for managing messages
@@ -62,11 +64,6 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
     void markAsRead(T thread);
 
     /**
-     * Sends a message
-     */
-    void send(M message);
-
-    /**
      * Return all messages containing the text.
      */
     Future<List<M>> search(String text);
@@ -80,4 +77,9 @@ public interface MessageManager<M extends Message, T extends MessageThread, U ex
      * Remove a registered observer
      */
     void unregisterObserver(MessageObserver observer);
+
+    int getUnreadCount(T thread);
+    int getCount(T thread);
+    Future<U> getSender(M message);
+    Future<Set<U>> getMembers(M message);
 }
