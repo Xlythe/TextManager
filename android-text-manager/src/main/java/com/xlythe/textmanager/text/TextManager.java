@@ -650,7 +650,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
                 Thread.ThreadCursor cursor = new Thread.ThreadCursor(
                         contentResolver.query(uri, null, clause, null, order),
-                        contentResolver.query(inboxUri, null, unreadMessagesClause, null, order),
+                        contentResolver.query(inboxUri, null, unreadMessagesClause, null, null),
                         messages);
                 try {
                     if (cursor.moveToFirst()) {
