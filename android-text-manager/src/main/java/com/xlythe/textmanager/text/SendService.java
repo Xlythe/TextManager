@@ -37,7 +37,7 @@ public class SendService extends IntentService {
         // Send SMS
         if (!text.isMms()) {
             final Uri uri = storeSMS(this, text);
-            SendSMS(this, text, uri);
+            sendSMS(this, text, uri);
         }
 
         // Send MMS
@@ -82,7 +82,7 @@ public class SendService extends IntentService {
         return uri;
     }
 
-    private static void SendSMS(Context context, Text text, Uri uri) {
+    private static void sendSMS(Context context, Text text, Uri uri) {
         SmsManager sms = SmsManager.getDefault();
         TextManager manager = TextManager.getInstance(context);
         String address = manager.getMembers(text).get().iterator().next().getNumber(context).get();

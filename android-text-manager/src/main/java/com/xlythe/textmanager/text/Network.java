@@ -18,13 +18,17 @@ import java.util.concurrent.TimeUnit;
  * Created by Niko on 5/20/16.
  */
 public class Network {
+    private static final String ENABLE_MMS = "enableMMS";
+    private static final int ALREADY_ACTIVE = 0;
+    private static final int TIMEOUT = 10;
+
+
     public static void forceDataConnection(Context context, final Callback callback) {
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             request(context, callback);
         } else {
             requestLegacy(context, callback);
         }
-
     }
 
     @TargetApi(21)
@@ -40,35 +44,32 @@ public class Network {
         // as failed in that case.
         final CountDownLatch latch = new CountDownLatch(1);
         boolean success = false;
-        new java.lang.Thread(new Runnable() {
-            public void run() {
-                connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(android.net.Network network) {
-                        super.onAvailable(network);
-                        latch.countDown();
-                        ConnectivityManager.setProcessDefaultNetwork(network);
-                        callback.onSuccess();
-                        connectivityManager.unregisterNetworkCallback(this);
-                    }
-                });
+        connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(android.net.Network network) {
+                super.onAvailable(network);
+                latch.countDown();
+                ConnectivityManager.setProcessDefaultNetwork(network);
+                connectivityManager.unregisterNetworkCallback(this);
             }
-        }).start();
+        });
         try {
-            success = latch.await(10, TimeUnit.SECONDS);
+            success = latch.await(TIMEOUT, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (!success) {
+        if (success) {
+            callback.onSuccess();
+        } else {
             callback.onFail();
         }
     }
 
     private static void requestLegacy(Context context, final Callback callback) {
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, "enableMMS");
+        final int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, ENABLE_MMS);
 
-        if (result != 0) {
+        if (result != ALREADY_ACTIVE) {
             IntentFilter filter = new IntentFilter();
             filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
             final CountDownLatch latch = new CountDownLatch(1);
@@ -87,34 +88,25 @@ public class Network {
                         return;
                     }
 
-                    if (!mNetworkInfo.isConnected()) {
-                        return;
-                    } else {
-                        new java.lang.Thread(new Runnable() {
-                            public void run() {
-                                callback.onSuccess();
-                                latch.countDown();
-                            }
-                        }).start();
+                    if (mNetworkInfo.isConnected()) {
+                        latch.countDown();
                     }
                 }
             };
             context.registerReceiver(receiver, filter);
             try {
-                success = latch.await(10, TimeUnit.SECONDS);
+                success = latch.await(TIMEOUT, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (!success) {
+            if (success) {
+                callback.onSuccess();
+            } else {
                 callback.onFail();
             }
             context.unregisterReceiver(receiver);
         } else {
-            new java.lang.Thread(new Runnable() {
-                public void run() {
-                    callback.onSuccess();
-                }
-            }).start();
+            callback.onSuccess();
         }
     }
 
