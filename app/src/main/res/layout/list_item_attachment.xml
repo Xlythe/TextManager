@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card"
-    android:padding="16dp"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/card"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
     <ImageView
         android:id="@+id/profile_image"
@@ -15,71 +14,66 @@
         android:layout_marginEnd="16dp"
         android:src="@android:color/transparent"/>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <TextView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:textSize="16sp"
+        android:textColor="#00acc1"
+        android:fontFamily="sans-serif-medium"
+        android:id="@+id/sender"
+        android:paddingRight="4dp"
+        android:paddingEnd="4dp"
+        android:text="@string/thread_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+    <TextView
+        android:layout_toRightOf="@+id/sender"
+        android:layout_toEndOf="@+id/sender"
+        android:layout_alignBaseline="@+id/sender"
+        android:textSize="16sp"
+        android:textColor="#00acc1"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:id="@+id/unread"
+        android:text="6 new"
+        android:background="@drawable/highlight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-            <TextView
-                android:textSize="16sp"
-                android:textColor="#00acc1"
-                android:fontFamily="sans-serif-medium"
-                android:id="@+id/sender"
-                android:paddingRight="4dp"
-                android:paddingEnd="4dp"
-                android:text="Will Harmon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+    <TextView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_below="@+id/sender"
+        android:textSize="14sp"
+        android:textColor="#707070"
+        android:fontFamily="sans-serif-medium"
+        android:id="@+id/date"
+        android:text="10 min"
+        android:paddingBottom="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-            <TextView
-                android:textSize="16sp"
-                android:textColor="#00acc1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:id="@+id/unread"
-                android:text="6 new"
-                android:background="@drawable/highlight"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_below="@+id/date"
+        android:id="@+id/attachment"
+        android:src="@color/colorBackground"
+        android:scaleType="centerCrop"
+        android:layout_width="132dp"
+        android:layout_height="88dp"
+        app:riv_corner_radius="2dp"/>
 
-        <TextView
-            android:textSize="14sp"
-            android:textColor="#707070"
-            android:fontFamily="sans-serif-medium"
-            android:id="@+id/date"
-            android:text="10 min"
-            android:paddingBottom="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+    <ImageView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_below="@+id/date"
+        android:id="@+id/video_label"
+        android:src="@drawable/video"
+        android:visibility="gone"
+        android:scaleType="center"
+        android:layout_width="132dp"
+        android:layout_height="88dp" />
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <com.makeramen.roundedimageview.RoundedImageView
-                android:id="@+id/attachment"
-                android:src="@color/colorBackground"
-                android:scaleType="centerCrop"
-                android:layout_width="132dp"
-                android:layout_height="88dp"
-                app:riv_corner_radius="2dp"/>
-
-            <ImageView
-                android:id="@+id/video_label"
-                android:visibility="gone"
-                android:layout_gravity="center"
-                android:src="@drawable/video"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-        </FrameLayout>
-
-    </LinearLayout>
-
-</LinearLayout>
+</RelativeLayout>

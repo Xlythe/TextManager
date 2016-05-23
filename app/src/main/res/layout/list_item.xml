@@ -1,75 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/card"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <LinearLayout
-        android:padding="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="?selectableItemBackground">
-
-        <ImageView
-            android:id="@+id/profile_image"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
-            android:src="@android:color/transparent"/>
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/sender"
-                    android:textSize="16sp"
-                    android:textColor="#00acc1"
-                    android:fontFamily="sans-serif-medium"
-                    android:paddingRight="4dp"
-                    android:paddingEnd="4dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/unread"
-                    android:textSize="16sp"
-                    android:textColor="#00acc1"
-                    android:fontFamily="sans-serif-medium"
-                    android:gravity="center"
-                    android:background="@drawable/highlight"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/message"
-                android:textSize="14sp"
-                android:textColor="#212121"
-                android:fontFamily="sans-serif-medium"
-                android:layout_width="wrap_content"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/card"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAlignment="viewStart" />
+                android:padding="16dp"
+                android:background="?selectableItemBackground">
 
-            <TextView
-                android:id="@+id/date"
-                android:textSize="14sp"
-                android:textColor="#707070"
-                android:fontFamily="sans-serif-medium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+    <ImageView
+        android:id="@+id/profile_image"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@android:color/transparent"/>
 
-        </LinearLayout>
+    <TextView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:id="@+id/sender"
+        android:textSize="16sp"
+        android:textColor="#00acc1"
+        android:fontFamily="sans-serif-medium"
+        android:paddingRight="4dp"
+        android:paddingEnd="4dp"
+        android:text="@string/thread_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-    </LinearLayout>
+    <TextView
+        android:layout_toRightOf="@+id/sender"
+        android:layout_toEndOf="@+id/sender"
+        android:layout_alignBaseline="@+id/sender"
+        android:id="@+id/unread"
+        android:textSize="16sp"
+        android:textColor="#00acc1"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:background="@drawable/highlight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-</FrameLayout>
+    <TextView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_below="@+id/sender"
+        android:id="@+id/message"
+        android:textSize="14sp"
+        android:textColor="#212121"
+        android:fontFamily="sans-serif-medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAlignment="viewStart" />
+
+    <TextView
+        android:layout_toRightOf="@+id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_below="@+id/message"
+        android:id="@+id/date"
+        android:textSize="14sp"
+        android:textColor="#707070"
+        android:fontFamily="sans-serif-medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</RelativeLayout>

@@ -18,6 +18,8 @@
 
     <string name="thread_unread_messages">%s new</string>
 
+    <string name="thread_loading">Loading...</string>
+
     <string name="compose_hint">To</string>
     <string name="compose_msg_hint">Message</string>
     <string name="compose_msg_hint_long">Type a message</string>
