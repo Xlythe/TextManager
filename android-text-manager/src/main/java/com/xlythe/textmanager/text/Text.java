@@ -314,6 +314,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
 
+    // TODO: Name bytes is the name of media file, how should they be handled?
+    // I don't think it really matters what they are called, we could just name
+    // name them all "fetch_media" or something...
     SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
         PduPart partPdu = new PduPart();
@@ -321,12 +324,14 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         byte[] nameBytes = new byte[]{};
         byte[] typeBytes = new byte[]{};
         byte[] dataBytes = new byte[]{};
+
+        // Create media parts, we only send one pic/video at a time
         if (mAttachment != null) {
             Attachment.Type type = mAttachment.getType();
             switch (type) {
                 case IMAGE:
                     nameBytes = "image".getBytes();
-                    typeBytes = "image/png".getBytes();
+                    typeBytes = ContentType.IMAGE_PNG.getBytes();
                     dataBytes = bitmapToByteArray(((ImageAttachment) mAttachment).getBitmap(context).get());
                     if (dataBytes == null) {
                         Log.e(TAG, "Error getting bitmap from attachment");
@@ -335,7 +340,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                     break;
                 case VIDEO:
                     nameBytes = "video".getBytes();
-                    typeBytes = "video/mpeg".getBytes();
+                    typeBytes = ContentType.VIDEO_MP4.getBytes();
                     dataBytes = ((VideoAttachment) mAttachment).getBytes(context).get();
                     if (dataBytes == null) {
                         Log.e(TAG, "Error getting bytes from attachment");
@@ -352,18 +357,21 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             messageSize += (nameBytes.length + typeBytes.length + dataBytes.length);
         }
 
+        // We can have an image with text, so we do this separate
         if (mBody != null && !mBody.isEmpty()) {
             // add text to the end of the part and send
             partPdu.setName("text".getBytes());
-            partPdu.setContentType("text/plain".getBytes());
+            partPdu.setContentType(ContentType.TEXT_PLAIN.getBytes());
             partPdu.setData(mBody.getBytes());
             partPdu.setCharset(CharacterSets.UTF_8);
             pduBody.addPart(partPdu);
-            messageSize += ("text".getBytes().length + "text/plain".getBytes().length + mBody.getBytes().length);
+            messageSize += ("text".getBytes().length + ContentType.TEXT_PLAIN.getBytes().length + mBody.getBytes().length);
         }
 
+        // Create the actual send request that can later be turned into byte for sending
         final SendReq sendRequest = new SendReq();
 
+        // Add recipients to the send request
         for (Contact recipient : TextManager.getInstance(context).getMembersExceptMe(this).get()) {
             final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber(context).get());
             if (phoneNumbers != null && phoneNumbers.length > 0) {
@@ -371,11 +379,18 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             }
         }
 
+        // This can't be empty, but we really should give the opportunity to set it
         String subject = " ";
         sendRequest.setSubject(new EncodedStringValue(subject));
+
+        // Set date
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
+
+        // Set sender
         TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         sendRequest.setFrom(new EncodedStringValue(manager.getLine1Number()));
+
+        // Turn all the parts into a smil document
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         SmilXmlSerializer.serialize(SmilHelper.createSmilDocument(pduBody), out);
         PduPart smilPart = new PduPart();
@@ -384,9 +399,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         smilPart.setContentType(ContentType.APP_SMIL.getBytes());
         smilPart.setData(out.toByteArray());
         pduBody.addPart(0, smilPart);
+
+        // Add content to the send request
         sendRequest.setBody(pduBody);
         sendRequest.setMessageSize(messageSize);
 
+        // Populate byte for convenience
         final PduComposer composer = new PduComposer(context, sendRequest);
         mBytesToSend = composer.make();
 
