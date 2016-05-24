@@ -34,6 +34,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private static final String TAG = MessageAdapter.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
+    private static final int CACHE_SIZE_NUMBER = 100;
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
@@ -81,11 +82,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Context mContext;
     private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
-    private final LruCache<String, Contact> mNumberLruCache;
+    private final LruCache<String, Contact> mNumberLruCache = new LruCache<>(CACHE_SIZE_NUMBER);
     private int mMemberSize = -1;
-
-    // TODO: this is for debugging REMOVE!!
-    private int i = 0;
 
     public static boolean hasFailed(Text text) {
         // This is kinda hacky because if the app force closes then the message status isn't updated
@@ -348,7 +346,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     public MessageAdapter(Context context, Text.TextCursor cursor) {
         mCursor = cursor;
         mContext = context;
-        mNumberLruCache = new LruCache<>(mCursor.getCount());
     }
 
     public void setOnClickListener(MessageAdapter.OnClickListener onClickListener) {
@@ -388,9 +385,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Contact getSender(Text text) {
         Contact contact = mNumberLruCache.get(text.getId());
         if (contact == null) {
-            i++;
-            Log.d(TAG,  i + "");
-            Log.d(TAG,  getItemCount() + "");
             TextManager manager = TextManager.getInstance(mContext);
             contact = manager.getSender(text).get();
             mNumberLruCache.put(text.getId(), contact);
