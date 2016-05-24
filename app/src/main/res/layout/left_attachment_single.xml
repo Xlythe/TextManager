@@ -57,9 +57,10 @@
                 android:layout_toRightOf="@id/holder"
                 android:layout_toEndOf="@id/holder"
                 android:id="@+id/share"
-                android:layout_margin="12dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_share"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:layout_centerVertical="true"
-                android:background="@drawable/ic_share"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
