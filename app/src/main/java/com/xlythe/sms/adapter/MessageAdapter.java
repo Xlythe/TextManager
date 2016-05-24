@@ -386,7 +386,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         Text text = getText(position);
 
         if (mMemberSize == -1) {
-            mMemberSize = manager.getMembers(text).get().size();
+            mMemberSize = 0; //manager.getMembers(text).get().size();
         }
 
         Text prevText = null;
