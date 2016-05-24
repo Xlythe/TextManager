@@ -81,6 +81,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Context mContext;
     private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
+    private int mMemberSize = -1;
 
     public static boolean hasFailed(Text text) {
         // This is kinda hacky because if the app force closes then the message status isn't updated
@@ -381,7 +382,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     @Override
     public int getItemViewType(int position) {
+        TextManager manager = TextManager.getInstance(mContext);
         Text text = getText(position);
+
+        if (mMemberSize == -1) {
+            mMemberSize = manager.getMembers(text).get().size();
+        }
 
         Text prevText = null;
         if (position > 0) {
@@ -400,12 +406,18 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         // Get the sender of the current, previous and next message. (returns true if you)
         boolean userCurrent = text.isIncoming();
-        boolean userPrevious = text.isIncoming();
-        boolean userNext = !text.isIncoming();
+        boolean userPrevious;
+        boolean userNext;
 
-        TextManager manager = TextManager.getInstance(mContext);
-
-        Contact contactCurrent = manager.getSender(text).get();
+        // This should improve speed
+        Contact contactCurrent;
+        if (!text.isIncoming()) {
+            contactCurrent = manager.getSelf();
+        } else if (mMemberSize == 2) {
+            contactCurrent = null;
+        } else {
+            contactCurrent = manager.getSender(text).get();
+        }
         Contact contactPrevious = contactCurrent;
         Contact contactNext = null;
 
@@ -413,17 +425,34 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         // Check if previous message exists, then get the date and sender.
         if (prevText != null) {
             datePrevious = prevText.getTimestamp();
-            contactPrevious = manager.getSender(prevText).get();
+            if (!prevText.isIncoming()) {
+                contactPrevious = manager.getSelf();
+            } else if (mMemberSize == 2) {
+                contactPrevious = null;
+            } else {
+                contactPrevious = manager.getSender(prevText).get();
+            }
         }
 
         // Check if next message exists, then get the date and sender.
         if (nextText != null) {
             dateNext = nextText.getTimestamp();
-            contactNext = manager.getSender(nextText).get();
+            if (!nextText.isIncoming()) {
+                contactNext = manager.getSelf();
+            } else if (mMemberSize == 2) {
+                contactNext = null;
+            } else {
+                contactNext = manager.getSender(nextText).get();
+            }
         }
 
-        userNext = contactCurrent.equals(contactNext);
-        userPrevious = contactCurrent.equals(contactPrevious);
+        if (contactCurrent == null) {
+            userNext = null == contactNext;
+            userPrevious = null == contactPrevious;
+        } else {
+            userNext = contactCurrent.equals(contactNext);
+            userPrevious = contactCurrent.equals(contactPrevious);
+        }
 
         // Calculate time gap.
         boolean largePC = dateCurrent - datePrevious > SPLIT_DURATION;
