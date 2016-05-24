@@ -13,6 +13,7 @@
     <color name="date_text_color">#9e9e9e</color>
     <color name="button">#bdbdbd</color>
 
+    <color name="empty_text">#939393</color>
 
     <color name="select_tint">#4d000000</color>
 

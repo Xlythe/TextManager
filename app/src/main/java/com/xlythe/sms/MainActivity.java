@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.HeadersDecoration;
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private TextManager mManager;
     private Thread.ThreadCursor mThreads;
 
+    private RelativeLayout mEmptyState;
     private AppBarLayout mAppbar;
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
+        mEmptyState = (RelativeLayout) findViewById(R.id.empty_state);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -152,6 +155,14 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         mFab.setEnabled(true);
         mRecyclerView.setVisibility(View.VISIBLE);
+
+        if (mThreads.getCount() == 0) {
+            mEmptyState.setVisibility(View.VISIBLE);
+            mRecyclerView.setVisibility(View.GONE);
+        } else {
+            mEmptyState.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void requiredPermissionsNotGranted() {

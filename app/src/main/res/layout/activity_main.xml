@@ -24,6 +24,35 @@
 
     <include layout="@layout/content_main" />
 
+    <RelativeLayout
+        android:id="@+id/empty_state"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:layout_marginTop="20dp"
+            android:src="@drawable/empty_background"
+            android:scaleType="centerCrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        <ImageView
+            android:src="@drawable/empty"
+            android:layout_centerHorizontal="true"
+            android:layout_above="@+id/empty_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:paddingTop="24dp"
+            android:textSize="16sp"
+            android:textColor="@color/empty_text"
+            android:id="@+id/empty_text"
+            android:text="You have no conversations"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
