@@ -403,17 +403,27 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         boolean userPrevious = text.isIncoming();
         boolean userNext = !text.isIncoming();
 
+        TextManager manager = TextManager.getInstance(mContext);
+
+        Contact contactCurrent = manager.getSender(text).get();
+        Contact contactPrevious = contactCurrent;
+        Contact contactNext = null;
+
+
         // Check if previous message exists, then get the date and sender.
         if (prevText != null) {
             datePrevious = prevText.getTimestamp();
-            userPrevious = prevText.isIncoming();
+            contactPrevious = manager.getSender(prevText).get();
         }
 
         // Check if next message exists, then get the date and sender.
         if (nextText != null) {
             dateNext = nextText.getTimestamp();
-            userNext = nextText.isIncoming();
+            contactNext = manager.getSender(nextText).get();
         }
+
+        userNext = contactCurrent.equals(contactNext);
+        userPrevious = contactCurrent.equals(contactPrevious);
 
         // Calculate time gap.
         boolean largePC = dateCurrent - datePrevious > SPLIT_DURATION;
