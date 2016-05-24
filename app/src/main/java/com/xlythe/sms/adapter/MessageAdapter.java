@@ -81,6 +81,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Context mContext;
     private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
+    private final LruCache<String, Contact> mNumberLruCache;
     private int mMemberSize = -1;
 
     public static boolean hasFailed(Text text) {
@@ -344,6 +345,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     public MessageAdapter(Context context, Text.TextCursor cursor) {
         mCursor = cursor;
         mContext = context;
+        mNumberLruCache = new LruCache<>(mCursor.getCount());
     }
 
     public void setOnClickListener(MessageAdapter.OnClickListener onClickListener) {
@@ -378,6 +380,16 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             default:
                 return new MessageViewHolder(layout, mClickListener);
         }
+    }
+
+    private Contact getSender(Text text) {
+        Contact contact = mNumberLruCache.get(text.getId());
+        if (contact == null) {
+            TextManager manager = TextManager.getInstance(mContext);
+            contact = manager.getSender(text).get();
+            mNumberLruCache.put(text.getId(), contact);
+        }
+        return contact;
     }
 
     @Override
@@ -416,7 +428,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         } else if (mMemberSize == 2) {
             contactCurrent = null;
         } else {
-            contactCurrent = manager.getSender(text).get();
+            contactCurrent = getSender(text);
         }
         Contact contactPrevious = contactCurrent;
         Contact contactNext = null;
@@ -429,7 +441,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else if (mMemberSize == 2) {
                 contactPrevious = null;
             } else {
-                contactPrevious = manager.getSender(prevText).get();
+                contactPrevious = getSender(text);
             }
         }
 
@@ -441,7 +453,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else if (mMemberSize == 2) {
                 contactNext = null;
             } else {
-                contactNext = manager.getSender(nextText).get();
+                contactNext = getSender(text);
             }
         }
 
