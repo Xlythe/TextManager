@@ -421,7 +421,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         Contact contactPrevious = contactCurrent;
         Contact contactNext = null;
 
-
         // Check if previous message exists, then get the date and sender.
         if (prevText != null) {
             datePrevious = prevText.getTimestamp();

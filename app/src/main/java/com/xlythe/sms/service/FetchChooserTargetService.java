@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.service.chooser.ChooserTarget;
 import android.service.chooser.ChooserTargetService;
+import android.util.Log;
 
 import com.xlythe.sms.MessageActivity;
 import com.xlythe.sms.drawable.ProfileDrawable;
@@ -24,6 +25,7 @@ import java.util.Set;
 
 @TargetApi(23)
 public class FetchChooserTargetService extends ChooserTargetService {
+    private static final String TAG = FetchChooserTargetService.class.getSimpleName();
     private static final int SIZE = 3;
 
     private TextManager mManager;
@@ -36,9 +38,11 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     @Override
     public List<ChooserTarget> onGetChooserTargets(ComponentName targetActivityName, IntentFilter matchedFilter) {
+        Log.d(TAG, "onGetChooserTargets");
         final List<ChooserTarget> targets = new ArrayList<>();
 
         if (!mManager.isDefaultSmsPackage()) {
+            Log.w(TAG, "We're not the default SMS app, so ignoring this event");
             // If we can't send texts, then don't have targets.
             return targets;
         }
@@ -56,18 +60,18 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
             targets.add(new ChooserTarget(title, icon, score, componentName, extras));
         }
+        Log.i(TAG, "Found " + recentThreads.size() + " recent threads.");
 
         return targets;
     }
 
     private String getTitle(Thread thread) {
-        String title = "";
-        for (Contact member : mManager.getMembersExceptMe(thread.getLatestMessage()).get()) {
-            if (!title.isEmpty()){
-                title += ", ";
+        String title = Utils.join(", ", mManager.getMembersExceptMe(thread.getLatestMessage()).get(), new Utils.Rule<Contact>() {
+            @Override
+            public String toString(Contact contact) {
+                return contact.getDisplayName();
             }
-            title += member.getDisplayName();
-        }
+        });
         return title;
     }
 
@@ -85,12 +89,14 @@ public class FetchChooserTargetService extends ChooserTargetService {
         List<Thread> recentThreads = new ArrayList<>(SIZE);
         Thread.ThreadCursor cursor = mManager.getThreadCursor();
         try {
-            while (cursor.moveToNext() && recentThreads.size() < SIZE) {
-                if (mManager.getMembersExceptMe(cursor.getThread().getLatestMessage()).get().size() == 0) {
-                    // Ignore corrupted texts
-                    continue;
-                }
-                recentThreads.add(cursor.getThread());
+            if (cursor.moveToFirst()) {
+                do {
+                    if (mManager.getMembersExceptMe(cursor.getThread().getLatestMessage()).get().size() == 0) {
+                        Log.w(TAG, "Ignoring corrupted thread");
+                        continue;
+                    }
+                    recentThreads.add(cursor.getThread());
+                } while (cursor.moveToNext() && recentThreads.size() < SIZE);
             }
         } finally {
             cursor.close();
