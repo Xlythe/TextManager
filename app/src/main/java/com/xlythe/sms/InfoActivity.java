@@ -16,8 +16,6 @@ import android.widget.TextView;
 
 import com.xlythe.sms.adapter.MessageAttachmentAdapter;
 import com.xlythe.sms.drawable.ProfileDrawable;
-import com.xlythe.sms.util.ActionBarUtils;
-import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
@@ -37,9 +35,7 @@ public class InfoActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        getSupportActionBar().setTitle(ColorUtils.color(0x212121, "Info"));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ActionBarUtils.grayUpArrow(this);
 
         TextManager manager =  TextManager.getInstance(this);
 
@@ -81,7 +77,7 @@ public class InfoActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        recyclerView.setHasFixedSize(false);
+        recyclerView.setHasFixedSize(true);
 
         List<Attachment> attachments = manager.getAttachments(thread);
         Collections.reverse(attachments);

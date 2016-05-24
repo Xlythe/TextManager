@@ -39,7 +39,6 @@ import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.receiver.Notifications;
-import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.sms.view.ExtendedEditText;
 import com.xlythe.textmanager.MessageObserver;
@@ -232,9 +231,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 return contact.getDisplayName();
             }
         });
-        getSupportActionBar().setTitle(ColorUtils.color(0x212121, name));
+        getSupportActionBar().setTitle(name);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ActionBarUtils.grayUpArrow(this);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(ColorUtils.getDarkColor(mThread.getIdAsLong()));

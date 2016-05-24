@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Fetch</string>
-    <string name="title_activity_message">MessageActivity</string>
+    <string name="activity_info">Info</string>
 
     <string name="action_search">Search</string>
     <string name="action_info">Info</string>

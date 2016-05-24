@@ -11,11 +11,12 @@
         android:layout_width="match_parent">
 
         <android.support.v7.widget.Toolbar
-            android:elevation="5dp"
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:elevation="5dp"
             android:background="@android:color/white"
+            app:titleTextColor="@color/titleText"
             app:layout_collapseMode="pin"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 

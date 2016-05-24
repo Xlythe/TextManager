@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.xlythe.sms.util.ActionBarUtils;
 import com.xlythe.sms.view.ContactEditText;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
@@ -40,7 +39,6 @@ public class ComposeActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        ActionBarUtils.whiteUpArrow(this);
 
         mManager = TextManager.getInstance(getBaseContext());
         mContacts = (ContactEditText) findViewById(R.id.contacts);

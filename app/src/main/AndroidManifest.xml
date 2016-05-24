@@ -105,7 +105,6 @@
             android:name=".MessageActivity"
             android:label="@string/app_name"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.Compose"
             android:windowSoftInputMode="adjustNothing">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -134,7 +133,14 @@
                 android:name="android.service.chooser.chooser_target_service"
                 android:value=".service.FetchChooserTargetService"/>
         </activity>
-        <activity android:name=".InfoActivity">
+
+        <!-- For viewing contacts in a thread -->
+        <activity android:name=".InfoActivity"
+            android:label="@string/activity_info"
+            android:parentActivityName=".MessageActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.xlythe.sms.MessageActivity"/>
         </activity>
     </application>
 
