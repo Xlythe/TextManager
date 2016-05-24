@@ -44,15 +44,15 @@ public class Network {
         // as failed in that case.
         final CountDownLatch latch = new CountDownLatch(1);
         boolean success = false;
-        connectivityManager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(android.net.Network network) {
                 super.onAvailable(network);
                 latch.countDown();
                 ConnectivityManager.setProcessDefaultNetwork(network);
-                connectivityManager.unregisterNetworkCallback(this);
             }
-        });
+        };
+        connectivityManager.requestNetwork(networkRequest, networkCallback);
         try {
             success = latch.await(TIMEOUT, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -63,6 +63,7 @@ public class Network {
         } else {
             callback.onFail();
         }
+        connectivityManager.unregisterNetworkCallback(networkCallback);
     }
 
     private static void requestLegacy(Context context, final Callback callback) {
