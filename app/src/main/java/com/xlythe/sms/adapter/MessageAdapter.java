@@ -84,6 +84,9 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private final LruCache<String, Contact> mNumberLruCache;
     private int mMemberSize = -1;
 
+    // TODO: this is for debugging REMOVE!!
+    private int i = 0;
+
     public static boolean hasFailed(Text text) {
         // This is kinda hacky because if the app force closes then the message status isn't updated
         return text.getStatus() == Status.FAILED
@@ -385,6 +388,9 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     private Contact getSender(Text text) {
         Contact contact = mNumberLruCache.get(text.getId());
         if (contact == null) {
+            i++;
+            Log.d(TAG,  i + "");
+            Log.d(TAG,  getItemCount() + "");
             TextManager manager = TextManager.getInstance(mContext);
             contact = manager.getSender(text).get();
             mNumberLruCache.put(text.getId(), contact);
@@ -394,11 +400,13 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     @Override
     public int getItemViewType(int position) {
+
         TextManager manager = TextManager.getInstance(mContext);
         Text text = getText(position);
 
         if (mMemberSize == -1) {
             mMemberSize = manager.getMembers(text).get().size();
+            Log.d(TAG, "Member size: " + mMemberSize);
         }
 
         Text prevText = null;
@@ -416,21 +424,16 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         long datePrevious = 0;
         long dateNext = 0;
 
-        // Get the sender of the current, previous and next message. (returns true if you)
-        boolean userCurrent = text.isIncoming();
-        boolean userPrevious;
-        boolean userNext;
-
         // This should improve speed
         Contact contactCurrent;
         if (!text.isIncoming()) {
             contactCurrent = manager.getSelf();
-        } else if (mMemberSize == 2) {
+        } else if (mMemberSize <= 2) {
             contactCurrent = null;
         } else {
             contactCurrent = getSender(text);
         }
-        Contact contactPrevious = contactCurrent;
+        Contact contactPrevious = null;
         Contact contactNext = null;
 
         // Check if previous message exists, then get the date and sender.
@@ -438,10 +441,10 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             datePrevious = prevText.getTimestamp();
             if (!prevText.isIncoming()) {
                 contactPrevious = manager.getSelf();
-            } else if (mMemberSize == 2) {
+            } else if (mMemberSize <= 2) {
                 contactPrevious = null;
             } else {
-                contactPrevious = getSender(text);
+                contactPrevious = getSender(prevText);
             }
         }
 
@@ -450,91 +453,90 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             dateNext = nextText.getTimestamp();
             if (!nextText.isIncoming()) {
                 contactNext = manager.getSelf();
-            } else if (mMemberSize == 2) {
+            } else if (mMemberSize <= 2) {
                 contactNext = null;
             } else {
-                contactNext = getSender(text);
+                contactNext = getSender(nextText);
             }
         }
 
+        boolean topEqualsCurrent;
+        boolean bottomEqualsCurrent;
         if (contactCurrent == null) {
-            userNext = null == contactNext;
-            userPrevious = null == contactPrevious;
+            topEqualsCurrent = null == contactPrevious;
+            bottomEqualsCurrent = null == contactNext;
         } else {
-            userNext = contactCurrent.equals(contactNext);
-            userPrevious = contactCurrent.equals(contactPrevious);
+            topEqualsCurrent = contactCurrent.equals(contactPrevious);
+            bottomEqualsCurrent = contactCurrent.equals(contactNext);
         }
 
         // Calculate time gap.
         boolean largePC = dateCurrent - datePrevious > SPLIT_DURATION;
         boolean largeCN = dateNext - dateCurrent > SPLIT_DURATION;
 
-        if (DEBUG) {
-            Log.d(TAG, String.format(
-                    "userCurrent=%s, userPrevious=%s, userNext=%s," +
-                    "dateCurrent=%s, datePrevious=%s, dateNext=%s," +
-                    "largePC=%s, largeCN=%s",
-                    userCurrent, userPrevious, userNext,
-                    dateCurrent, datePrevious, dateNext,
-                    largePC, largeCN));
+        // If the message above does not equal the current message or the time gap is large
+        boolean largeTopGap = !topEqualsCurrent || largePC;
+
+        // If the message below equals the current message and the time gap is small
+        boolean smallBottomGap = bottomEqualsCurrent && !largeCN;
+
+        // If the message isn't incoming its you and should be on the right
+        if (!text.isIncoming()) {
+            if (largeTopGap) {
+                if (smallBottomGap) {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_TOP_RIGHT;
+                    }
+                    return TYPE_TOP_RIGHT;
+                } else {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_SINGLE_RIGHT;
+                    }
+                    return TYPE_SINGLE_RIGHT;
+                }
+            } else {
+                if (smallBottomGap) {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_MIDDLE_RIGHT;
+                    }
+                    return TYPE_MIDDLE_RIGHT;
+                } else {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_BOTTOM_RIGHT;
+                    }
+                    return TYPE_BOTTOM_RIGHT;
+                }
+            }
         }
 
-        if (!userCurrent && (userPrevious || largePC) && (!userNext && !largeCN)) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_TOP_RIGHT;
+        // Otherwise it should be on the left
+        else {
+            if (largeTopGap) {
+                if (smallBottomGap) {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_TOP_LEFT;
+                    }
+                    return TYPE_TOP_LEFT;
+                }
+                else {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_SINGLE_LEFT;
+                    }
+                    return TYPE_SINGLE_LEFT;
+                }
+            } else {
+                if (smallBottomGap) {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_MIDDLE_LEFT;
+                    }
+                    return TYPE_MIDDLE_LEFT;
+                } else {
+                    if (text.getAttachment() != null) {
+                        return TYPE_ATTACHMENT_BOTTOM_LEFT;
+                    }
+                    return TYPE_BOTTOM_LEFT;
                 }
             }
-            return TYPE_TOP_RIGHT;
-        } else if (!userCurrent && (!userPrevious && !largePC) && (!userNext && !largeCN)) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_MIDDLE_RIGHT;
-                }
-            }
-            return TYPE_MIDDLE_RIGHT;
-        } else if (!userCurrent && (!userPrevious && !largePC)) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_BOTTOM_RIGHT;
-                }
-            }
-            return TYPE_BOTTOM_RIGHT;
-        } else if (!userCurrent) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_SINGLE_RIGHT;
-                }
-            }
-            return TYPE_SINGLE_RIGHT;
-        } else if ((!userPrevious || largePC) && (userNext && !largeCN)) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_TOP_LEFT;
-                }
-            }
-            return TYPE_TOP_LEFT;
-        } else if ((userPrevious && !largePC) && (userNext && !largeCN)) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_MIDDLE_LEFT;
-                }
-            }
-            return TYPE_MIDDLE_LEFT;
-        } else if (userPrevious && !largePC) {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_BOTTOM_LEFT;
-                }
-            }
-            return TYPE_BOTTOM_LEFT;
-        } else {
-            if (text.isMms()) {
-                if (text.getAttachment() != null) {
-                    return TYPE_ATTACHMENT_SINGLE_LEFT;
-                }
-            }
-            return TYPE_SINGLE_LEFT;
         }
     }
 
