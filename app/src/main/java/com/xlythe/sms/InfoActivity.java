@@ -1,6 +1,7 @@
 package com.xlythe.sms;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 public class InfoActivity extends AppCompatActivity {
+    private ViewGroup mBlock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +48,10 @@ public class InfoActivity extends AppCompatActivity {
 
         final TextView name = (TextView) findViewById(R.id.name);
         final ImageView icon = (ImageView) findViewById(R.id.icon);
+        mBlock = (ViewGroup) findViewById(R.id.block);
+
+        // TODO: add this back in when feature is implemented
+        mBlock.setVisibility(View.GONE);
 
         if (contacts.size() == 1 && contacts.iterator().next().hasName()) {
             icon.setVisibility(View.VISIBLE);
@@ -82,6 +88,15 @@ public class InfoActivity extends AppCompatActivity {
 
         MessageAttachmentAdapter adapter = new MessageAttachmentAdapter(this, attachments);
         recyclerView.setAdapter(adapter);
+
+        adapter.setOnClickListener(new MessageAttachmentAdapter.OnClickListener() {
+            @Override
+            public void onClick(Attachment attachment) {
+                Intent i = new Intent(getBaseContext(), MediaActivity.class);
+                i.putExtra(MediaActivity.EXTRA_ATTACHMENT, attachment);
+                startActivity(i);
+            }
+        });
     }
 
     @Override

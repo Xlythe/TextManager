@@ -14,6 +14,7 @@ import android.widget.VideoView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.VideoAttachment;
 
@@ -22,9 +23,9 @@ import java.util.Formatter;
 import java.util.Locale;
 
 public class MediaActivity extends AppCompatActivity {
-    public static final String EXTRA_TEXT = "text";
+    public static final String EXTRA_ATTACHMENT = "attachment";
     private static final int PROGRESS = 0;
-    private Text mText;
+    private Attachment mAttachment;
     private Handler mHandler = new MessageHandler(this);
     private ProgressBar mProgress;
     private VideoView mPlayer;
@@ -36,7 +37,7 @@ public class MediaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media);
 
-        mText = getIntent().getParcelableExtra(EXTRA_TEXT);
+        mAttachment = getIntent().getParcelableExtra(EXTRA_ATTACHMENT);
 
         final SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
         mPlayer = (VideoView) findViewById(R.id.video);
@@ -47,9 +48,9 @@ public class MediaActivity extends AppCompatActivity {
 
         mPauseButton.setOnClickListener(mPauseListener);
 
-        Uri uri = mText.getAttachment().getUri();
+        Uri uri = mAttachment.getUri();
 
-        if (mText.getAttachment() instanceof VideoAttachment) {
+        if (mAttachment instanceof VideoAttachment) {
             image.setVisibility(View.GONE);
             mPlayer.setVisibility(View.VISIBLE);
             mPlayer.setVideoURI(uri);
@@ -68,7 +69,7 @@ public class MediaActivity extends AppCompatActivity {
             mCurrentTime.setVisibility(View.GONE);
             mProgress.setVisibility(View.GONE);
             image.setVisibility(View.VISIBLE);
-            image.setImage(ImageSource.uri(mText.getAttachment().getUri()));
+            image.setImage(ImageSource.uri(mAttachment.getUri()));
         }
     }
 

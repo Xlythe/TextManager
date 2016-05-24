@@ -392,7 +392,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 && (text.getAttachment().getType() == Attachment.Type.IMAGE
                 || text.getAttachment().getType() == Attachment.Type.VIDEO)) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
-            i.putExtra(MediaActivity.EXTRA_TEXT, text);
+            i.putExtra(MediaActivity.EXTRA_ATTACHMENT, text.getAttachment());
             startActivity(i);
         }
     }

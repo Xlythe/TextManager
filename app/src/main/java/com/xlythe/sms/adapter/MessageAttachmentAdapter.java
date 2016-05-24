@@ -21,25 +21,54 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
 
     private List<Attachment> mAttachments;
     private Context mContext;
+    private OnClickListener mOnClickListener;
 
     public MessageAttachmentAdapter(Context context, List<Attachment> attachments) {
         mAttachments = attachments;
         mContext = context;
     }
 
+    public void setOnClickListener(OnClickListener onClickListener) {
+        mOnClickListener = onClickListener;
+    }
+
     public static class AttachmentViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        public ImageView attachment;
+        private ImageView mAttachmentView;
+        private ImageView videoLabel;
+        private OnClickListener mOnClickListener;
+        private Attachment mAttachment;
 
         public AttachmentViewHolder(View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
-            attachment = (ImageView) itemView.findViewById(R.id.attachment);
+            mAttachmentView = (ImageView) itemView.findViewById(R.id.attachment);
+            videoLabel = (ImageView) itemView.findViewById(R.id.video_label);
+        }
+
+        public void setAttachment(Context context, Attachment attachment, OnClickListener onClickListener) {
+            mOnClickListener = onClickListener;
+            mAttachment = attachment;
+            if (attachment.getType() == Attachment.Type.VIDEO) {
+                videoLabel.setVisibility(View.VISIBLE);
+            } else {
+                videoLabel.setVisibility(View.GONE);
+            }
+            Glide.with(context)
+                    .load(attachment.getUri())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .dontAnimate()
+                    .placeholder(R.color.loading)
+                    .into(mAttachmentView);
+        }
+
+        public OnClickListener getOnClickListener() {
+            return mOnClickListener;
         }
 
         @Override
         public void onClick(View view) {
-
+            getOnClickListener().onClick(mAttachment);
         }
     }
 
@@ -51,16 +80,15 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
 
     @Override
     public void onBindViewHolder(AttachmentViewHolder holder, int position) {
-       Glide.with(mContext)
-                .load(mAttachments.get(position).getUri())
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .dontAnimate()
-                .placeholder(R.color.loading)
-                .into(holder.attachment);
+        holder.setAttachment(mContext, mAttachments.get(position), mOnClickListener);
     }
 
     @Override
     public int getItemCount() {
         return mAttachments.size();
+    }
+
+    public interface OnClickListener {
+        void onClick(Attachment attachment);
     }
 }

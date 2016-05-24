@@ -200,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         Text text = thread.getLatestMessage();
         if (text.getAttachment() != null) {
             Intent i = new Intent(getBaseContext(), MediaActivity.class);
-            i.putExtra(MediaActivity.EXTRA_TEXT, text);
+            i.putExtra(MediaActivity.EXTRA_ATTACHMENT, text.getAttachment());
             startActivity(i);
         }
     }

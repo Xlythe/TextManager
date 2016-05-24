@@ -52,6 +52,7 @@
                 android:layout_height="wrap_content"/>
 
             <LinearLayout
+                android:layout_marginTop="16dp"
                 android:id="@+id/holder"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
@@ -59,9 +60,9 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/block"
                 android:background="@drawable/border"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
                 android:padding="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -84,7 +85,10 @@
             <TextView
                 android:text="Attachments"
                 android:textSize="14sp"
-                android:layout_margin="16dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
                 android:textColor="#707070"
                 android:fontFamily="sans-serif-medium"
                 android:layout_width="wrap_content"
