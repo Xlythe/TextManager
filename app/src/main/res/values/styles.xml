@@ -56,6 +56,18 @@
         <item name="android:textColor">@color/titleText</item>
     </style>
 
+    <item type="id" name="share" />
+
+    <style name="Share">
+        <item name="android:id">@id/share</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:src">@drawable/ic_share</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
     <style name="Compose" />
 
     <style name="Compose.To">

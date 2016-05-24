@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_marginTop="16dp"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:paddingLeft="@dimen/message_vertical_margin"
-              android:paddingRight="@dimen/message_vertical_margin"
-              android:paddingTop="@dimen/message_outside_margin"
-              android:paddingBottom="@dimen/message_inside_margin"
-              android:background="?selectableItemBackground">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="@dimen/message_vertical_margin"
+    android:paddingRight="@dimen/message_vertical_margin"
+    android:paddingTop="@dimen/message_outside_margin"
+    android:paddingBottom="@dimen/message_inside_margin"
+    android:background="?selectableItemBackground">
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -56,17 +57,12 @@
             <ImageButton
                 android:layout_toRightOf="@id/holder"
                 android:layout_toEndOf="@id/holder"
-                android:id="@+id/share"
-                android:padding="12dp"
-                android:src="@drawable/ic_share"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_centerVertical="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                style="@style/Share"/>
 
         </RelativeLayout>
 
     </LinearLayout>
+
     <FrameLayout
         android:id="@+id/frame"
         android:layout_marginLeft="40dp"
@@ -85,4 +81,5 @@
             style="@style/Body.Left" />
 
     </FrameLayout>
+
 </LinearLayout>
