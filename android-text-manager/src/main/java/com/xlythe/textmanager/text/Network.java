@@ -48,8 +48,8 @@ public class Network {
             @Override
             public void onAvailable(android.net.Network network) {
                 super.onAvailable(network);
-                latch.countDown();
                 ConnectivityManager.setProcessDefaultNetwork(network);
+                latch.countDown();
             }
         };
         connectivityManager.requestNetwork(networkRequest, networkCallback);
