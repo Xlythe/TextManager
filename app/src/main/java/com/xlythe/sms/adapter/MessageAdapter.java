@@ -427,8 +427,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
         } else {
             contactCurrent = getSender(text);
         }
-        Contact contactPrevious = null;
-        Contact contactNext = null;
+        Contact contactPrevious;
+        Contact contactNext;
 
         // Check if previous message exists, then get the date and sender.
         if (prevText != null) {
@@ -440,6 +440,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else {
                 contactPrevious = getSender(prevText);
             }
+        } else {
+            contactPrevious = contactCurrent;
         }
 
         // Check if next message exists, then get the date and sender.
@@ -451,6 +453,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 contactNext = null;
             } else {
                 contactNext = getSender(nextText);
+            }
+        } else {
+            if (contactCurrent == null) {
+                contactNext = manager.getSelf();
+            } else {
+                contactNext = null;
             }
         }
 
