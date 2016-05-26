@@ -33,7 +33,7 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:textSize="16sp"
-            android:inputType="textAutoCorrect|textCapSentences"
+            android:inputType="textAutoCorrect|textCapSentences|textMultiLine"
             android:imeOptions="flagNoExtractUi"
             android:textColorHint="#9e9e9e"
             android:hint="@string/compose_msg_hint_long"
