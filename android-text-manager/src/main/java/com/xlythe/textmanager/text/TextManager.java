@@ -624,7 +624,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return new FutureImpl<Thread>() {
             @Override
             public Thread get() {
-                String clause = String.format("%s = %s", Mock.Telephony.Sms.Conversations.THREAD_ID, threadId);
+                String clause = String.format("%s = %s", Thread.THREAD_ID, threadId);
                 ContentResolver contentResolver = mContext.getContentResolver();
                 final Uri uri;
                 final String order;
