@@ -146,7 +146,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
             mTexts = texts;
         }
 
-        private android.database.Cursor getUnreadCursor() {
+        private Cursor getUnreadCursor() {
             return mUnreadCursor;
         }
 
