@@ -4,6 +4,7 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
+
     <android.support.design.widget.AppBarLayout
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
@@ -17,21 +18,23 @@
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </android.support.design.widget.AppBarLayout>
+
     <LinearLayout
         android:background="@drawable/border"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <ImageView
             android:id="@+id/media"
             android:background="@drawable/border"
-            android:src="@drawable/stickers_affection"
             android:layout_marginTop="12dp"
             android:layout_marginLeft="12dp"
             android:layout_marginStart="12dp"
             android:layout_marginBottom="12dp"
             android:layout_width="80dp"
             android:layout_height="80dp"/>
+
         <EditText
             android:id="@+id/message"
             android:inputType="textAutoCorrect|textCapSentences|textMultiLine"
@@ -45,10 +48,10 @@
             android:layout_marginBottom="12dp"
             android:textSize="16sp"
             android:textColorHint="#757575"
-            android:hint="Add a caption..."
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="80dp" />
+
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
@@ -79,6 +82,7 @@
             android:backgroundTint="@color/colorAccent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
     </LinearLayout>
 
 </LinearLayout>
