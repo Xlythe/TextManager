@@ -82,7 +82,7 @@ And add the receiver to your manifest
 
 Permissions
 -----------
-Lastly, but very import, don't forget to add permissions to the manifest
+Finally, here are the permissions you'll need to use the library.
 ```xml
 <!-- You may not need all of these, depending on what you are doing -->
 
