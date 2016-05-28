@@ -16,6 +16,8 @@ import android.widget.ImageView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
+import com.xlythe.sms.pojo.Sticker;
+import com.xlythe.sms.view.PreviewDialog;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -44,18 +46,13 @@ public class StickerFragment extends Fragment {
         RecyclerView gridView = (RecyclerView) rootView.findViewById(R.id.content);
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(final Uri uri) {
-                TextManager.getInstance(getContext()).send(new ImageAttachment(uri)).to(mText);
+            public void onItemClick(Sticker sticker) {
+                TextManager.getInstance(getContext()).send(new ImageAttachment(sticker.getUri(getContext()))).to(mText);
             }
 
             @Override
-            public void onItemLongClick(Drawable drawable) {
-                ImageView imageView = new ImageView(getContext());
-                imageView.setImageDrawable(drawable);
-                AlertDialog alertDialog = new AlertDialog.Builder(getContext()).setView(imageView).show();
-                alertDialog.getWindow().setLayout(
-                        getResources().getDimensionPixelSize(R.dimen.sticker_dialog_width),
-                        getResources().getDimensionPixelSize(R.dimen.sticker_dialog_height));
+            public void onItemLongClick(Sticker sticker) {
+                new PreviewDialog(getContext(), sticker.getThumbnail()).show();
             }
         }));
         gridView.setLayoutManager(new GridAutofitLayoutManager(getContext()));

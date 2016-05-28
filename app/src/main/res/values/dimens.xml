@@ -15,8 +15,9 @@
     <dimen name="message_inside_margin">3dp</dimen>
     <dimen name="message_outside_margin">8dp</dimen>
 
-    <dimen name="sticker_dialog_width">250dp</dimen>
-    <dimen name="sticker_dialog_height">250dp</dimen>
+    <dimen name="sticker_dialog_width">150dp</dimen>
+    <dimen name="sticker_dialog_height">150dp</dimen>
+
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
