@@ -2,6 +2,7 @@ package com.xlythe.sms.fragment;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -43,8 +44,8 @@ public class StickerFragment extends Fragment {
         RecyclerView gridView = (RecyclerView) rootView.findViewById(R.id.content);
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(final Drawable drawable) {
-                TextManager.getInstance(getContext()).send(new ImageAttachment(getContext(), "sticker", drawable)).to(mText);
+            public void onItemClick(final Uri uri) {
+                TextManager.getInstance(getContext()).send(new ImageAttachment(uri)).to(mText);
             }
 
             @Override
