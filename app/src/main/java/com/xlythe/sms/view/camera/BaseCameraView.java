@@ -216,12 +216,18 @@ public abstract class BaseCameraView extends TextureView {
         rect.right = rect.left + areaSize;
 
         // Cap at -1000 to 1000
-        rect.top = Math.max(rect.top, -1000);
-        rect.left = Math.max(rect.left, -1000);
-        rect.bottom = Math.min(rect.bottom, 1000);
-        rect.right = Math.min(rect.right, 1000);
+        rect.top = rangeLimit(rect.top);
+        rect.left = rangeLimit(rect.left);
+        rect.bottom = rangeLimit(rect.bottom);
+        rect.right = rangeLimit(rect.right);
 
         return rect;
+    }
+
+    private int rangeLimit(int val) {
+        int floor = Math.max(val, -1000);
+        int ceiling = Math.min(floor, 1000);
+        return ceiling;
     }
 
     protected void onOpen() {}
