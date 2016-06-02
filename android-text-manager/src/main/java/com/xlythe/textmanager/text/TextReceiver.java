@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
+import android.provider.Settings;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
@@ -134,8 +135,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
                     try {
                         Uri uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
                         // can't the status via pdu, so update with the content resolver
-                        ContentValues values = new ContentValues(1);
+                        ContentValues values = new ContentValues(2);
                         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis());
                         mContext.getContentResolver().update(uri, values, null, null);
 
 
