@@ -68,7 +68,7 @@ public class InfoActivity extends AppCompatActivity {
 
             // fill in any details dynamically here
             TextView textView = (TextView) v.findViewById(R.id.number);
-            textView.setText(contact.getNumber(this).get());
+            textView.setText(contact.getNumber());
 
             // insert into main view
             ViewGroup insertPoint = (ViewGroup) findViewById(R.id.holder);

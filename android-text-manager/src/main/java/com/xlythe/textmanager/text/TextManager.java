@@ -793,13 +793,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
             try {
                 if (c != null && c.moveToFirst()) {
-                    contact = new Contact(c);
+                    contact = new Contact(phoneNumber, c);
                 } else {
                     // There was no contact with this number. Use the full (unsanitized) number
                     // so that we don't lose any information (such as country code).
                     contact = new Contact(phoneNumber);
 
-                    if (TextUtils.isEmpty(contact.getNumber(mContext).get())) {
+                    if (TextUtils.isEmpty(contact.getNumber())) {
                         contact = Contact.UNKNOWN;
                     }
                 }

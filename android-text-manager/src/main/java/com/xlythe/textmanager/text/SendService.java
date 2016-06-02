@@ -62,7 +62,7 @@ public class SendService extends IntentService {
     private static Uri storeSMS(Context context, final Text text) {
         // Put together query data
         TextManager manager = TextManager.getInstance(context);
-        String address = manager.getMembers(text).get().iterator().next().getNumber(context).get();
+        String address = manager.getMembers(text).get().iterator().next().getNumber();
         ContentValues values = new ContentValues();
         Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
         values.put(Mock.Telephony.Sms.ADDRESS, address);
@@ -85,7 +85,7 @@ public class SendService extends IntentService {
     private static void sendSMS(Context context, Text text, Uri uri) {
         SmsManager sms = SmsManager.getDefault();
         TextManager manager = TextManager.getInstance(context);
-        String address = manager.getMembers(text).get().iterator().next().getNumber(context).get();
+        String address = manager.getMembers(text).get().iterator().next().getNumber();
         sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
     }
 

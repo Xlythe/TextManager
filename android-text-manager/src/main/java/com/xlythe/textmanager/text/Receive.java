@@ -185,6 +185,7 @@ public class Receive {
         if (isEmailAddress(recipient)) {
             recipient = extractAddrSpec(recipient);
         }
+
         uriBuilder.appendQueryParameter("recipient", recipient);
 
         Uri uri = uriBuilder.build();

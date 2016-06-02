@@ -8,7 +8,6 @@ import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.Gravity;
@@ -152,7 +151,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         }
 
         public void createView(boolean isSelected, final boolean selectMode) {
-            long startTime = System.currentTimeMillis();
             String body = "";
             String time = "";
             int unreadCount = 0;
@@ -249,8 +247,6 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             } else {
                 card.setBackgroundColor(CARD_STATE_COLOR);
             }
-            long endTime = System.currentTimeMillis();
-            Log.d("TAG", "view time: " + (endTime - startTime));
         }
 
         @Override

@@ -109,7 +109,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
         return Utils.join(';', contacts, new Utils.Rule<Contact>() {
             @Override
             public String toString(Contact contact) {
-                return contact.getNumber(getBaseContext()).get();
+                return contact.getNumber();
             }
         });
     }

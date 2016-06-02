@@ -183,7 +183,7 @@ public class ProfileDrawable extends Drawable {
         Integer color = COLOR_CACHE.get(contact);
         if (color == null) {
             // Hasn't been queried yet
-            color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber(mContext).get()));
+            color = ColorUtils.getColor(Receive.getOrCreateThreadId(mContext, contact.getNumber()));
             COLOR_CACHE.put(contact, color);
         }
         mPaint.setColor(color);

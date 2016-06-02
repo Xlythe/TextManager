@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -400,7 +399,6 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         if (mMemberSize == -1) {
             mMemberSize = manager.getMembers(text).get().size();
-            Log.d(TAG, "Member size: " + mMemberSize);
         }
 
         Text prevText = null;

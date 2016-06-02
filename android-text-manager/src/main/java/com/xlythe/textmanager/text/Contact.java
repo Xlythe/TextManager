@@ -55,8 +55,17 @@ public final class Contact implements User, Parcelable {
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
+    protected Contact(String phoneNumber, Cursor c) {
+        mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+        // Number may not exist, so check first
+        setNumber(phoneNumber);
+        mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
+        mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
+        mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
+    }
+
     protected Contact(String number) {
-        this(number, null);
+        this(number, (String) null);
     }
 
     protected Contact(String number, String displayName) {
@@ -83,22 +92,8 @@ public final class Contact implements User, Parcelable {
         return mId;
     }
 
-    public synchronized Future<String> getNumber(final Context context) {
-        if (mNumber != null) {
-            return new Present<>(mNumber);
-        } else {
-            return new FutureImpl<String>() {
-                @Override
-                public String get() {
-                    List<String> numbers = getNumbers(context);
-                    if (numbers.isEmpty()) {
-                        return null;
-                    } else {
-                        return setNumber(numbers.get(0));
-                    }
-                }
-            };
-        }
+    public String getNumber() {
+        return mNumber;
     }
 
     private synchronized String setNumber(String number) {
@@ -180,7 +175,7 @@ public final class Contact implements User, Parcelable {
             return mDisplayName;
         } else {
             // Guaranteed to have a number if the name is null.
-            return PhoneNumberUtils.formatNumber(getNumber(null /*context*/).get());
+            return PhoneNumberUtils.formatNumber(getNumber());
         }
     }
 

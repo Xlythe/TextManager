@@ -373,7 +373,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         // Add recipients to the send request
         for (Contact recipient : TextManager.getInstance(context).getMembersExceptMe(this).get()) {
-            final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber(context).get());
+            final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber());
             if (phoneNumbers != null && phoneNumbers.length > 0) {
                 sendRequest.addTo(phoneNumbers[0]);
             }
