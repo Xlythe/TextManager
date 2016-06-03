@@ -91,6 +91,10 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 && System.currentTimeMillis() - text.getTimestamp() > TIMEOUT);
     }
 
+    public static boolean showAsSingle(Text text) {
+        return text.getStatus() == Status.FAILED || (text.getStatus() == Status.PENDING);
+    }
+
     public static class MessageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private Text mText;
         private Context mContext;
@@ -482,6 +486,13 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         // If the message isn't incoming its you and should be on the right
         if (!text.isIncoming()) {
+            if (showAsSingle(text)) {
+                if (text.getAttachment() != null) {
+                    return TYPE_ATTACHMENT_SINGLE_RIGHT;
+                }
+                return TYPE_SINGLE_RIGHT;
+            }
+
             if (largeTopGap) {
                 if (smallBottomGap) {
                     if (text.getAttachment() != null) {
@@ -511,6 +522,13 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         // Otherwise it should be on the left
         else {
+            if (showAsSingle(text)) {
+                if (text.getAttachment() != null) {
+                    return TYPE_ATTACHMENT_SINGLE_LEFT;
+                }
+                return TYPE_SINGLE_LEFT;
+            }
+
             if (largeTopGap) {
                 if (smallBottomGap) {
                     if (text.getAttachment() != null) {

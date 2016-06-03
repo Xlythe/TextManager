@@ -17,6 +17,10 @@ import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
@@ -25,26 +29,39 @@ public class SendService extends IntentService {
     private static final String SMS_DELIVERED = PREAMBLE + "SMS_DELIVERED";
     private static final String MMS_SENT = PREAMBLE + "MMS_SENT";
     public static final String TEXT_EXTRA = "text_extra";
+    public static final String URI_EXTRA = "uri_extra";
 
     public SendService() {
         super("SendService");
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Text text = intent.getParcelableExtra(TEXT_EXTRA);
+
+        final Uri uri;
+        if (!text.isMms()) {
+             uri = storeSMS(this, text);
+        } else {
+            uri = storeMMS(this, text);
+        }
+
+        intent.putExtra(URI_EXTRA, uri);
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
     protected void onHandleIntent(Intent intent) {
         final Text text = intent.getParcelableExtra(TEXT_EXTRA);
-
+        final Uri uri = intent.getParcelableExtra(URI_EXTRA);
         // Send SMS
         if (!text.isMms()) {
-            final Uri uri = storeSMS(this, text);
             sendSMS(this, text, uri);
         }
 
         // Send MMS
         else {
-            final Uri uri = storeMMS(this, text);
             final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
-
             Network.forceDataConnection(this, new Network.Callback() {
                 @Override
                 public void onSuccess() {
