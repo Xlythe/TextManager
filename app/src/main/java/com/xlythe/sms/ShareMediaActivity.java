@@ -122,6 +122,7 @@ public class ShareMediaActivity extends AppCompatActivity {
                     Intent intent = new Intent(getBaseContext(), MainActivity.class);
                     startActivity(intent);
                 }
+                finish();
             }
         });
     }
