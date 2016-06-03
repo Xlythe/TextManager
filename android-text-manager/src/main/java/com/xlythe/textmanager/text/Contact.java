@@ -92,6 +92,52 @@ public final class Contact implements User, Parcelable {
         return mId;
     }
 
+    public synchronized Future<String> getMobileNumber(final Context context) {
+        if (mNumber != null) {
+            return new Present<>(mNumber);
+        } else {
+            return new FutureImpl<String>() {
+                @Override
+                public String get() {
+                    List<String> numbers = new LinkedList<>();
+
+                    Uri uri = Phone.CONTENT_URI;
+                    String[] projection = new String[] {
+                            Phone.NUMBER,
+                            Phone.IS_PRIMARY,
+                            Phone.TYPE
+                    };
+                    String clause = Phone.CONTACT_ID + " = ? AND " + Phone.TYPE + " = ?";
+                    String[] args = new String[] { getId(), Integer.toString(Phone.TYPE_MOBILE) };
+                    Cursor cursor = context.getContentResolver().query(uri, projection, clause, args, null);
+                    if (cursor != null) {
+                        try {
+                            if (cursor.moveToFirst()) {
+                                do {
+                                    boolean isPrimary = cursor.getInt(cursor.getColumnIndex(Phone.IS_PRIMARY)) != 0;
+                                    String number = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
+
+                                    if (isPrimary) {
+                                        numbers.add(0, number);
+                                    } else {
+                                        numbers.add(number);
+                                    }
+                                } while (cursor.moveToNext());
+                            }
+                        } finally {
+                            cursor.close();
+                        }
+                    }
+                    if (numbers.isEmpty()) {
+                        return null;
+                    } else {
+                        return setNumber(numbers.get(0));
+                    }
+                }
+            };
+        }
+    }
+
     public String getNumber() {
         return mNumber;
     }

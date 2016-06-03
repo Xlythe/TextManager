@@ -156,7 +156,7 @@ public class ContactEditText extends EditText {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
 
         // Create the String that the real value is of
-        String stringRepresentation = contact.getNumber() + ";";
+        String stringRepresentation = contact.getMobileNumber(getContext()).get() + ";";
         builder.append(stringRepresentation);
 
         // Map the drawable to the string
