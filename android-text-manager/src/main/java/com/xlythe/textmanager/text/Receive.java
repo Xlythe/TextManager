@@ -13,6 +13,7 @@ import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
+import java.lang.*;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
@@ -50,17 +51,22 @@ public class Receive {
      * HTTP request to the MMSC database
      */
     protected static void getPdu(final String uri, final Context context, final DataCallback callback) {
-        Network.forceDataConnection(context, new Network.Callback() {
+        new java.lang.Thread(new Runnable() {
             @Override
-            public void onSuccess() {
-                receive(context, uri, callback);
-            }
+            public void run() {
+                Network.forceDataConnection(context, new Network.Callback() {
+                    @Override
+                    public void onSuccess() {
+                        receive(context, uri, callback);
+                    }
 
-            @Override
-            public void onFail() {
-                callback.onFail();
+                    @Override
+                    public void onFail() {
+                        callback.onFail();
+                    }
+                });
             }
-        });
+        }).start();
     }
 
     public static void receive(final Context context, String uri, final DataCallback callback){
