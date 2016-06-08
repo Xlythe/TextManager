@@ -470,12 +470,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     senderAddress = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
 
                     // If the sender is null that means its a failed mms soo populate data with a different message
-                    if (senderAddress == null) {
+                    Log.d(TAG, "Sender: " + senderAddress);
+                    if (senderAddress == null || senderAddress.equals("Unknown")) {
                         Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
                         String order5 = "normalized_date ASC";
                         Cursor smsFailed = contentResolver.query(uri5, PROJECTION, null, null, order5);
                         int position = smsFailed.getPosition();
-                        while (senderAddress == null && smsFailed.moveToNext()) {
+                        while ((senderAddress == null || senderAddress.equals("Unknown")) && smsFailed.moveToNext()) {
                             senderAddress = smsFailed.getString(smsFailed.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
                         }
                         smsFailed.moveToPosition(position);
