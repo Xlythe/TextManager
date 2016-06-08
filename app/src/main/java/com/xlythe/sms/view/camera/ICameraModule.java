@@ -166,8 +166,10 @@ public abstract class ICameraModule {
     }
 
     static int getRelativeImageOrientation(int displayRotation, int sensorOrientation, boolean isFrontFacing, boolean compensateForMirroring) {
-        Log.d(TAG, String.format("getRelativeImageOrientation displayRotation=%s, sensorOrientation=%s, isFrontFacing=%s, compensateForMirroring=%s",
-                displayRotation, sensorOrientation, isFrontFacing, compensateForMirroring));
+        if (DEBUG) {
+            Log.d(TAG, String.format("getRelativeImageOrientation displayRotation=%s, sensorOrientation=%s, isFrontFacing=%s, compensateForMirroring=%s",
+                    displayRotation, sensorOrientation, isFrontFacing, compensateForMirroring));
+        }
         int result;
         if (isFrontFacing) {
             result = (sensorOrientation + displayRotation) % 360;

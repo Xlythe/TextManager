@@ -158,12 +158,23 @@ public abstract class BaseCameraView extends TextureView {
                 break;
             case MotionEvent.ACTION_UP:
                 if (delta() < ViewConfiguration.getLongPressTimeout()) {
-                    focus(calculateTapArea(mFocusingRect, event.getX(), event.getY(), 1f),
-                            calculateTapArea(mMeteringRect, event.getX(), event.getY(), 1.5f));
+                    calculateTapArea(mFocusingRect, event.getX(), event.getY(), 1f);
+                    calculateTapArea(mMeteringRect, event.getX(), event.getY(), 1.5f);
+                    if (area(mFocusingRect) == 0 || area(mMeteringRect) == 0) {
+                        break;
+                    }
+                    focus(mFocusingRect, mMeteringRect);
                 }
                 break;
         }
         return true;
+    }
+
+    /**
+     * Returns the width * height of the given rect
+     */
+    private int area(Rect rect) {
+        return rect.width() * rect.height();
     }
 
     /**
