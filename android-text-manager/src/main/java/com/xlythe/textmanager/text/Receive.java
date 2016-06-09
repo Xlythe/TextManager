@@ -13,7 +13,6 @@ import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
-import java.lang.*;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
