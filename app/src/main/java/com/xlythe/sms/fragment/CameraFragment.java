@@ -2,12 +2,15 @@ package com.xlythe.sms.fragment;
 
 import android.Manifest;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,6 +26,7 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
@@ -52,7 +56,29 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
 
     @Override
     public void onImageCaptured(final File file) {
-        TextManager.getInstance(getContext()).send(new ImageAttachment(Uri.fromFile(file))).to(mText);
+        try {
+            Bitmap b = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), Uri.fromFile(file));
+            int max = Math.max(b.getHeight(), b.getWidth());
+            int height;
+            int width;
+            double scale;
+            if (max > 2560) {
+                scale = 2560.0 / max;
+                width = (int) (b.getWidth() * scale);
+                height = (int) (b.getHeight() * scale);
+                b = Bitmap.createScaledBitmap(b, width, height, false);
+            }
+            int min = Math.min(b.getHeight(), b.getWidth());
+            if (min > 1440) {
+                scale = 1440.0 / min;
+                width = (int) (b.getWidth() * scale);
+                height = (int) (b.getHeight() * scale);
+                b = Bitmap.createScaledBitmap(b, width, height, false);
+            }
+            TextManager.getInstance(getContext()).send(new ImageAttachment(getContext(), "image", b)).to(mText);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -46,7 +46,7 @@ public class LegacyCameraModule extends ICameraModule {
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
             mCamera.setParameters(parameters);
             configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height, cameraOrientation);
-            
+
             mCamera.startPreview();
         } catch (IOException e) {
             e.printStackTrace();
