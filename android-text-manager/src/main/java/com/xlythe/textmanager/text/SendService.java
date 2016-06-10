@@ -116,8 +116,9 @@ public class SendService extends IntentService {
             sendIntent.add(newSmsSentPendingIntent(context, uri, text.getId()));
             deliveryIntent.add(newSmsDeliveredPendingIntent(context, uri, text.getId()));
             sms.sendMultipartTextMessage(address, null, sms.divideMessage(text.getBody()), sendIntent, deliveryIntent);
+        } else {
+            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
         }
-        sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
     }
 
     private static Uri storeMMS(Context context, final Text text) {
