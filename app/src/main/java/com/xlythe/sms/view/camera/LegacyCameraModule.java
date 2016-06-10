@@ -3,6 +3,7 @@ package com.xlythe.sms.view.camera;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
+import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.util.Log;
 
@@ -45,7 +46,7 @@ public class LegacyCameraModule extends ICameraModule {
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
             mCamera.setParameters(parameters);
             configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height, cameraOrientation);
-
+            
             mCamera.startPreview();
         } catch (IOException e) {
             e.printStackTrace();
@@ -77,7 +78,7 @@ public class LegacyCameraModule extends ICameraModule {
 
         mVideoRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         mVideoRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
-        mVideoRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_720P));
+        mVideoRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_LOW));
         mVideoRecorder.setOutputFile(file.getAbsolutePath());
         mVideoRecorder.setMaxDuration(30000); // 30 seconds
         mVideoRecorder.setMaxFileSize(10000000); // Approximately 10 megabytes
