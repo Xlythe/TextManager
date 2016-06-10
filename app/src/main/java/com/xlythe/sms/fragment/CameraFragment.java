@@ -39,6 +39,8 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 3;
+    private static final double MAX_UPPER = 2560.0;
+    private static final double MAX_LOWER = 1440.0;
 
     private View mCameraHolder;
     private View mPermissionPrompt;
@@ -62,15 +64,15 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             int height;
             int width;
             double scale;
-            if (max > 2560) {
-                scale = 2560.0 / max;
+            if (max > MAX_UPPER) {
+                scale = MAX_UPPER / max;
                 width = (int) (b.getWidth() * scale);
                 height = (int) (b.getHeight() * scale);
                 b = Bitmap.createScaledBitmap(b, width, height, false);
             }
             int min = Math.min(b.getHeight(), b.getWidth());
-            if (min > 1440) {
-                scale = 1440.0 / min;
+            if (min > MAX_LOWER) {
+                scale = MAX_LOWER / min;
                 width = (int) (b.getWidth() * scale);
                 height = (int) (b.getHeight() * scale);
                 b = Bitmap.createScaledBitmap(b, width, height, false);
