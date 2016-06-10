@@ -17,6 +17,7 @@ import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -107,6 +108,15 @@ public class SendService extends IntentService {
         SmsManager sms = SmsManager.getDefault();
         TextManager manager = TextManager.getInstance(context);
         String address = manager.getMembers(text).get().iterator().next().getNumber();
+        ArrayList<String> messages = sms.divideMessage(text.getBody());
+        if (messages.size() > 1) {
+            // TODO: not sure if this works for everyone
+            ArrayList<PendingIntent> sendIntent = new ArrayList<>();
+            ArrayList<PendingIntent> deliveryIntent = new ArrayList<>();
+            sendIntent.add(newSmsSentPendingIntent(context, uri, text.getId()));
+            deliveryIntent.add(newSmsDeliveredPendingIntent(context, uri, text.getId()));
+            sms.sendMultipartTextMessage(address, null, sms.divideMessage(text.getBody()), sendIntent, deliveryIntent);
+        }
         sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
     }
 

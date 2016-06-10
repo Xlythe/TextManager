@@ -46,6 +46,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     static final boolean DEBUG = true;
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
+    private static final String UNKNOWN = "Unknown";
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
@@ -471,12 +472,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
                     // If the sender is null that means its a failed mms soo populate data with a different message
                     Log.d(TAG, "Sender: " + senderAddress);
-                    if (senderAddress == null || senderAddress.equals("Unknown")) {
+                    if (senderAddress == null || senderAddress.equals(UNKNOWN)) {
                         Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
                         String order5 = "normalized_date ASC";
                         Cursor smsFailed = contentResolver.query(uri5, PROJECTION, null, null, order5);
                         int position = smsFailed.getPosition();
-                        while ((senderAddress == null || senderAddress.equals("Unknown")) && smsFailed.moveToNext()) {
+                        while ((senderAddress == null || senderAddress.equals(UNKNOWN)) && smsFailed.moveToNext()) {
                             senderAddress = smsFailed.getString(smsFailed.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
                         }
                         smsFailed.moveToPosition(position);
