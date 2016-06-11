@@ -314,9 +314,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
 
-    // TODO: Name bytes is the name of media file, how should they be handled?
-    // I don't think it really matters what they are called, we could just name
-    // name them all "fetch_media" or something...
     SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
         PduPart partPdu = new PduPart();
@@ -332,7 +329,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 case IMAGE:
                     nameBytes = "image".getBytes();
                     typeBytes = ContentType.IMAGE_PNG.getBytes();
-                    dataBytes = bitmapToByteArray(((ImageAttachment) mAttachment).getBitmap(context).get());
+                    dataBytes = ((ImageAttachment) mAttachment).getBytes(context);
                     if (dataBytes == null) {
                         Log.e(TAG, "Error getting bitmap from attachment");
                         break;
@@ -421,17 +418,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             bytesToSend = composer.make();
             return bytesToSend;
         }
-    }
-
-    private byte[] bitmapToByteArray(Bitmap image) {
-        if (image == null) {
-            Log.v(TAG, "image is null, returning byte array of size 0");
-            return new byte[0];
-        }
-
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.PNG, 0, stream);
-        return stream.toByteArray();
     }
 
     public byte[] toBytes() {

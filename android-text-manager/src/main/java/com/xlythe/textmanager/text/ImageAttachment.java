@@ -15,6 +15,7 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -87,6 +88,17 @@ public final class ImageAttachment extends Attachment {
                 }
             };
         }
+    }
+
+    public byte[] getBytes(final Context context) {
+        if (getBitmap(context).get() == null) {
+            Log.v(TAG, "image is null, returning byte array of size 0");
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 0, stream);
+        return stream.toByteArray();
     }
 
     private synchronized void setBitmap(Bitmap bitmap) {
