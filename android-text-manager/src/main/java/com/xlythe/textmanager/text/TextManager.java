@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
@@ -27,6 +28,8 @@ import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.exception.MmsException;
+import com.xlythe.textmanager.text.pdu.GenericPdu;
+import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
@@ -37,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Manages sms and mms messages
@@ -47,6 +51,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";
+    private static final String TEXT_EXTRA = "text";
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
@@ -88,6 +93,21 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public void downloadAttachment(Text text){
         if (text.isMms()) {
+            Intent intent = new Intent();
+            intent.putExtra(TEXT_EXTRA, text);
+            new ReceivePushTask(mContext).execute(intent);
+        }
+    }
+
+    private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
+        Context mContext;
+        public ReceivePushTask(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        protected Void doInBackground(Intent... intents) {
+            Text text = intents[0].getParcelableExtra(TEXT_EXTRA);
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
@@ -98,22 +118,27 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             };
 
             Cursor cursor = mContext.getContentResolver().query(uri, proj, null, null, null);
-            String url = "";
+            final String url;
 
             if (cursor != null) {
                 try {
                     if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
                         url = cursor.getString(COLUMN_CONTENT_LOCATION);
+                    } else {
+                        return null;
                     }
                 } finally {
                     cursor.close();
                 }
+            } else {
+                return null;
             }
 
-            Receive.getPdu(url, mContext, new Receive.DataCallback() {
+            Network.forceDataConnection(mContext, new Network.Callback() {
                 @Override
-                public void onSuccess(byte[] result) {
-                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+                public void onSuccess() {
+                    byte[] data = Receive.receive(mContext, url);
+                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
 
                     PduPersister persister = PduPersister.getPduPersister(mContext);
                     Uri msgUri;
@@ -127,16 +152,17 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         mContext.getContentResolver().update(msgUri, values, null, null);
                     } catch (MmsException e) {
                         Log.e(TAG, "unable to persist message");
-                        onFail();
                     }
                 }
 
                 @Override
                 public void onFail() {
-                    // this maybe useful
+
                 }
             });
+
             wl.release();
+            return null;
         }
     }
 

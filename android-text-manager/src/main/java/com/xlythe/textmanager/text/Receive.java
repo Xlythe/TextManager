@@ -46,29 +46,7 @@ public class Receive {
     // Name Address Email Pattern.
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
 
-    /**
-     * HTTP request to the MMSC database
-     */
-    protected static void getPdu(final String uri, final Context context, final DataCallback callback) {
-        new java.lang.Thread(new Runnable() {
-            @Override
-            public void run() {
-                Network.forceDataConnection(context, new Network.Callback() {
-                    @Override
-                    public void onSuccess() {
-                        receive(context, uri, callback);
-                    }
-
-                    @Override
-                    public void onFail() {
-                        callback.onFail();
-                    }
-                });
-            }
-        }).start();
-    }
-
-    public static void receive(final Context context, String uri, final DataCallback callback){
+    public static byte[] receive(final Context context, String uri){
         ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
         try {
             byte[] data = HttpUtils.httpConnection(
@@ -77,16 +55,11 @@ public class Receive {
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());
-            callback.onSuccess(data);
+            return data;
         } catch (IOException ioe){
             Log.e(TAG,"download failed due to network error");
-            callback.onFail();
+            return null;
         }
-    }
-
-    public interface DataCallback{
-        void onSuccess(byte[] result);
-        void onFail();
     }
 
     /**

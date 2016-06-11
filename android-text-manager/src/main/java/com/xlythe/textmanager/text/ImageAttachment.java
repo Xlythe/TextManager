@@ -39,7 +39,6 @@ public final class ImageAttachment extends Attachment {
     private static Uri persist(Context context, String name, Bitmap image) {
         Log.d(TAG, "Persisting bitmap \"" + name + ".png\" to cache");
         File file = new File(context.getCacheDir(), name + ".png");
-
         try {
             FileOutputStream out = new FileOutputStream(file);
             // quality is ignored for png
@@ -51,7 +50,6 @@ public final class ImageAttachment extends Attachment {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return Uri.fromFile(file);
     }
 

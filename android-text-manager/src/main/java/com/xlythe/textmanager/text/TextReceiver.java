@@ -84,13 +84,17 @@ public abstract class TextReceiver extends BroadcastReceiver {
             }
 
             byte[] location = notif.getContentLocation();
-            String loc = new String (location);
+            final String loc = new String (location);
             final CountDownLatch pduDownloaded = new CountDownLatch(1);
-            Receive.getPdu(loc, mContext, new Receive.DataCallback() {
+            Network.forceDataConnection(mContext, new Network.Callback() {
                 @Override
-                public void onSuccess(byte[] result) {
+                public void onSuccess() {
                     Log.e(TAG, "Download Success");
-                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(result, true).parse();
+                    byte[] data = Receive.receive(mContext, loc);
+                    if (data == null) {
+                        onFail();
+                    }
+                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
                     PduPersister persister = PduPersister.getPduPersister(mContext);
                     Uri msgUri;
                     try {
@@ -139,7 +143,6 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                         values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis());
                         mContext.getContentResolver().update(uri, values, null, null);
-
 
                     } catch (MmsException e) {
                         Log.e(TAG, "Persisting pdu failed", e);

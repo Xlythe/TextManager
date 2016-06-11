@@ -2,15 +2,12 @@ package com.xlythe.sms.fragment;
 
 import android.Manifest;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
-import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,7 +23,6 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
@@ -39,8 +35,6 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 3;
-    private static final double MAX_UPPER = 2560.0;
-    private static final double MAX_LOWER = 1440.0;
 
     private View mCameraHolder;
     private View mPermissionPrompt;
@@ -58,29 +52,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
 
     @Override
     public void onImageCaptured(final File file) {
-        try {
-            Bitmap b = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), Uri.fromFile(file));
-            int max = Math.max(b.getHeight(), b.getWidth());
-            int height;
-            int width;
-            double scale;
-            if (max > MAX_UPPER) {
-                scale = MAX_UPPER / max;
-                width = (int) (b.getWidth() * scale);
-                height = (int) (b.getHeight() * scale);
-                b = Bitmap.createScaledBitmap(b, width, height, false);
-            }
-            int min = Math.min(b.getHeight(), b.getWidth());
-            if (min > MAX_LOWER) {
-                scale = MAX_LOWER / min;
-                width = (int) (b.getWidth() * scale);
-                height = (int) (b.getHeight() * scale);
-                b = Bitmap.createScaledBitmap(b, width, height, false);
-            }
-            TextManager.getInstance(getContext()).send(new ImageAttachment(getContext(), "image", b)).to(mText);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        TextManager.getInstance(getContext()).send(new ImageAttachment(Uri.fromFile(file))).to(mText);
     }
 
     @Override
