@@ -89,10 +89,11 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Network.forceDataConnection(mContext, new Network.Callback() {
                 @Override
                 public void onSuccess() {
-                    Log.e(TAG, "Download Success");
+                    Log.d(TAG, "Download Success");
                     byte[] data = Receive.receive(mContext, loc);
                     if (data == null) {
                         onFail();
+                        return;
                     }
                     RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
                     PduPersister persister = PduPersister.getPduPersister(mContext);
