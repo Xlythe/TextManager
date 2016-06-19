@@ -37,13 +37,16 @@ public final class ImageAttachment extends Attachment {
         return bitmap;
     }
 
-    private static Uri persist(Context context, String name, Bitmap image) {
-        Log.d(TAG, "Persisting bitmap \"" + name + ".png\" to cache");
-        File file = new File(context.getCacheDir(), name + ".png");
+    private static Uri persist(Context context, String name, Bitmap image, Type type) {
+        Log.d(TAG, "Persisting bitmap \"" + name + ".jpg\" to cache");
+        File file = new File(context.getCacheDir(), name + ".jpg");
         try {
             FileOutputStream out = new FileOutputStream(file);
-            // quality is ignored for png
-            image.compress(Bitmap.CompressFormat.PNG, 0, out);
+            if (type == Type.HIGH_RES) {
+                image.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } else {
+                image.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            }
             out.flush();
             out.close();
         } catch (FileNotFoundException e) {
@@ -54,12 +57,25 @@ public final class ImageAttachment extends Attachment {
         return Uri.fromFile(file);
     }
 
+    public ImageAttachment(Uri uri, Type type){
+        super(type, uri);
+    }
+
+    public ImageAttachment(Context context, String name, Bitmap image, Type type) {
+        super(type, persist(context, name, image, type));
+        mBitmap = image;
+    }
+
+    public ImageAttachment(Context context, String name, Drawable image, Type type) {
+        this(context, name, toBitmap(image), type);
+    }
+
     public ImageAttachment(Uri uri){
         super(Type.IMAGE, uri);
     }
 
     public ImageAttachment(Context context, String name, Bitmap image) {
-        super(Type.IMAGE, persist(context, name, image));
+        super(Type.IMAGE, persist(context, name, image, Type.IMAGE));
         mBitmap = image;
     }
 
@@ -97,7 +113,11 @@ public final class ImageAttachment extends Attachment {
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 0, stream);
+        if (getType() == Type.HIGH_RES) {
+            getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 100, stream);
+        } else {
+            getBitmap(context).get().compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        }
         return stream.toByteArray();
     }
 

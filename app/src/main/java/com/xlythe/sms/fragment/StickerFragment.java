@@ -18,6 +18,7 @@ import com.xlythe.sms.R;
 import com.xlythe.sms.adapter.StickerAdapter;
 import com.xlythe.sms.pojo.Sticker;
 import com.xlythe.sms.view.PreviewDialog;
+import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
@@ -47,7 +48,7 @@ public class StickerFragment extends Fragment {
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Sticker sticker) {
-                TextManager.getInstance(getContext()).send(new ImageAttachment(sticker.getUri(getContext()))).to(mText);
+                TextManager.getInstance(getContext()).send(new ImageAttachment(sticker.getUri(getContext()), Attachment.Type.HIGH_RES)).to(mText);
             }
 
             @Override

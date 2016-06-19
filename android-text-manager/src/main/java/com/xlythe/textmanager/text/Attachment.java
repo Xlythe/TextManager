@@ -8,7 +8,7 @@ import com.xlythe.textmanager.text.util.Utils;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {
-        IMAGE, VIDEO, VOICE;
+        IMAGE, VIDEO, VOICE, HIGH_RES;
     }
 
     private final Type mType;

@@ -328,6 +328,15 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             switch (type) {
                 case IMAGE:
                     nameBytes = "image".getBytes();
+                    typeBytes = ContentType.IMAGE_JPEG.getBytes();
+                    dataBytes = ((ImageAttachment) mAttachment).getBytes(context);
+                    if (dataBytes == null) {
+                        Log.e(TAG, "Error getting bitmap from attachment");
+                        break;
+                    }
+                    break;
+                case HIGH_RES:
+                    nameBytes = "image".getBytes();
                     typeBytes = ContentType.IMAGE_PNG.getBytes();
                     dataBytes = ((ImageAttachment) mAttachment).getBytes(context);
                     if (dataBytes == null) {
