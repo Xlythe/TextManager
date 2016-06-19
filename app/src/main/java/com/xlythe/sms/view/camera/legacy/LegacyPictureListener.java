@@ -4,16 +4,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
-import android.media.ExifInterface;
-import android.net.Uri;
-import android.provider.MediaStore;
-import android.util.Log;
+import android.os.AsyncTask;
 
 import com.xlythe.sms.view.camera.BaseCameraView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -37,19 +33,24 @@ public class LegacyPictureListener implements Camera.PictureCallback {
     }
 
     @Override
-    public void onPictureTaken(byte[] data, Camera camera) {
-        data = manuallyRotateImage(data);
+    public void onPictureTaken(final byte[] data, final Camera camera) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                byte[] cleanedUp = manuallyRotateImage(data);
 
-        try {
-            FileOutputStream fos = new FileOutputStream(mFile);
-            fos.write(data);
-            fos.close();
+                try {
+                    FileOutputStream fos = new FileOutputStream(mFile);
+                    fos.write(cleanedUp);
+                    fos.close();
 
-            mListener.onImageCaptured(mFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+                    mListener.onImageCaptured(mFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }.execute();
         camera.startPreview();
     }
 

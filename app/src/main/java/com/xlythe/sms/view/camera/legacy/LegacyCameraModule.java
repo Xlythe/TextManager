@@ -1,5 +1,6 @@
 package com.xlythe.sms.view.camera.legacy;
 
+import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
@@ -46,6 +47,7 @@ public class LegacyCameraModule extends ICameraModule {
             mCamera.setDisplayOrientation(cameraOrientation);
             mPreviewSize = chooseOptimalPreviewSize(mCamera.getParameters().getSupportedPreviewSizes(), getWidth(), getHeight());
             parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+            parameters.setPictureFormat(ImageFormat.JPEG);
             mCamera.setParameters(parameters);
             configureTransform(getWidth(), getHeight(), mPreviewSize.width, mPreviewSize.height, cameraOrientation);
 
