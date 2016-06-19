@@ -1,4 +1,4 @@
-package com.xlythe.sms.view.camera;
+package com.xlythe.sms.view.camera.v2;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -17,6 +17,9 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+
+import com.xlythe.sms.view.camera.CameraView;
+import com.xlythe.sms.view.camera.ICameraModule;
 
 import java.io.File;
 import java.util.ArrayList;

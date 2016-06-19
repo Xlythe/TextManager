@@ -1,4 +1,4 @@
-package com.xlythe.sms.view.camera;
+package com.xlythe.sms.view.camera.v2;
 
 import android.annotation.TargetApi;
 import android.graphics.SurfaceTexture;
@@ -12,6 +12,9 @@ import android.media.MediaRecorder;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+
+import com.xlythe.sms.view.camera.BaseCameraView;
+import com.xlythe.sms.view.camera.CameraView;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,11 +1,13 @@
-package com.xlythe.sms.view.camera;
+package com.xlythe.sms.view.camera.legacy;
 
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
-import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.util.Log;
+
+import com.xlythe.sms.view.camera.CameraView;
+import com.xlythe.sms.view.camera.ICameraModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +29,7 @@ public class LegacyCameraModule extends ICameraModule {
     private MediaRecorder mVideoRecorder;
     private File mVideoFile;
 
-    LegacyCameraModule(CameraView view) {
+    public LegacyCameraModule(CameraView view) {
         super(view);
     }
 
@@ -65,7 +67,7 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     public void takePicture(File file) {
-        mCamera.takePicture(null, null, new LegacyPictureListener(file, getRelativeCameraOrientation(), getOnImageCapturedListener()));
+        mCamera.takePicture(null, null, new LegacyPictureListener(file, getRelativeCameraOrientation(false /* isPreview */), getOnImageCapturedListener()));
     }
 
     @Override
@@ -188,7 +190,11 @@ public class LegacyCameraModule extends ICameraModule {
 
     @Override
     protected int getRelativeCameraOrientation() {
-        return getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), true);
+        return getRelativeCameraOrientation(true /* isPreview */);
+    }
+
+    protected int getRelativeCameraOrientation(boolean isPreview) {
+        return getRelativeImageOrientation(getDisplayRotation(), getSensorOrientation(), isUsingFrontFacingCamera(), isPreview);
     }
 
     private int getSensorOrientation() {

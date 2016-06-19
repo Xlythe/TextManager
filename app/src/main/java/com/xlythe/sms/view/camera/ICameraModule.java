@@ -8,14 +8,14 @@ import android.util.Log;
 import java.io.File;
 
 public abstract class ICameraModule {
-    static final String TAG = "CameraModule";
-    static final boolean DEBUG = true;
+    public static final String TAG = "CameraModule";
+    public static final boolean DEBUG = true;
 
     private final CameraView mView;
     private BaseCameraView.OnImageCapturedListener mOnImageCapturedListener;
     private BaseCameraView.OnVideoCapturedListener mOnVideoCapturedListener;
 
-    ICameraModule(CameraView view) {
+    public ICameraModule(CameraView view) {
         mView = view;
     }
 
@@ -165,7 +165,7 @@ public abstract class ICameraModule {
         return mOnVideoCapturedListener;
     }
 
-    static int getRelativeImageOrientation(int displayRotation, int sensorOrientation, boolean isFrontFacing, boolean compensateForMirroring) {
+    public static int getRelativeImageOrientation(int displayRotation, int sensorOrientation, boolean isFrontFacing, boolean compensateForMirroring) {
         if (DEBUG) {
             Log.d(TAG, String.format("getRelativeImageOrientation displayRotation=%s, sensorOrientation=%s, isFrontFacing=%s, compensateForMirroring=%s",
                     displayRotation, sensorOrientation, isFrontFacing, compensateForMirroring));

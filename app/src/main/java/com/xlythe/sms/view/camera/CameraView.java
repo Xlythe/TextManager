@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 
+import com.xlythe.sms.view.camera.legacy.LegacyCameraModule;
+
 import java.io.File;
 
 public class CameraView extends BaseCameraView {

@@ -1,4 +1,4 @@
-package com.xlythe.sms.view.camera;
+package com.xlythe.sms.view.camera.legacy;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +8,8 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
+
+import com.xlythe.sms.view.camera.BaseCameraView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,36 +45,12 @@ public class LegacyPictureListener implements Camera.PictureCallback {
             fos.write(data);
             fos.close();
 
-//            rotateImage();
-
             mListener.onImageCaptured(mFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         camera.startPreview();
-    }
-
-    // TODO Doesn't seem to work :[
-    private void rotateImage() throws IOException {
-        int orientation = 1;
-        switch (mOrientation) {
-            case 0:
-                orientation = ExifInterface.ORIENTATION_NORMAL;
-                break;
-            case 90:
-                orientation = ExifInterface.ORIENTATION_ROTATE_90;
-                break;
-            case 180:
-                orientation = ExifInterface.ORIENTATION_ROTATE_180;
-                break;
-            case 270:
-                orientation = ExifInterface.ORIENTATION_ROTATE_270;
-                break;
-        }
-        ExifInterface exif = new ExifInterface(mFile.getAbsolutePath());
-        exif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(orientation));
-        exif.saveAttributes();
     }
 
     private byte[] manuallyRotateImage(byte[] data) {

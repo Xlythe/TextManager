@@ -1,4 +1,4 @@
-package com.xlythe.sms.view.camera;
+package com.xlythe.sms.view.camera.v2;
 
 import android.annotation.TargetApi;
 import android.graphics.ImageFormat;
@@ -16,6 +16,10 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
+
+import com.xlythe.sms.view.camera.BaseCameraView;
+import com.xlythe.sms.view.camera.CameraView;
+import com.xlythe.sms.view.camera.ICameraModule;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,7 +50,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
 
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         private void process(CaptureResult result) {
-            Log.d(TAG, "CaptureCallback: " + getState());
+            Log.d(ICameraModule.TAG, "CaptureCallback: " + getState());
             switch (getState()) {
                 case PREVIEW: {
                     // We have nothing to do when the camera preview is working normally.
@@ -158,7 +162,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * we get a response in {@link #mCaptureCallback} from {@link #lockFocus()}.
      */
     private void runPrecaptureSequence() {
-        Log.d(TAG, "runPrecaptureSequence");
+        Log.d(ICameraModule.TAG, "runPrecaptureSequence");
         try {
             // This is how to tell the camera to trigger.
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -175,7 +179,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * {@link #mCaptureCallback} from both {@link #lockFocus()}.
      */
     private void captureStillPicture() {
-        Log.d(TAG, "captureStillPicture");
+        Log.d(ICameraModule.TAG, "captureStillPicture");
         try {
             // This is the CaptureRequest.Builder that we use to take a picture.
             final CaptureRequest.Builder captureBuilder = getCameraDevice().createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -208,7 +212,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * Lock the focus as the first step for a still image capture.
      */
     private void lockFocus() {
-        Log.d(TAG, "lockFocus");
+        Log.d(ICameraModule.TAG, "lockFocus");
         try {
             // This is how to tell the camera to lock focus.
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,  CameraMetadata.CONTROL_AF_TRIGGER_START);
@@ -225,7 +229,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
      * finished.
      */
     private void unlockFocus() {
-        Log.d(TAG, "unlockFocus");
+        Log.d(ICameraModule.TAG, "unlockFocus");
         try {
             // Reset the auto-focus trigger
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
@@ -282,7 +286,7 @@ public class Camera2PictureModule extends Camera2PreviewModule {
                             onPictureTaken();
                             mFile = null;
                         } else {
-                            Log.w(TAG, "OnImageAvailable called but no file to write to");
+                            Log.w(ICameraModule.TAG, "OnImageAvailable called but no file to write to");
                         }
                     }
                 });

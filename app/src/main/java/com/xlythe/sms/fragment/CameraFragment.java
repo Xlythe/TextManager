@@ -116,6 +116,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
         });
 
         ImageView capture = (ImageView) mCameraHolder.findViewById(R.id.btn_capture);
+        capture.setEnabled(TextManager.getInstance(getContext()).isDefaultSmsPackage());
         capture.setOnTouchListener(new View.OnTouchListener() {
             private final int TAP = 1;
             private final int HOLD = 2;
