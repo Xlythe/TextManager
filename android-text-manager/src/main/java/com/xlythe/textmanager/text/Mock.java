@@ -182,7 +182,7 @@ public class Mock {
                         WAP_PUSH_DELIVER_ACTION = android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
                         WAP_PUSH_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION;
                         SMS_CB_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_CB_RECEIVED_ACTION;
-                        SMS_EMERGENCY_CB_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_EMERGENCY_CB_RECEIVED_ACTION;
+                        SMS_EMERGENCY_CB_RECEIVED_ACTION = "android.provider.Telephony.SMS_EMERGENCY_CB_RECEIVED";
                         SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION = android.provider.Telephony.Sms.Intents.SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION;
                         SIM_FULL_ACTION = android.provider.Telephony.Sms.Intents.SIM_FULL_ACTION;
                         SMS_REJECTED_ACTION = android.provider.Telephony.Sms.Intents.SMS_REJECTED_ACTION;

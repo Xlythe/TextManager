@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
+import android.provider.BlockedNumberContract;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
@@ -967,5 +969,30 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public boolean supportsSms() {
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    @TargetApi(24)
+    public void block(Contact contact) {
+        if (BlockedNumberContract.canCurrentUserBlockNumbers(mContext)) {
+            ContentValues values = new ContentValues();
+            values.put(BlockedNumberContract.BlockedNumbers.COLUMN_ORIGINAL_NUMBER, contact.getMobileNumber(mContext).get());
+            mContext.getContentResolver().insert(BlockedNumberContract.BlockedNumbers.CONTENT_URI, values);
+        }
+    }
+
+    @TargetApi(24)
+    public void unblock(Contact contact) {
+        if (BlockedNumberContract.canCurrentUserBlockNumbers(mContext)) {
+            BlockedNumberContract.unblock(mContext, contact.getMobileNumber(mContext).get());
+        }
+    }
+
+    @TargetApi(24)
+    public boolean isBlocked(Contact contact) {
+        if (BlockedNumberContract.canCurrentUserBlockNumbers(mContext)) {
+            return BlockedNumberContract.isBlocked(mContext, contact.getMobileNumber(mContext).get());
+        } else {
+            return false;
+        }
     }
 }
