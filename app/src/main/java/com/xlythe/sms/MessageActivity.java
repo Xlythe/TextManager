@@ -135,7 +135,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
                 Rect r = new Rect();
                 View view = rootWindow.getDecorView();
                 view.getWindowVisibleDisplayFrame(r);
-                if (mScreenSize != 0 && mScreenSize != r.bottom) {
+                if (mScreenSize != 0 && mScreenSize > r.bottom) {
                     mKeyboardSize = mScreenSize - r.bottom;
                     mAttachView.getLayoutParams().height = mKeyboardSize;
                     rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
