@@ -2,6 +2,7 @@ package com.xlythe.sms;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -11,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -37,17 +39,40 @@ public class InfoActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        TextManager manager =  TextManager.getInstance(this);
+        final TextManager manager =  TextManager.getInstance(this);
 
         Thread thread = getIntent().getParcelableExtra(MessageActivity.EXTRA_THREAD);
-        Set<Contact> contacts = manager.getMembersExceptMe(thread.getLatestMessage()).get();
+        final Set<Contact> contacts = manager.getMembersExceptMe(thread.getLatestMessage()).get();
 
         final TextView name = (TextView) findViewById(R.id.name);
         final ImageView icon = (ImageView) findViewById(R.id.icon);
         mBlock = (ViewGroup) findViewById(R.id.block);
 
-        // TODO: add this back in when feature is implemented
-        mBlock.setVisibility(View.GONE);
+        if (Build.VERSION.SDK_INT < 24) {
+            mBlock.setVisibility(View.GONE);
+        } else {
+            final CompoundButton btn = (CompoundButton) mBlock.findViewById(R.id.is_blocked);
+
+            for (Contact contact : contacts) {
+                if (manager.isBlocked(contact)) {
+                    btn.setChecked(true);
+                    break;
+                }
+            }
+
+            btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                    for (Contact contact : contacts) {
+                        if (checked) {
+                            manager.block(contact);
+                        } else {
+                            manager.unblock(contact);
+                        }
+                    }
+                }
+            });
+        }
 
         if (contacts.size() == 1 && contacts.iterator().next().hasName()) {
             icon.setVisibility(View.VISIBLE);
