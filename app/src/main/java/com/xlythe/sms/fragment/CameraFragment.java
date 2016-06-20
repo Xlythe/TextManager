@@ -1,6 +1,7 @@
 package com.xlythe.sms.fragment;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -45,7 +47,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
     private BaseCameraView mCamera;
     private TextView mDuration;
     private ProgressBar mProgress;
-    private int mProgressStatus = 0;
+    private MyAnimator mAnimator = new MyAnimator();;
 
     private Text mText;
 
@@ -115,6 +117,25 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
         }
     }
 
+    public class MyAnimator extends ValueAnimator {
+        public MyAnimator() {
+            setInterpolator(new LinearInterpolator());
+            setFloatValues(0f, 1f);
+            addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float percent = (float) animation.getAnimatedValue();
+                    onUpdate(percent);
+                }
+            });
+        }
+
+        public void onUpdate(float percent) {
+            mProgress.setProgress((int) (percent * 10000));
+            mDuration.setText(stringForTime((int) (percent * 10000)));
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_camera, container, false);
@@ -179,28 +200,13 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
                 vibrate();
                 mCamera.startRecording(new File(getContext().getCacheDir(), "TODO.mp4"));
                 mDuration.setVisibility(View.VISIBLE);
-                // Start lengthy operation in a background thread
-                new Thread(new Runnable() {
-                    public void run() {
-                        while (mProgressStatus < 10000) {
-                            mProgressStatus = (int) (System.currentTimeMillis() - start);
-
-                            // Update the progress bar
-                            mHandler.post(new Runnable() {
-                                public void run() {
-                                    mProgress.setProgress(mProgressStatus);
-                                    mDuration.setText(stringForTime(mProgressStatus));
-                                }
-                            });
-                        }
-                    }
-                }).start();
+                mAnimator.setDuration(10 * 1000).start();
             }
 
             private void onRelease() {
                 mCamera.stopRecording();
+                mAnimator.cancel();
                 mProgress.setProgress(0);
-                mProgressStatus = 0;
                 mDuration.setVisibility(View.GONE);
             }
 
