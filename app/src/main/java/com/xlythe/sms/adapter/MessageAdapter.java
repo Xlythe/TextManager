@@ -37,7 +37,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
     // Duration between considering a text to be part of the same message, or split into different messages
     private static final long SPLIT_DURATION = 60 * 1000;
-    private static final long TIMEOUT = 10 * 1000;
+    private static final long TIMEOUT = 120 * 1000;
 
     private static final int TYPE_TOP_RIGHT                 = 0;
     private static final int TYPE_MIDDLE_RIGHT              = 1;
