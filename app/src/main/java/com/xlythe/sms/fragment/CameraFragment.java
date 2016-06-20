@@ -47,7 +47,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
     private BaseCameraView mCamera;
     private TextView mDuration;
     private ProgressBar mProgress;
-    private MyAnimator mAnimator = new MyAnimator();;
+    private ProgressBarAnimator mAnimator = new ProgressBarAnimator();
 
     private Text mText;
 
@@ -117,8 +117,8 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
         }
     }
 
-    public class MyAnimator extends ValueAnimator {
-        public MyAnimator() {
+    public class ProgressBarAnimator extends ValueAnimator {
+        public ProgressBarAnimator() {
             setInterpolator(new LinearInterpolator());
             setFloatValues(0f, 1f);
             addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
