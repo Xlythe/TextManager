@@ -11,9 +11,16 @@
             android:id="@+id/camera"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+        <ProgressBar
+            android:id="@+id/seek"
+            android:progressDrawable="@drawable/progress_record"
+            android:layout_gravity="bottom"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            style="@android:style/Widget.ProgressBar.Horizontal"/>
         <ImageView
             android:id="@+id/btn_capture"
-            android:src="@drawable/send_mms_button"
+            android:src="@drawable/btn_record"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
@@ -22,8 +29,21 @@
             android:id="@+id/btn_toggle_camera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left|bottom"
-            android:layout_margin="8dp"/>
+            android:layout_gravity="end|bottom"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="25dp"/>
+        <TextView
+            android:id="@+id/duration"
+            android:textColor="@android:color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|bottom"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="25dp"/>
     </FrameLayout>
     <include layout="@layout/content_permission_error" />
 </FrameLayout>

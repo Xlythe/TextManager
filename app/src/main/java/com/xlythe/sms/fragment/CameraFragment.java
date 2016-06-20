@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.xlythe.sms.R;
 import com.xlythe.sms.view.camera.BaseCameraView;
@@ -23,6 +25,8 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.File;
+import java.util.Formatter;
+import java.util.Locale;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
@@ -39,6 +43,9 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
     private View mCameraHolder;
     private View mPermissionPrompt;
     private BaseCameraView mCamera;
+    private TextView mDuration;
+    private ProgressBar mProgress;
+    private int mProgressStatus = 0;
 
     private Text mText;
 
@@ -92,6 +99,22 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
         mPermissionPrompt.setVisibility(View.VISIBLE);
     }
 
+    private String stringForTime(int timeMs) {
+        int totalSeconds = timeMs / 1000;
+
+        int seconds = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours   = totalSeconds / 3600;
+
+        Formatter formatter = new Formatter(Locale.getDefault());
+
+        if (hours > 0) {
+            return formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString();
+        } else {
+            return formatter.format("%02d:%02d", minutes, seconds).toString();
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_camera, container, false);
@@ -115,7 +138,12 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             }
         });
 
-        ImageView capture = (ImageView) mCameraHolder.findViewById(R.id.btn_capture);
+        mProgress = (ProgressBar) mCameraHolder.findViewById(R.id.seek);
+        mProgress.setMax(10000);
+        mDuration = (TextView) mCameraHolder.findViewById(R.id.duration);
+        mDuration.setVisibility(View.GONE);
+
+        final ImageView capture = (ImageView) mCameraHolder.findViewById(R.id.btn_capture);
         capture.setEnabled(TextManager.getInstance(getContext()).isDefaultSmsPackage());
         capture.setOnTouchListener(new View.OnTouchListener() {
             private final int TAP = 1;
@@ -150,27 +178,53 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             private void onHold() {
                 vibrate();
                 mCamera.startRecording(new File(getContext().getCacheDir(), "TODO.mp4"));
+                mDuration.setVisibility(View.VISIBLE);
+                // Start lengthy operation in a background thread
+                new Thread(new Runnable() {
+                    public void run() {
+                        while (mProgressStatus < 10000) {
+                            mProgressStatus = (int) (System.currentTimeMillis() - start);
+
+                            // Update the progress bar
+                            mHandler.post(new Runnable() {
+                                public void run() {
+                                    mProgress.setProgress(mProgressStatus);
+                                    mDuration.setText(stringForTime(mProgressStatus));
+                                }
+                            });
+                        }
+                    }
+                }).start();
             }
 
             private void onRelease() {
                 mCamera.stopRecording();
+                mProgress.setProgress(0);
+                mProgressStatus = 0;
+                mDuration.setVisibility(View.GONE);
             }
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        toggleCamera.setVisibility(View.GONE);
+                        capture.setImageResource(R.drawable.btn_record_press);
                         start = System.currentTimeMillis();
                         mHandler.sendEmptyMessageDelayed(HOLD, LONG_PRESS);
                         mHandler.sendEmptyMessageDelayed(RELEASE, RELEASE_TIMEOUT);
                         break;
                     case MotionEvent.ACTION_CANCEL:
+                        toggleCamera.setVisibility(View.GONE);
+                        capture.setImageResource(R.drawable.btn_record);
                         clearHandler();
                         if (delta() > LONG_PRESS && delta() < RELEASE_TIMEOUT) {
                             mHandler.sendEmptyMessage(RELEASE);
                         }
                         break;
                     case MotionEvent.ACTION_UP:
+                        toggleCamera.setVisibility(View.VISIBLE);
+                        capture.setImageResource(R.drawable.btn_record);
                         clearHandler();
                         if (delta() < LONG_PRESS) {
                             mHandler.sendEmptyMessage(TAP);
