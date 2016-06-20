@@ -86,7 +86,7 @@ public class LegacyCameraModule extends ICameraModule {
         mVideoRecorder.setOutputFile(file.getAbsolutePath());
         mVideoRecorder.setMaxDuration(30000); // 30 seconds
         mVideoRecorder.setMaxFileSize(10000000); // Approximately 10 megabytes
-        mVideoRecorder.setOrientationHint(getRelativeCameraOrientation());
+        mVideoRecorder.setOrientationHint(getRelativeCameraOrientation(false /* isPreview */));
         mVideoRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
             @Override
             public void onInfo(MediaRecorder mr, int what, int extra) {
