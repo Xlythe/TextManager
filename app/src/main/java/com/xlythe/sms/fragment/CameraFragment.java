@@ -3,12 +3,16 @@ package com.xlythe.sms.fragment;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
 import android.support.v4.app.Fragment;
+import android.support.v4.hardware.display.DisplayManagerCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,8 +45,8 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 3;
-    private static final String PHOTO_DESTINATION = "photo.jpg"
-    private static final String VIDEO_DESTINATION = "video.mp4"
+    private static final String PHOTO_DESTINATION = "photo.jpg";
+    private static final String VIDEO_DESTINATION = "video.mp4";
     private static final long VIDEO_MAX_DURATION = 10 * 1000;
 
     private View mCameraHolder;
@@ -53,6 +57,8 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
     private ProgressBarAnimator mAnimator = new ProgressBarAnimator();
 
     private Text mText;
+
+    private DisplayManager.DisplayListener mDisplayListener;
 
     public static CameraFragment newInstance(Text text) {
         CameraFragment fragment = new CameraFragment();
@@ -80,6 +86,40 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             } else {
                 showPermissionPrompt();
             }
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (Build.VERSION.SDK_INT > 17) {
+            mDisplayListener = new DisplayManager.DisplayListener() {
+                @Override
+                public void onDisplayAdded(int displayId) {}
+
+                @Override
+                public void onDisplayRemoved(int displayId) {}
+
+                @Override
+                public void onDisplayChanged(int displayId) {
+                    if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
+                        mCamera.close();
+                        mCamera.open();
+                    }
+                }
+            };
+            DisplayManager displayManager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            displayManager.registerDisplayListener(mDisplayListener, new Handler());
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        if (Build.VERSION.SDK_INT > 17) {
+            DisplayManager displayManager = (DisplayManager) getContext().getSystemService(Context.DISPLAY_SERVICE);
+            displayManager.unregisterDisplayListener(mDisplayListener);
         }
     }
 
