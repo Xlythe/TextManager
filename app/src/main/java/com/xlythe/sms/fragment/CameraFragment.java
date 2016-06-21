@@ -41,6 +41,9 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 3;
+    private static final String PHOTO_DESTINATION = "photo.jpg"
+    private static final String VIDEO_DESTINATION = "video.mp4"
+    private static final long VIDEO_MAX_DURATION = 10 * 1000;
 
     private View mCameraHolder;
     private View mPermissionPrompt;
@@ -172,7 +175,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             private final int RELEASE = 3;
 
             private final long LONG_PRESS = ViewConfiguration.getLongPressTimeout();
-            private final long RELEASE_TIMEOUT = LONG_PRESS + 10 * 1000; // max 10 seconds
+            private final long RELEASE_TIMEOUT = LONG_PRESS + VIDEO_MAX_DURATION;
 
             private long start;
             private final Handler mHandler = new Handler() {
@@ -193,14 +196,14 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             };
 
             private void onTap() {
-                mCamera.takePicture(new File(getContext().getCacheDir(), "TODO.jpg"));
+                mCamera.takePicture(new File(getContext().getCacheDir(), PHOTO_DESTINATION));
             }
 
             private void onHold() {
                 vibrate();
-                mCamera.startRecording(new File(getContext().getCacheDir(), "TODO.mp4"));
+                mCamera.startRecording(new File(getContext().getCacheDir(), VIDEO_DESTINATION));
                 mDuration.setVisibility(View.VISIBLE);
-                mAnimator.setDuration(10 * 1000).start();
+                mAnimator.setDuration(VIDEO_MAX_DURATION).start();
             }
 
             private void onRelease() {
