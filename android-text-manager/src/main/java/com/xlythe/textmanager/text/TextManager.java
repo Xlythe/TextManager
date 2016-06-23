@@ -809,6 +809,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Contact lookupContact(String phoneNumber) {
         String sanitizedNumber = sanitizeNumber(phoneNumber);
+        if (sanitizedNumber == null) {
+            return Contact.UNKNOWN;
+        }
         Contact contact = mContactCache.get(sanitizedNumber);
         if (contact == null) {
             Cursor c;

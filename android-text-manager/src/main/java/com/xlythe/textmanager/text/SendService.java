@@ -38,6 +38,7 @@ public class SendService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Text text = intent.getParcelableExtra(TEXT_EXTRA);
+
         final Uri uri;
 
         // Store SMS
@@ -107,7 +108,12 @@ public class SendService extends IntentService {
     private static void sendSMS(Context context, Text text, Uri uri) {
         SmsManager sms = SmsManager.getDefault();
         TextManager manager = TextManager.getInstance(context);
-        String address = manager.getMembers(text).get().iterator().next().getNumber();
+        Contact contact = manager.getMembers(text).get().iterator().next();
+        if (contact.equals(Contact.UNKNOWN)) {
+            return;
+        }
+        String address = contact.getNumber();
+
         ArrayList<String> messages = sms.divideMessage(text.getBody());
         if (messages.size() > 1) {
             // TODO: not sure if this works for everyone
@@ -149,6 +155,11 @@ public class SendService extends IntentService {
      * Send message
      */
     public static void sendMMS(Context context, final Text text, final PendingIntent sentMmsPendingIntent) {
+        TextManager manager = TextManager.getInstance(context);
+        Contact contact = manager.getMembers(text).get().iterator().next();
+        if (contact.equals(Contact.UNKNOWN)) {
+            return;
+        }
         try {
             ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
             HttpUtils.httpConnection(
