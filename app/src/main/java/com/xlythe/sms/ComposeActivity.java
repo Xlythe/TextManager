@@ -83,7 +83,7 @@ public class ComposeActivity extends AppCompatActivity {
                         address += ";";
                     }
                     mContacts.setText(address);
-                    mContacts.setSelection(address.length());
+                    mContacts.setSelection(mContacts.getText().length());
                 }
                 mMessage.setText(body);
             }
