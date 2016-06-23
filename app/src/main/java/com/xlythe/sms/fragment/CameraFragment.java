@@ -215,7 +215,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
             private final int RELEASE = 3;
 
             private final long LONG_PRESS = ViewConfiguration.getLongPressTimeout();
-            private final long RELEASE_TIMEOUT = LONG_PRESS + VIDEO_MAX_DURATION;
+            private final long RELEASE_TIMEOUT = VIDEO_MAX_DURATION;
 
             private long start;
             private final Handler mHandler = new Handler() {
@@ -227,6 +227,7 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
                             break;
                         case HOLD:
                             onHold();
+                            sendEmptyMessageDelayed(RELEASE, RELEASE_TIMEOUT);
                             break;
                         case RELEASE:
                             onRelease();
@@ -261,7 +262,6 @@ public class CameraFragment extends Fragment implements BaseCameraView.OnImageCa
                         capture.setImageResource(R.drawable.btn_record_press);
                         start = System.currentTimeMillis();
                         mHandler.sendEmptyMessageDelayed(HOLD, LONG_PRESS);
-                        mHandler.sendEmptyMessageDelayed(RELEASE, RELEASE_TIMEOUT);
                         break;
                     case MotionEvent.ACTION_CANCEL:
                         toggleCamera.setVisibility(View.GONE);
