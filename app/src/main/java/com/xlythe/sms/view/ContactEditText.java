@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 public class ContactEditText extends EditText {
+    private static final boolean DEBUG = true;
     private static final String TAG = ContactEditText.class.getSimpleName();
 
     private final PendingText mPendingText = new PendingText();
@@ -158,7 +159,9 @@ public class ContactEditText extends EditText {
         String stringRepresentation = contact.getMobileNumber(getContext()).get() + ";";
         builder.append(stringRepresentation);
 
-        Log.d(TAG, stringRepresentation);
+        if (DEBUG) {
+            Log.d(TAG, stringRepresentation);
+        }
 
         // Map the drawable to the string
         builder.setSpan(

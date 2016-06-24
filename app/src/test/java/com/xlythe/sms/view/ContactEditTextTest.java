@@ -1,7 +1,6 @@
 package com.xlythe.sms.view;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.xlythe.sms.BuildConfig;
 import com.xlythe.textmanager.text.Contact;
@@ -14,7 +13,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowLog;
@@ -23,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 
 /**
  *
@@ -54,6 +53,9 @@ public class ContactEditTextTest {
         // Update the owner's contact in TextManager
         ShadowTextManager shadowTextManager = (ShadowTextManager) ShadowExtractor.extract(TextManager.getInstance(mContext));
         shadowTextManager.setSelf(ME);
+        shadowTextManager.setFakeContact(ShadowContact.getInstance(ALICE_NUMBER, ALICE_NAME));
+        shadowTextManager.setFakeContact(ShadowContact.getInstance(BOB_NUMBER, BOB_NAME));
+        shadowTextManager.setFakeContact(ShadowContact.getInstance(BROKEN_NUMBER, BROKEN_NAME));
     }
 
     @Test
@@ -112,10 +114,10 @@ public class ContactEditTextTest {
         assertEquals("hi", mEditText.getPendingText());
     }
 
-//    @Test
-//    public void brokenCaseInsertPending() {
-//        mEditText.append(BROKEN_NAME);
-//        mEditText.insertPendingText();
-//        assertEquals(BROKEN_NAME, mEditText.getPendingText());
-//    }
+    @Test
+    public void brokenCaseInsertPending() {
+        mEditText.append(BROKEN_NUMBER);
+        mEditText.insertPendingText();
+        assertEquals(BROKEN_NAME, mEditText.getContacts().get(0).getDisplayName());
+    }
 }
