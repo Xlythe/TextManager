@@ -37,7 +37,7 @@ import static junit.framework.Assert.assertTrue;
  * thread, but will leave the other notifications active.
  */
 @RunWith(RobolectricGradleTestRunner.class)
-@Config(shadows={ShadowTextManager.class}, constants = BuildConfig.class)
+@Config(sdk=23, shadows={ShadowTextManager.class}, constants = BuildConfig.class)
 public class NotificationsTest {
     private static final String ME = "111-111-1111";
     private static final String ALICE= "222-222-2222";

@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.EditText;
 
 import com.xlythe.sms.drawable.ExtendedProfileDrawable;
@@ -92,10 +93,8 @@ public class ContactEditText extends EditText {
                         end = spanStart;
                         break;
                     }
-
                     start = spanEnd;
                 }
-
                 // The block of text is...
                 mPendingText.start = start;
                 mPendingText.end = end;
@@ -158,6 +157,8 @@ public class ContactEditText extends EditText {
         // Create the String that the real value is of
         String stringRepresentation = contact.getMobileNumber(getContext()).get() + ";";
         builder.append(stringRepresentation);
+
+        Log.d(TAG, stringRepresentation);
 
         // Map the drawable to the string
         builder.setSpan(
