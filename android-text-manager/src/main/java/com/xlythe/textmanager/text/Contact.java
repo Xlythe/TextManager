@@ -143,10 +143,6 @@ public final class Contact implements User, Parcelable {
     }
 
     private synchronized String setNumber(String number) {
-        if (number != null) {
-            // Sanitize the number
-            number = number.replaceAll("[^\\d+]", "");
-        }
         mNumber = number;
         return mNumber;
     }

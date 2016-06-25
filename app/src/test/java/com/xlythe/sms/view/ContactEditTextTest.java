@@ -18,6 +18,7 @@ import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowLog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -30,13 +31,10 @@ import static junit.framework.Assert.assertFalse;
 @Config(sdk=23, shadows={ShadowTextManager.class, ShadowContact.class}, constants = BuildConfig.class)
 public class ContactEditTextTest {
     private static final String ME = "111-111-1111";
-    private static final String ALICE_NUMBER = "222-222-2222";
-    private static final String BOB_NUMBER = "333-333-3333";
-    private static final String BROKEN_NUMBER = "+1 216-313-8473";
-
-    private static final String ALICE_NAME = "Alice Lazname";
-    private static final String BOB_NAME = "Bob Burger";
-    private static final String BROKEN_NAME = "Me Normalized";
+    private static final Contact ALICE = ShadowContact.getInstance("222-222-2222", "Alice");
+    private static final Contact BOB = ShadowContact.getInstance("333-333-3333", "Bob Bobberson");
+    private static final Contact CHARLIE = ShadowContact.getInstance("+1 234-567-8901", "Charlie");
+    private static final Contact NAMELESS = ShadowContact.getInstance("444444444");
 
     private Context mContext;
     private ContactEditText mEditText;
@@ -53,71 +51,55 @@ public class ContactEditTextTest {
         // Update the owner's contact in TextManager
         ShadowTextManager shadowTextManager = (ShadowTextManager) ShadowExtractor.extract(TextManager.getInstance(mContext));
         shadowTextManager.setSelf(ME);
-        shadowTextManager.setFakeContact(ShadowContact.getInstance(ALICE_NUMBER, ALICE_NAME));
-        shadowTextManager.setFakeContact(ShadowContact.getInstance(BOB_NUMBER, BOB_NAME));
-        shadowTextManager.setFakeContact(ShadowContact.getInstance(BROKEN_NUMBER, BROKEN_NAME));
+        shadowTextManager.addContact(ALICE);
+        shadowTextManager.addContact(BOB);
+        shadowTextManager.addContact(CHARLIE);
+        shadowTextManager.addContact(NAMELESS);
     }
 
     @Test
     public void oneNumber() {
-        Contact contact = ShadowContact.getInstance(ALICE_NUMBER);
-        mEditText.insert(contact);
-        assertEquals(contact, mEditText.getContacts().get(0));
+        mEditText.insert(ALICE);
+        assertEquals(1, mEditText.getContacts().size());
+        assertEquals(ALICE, mEditText.getContacts().get(0));
     }
 
     @Test
     public void multipleNumbers() {
-        List<Contact> contacts = new ArrayList<>();
-        contacts.add(ShadowContact.getInstance(ALICE_NUMBER));
-        contacts.add(ShadowContact.getInstance(BOB_NUMBER));
+        List<Contact> contacts = Arrays.asList(ALICE, BOB);
         mEditText.setContacts(contacts);
+        assertEquals(contacts.size(), mEditText.getContacts().size());
         for (int i = 0; i < contacts.size(); i++) {
             assertEquals(contacts.get(i), mEditText.getContacts().get(i));
         }
     }
 
     @Test
-    public void oneNumberWithName() {
-        Contact contact = ShadowContact.getInstance(ALICE_NUMBER, ALICE_NAME);
-        mEditText.insert(contact);
-        assertEquals(contact, mEditText.getContacts().get(0));
+    public void pendingText() {
+        mEditText.insert(ALICE);
+        mEditText.append("Hello World");
+        assertEquals(ALICE, mEditText.getContacts().get(0));
+        assertEquals("Hello World", mEditText.getPendingText());
     }
 
     @Test
-    public void MultipleNumbersWithNames() {
-        List<Contact> contacts = new ArrayList<>();
-        contacts.add(ShadowContact.getInstance(ALICE_NUMBER, ALICE_NAME));
-        contacts.add(ShadowContact.getInstance(BOB_NUMBER, BOB_NAME));
-        mEditText.setContacts(contacts);
-        for (int i = 0; i < contacts.size(); i++) {
-            assertEquals(contacts.get(i), mEditText.getContacts().get(i));
-        }
+    public void insertOnSemiColon() {
+        mEditText.append(ALICE.getDisplayName() + ";");
+        assertEquals(ALICE, mEditText.getContacts().get(0));
     }
 
     @Test
-    public void brokenCase() {
-        List<Contact> contacts = new ArrayList<>();
-        contacts.add(ShadowContact.getInstance(BROKEN_NUMBER, BROKEN_NAME));
-        contacts.add(ShadowContact.getInstance(BOB_NUMBER, BOB_NAME));
-        mEditText.setContacts(contacts);
-        for (int i = 0; i < contacts.size(); i++) {
-            assertEquals(contacts.get(i), mEditText.getContacts().get(i));
-        }
+    public void namelessPendingText() {
+        mEditText.append(NAMELESS.getDisplayName() + ";");
+        mEditText.append("Hello World");
+        assertEquals(NAMELESS, mEditText.getContacts().get(0));
+        assertEquals("Hello World", mEditText.getPendingText());
     }
 
     @Test
-    public void brokenCaseInsert() {
-        Contact contact = ShadowContact.getInstance(BROKEN_NUMBER, BROKEN_NAME);
-        mEditText.insert(contact);
-        mEditText.append("hi");
-        assertEquals(contact, mEditText.getContacts().get(0));
-        assertEquals("hi", mEditText.getPendingText());
-    }
-
-    @Test
-    public void brokenCaseInsertPending() {
-        mEditText.append(BROKEN_NUMBER);
+    public void insertPending() {
+        mEditText.append(ALICE.getDisplayName());
         mEditText.insertPendingText();
-        assertEquals(BROKEN_NAME, mEditText.getContacts().get(0).getDisplayName());
+        assertEquals(ALICE, mEditText.getContacts().get(0));
     }
 }
