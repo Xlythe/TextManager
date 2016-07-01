@@ -1,5 +1,6 @@
 package com.xlythe.sms;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -87,6 +88,19 @@ public class ComposeActivity extends AppCompatActivity {
                 }
                 mMessage.setText(body);
             }
+        }
+    }
+
+    @TargetApi(21)
+    @Override
+    public void onActivityReenter(int resultCode, Intent intent) {
+        super.onActivityReenter(resultCode, intent);
+        intent.setExtrasClassLoader(getClassLoader());
+        if (intent.hasExtra(EXTRA_CONTACTS)) {
+            ArrayList<Contact> contacts = intent.getParcelableArrayListExtra(EXTRA_CONTACTS);
+            mContacts.setContacts(contacts);
+            int cursor = intent.getIntExtra(EXTRA_CURSOR, mContacts.getText().length());
+            mContacts.setSelection(cursor);
         }
     }
 
