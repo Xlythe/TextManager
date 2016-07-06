@@ -11,6 +11,7 @@
     tools:showIn="@layout/activity_compose">
     <com.xlythe.sms.view.ContactEditText
         android:id="@+id/contacts"
+        android:transitionName="edit_text"
         style="@style/Compose.To"/>
     <EditText
         android:id="@+id/message"
