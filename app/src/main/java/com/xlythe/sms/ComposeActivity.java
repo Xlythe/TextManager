@@ -12,6 +12,7 @@ import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import com.xlythe.sms.view.ContactEditText;
@@ -91,6 +92,19 @@ public class ComposeActivity extends AppCompatActivity {
         }
     }
 
+    private void scheduleStartPostponedTransition(final View sharedElement) {
+        sharedElement.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @TargetApi(21)
+                    @Override
+                    public boolean onPreDraw() {
+                        sharedElement.getViewTreeObserver().removeOnPreDrawListener(this);
+                        startPostponedEnterTransition();
+                        return true;
+                    }
+                });
+    }
+
     @TargetApi(21)
     @Override
     public void onActivityReenter(int resultCode, Intent intent) {
@@ -102,6 +116,8 @@ public class ComposeActivity extends AppCompatActivity {
             int cursor = intent.getIntExtra(EXTRA_CURSOR, mContacts.getText().length());
             mContacts.setSelection(cursor);
         }
+        postponeEnterTransition();
+        scheduleStartPostponedTransition(mContacts);
     }
 
     @Override
