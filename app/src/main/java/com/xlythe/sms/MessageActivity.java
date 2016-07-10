@@ -6,11 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,11 +21,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.Window;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,7 +33,7 @@ import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.fragment.StickerFragment;
 import com.xlythe.sms.receiver.Notifications;
 import com.xlythe.sms.util.ColorUtils;
-import com.xlythe.sms.view.ExtendedEditText;
+import com.xlythe.swap.SwapEditText;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
@@ -70,15 +63,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         return false;
     }
 
-    // Keyboard hack
-    private int mScreenSize;
-    private int mKeyboardSize;
-    private boolean mAdjustNothing;
-    private boolean mKeyboardOpen;
-
     private AppBarLayout mAppbar;
-    private View mAttachView;
-    private ExtendedEditText mEditText;
+    private SwapEditText mEditText;
     private ImageView mSendButton;
     private Thread mThread;
     private TextManager mManager;
@@ -124,35 +110,9 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final Window rootWindow = getWindow();
-        final View root = rootWindow.getDecorView().findViewById(android.R.id.content);
-
-        // Seems redundant to set as ADJUST_NOTHING in manifest and then immediately to ADJUST_RESIZE
-        // but it seems that the input gets reset to a default on keyboard dismissal if not set otherwise.
-        rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            public void onGlobalLayout() {
-                Rect r = new Rect();
-                View view = rootWindow.getDecorView();
-                view.getWindowVisibleDisplayFrame(r);
-                if (mScreenSize != 0 && mScreenSize > r.bottom) {
-                    mKeyboardSize = mScreenSize - r.bottom;
-                    mAttachView.getLayoutParams().height = mKeyboardSize;
-                    rootWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
-                    if (mKeyboardOpen) {
-                        mAttachView.setVisibility(View.VISIBLE);
-                    }
-                    mAdjustNothing = true;
-                } else {
-                    mScreenSize = r.bottom;
-                }
-            }
-        });
-
         mAppbar = (AppBarLayout) findViewById(R.id.appbar);
 
-        mAttachView = findViewById(R.id.fragment_container);
-        mEditText = (ExtendedEditText) findViewById(R.id.edit_text);
+        mEditText = (SwapEditText) findViewById(R.id.edit_text);
         mSendButton = (ImageView) findViewById(R.id.send);
 
         setSendable(false);
@@ -176,14 +136,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             }
         });
 
-        mEditText.setOnDismissKeyboardListener(new ExtendedEditText.OnDismissKeyboardListener() {
-            @Override
-            public void onDismissed() {
-                mEditText.clearFocus();
-                onAttachmentHidden();
-            }
-        });
-
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -197,22 +149,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             public void afterTextChanged(Editable s) {}
         });
 
-        mEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        mEditText.setOnFragmentHiddenListener(new SwapEditText.OnFragmentHiddenListener() {
             @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                mKeyboardOpen = hasFocus;
-                if(hasFocus) {
-                    clearAttachmentSelection();
-                    if (!mAdjustNothing) {
-                        onAttachmentHidden();
-                    } else {
-                        // Just because it has focus doesnt mean the keyboard actually opened
-                        // This seems like an easier fix than not showing the attachview
-                        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        mgr.showSoftInput(mEditText, 0);
-                        mAttachView.setVisibility(View.VISIBLE);
-                    }
-                }
+            public void onFragmentHidden() {
+                clearAttachmentSelection();
             }
         });
 
@@ -259,10 +199,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState > 0) {
-                    InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
-                    mEditText.clearFocus();
-                    onAttachmentHidden();
+                    mEditText.hideKeyboard();
                 }
             }
         });
@@ -303,43 +240,26 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     }
 
     public void onAttachmentClicked(View view){
-        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        mgr.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);
-        mEditText.clearFocus();
-
-        mAttachView.setVisibility(View.VISIBLE);
-
         clearAttachmentSelection();
         int color = ColorUtils.getColor(mThread.getIdAsLong());
         ((ImageView) view).setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         Text text = mThread.getLatestMessage();
 
         view.setEnabled(false);
         switch (view.getId()) {
             case R.id.gallery:
-                transaction.replace(R.id.fragment_container, GalleryFragment.newInstance(text, color)).commit();
+                mEditText.showFragment(GalleryFragment.newInstance(text, color));
                 break;
             case R.id.camera:
-                transaction.replace(R.id.fragment_container, CameraFragment.newInstance(text)).commit();
+                mEditText.showFragment(CameraFragment.newInstance(text));
                 break;
             case R.id.sticker:
-                transaction.replace(R.id.fragment_container, StickerFragment.newInstance(text)).commit();
+                mEditText.showFragment(StickerFragment.newInstance(text));
                 break;
             case R.id.mic:
-                transaction.replace(R.id.fragment_container, new MicFragment()).commit();
+                mEditText.showFragment(new MicFragment());
                 break;
         }
-    }
-
-    public void onAttachmentHidden(){
-        Fragment activeFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        if (activeFragment != null) {
-            getSupportFragmentManager().beginTransaction().remove(activeFragment).commit();
-        }
-        mAttachView.setVisibility(View.GONE);
-        clearAttachmentSelection();
     }
 
     private void clearAttachmentSelection() {
@@ -490,8 +410,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
 
     @Override
     public void onBackPressed() {
-        if (mAttachView.getVisibility() == View.VISIBLE) {
-            onAttachmentHidden();
+        if (mEditText.getFragmentVisibility()) {
+            mEditText.hideKeyboard();
         } else {
             super.onBackPressed();
         }
@@ -503,9 +423,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Notifications.dismissNotification(getApplicationContext(), mThread);
         mManager.markAsRead(mThread);
         sActiveThread = mThread;
-        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container) == null) {
-            onAttachmentHidden();
-        }
     }
 
     @Override

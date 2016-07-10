@@ -407,6 +407,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         };
         Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
+        Log.d(TAG, "uri: " + uri.toString());
+        Log.d(TAG, "order: " + order);
+
         Cursor threads = contentResolver.query(uri, null, null, null, order);
 
         List<String> ids = new ArrayList<>();
