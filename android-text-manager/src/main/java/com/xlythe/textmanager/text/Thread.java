@@ -24,7 +24,9 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     // Maybe just change the conversations thread ID but that would be confusing
     static final String THREAD_ID;
     static {
-        if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)) {
+        if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)
+                || android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_HTC)
+                || android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_ZTE)) {
             THREAD_ID = BaseColumns._ID;
         } else {
             THREAD_ID = Mock.Telephony.Sms.Conversations.THREAD_ID;
