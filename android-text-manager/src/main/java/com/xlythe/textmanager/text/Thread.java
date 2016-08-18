@@ -15,6 +15,8 @@ import java.util.List;
  * An SMS conversation
  */
 public final class Thread implements MessageThread<Text>, Parcelable {
+    private static final String MANUFACTURER = android.os.Build.MANUFACTURER.toLowerCase();
+
     private final long mThreadId;
     private Integer mCount;
     private Integer mUnreadCount;
@@ -24,9 +26,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     // Maybe just change the conversations thread ID but that would be confusing
     static final String THREAD_ID;
     static {
-        if(android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)
-                || android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_HTC)
-                || android.os.Build.MANUFACTURER.equals(Mock.MANUFACTURER_ZTE)) {
+        if(requiresKitKatApis()) {
             THREAD_ID = BaseColumns._ID;
         } else {
             THREAD_ID = Mock.Telephony.Sms.Conversations.THREAD_ID;
@@ -159,5 +159,15 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         public Thread getThread() {
             return new Thread(this);
         }
+    }
+
+    /**
+     * Check if devices are using unsupported APIs
+     * As of now this is all Samsung, HTC, and ZTE manufactured phones
+     */
+    private static boolean requiresKitKatApis() {
+        return MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)
+                || MANUFACTURER.equals(Mock.MANUFACTURER_HTC)
+                || MANUFACTURER.equals(Mock.MANUFACTURER_ZTE);
     }
 }

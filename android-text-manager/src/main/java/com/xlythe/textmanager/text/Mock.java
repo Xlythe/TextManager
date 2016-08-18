@@ -15,8 +15,8 @@ import java.util.regex.Pattern;
  */
 public class Mock {
     public static final String MANUFACTURER_SAMSUNG = "samsung";
-    public static final String MANUFACTURER_HTC = "HTC";
-    public static final String MANUFACTURER_ZTE = "ZTE";
+    public static final String MANUFACTURER_HTC = "htc";
+    public static final String MANUFACTURER_ZTE = "zte";
 
     private Mock() {}
 
