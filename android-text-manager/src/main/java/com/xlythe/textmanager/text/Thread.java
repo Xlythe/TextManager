@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import android.provider.BaseColumns;
 
 import com.xlythe.textmanager.MessageThread;
+import com.xlythe.textmanager.text.util.PreKitKatUtils;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.List;
@@ -15,7 +16,6 @@ import java.util.List;
  * An SMS conversation
  */
 public final class Thread implements MessageThread<Text>, Parcelable {
-    private static final String MANUFACTURER = android.os.Build.MANUFACTURER.toLowerCase();
 
     private final long mThreadId;
     private Integer mCount;
@@ -26,7 +26,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     // Maybe just change the conversations thread ID but that would be confusing
     static final String THREAD_ID;
     static {
-        if(requiresKitKatApis()) {
+        if(PreKitKatUtils.requiresKitKatApis()) {
             THREAD_ID = BaseColumns._ID;
         } else {
             THREAD_ID = Mock.Telephony.Sms.Conversations.THREAD_ID;
@@ -161,13 +161,5 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         }
     }
 
-    /**
-     * Check if devices are using unsupported APIs
-     * As of now this is all Samsung, HTC, and ZTE manufactured phones
-     */
-    private static boolean requiresKitKatApis() {
-        return MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)
-                || MANUFACTURER.equals(Mock.MANUFACTURER_HTC)
-                || MANUFACTURER.equals(Mock.MANUFACTURER_ZTE);
-    }
+
 }

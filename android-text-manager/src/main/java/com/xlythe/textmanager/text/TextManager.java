@@ -35,6 +35,7 @@ import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
+import com.xlythe.textmanager.text.util.PreKitKatUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +55,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";
     private static final String TEXT_EXTRA = "text";
-    private static final String MANUFACTURER = android.os.Build.MANUFACTURER.toLowerCase();
     public static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
@@ -388,7 +388,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         ContentResolver contentResolver = mContext.getContentResolver();
         final Uri uri;
         final String order;
-        if (requiresKitKatApis()) {
+        if (PreKitKatUtils.requiresKitKatApis()) {
             uri = Uri.parse("content://mms-sms/conversations/?simple=true");
             order = "date DESC";
         } else {
@@ -438,7 +438,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
             boolean incoming = Text.isIncomingMessage(threads, true);
             long id = -1;
-            if (!(requiresKitKatApis())) {
+            if (!(PreKitKatUtils.requiresKitKatApis())) {
                 id = threads.getLong(threads.getColumnIndexOrThrow(BaseColumns._ID));
                 if (isMms) {
                     ids.add(Long.toString(id));
@@ -454,7 +454,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Attachment attachment = null;
 
             if (!isMms) {
-                if (requiresKitKatApis()) {
+                if (PreKitKatUtils.requiresKitKatApis()) {
                     Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
                     String order5 = "normalized_date ASC";
                     Cursor smsSamsung = contentResolver.query(uri5, PROJECTION, null, null, order5);
@@ -520,7 +520,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
                 }
             } else {
-                if (!(requiresKitKatApis())) {
+                if (!(PreKitKatUtils.requiresKitKatApis())) {
                     date = date * 1000;
                     mmsId = threads.getLong(threads.getColumnIndex(Mock.Telephony.Mms._ID));
                     status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
@@ -667,7 +667,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 ContentResolver contentResolver = mContext.getContentResolver();
                 final Uri uri;
                 final String order;
-                if (requiresKitKatApis()) {
+                if (PreKitKatUtils.requiresKitKatApis()) {
                     uri = Uri.parse("content://mms-sms/conversations/?simple=true");
                     order = "date DESC";
                 } else {
@@ -1001,15 +1001,5 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Check if devices are using unsupported APIs
-     * As of now this is all Samsung, HTC, and ZTE manufactured phones
-     */
-    private boolean requiresKitKatApis() {
-        return MANUFACTURER.equals(Mock.MANUFACTURER_SAMSUNG)
-                || MANUFACTURER.equals(Mock.MANUFACTURER_HTC)
-                || MANUFACTURER.equals(Mock.MANUFACTURER_ZTE);
     }
 }
