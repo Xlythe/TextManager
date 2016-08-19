@@ -438,7 +438,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
             boolean incoming = Text.isIncomingMessage(threads, true);
             long id = -1;
-            if (!(PreKitKatUtils.requiresKitKatApis())) {
+            if (!PreKitKatUtils.requiresKitKatApis()) {
                 id = threads.getLong(threads.getColumnIndexOrThrow(BaseColumns._ID));
                 if (isMms) {
                     ids.add(Long.toString(id));
@@ -520,7 +520,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
                 }
             } else {
-                if (!(PreKitKatUtils.requiresKitKatApis())) {
+                if (!PreKitKatUtils.requiresKitKatApis()) {
                     date = date * 1000;
                     mmsId = threads.getLong(threads.getColumnIndex(Mock.Telephony.Mms._ID));
                     status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));

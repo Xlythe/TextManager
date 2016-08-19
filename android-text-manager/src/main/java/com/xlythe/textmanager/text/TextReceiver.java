@@ -56,6 +56,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Text text = Receive.storeMessage(context, messages, 0);
             onMessageReceived(context, text);
         }
+        //TODO: Remember why this is commented out
+        // I believe its because pre 19 has notifications for other apps and I didn't want to deal
+        // with it at the time/ need to test it out
 //        else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
             //TODO: Build notifications for pre 19
 //            onMessageReceived(context, text);
@@ -73,6 +76,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
             final PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
             wl.acquire();
+            final CountDownLatch pduDownloaded = new CountDownLatch(1);
             try {
                 Intent intent = intents[0];
 
@@ -89,7 +93,6 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
                 byte[] location = notif.getContentLocation();
                 final String loc = new String (location);
-                final CountDownLatch pduDownloaded = new CountDownLatch(1);
                 Network.forceDataConnection(mContext, new Network.Callback() {
                     @Override
                     public void onSuccess() {
@@ -111,7 +114,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
                             mContext.getContentResolver().update(msgUri, values, null, null);
 
                             Cursor textCursor = mContext.getContentResolver().query(msgUri, null, null, null, null);
-                            if (textCursor == null) return;
+                            if (textCursor == null) {
+                                onFail();
+                                return;
+                            }
                             textCursor.moveToFirst();
 
                             final String[] mmsProjection = new String[]{
@@ -123,7 +129,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
                             };
                             Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
                             Cursor mmsCursor = mContext.getContentResolver().query(mmsUri, mmsProjection, null, null, null);
-                            if (mmsCursor == null) return;
+                            if (mmsCursor == null) {
+                                onFail();
+                                return;
+                            }
                             mmsCursor.moveToFirst();
 
                             Text text = new Text(textCursor, mmsCursor);
@@ -133,9 +142,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
                         } catch (MmsException e) {
                             Log.e(TAG, "Unable to persist message", e);
                             onFail();
-                            return;
                         }
-                        pduDownloaded.countDown();
                     }
 
                     @Override
@@ -148,11 +155,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
                             values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
                             values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis());
                             mContext.getContentResolver().update(uri, values, null, null);
-
                         } catch (MmsException e) {
                             Log.e(TAG, "Persisting pdu failed", e);
                         }
-                        pduDownloaded.countDown();
                     }
                 });
 
@@ -160,6 +165,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             } catch (InterruptedException e) {
                 java.lang.Thread.currentThread().interrupt();
             } finally {
+                pduDownloaded.countDown();
                 wl.release();
             }
             return null;
