@@ -56,6 +56,9 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Text text = Receive.storeMessage(context, messages, 0);
             onMessageReceived(context, text);
         }
+        //TODO: Remember why this is commented out
+        // I believe its because pre 19 has notifications for other apps and I didn't want to deal
+        // with it at the time/ need to test it out
 //        else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
             //TODO: Build notifications for pre 19
 //            onMessageReceived(context, text);
@@ -93,16 +96,17 @@ public abstract class TextReceiver extends BroadcastReceiver {
                 Network.forceDataConnection(mContext, new Network.Callback() {
                     @Override
                     public void onSuccess() {
-                        Log.d(TAG, "Download Success");
-                        byte[] data = Receive.receive(mContext, loc);
-                        if (data == null) {
-                            onFail();
-                            return;
-                        }
-                        RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
-                        PduPersister persister = PduPersister.getPduPersister(mContext);
-                        Uri msgUri;
                         try {
+                            Log.d(TAG, "Download Success");
+                            byte[] data = Receive.receive(mContext, loc);
+                            if (data == null) {
+                                onFail();
+                                return;
+                            }
+                            RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
+                            PduPersister persister = PduPersister.getPduPersister(mContext);
+                            Uri msgUri;
+
                             msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
 
                             // Use local time instead of PDU time
@@ -146,8 +150,8 @@ public abstract class TextReceiver extends BroadcastReceiver {
 
                     @Override
                     public void onFail() {
-                        PduPersister p = PduPersister.getPduPersister(mContext);
                         try {
+                            PduPersister p = PduPersister.getPduPersister(mContext);
                             Uri uri = p.persist(pdu, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
                             // can't the status via pdu, so update with the content resolver
                             ContentValues values = new ContentValues(2);
