@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
@@ -9,6 +10,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.support.annotation.VisibleForTesting;
+import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -28,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -570,6 +573,50 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         public void close() {
             super.close();
             mMMSCursor.close();
+        }
+    }
+
+    public static class Converter {
+        public Text toText(Context context, SmsMessage[] msgs){
+            Text text = new Text();
+
+            SmsMessage sms = msgs[0];
+
+            text.mDate = checkDate(sms);
+            text.mMemberAddresses.add(sms.getDisplayOriginatingAddress());
+            text.mSenderAddress = sms.getDisplayOriginatingAddress();
+
+
+            // Add the message body
+            StringBuilder body = new StringBuilder();
+            for (SmsMessage msg: msgs) {
+                sms = msg;
+                if(sms.getDisplayMessageBody() != null) {
+                    body.append(sms.getDisplayMessageBody());
+                }
+            }
+            text.mBody = replaceFormFeeds(body.toString());
+
+            if(text.mSenderAddress != null) {
+                text.mThreadId = Receive.getOrCreateThreadId(context, text.mSenderAddress);
+            }
+
+            return text;
+        }
+
+        private String replaceFormFeeds(String s) {
+            return s == null ? "" : s.replace('\f', '\n');
+        }
+
+        private long checkDate(SmsMessage sms){
+            Calendar buildDate = new GregorianCalendar(2011, 8, 18); // 18 Sep 2011
+            Calendar nowDate = new GregorianCalendar();
+            long now = System.currentTimeMillis();
+            nowDate.setTimeInMillis(now);
+            if(nowDate.before(buildDate)) {
+                now = sms.getTimestampMillis();
+            }
+            return now;
         }
     }
 
