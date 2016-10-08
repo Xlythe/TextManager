@@ -17,6 +17,7 @@ public class Mock {
     public static final String MANUFACTURER_SAMSUNG = "samsung";
     public static final String MANUFACTURER_HTC = "htc";
     public static final String MANUFACTURER_ZTE = "zte";
+    public static final String MANUFACTURER_SYMPHONY = "symphony teleca";
 
     private Mock() {}
 

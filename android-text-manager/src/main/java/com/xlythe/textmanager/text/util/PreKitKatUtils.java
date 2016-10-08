@@ -18,6 +18,7 @@ public class PreKitKatUtils {
         String manufacturer = android.os.Build.MANUFACTURER.toLowerCase();
         return manufacturer.equals(Mock.MANUFACTURER_SAMSUNG)
                 || manufacturer.equals(Mock.MANUFACTURER_HTC)
-                || manufacturer.equals(Mock.MANUFACTURER_ZTE);
+                || manufacturer.equals(Mock.MANUFACTURER_ZTE)
+                || manufacturer.equals(Mock.MANUFACTURER_SYMPHONY);
     }
 }
