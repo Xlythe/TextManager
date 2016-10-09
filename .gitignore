@@ -6,7 +6,6 @@
 /build
 /.idea
 *.iml
-gradle.properties
 /gradle
 gradlew
 gradlew.bat
