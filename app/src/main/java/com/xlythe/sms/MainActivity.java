@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     }
 
     private void requiredPermissionsNotGranted() {
-        final View errorBox = findViewById(R.id.permission_error);
+        final View errorBox = findViewById(R.id.layout_permissions);
         errorBox.setVisibility(View.VISIBLE);
 
         Button button = (Button) errorBox.findViewById(R.id.request_permissions);

@@ -83,7 +83,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
             }
         });
 
-        mPermissionPrompt = rootView.findViewById(R.id.permission_error);
+        mPermissionPrompt = rootView.findViewById(R.id.layout_permissions);
         mPermissionPrompt.findViewById(R.id.request_permissions).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
