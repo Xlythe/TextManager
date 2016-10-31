@@ -79,7 +79,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
         }
 
         if (getIntent().hasExtra(EXTRA_CURSOR)) {
-            mInputField.setSelection(getIntent().getIntExtra(EXTRA_CURSOR, mInputField.getText().length()));
+            mInputField.setSelection(Math.min(mInputField.getText().length(), getIntent().getIntExtra(EXTRA_CURSOR, mInputField.getText().length())));
         }
     }
 
