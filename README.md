@@ -87,12 +87,12 @@ Finally, here are the permissions you'll need to use the library.
 <!-- You may not need all of these, depending on what you are doing -->
 
 <!-- Used to send and receive messages -->
-<uses-permission android:name="android.permission.SEND_SMS" />
-<uses-permission android:name="android.permission.SEND_MMS" />
-<uses-permission android:name="android.permission.RECEIVE_SMS" />
-<uses-permission android:name="android.permission.RECEIVE_MMS" />
 <uses-permission android:name="android.permission.READ_SMS" />
 <uses-permission android:name="android.permission.WRITE_SMS" />
+<uses-permission android:name="android.permission.SEND_SMS" />
+<uses-permission android:name="android.permission.RECEIVE_SMS" />
+<uses-permission android:name="android.permission.SEND_MMS" />
+<uses-permission android:name="android.permission.RECEIVE_MMS" />
 
 <!-- Used to get contact information to send messages -->
 <uses-permission android:name="android.permission.READ_CONTACTS" />
@@ -103,9 +103,9 @@ Finally, here are the permissions you'll need to use the library.
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
 <!-- Mms uses data network to send -->
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
 <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.INTERNET" />
 
 <!-- Keeps the phone awake while downloading messages -->
