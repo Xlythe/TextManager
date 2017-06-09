@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -160,7 +161,7 @@ public class ComposeActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), ContactSearchActivity.class);
         intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
         intent.putExtra(EXTRA_CURSOR, mContacts.getSelectionStart());
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
+        if (Build.VERSION.SDK_INT >= 21) {
             ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
                     Pair.create((View) mContacts, "edit_text"));
             startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());

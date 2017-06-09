@@ -10,13 +10,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.os.Build;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by Niko on 5/20/16.
- */
 public class Network {
     private static final String ENABLE_MMS = "enableMMS";
     private static final int ALREADY_ACTIVE = 0;
@@ -24,7 +22,7 @@ public class Network {
 
 
     public static void forceDataConnection(Context context, final Callback callback) {
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
+        if (Build.VERSION.SDK_INT >= 21) {
             request(context, callback);
         } else {
             requestLegacy(context, callback);

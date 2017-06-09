@@ -10,6 +10,7 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
@@ -30,8 +31,6 @@ import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.exception.MmsException;
-import com.xlythe.textmanager.text.pdu.GenericPdu;
-import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
@@ -43,7 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Manages sms and mms messages
@@ -956,7 +954,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
      * The default sms app. Before api 19, this returns null.
      */
     public String getDefaultSmsPackage() {
-        if (android.os.Build.VERSION.SDK_INT >= 19) {
+        if (Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext);
         } else {
             return null;
@@ -967,7 +965,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
      * Returns true if your package is the default SMS app. Before API 19, that means everyone.
      */
     public boolean isDefaultSmsPackage() {
-        if (android.os.Build.VERSION.SDK_INT >= 19 && supportsSms()) {
+        if (Build.VERSION.SDK_INT >= 19 && supportsSms()) {
             return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());
         } else {
             return supportsSms();

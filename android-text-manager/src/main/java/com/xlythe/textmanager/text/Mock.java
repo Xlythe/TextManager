@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -39,7 +40,7 @@ public class Mock {
             public static final String DEFAULT_SORT_ORDER;
 
             static {
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                if (Build.VERSION.SDK_INT >= 19) {
                     CONTENT_URI = android.provider.Telephony.Sms.CONTENT_URI;
                     DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.DEFAULT_SORT_ORDER;
                 } else {
@@ -62,7 +63,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Inbox.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Inbox.DEFAULT_SORT_ORDER;
                     } else {
@@ -79,7 +80,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Sent.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Sent.DEFAULT_SORT_ORDER;
                     } else {
@@ -96,7 +97,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Draft.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Draft.DEFAULT_SORT_ORDER;
                     } else {
@@ -113,7 +114,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Outbox.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Outbox.DEFAULT_SORT_ORDER;
                     } else {
@@ -132,7 +133,7 @@ public class Mock {
                 public static final String MESSAGE_COUNT;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Sms.Conversations.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Sms.Conversations.DEFAULT_SORT_ORDER;
                         SNIPPET = android.provider.Telephony.Sms.Conversations.SNIPPET;
@@ -170,7 +171,7 @@ public class Mock {
                 public static final String MMS_DOWNLOADED_ACTION = "android.provider.Telephony.MMS_DOWNLOADED"; // hidden
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         RESULT_SMS_HANDLED = android.provider.Telephony.Sms.Intents.RESULT_SMS_HANDLED;
                         RESULT_SMS_GENERIC_ERROR = android.provider.Telephony.Sms.Intents.RESULT_SMS_GENERIC_ERROR;
                         RESULT_SMS_OUT_OF_MEMORY = android.provider.Telephony.Sms.Intents.RESULT_SMS_OUT_OF_MEMORY;
@@ -335,7 +336,7 @@ public class Mock {
             public static final String CREATOR;
 
             static {
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                if (Build.VERSION.SDK_INT >= 19) {
                     MESSAGE_BOX_ALL    = android.provider.Telephony.BaseMmsColumns.MESSAGE_BOX_ALL;
                     MESSAGE_BOX_INBOX  = android.provider.Telephony.BaseMmsColumns.MESSAGE_BOX_INBOX;
                     MESSAGE_BOX_SENT   = android.provider.Telephony.BaseMmsColumns.MESSAGE_BOX_SENT;
@@ -469,7 +470,7 @@ public class Mock {
             }
 
             static {
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                if (Build.VERSION.SDK_INT >= 19) {
                     CONTENT_URI = android.provider.Telephony.Mms.CONTENT_URI;
                     REPORT_REQUEST_URI = android.provider.Telephony.Mms.REPORT_REQUEST_URI;
                     REPORT_STATUS_URI = android.provider.Telephony.Mms.REPORT_STATUS_URI;
@@ -489,7 +490,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Mms.Inbox.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Mms.Inbox.DEFAULT_SORT_ORDER;
                     } else {
@@ -506,7 +507,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Mms.Sent.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Mms.Sent.DEFAULT_SORT_ORDER;
                     } else {
@@ -523,7 +524,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Mms.Draft.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Mms.Draft.DEFAULT_SORT_ORDER;
                     } else {
@@ -540,7 +541,7 @@ public class Mock {
                 public static final String DEFAULT_SORT_ORDER;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Mms.Outbox.CONTENT_URI;
                         DEFAULT_SORT_ORDER = android.provider.Telephony.Mms.Outbox.DEFAULT_SORT_ORDER;
                     } else {
@@ -560,7 +561,7 @@ public class Mock {
                 public static final String CHARSET;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         MSG_ID = android.provider.Telephony.Mms.Addr.MSG_ID;
                         CONTACT_ID = android.provider.Telephony.Mms.Addr.CONTACT_ID;
                         ADDRESS = android.provider.Telephony.Mms.Addr.ADDRESS;
@@ -594,7 +595,7 @@ public class Mock {
                 public static final String TEXT;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         MSG_ID = android.provider.Telephony.Mms.Part.MSG_ID;
                         SEQ = android.provider.Telephony.Mms.Part.SEQ;
                         CONTENT_TYPE = android.provider.Telephony.Mms.Part.CONTENT_TYPE;
@@ -633,7 +634,7 @@ public class Mock {
                 public static final String SENT_TIME;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.Mms.Rate.CONTENT_URI;
                         SENT_TIME = android.provider.Telephony.Mms.Rate.SENT_TIME;
                     } else {
@@ -650,7 +651,7 @@ public class Mock {
                 public static final String DELETED_CONTENTS;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_CHANGED_ACTION = android.provider.Telephony.Mms.Intents.CONTENT_CHANGED_ACTION;
                         DELETED_CONTENTS = android.provider.Telephony.Mms.Intents.DELETED_CONTENTS;
                     } else {
@@ -686,7 +687,7 @@ public class Mock {
             public static final int ERR_TYPE_MMS_PROTO_PERMANENT;
 
             static {
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                if (Build.VERSION.SDK_INT >= 19) {
                     TYPE_DISCRIMINATOR_COLUMN = android.provider.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN;
                     CONTENT_URI = android.provider.Telephony.MmsSms.CONTENT_URI;
                     CONTENT_CONVERSATIONS_URI = android.provider.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
@@ -746,7 +747,7 @@ public class Mock {
                 public static final String SUBSCRIPTION_ID;
 
                 static {
-                    if (android.os.Build.VERSION.SDK_INT >= 19) {
+                    if (Build.VERSION.SDK_INT >= 19) {
                         CONTENT_URI = android.provider.Telephony.MmsSms.PendingMessages.CONTENT_URI;
                         PROTO_TYPE = android.provider.Telephony.MmsSms.PendingMessages.PROTO_TYPE;
                         MSG_ID = android.provider.Telephony.MmsSms.PendingMessages.MSG_ID;
@@ -821,7 +822,7 @@ public class Mock {
             public static final String CREATOR;
 
             static {
-                if (android.os.Build.VERSION.SDK_INT >= 19) {
+                if (Build.VERSION.SDK_INT >= 19) {
                     MESSAGE_TYPE_ALL    = android.provider.Telephony.TextBasedSmsColumns.MESSAGE_TYPE_ALL;
                     MESSAGE_TYPE_INBOX  = android.provider.Telephony.TextBasedSmsColumns.MESSAGE_TYPE_INBOX;
                     MESSAGE_TYPE_SENT   = android.provider.Telephony.TextBasedSmsColumns.MESSAGE_TYPE_SENT;

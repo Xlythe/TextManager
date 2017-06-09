@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -40,7 +41,6 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
-import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.MessageUtils;
 import com.xlythe.textmanager.text.util.Utils;
 
@@ -175,7 +175,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         getSupportActionBar().setTitle(name);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
+        if (Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(ColorUtils.getDarkColor(mThread.getIdAsLong()));
         }
 

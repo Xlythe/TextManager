@@ -15,7 +15,6 @@ import android.widget.VideoView;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.xlythe.textmanager.text.Attachment;
-import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.lang.ref.WeakReference;

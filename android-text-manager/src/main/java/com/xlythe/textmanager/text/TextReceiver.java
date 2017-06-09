@@ -7,9 +7,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
-import android.provider.Settings;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
@@ -56,7 +56,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             SmsMessage[] messages = getMessagesFromIntent(intent);
             Text text = Receive.storeMessage(context, messages, 0);
             onMessageReceived(context, text);
-        } else if (android.os.Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
+        } else if (Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
 //            TODO: Build notifications for pre 19
 //            TODO: This is purely to display the notification! because main sms app stores the sms
             SmsMessage[] messages = getMessagesFromIntent(intent);

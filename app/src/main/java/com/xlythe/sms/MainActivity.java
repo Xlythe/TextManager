@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.design.widget.AppBarLayout;
@@ -21,7 +22,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.HeadersDecoration;
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             markHasRequestedPermissions();
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
             // We do this on 6.0 because this issue is resolved in 6.0.1
-            if (android.os.Build.VERSION.RELEASE.equals("6.0") && !Settings.System.canWrite(this)) {
+            if (Build.VERSION.RELEASE.equals("6.0") && !Settings.System.canWrite(this)) {
                 startActivityForResult(
                         new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
                         REQUEST_CODE_WRITE_SETTINGS);
