@@ -31,12 +31,12 @@ public class CameraFragment extends com.xlythe.fragment.camera.CameraFragment {
     }
 
     @Override
-    public void onImageCaptured(final File file) {
+    public void onImageCaptured(File file) {
         TextManager.getInstance(getContext()).send(new ImageAttachment(Uri.fromFile(file))).to(mText);
     }
 
     @Override
-    public void onVideoCaptured(final File file) {
+    public void onVideoCaptured(File file) {
         TextManager.getInstance(getContext()).send(new VideoAttachment(Uri.fromFile(file))).to(mText);
     }
 

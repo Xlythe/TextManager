@@ -200,17 +200,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public class Builder {
-        Context mContext;
-        String mMessage;
-        Attachment mAttachment;
+        private final Context mContext;
+        private final String mMessage;
+        private final Attachment mAttachment;
 
         private Builder(Context context, String message) {
             mContext = context;
             mMessage = message;
+            mAttachment = null;
         }
 
         private Builder(Context context, Attachment attachment) {
             mContext = context;
+            mMessage = null;
             mAttachment = attachment;
         }
 

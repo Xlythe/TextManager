@@ -49,8 +49,6 @@ public final class ImageAttachment extends Attachment {
             }
             out.flush();
             out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
