@@ -36,15 +36,10 @@ public class SendService extends IntentService {
         Text text = intent.getParcelableExtra(TEXT_EXTRA);
 
         final Uri uri;
-
-        // Store SMS
-        if (!text.isMms()) {
-             uri = storeSMS(this, text);
-        }
-
-        // Store MMS
-        else {
+        if (text.isMms()) {
             uri = storeMMS(this, text);
+        }  else {
+            uri = storeSMS(this, text);
         }
 
         intent.setData(uri);
@@ -56,13 +51,7 @@ public class SendService extends IntentService {
         final Text text = intent.getParcelableExtra(TEXT_EXTRA);
         final Uri uri = intent.getData();
 
-        // Send SMS
-        if (!text.isMms()) {
-            sendSMS(this, text, uri);
-        }
-
-        // Send MMS
-        else {
+        if (text.isMms()) {
             final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
             Network.forceDataConnection(this, new Network.Callback() {
                 @Override
@@ -75,6 +64,8 @@ public class SendService extends IntentService {
                     sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
                 }
             });
+        } else {
+            sendSMS(this, text, uri);
         }
     }
 

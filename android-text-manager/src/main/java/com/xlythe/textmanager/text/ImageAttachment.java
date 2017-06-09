@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -104,10 +105,10 @@ public final class ImageAttachment extends Attachment {
         }
     }
 
+    @Nullable
     public byte[] getBytes(final Context context) {
         if (getBitmap(context).get() == null) {
-            Log.v(TAG, "image is null, returning byte array of size 0");
-            return new byte[0];
+            return null;
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
