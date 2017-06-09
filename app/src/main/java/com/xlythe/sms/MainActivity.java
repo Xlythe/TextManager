@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            mode.getMenuInflater().inflate (R.menu.selected_menu, menu);
+            mode.getMenuInflater().inflate(R.menu.selected_menu, menu);
             return true;
         }
 
@@ -251,7 +251,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             params.setScrollFlags(TOOLBAR_SCROLL_FLAGS_SELECT);
             mToolbar.setLayoutParams(params);
             mRecyclerView.setNestedScrollingEnabled(false);
-            mAppbar.setExpanded(true);
             return false;
         }
 
