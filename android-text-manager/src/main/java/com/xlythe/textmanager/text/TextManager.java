@@ -503,7 +503,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     senderAddress = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
 
                     // If the sender is null that means its a failed mms soo populate data with a different message
-                    Log.d(TAG, "Sender: " + senderAddress);
                     if (senderAddress == null || senderAddress.equals(UNKNOWN)) {
                         Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
                         String order5 = "normalized_date ASC";
