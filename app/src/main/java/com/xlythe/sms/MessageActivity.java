@@ -228,6 +228,18 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        clearAttachmentSelection();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mEditText.hideKeyboard();
+    }
+
     public void setSendable(boolean sendable){
         mSendButton.setEnabled(sendable && mManager.isDefaultSmsPackage());
         if (sendable && mManager.isDefaultSmsPackage()) {
@@ -273,10 +285,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         mStickerAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
         mMicAttachments.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
-        mGalleryAttachments.setEnabled(true);
-        mCameraAttachments.setEnabled(true);
-        mStickerAttachments.setEnabled(true);
-        mMicAttachments.setEnabled(true);
+        mGalleryAttachments.setEnabled(mManager.isDefaultSmsPackage());
+        mCameraAttachments.setEnabled(mManager.isDefaultSmsPackage());
+        mStickerAttachments.setEnabled(mManager.isDefaultSmsPackage());
+        mMicAttachments.setEnabled(mManager.isDefaultSmsPackage());
     }
 
     @Override
