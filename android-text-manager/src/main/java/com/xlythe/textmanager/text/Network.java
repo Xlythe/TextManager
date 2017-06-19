@@ -65,8 +65,8 @@ public class Network {
     }
 
     private static void requestLegacy(Context context, final Callback callback) {
-        ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final int result = connMgr.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, ENABLE_MMS);
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final int result = connectivityManager.startUsingNetworkFeature(ConnectivityManager.TYPE_MOBILE, ENABLE_MMS);
 
         if (result != ALREADY_ACTIVE) {
             IntentFilter filter = new IntentFilter();

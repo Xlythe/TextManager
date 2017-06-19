@@ -18,13 +18,16 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public final class ImageAttachment extends Attachment {
+    private static final String SCHEME_FILE = "file";
+
     private transient Bitmap mBitmap;
 
     private static Bitmap toBitmap(Drawable drawable) {
@@ -111,6 +114,14 @@ public final class ImageAttachment extends Attachment {
             return null;
         }
 
+        if (SCHEME_FILE.equals(getUri().getScheme())) {
+            try {
+                return toBytes(new File(getUri().getPath()));
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to read file", e);
+            }
+        }
+
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         if (getType() == Type.HIGH_RES) {
             getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 100, stream);
@@ -118,6 +129,18 @@ public final class ImageAttachment extends Attachment {
             getBitmap(context).get().compress(Bitmap.CompressFormat.JPEG, 100, stream);
         }
         return stream.toByteArray();
+    }
+
+    private static byte[] toBytes(File file) throws IOException {
+        InputStream is = new FileInputStream(file);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int bytesRead = 0;
+        do {
+            bos.write(buffer, 0, bytesRead);
+            bytesRead = is.read(buffer);
+        } while (bytesRead != -1);
+        return bos.toByteArray();
     }
 
     private synchronized void setBitmap(Bitmap bitmap) {
