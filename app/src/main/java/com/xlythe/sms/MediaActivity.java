@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -16,14 +17,19 @@ import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.VideoAttachment;
+import com.xlythe.view.camera.Exif;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Formatter;
 import java.util.Locale;
 
 public class MediaActivity extends AppCompatActivity {
+    private static final String TAG = MediaActivity.class.getSimpleName();
+
     public static final String EXTRA_ATTACHMENT = "attachment";
     private static final int PROGRESS = 0;
+
     private Attachment mAttachment;
     private Handler mHandler = new MessageHandler(this);
     private ProgressBar mProgress;
@@ -61,8 +67,30 @@ public class MediaActivity extends AppCompatActivity {
                     show();
                 }
             });
-
         } else {
+            // Due to a bug in SubsamplingScaleImageView, it does not always read Exif rotation
+            // appropriately. We'll read it manually and adjust ourselves.
+            try {
+                Exif exif = new Exif(mAttachment.asStream(this));
+                switch (exif.getRotation()) {
+                    case 0:
+                        image.setOrientation(SubsamplingScaleImageView.ORIENTATION_0);
+                        break;
+                    case 90:
+                        image.setOrientation(SubsamplingScaleImageView.ORIENTATION_90);
+                        break;
+                    case 180:
+                        image.setOrientation(SubsamplingScaleImageView.ORIENTATION_180);
+                        break;
+                    case 270:
+                        image.setOrientation(SubsamplingScaleImageView.ORIENTATION_270);
+                        break;
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to decode attachment's exif metadata", e);
+                image.setOrientation(SubsamplingScaleImageView.ORIENTATION_USE_EXIF);
+            }
+
             mPlayer.setVisibility(View.GONE);
             mPauseButton.setVisibility(View.GONE);
             mCurrentTime.setVisibility(View.GONE);

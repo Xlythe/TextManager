@@ -50,52 +50,12 @@ public final class VideoAttachment extends Attachment {
             return new FutureImpl<byte[]>() {
                 @Override
                 public byte[] get() {
-                    byte[] videoBytes = null;
                     try {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        InputStream fis = getInputStream();
-
-                        byte[] buf = new byte[1024];
-                        int n;
-                        while (-1 != (n = fis.read(buf)))
-                            baos.write(buf, 0, n);
-
-                        videoBytes = baos.toByteArray();
-                        setBytes(videoBytes);
+                        mBytes = toBytes(asStream(context));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "Failed to decode " + getUri() + " as bytes");
                     }
-                    return videoBytes;
-                }
-
-                private InputStream getInputStream() throws FileNotFoundException {
-                    if (DEBUG) {
-                        Log.d(TAG, "getInputStream(): " + getUri());
-                    }
-
-                    // Special case for MMS
-                    if (getUri().toString().startsWith("content://mms/part")) {
-                        return context.getContentResolver().openInputStream(getUri());
-                    }
-
-                    // Special case for files from gallery
-                    Cursor cursor = null;
-                    try {
-                        String[] proj = { MediaStore.Images.Media.DATA };
-                        cursor = context.getContentResolver().query(getUri(),  proj, null, null, null);
-                        if (cursor != null) {
-                            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                            cursor.moveToFirst();
-                            return new FileInputStream(new File(cursor.getString(column_index)));
-                        }
-                    } finally {
-                        if (cursor != null) {
-                            cursor.close();
-                        }
-                    }
-
-                    // The normal case, for most files
-                    return new FileInputStream(new File(getUri().getPath()));
+                    return mBytes;
                 }
             };
         }

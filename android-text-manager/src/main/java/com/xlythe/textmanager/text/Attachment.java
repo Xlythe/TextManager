@@ -1,10 +1,24 @@
 package com.xlythe.textmanager.text;
 
+import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.MediaStore;
+import android.util.Log;
 
 import com.xlythe.textmanager.text.util.Utils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static com.xlythe.textmanager.text.TextManager.DEBUG;
+import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {
@@ -73,5 +87,52 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
     @Override
     public String toString() {
         return String.format("Attachment{type=%s, uri=%s}", getType(), getUri());
+    }
+
+    public InputStream asStream(Context context) throws IOException {
+        Uri uri = getUri();
+
+        if (DEBUG) {
+            Log.d(TAG, "getInputStream(): " + uri);
+        }
+
+        // Special case for MMS
+        if (uri.toString().startsWith("content://mms/part")) {
+            return context.getContentResolver().openInputStream(uri);
+        }
+
+        // Special case for files from gallery
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(uri,  proj, null, null, null);
+            if (cursor != null) {
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                return new FileInputStream(new File(cursor.getString(column_index)));
+            }
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        // The normal case, for most files
+        return new FileInputStream(new File(uri.getPath()));
+    }
+
+    protected static byte[] toBytes(File file) throws IOException {
+        return toBytes(new FileInputStream(file));
+    }
+
+    protected static byte[] toBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int bytesRead = 0;
+        do {
+            bos.write(buffer, 0, bytesRead);
+            bytesRead = is.read(buffer);
+        } while (bytesRead != -1);
+        return bos.toByteArray();
     }
 }

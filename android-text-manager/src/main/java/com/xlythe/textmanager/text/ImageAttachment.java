@@ -110,16 +110,16 @@ public final class ImageAttachment extends Attachment {
 
     @Nullable
     public byte[] getBytes(final Context context) {
-        if (getBitmap(context).get() == null) {
-            return null;
-        }
-
         if (SCHEME_FILE.equals(getUri().getScheme())) {
             try {
                 return toBytes(new File(getUri().getPath()));
             } catch (IOException e) {
                 Log.e(TAG, "Failed to read file", e);
             }
+        }
+
+        if (getBitmap(context).get() == null) {
+            return null;
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -129,18 +129,6 @@ public final class ImageAttachment extends Attachment {
             getBitmap(context).get().compress(Bitmap.CompressFormat.JPEG, 100, stream);
         }
         return stream.toByteArray();
-    }
-
-    private static byte[] toBytes(File file) throws IOException {
-        InputStream is = new FileInputStream(file);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead = 0;
-        do {
-            bos.write(buffer, 0, bytesRead);
-            bytesRead = is.read(buffer);
-        } while (bytesRead != -1);
-        return bos.toByteArray();
     }
 
     private synchronized void setBitmap(Bitmap bitmap) {
