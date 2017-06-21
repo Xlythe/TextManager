@@ -395,22 +395,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             uri = Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI;
             order = "normalized_date DESC";
         }
-
-        String unreadMessagesClause = String.format("%s=%s",  Mock.Telephony.Sms.READ, 0);
-        Uri inboxUri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
-
-        final String[] mmsProjection = new String[]{
-                BaseColumns._ID,
-                Mock.Telephony.Mms.Part.CONTENT_TYPE,
-                Mock.Telephony.Mms.Part.TEXT,
-                Mock.Telephony.Mms.Part._DATA,
-                Mock.Telephony.Mms.Part.MSG_ID
-        };
-        Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
-
-        Log.d(TAG, "uri: " + uri.toString());
-        Log.d(TAG, "order: " + order);
-
         Cursor threads = contentResolver.query(uri, null, null, null, order);
 
         List<String> ids = new ArrayList<>();
@@ -451,78 +435,89 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             String body = null;
             long mmsId = -1;
             int status = -1;
-            Attachment attachment = null;
 
-            if (!isMms) {
+            if (isMms) {
+                if (!PreKitKatUtils.requiresKitKatApis()) {
+                    date = date * 1000;
+                    mmsId = threads.getLong(threads.getColumnIndex(Mock.Telephony.Mms._ID));
+                    status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
+                }
+            } else {
                 if (PreKitKatUtils.requiresKitKatApis()) {
-                    Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
-                    String order5 = "normalized_date ASC";
-                    Cursor smsSamsung = contentResolver.query(uri5, PROJECTION, null, null, order5);
-                    if (smsSamsung.moveToLast()) {
-                        id = smsSamsung.getLong(smsSamsung.getColumnIndexOrThrow(BaseColumns._ID));
-                        int ti = smsSamsung.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
-                        if (ti < 0) {
-                            // Type column not in projection, use another discriminator
-                            String cType = null;
-                            int cTypeIndex = smsSamsung.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE);
-                            if (cTypeIndex >= 0) {
-                                cType = smsSamsung.getString(smsSamsung.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
-                            }
-                            // If content type is present, this is an MMS message
-                            if (cType != null) {
-                                isMms = true;
-                            } else {
-                                isMms = false;
-                            }
-                        } else {
-                            isMms = smsSamsung.getString(ti).equals("mms");
-                        }
-
-                        if (isMms) {
-                            date = date * 1000;
-                            ids.add(Long.toString(id));
-                            mmsId = smsSamsung.getLong(smsSamsung.getColumnIndex(Mock.Telephony.Mms._ID));
-                            status = smsSamsung.getInt(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
-                        } else {
-                            senderAddress = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
-                            // If the sender is null that means its a failed mms soo populate data with a different message
-                            if (senderAddress == null) {
-                                int position = smsSamsung.getPosition();
-                                while (senderAddress == null && smsSamsung.moveToNext()) {
-                                    senderAddress = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+                    Cursor smsSamsung = contentResolver.query(
+                            Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId)),
+                            PROJECTION,
+                            null,
+                            null,
+                            Mock.ORDER_NORMALIZED_DATE_ASC);
+                    try {
+                        if (smsSamsung.moveToLast()) {
+                            id = smsSamsung.getLong(smsSamsung.getColumnIndexOrThrow(BaseColumns._ID));
+                            int ti = smsSamsung.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
+                            if (ti < 0) {
+                                // Type column not in projection, use another discriminator
+                                String cType = null;
+                                int cTypeIndex = smsSamsung.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE);
+                                if (cTypeIndex >= 0) {
+                                    cType = smsSamsung.getString(smsSamsung.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
                                 }
-                                smsSamsung.moveToPosition(position);
+                                // If content type is present, this is an MMS message
+                                if (cType != null) {
+                                    isMms = true;
+                                } else {
+                                    isMms = false;
+                                }
+                            } else {
+                                isMms = smsSamsung.getString(ti).equals("mms");
                             }
-                            memberAddresses.add(senderAddress);
 
-                            body = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
-                            status = smsSamsung.getInt(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
+                            if (isMms) {
+                                date = date * 1000;
+                                ids.add(Long.toString(id));
+                                mmsId = smsSamsung.getLong(smsSamsung.getColumnIndex(Mock.Telephony.Mms._ID));
+                                status = smsSamsung.getInt(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
+                            } else {
+                                senderAddress = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+                                // If the sender is null that means its a failed mms soo populate data with a different message
+                                if (senderAddress == null) {
+                                    int position = smsSamsung.getPosition();
+                                    while (senderAddress == null && smsSamsung.moveToNext()) {
+                                        senderAddress = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+                                    }
+                                    smsSamsung.moveToPosition(position);
+                                }
+                                memberAddresses.add(senderAddress);
+
+                                body = smsSamsung.getString(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
+                                status = smsSamsung.getInt(smsSamsung.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
+                            }
                         }
+                    } finally {
+                        smsSamsung.close();
                     }
                 } else {
                     senderAddress = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
 
-                    // If the sender is null that means its a failed mms soo populate data with a different message
+                    // If the sender is null that means its a failed mms, so populate data with a different message
                     if (senderAddress == null || senderAddress.equals(UNKNOWN)) {
-                        Uri uri5 = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId));
-                        String order5 = "normalized_date ASC";
-                        Cursor smsFailed = contentResolver.query(uri5, PROJECTION, null, null, order5);
-                        int position = smsFailed.getPosition();
-                        while ((senderAddress == null || senderAddress.equals(UNKNOWN)) && smsFailed.moveToNext()) {
-                            senderAddress = smsFailed.getString(smsFailed.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+                        Cursor smsFailed = contentResolver.query(
+                                Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId)),
+                                PROJECTION,
+                                null,
+                                null,
+                                Mock.ORDER_NORMALIZED_DATE_ASC);
+                        try {
+                            while ((senderAddress == null || senderAddress.equals(UNKNOWN)) && smsFailed.moveToNext()) {
+                                senderAddress = smsFailed.getString(smsFailed.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
+                            }
+                        } finally {
+                            smsFailed.close();
                         }
-                        smsFailed.moveToPosition(position);
                     }
                     memberAddresses.add(senderAddress);
 
                     body = threads.getString(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
                     status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
-                }
-            } else {
-                if (!PreKitKatUtils.requiresKitKatApis()) {
-                    date = date * 1000;
-                    mmsId = threads.getLong(threads.getColumnIndex(Mock.Telephony.Mms._ID));
-                    status = threads.getInt(threads.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
                 }
             }
 
@@ -537,7 +532,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     isMms,
                     senderAddress,
                     memberAddresses,
-                    attachment
+                    null /* attachment */
             ));
         }
 
@@ -549,30 +544,45 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             mmsClause += " OR " + Mock.Telephony.Mms.Part.MSG_ID + " = ?";
         }
 
+        String unreadMessagesClause = String.format("%s=%s",  Mock.Telephony.Sms.READ, 0);
+        Uri inboxUri = Mock.Telephony.Sms.Inbox.CONTENT_URI;
+
+        final String[] mmsProjection = new String[]{
+                BaseColumns._ID,
+                Mock.Telephony.Mms.Part.CONTENT_TYPE,
+                Mock.Telephony.Mms.Part.TEXT,
+                Mock.Telephony.Mms.Part._DATA,
+                Mock.Telephony.Mms.Part.MSG_ID
+        };
+        Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
         Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause, mmsArgs, null);
 
-        for (Text text : recentTexts) {
-            mms.moveToFirst();
-            while (mms.moveToNext()) {
-                if (mms.getLong(mms.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
-                    String contentType = mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
-                    if (contentType == null) {
-                        continue;
-                    }
+        try {
+            for (Text text : recentTexts) {
+                mms.moveToFirst();
+                while (mms.moveToNext()) {
+                    if (mms.getLong(mms.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
+                        String contentType = mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
+                        if (contentType == null) {
+                            continue;
+                        }
 
-                    if (contentType.matches("image/.*")) {
-                        // Find any part that is an image attachment
-                        long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-                        text.setAttachment(new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
-                    } else if (contentType.matches("text/.*")) {
-                        // Find any part that is text data
-                        text.setBody(mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.TEXT)));
-                    } else if (contentType.matches("video/.*")) {
-                        long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-                        text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                        if (contentType.matches("image/.*")) {
+                            // Find any part that is an image attachment
+                            long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
+                            text.setAttachment(new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                        } else if (contentType.matches("text/.*")) {
+                            // Find any part that is text data
+                            text.setBody(mms.getString(mms.getColumnIndex(Mock.Telephony.Mms.Part.TEXT)));
+                        } else if (contentType.matches("video/.*")) {
+                            long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
+                            text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                        }
                     }
                 }
             }
+        } finally {
+            mms.close();
         }
 
         return new Thread.ThreadCursor(threads,

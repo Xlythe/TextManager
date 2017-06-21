@@ -20,6 +20,8 @@ public class Mock {
     public static final String MANUFACTURER_ZTE = "zte";
     public static final String MANUFACTURER_SYMPHONY = "symphony teleca";
 
+    public static final String ORDER_NORMALIZED_DATE_ASC = "normalized_date ASC";
+
     private Mock() {}
 
     public static final class Telephony {
