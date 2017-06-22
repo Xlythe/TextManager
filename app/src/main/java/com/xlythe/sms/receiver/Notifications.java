@@ -102,7 +102,8 @@ public class Notifications {
         Log.v(TAG, "Building group summary");
         context = context.getApplicationContext();
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context).setSmallIcon(R.drawable.fetch_icon_notif)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.fetch_icon_notif)
                 .setColor(context.getResources().getColor(R.color.colorPrimary))
                 .setAutoCancel(true)
                 .setDeleteIntent(buildOnDismissIntent(context, id, texts, true /*dismissAll*/))
