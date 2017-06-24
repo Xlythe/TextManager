@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private Thread.ThreadCursor mThreads;
 
     private ViewGroup mEmptyState;
-    private AppBarLayout mAppbar;
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private RecyclerView mRecyclerView;
@@ -74,6 +73,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
 
+    private boolean mActionBarCollapsed = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,8 +86,12 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
-
-        mAppbar = (AppBarLayout) findViewById(R.id.appbar);
+        ((AppBarLayout) findViewById(R.id.appbar)).addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                mActionBarCollapsed = verticalOffset < 0;
+            }
+        });
 
         mRecyclerView = (RecyclerView) findViewById(R.id.list);
         mEmptyState = (ViewGroup) findViewById(R.id.empty_state);
@@ -222,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             mActionMode = startSupportActionMode(mActionModeCallback);
         }
         toggleSelection(thread);
+
         return true;
     }
 
@@ -234,6 +240,10 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         } else {
             mActionMode.setTitle(getString(R.string.title_selection, count));
             mActionMode.invalidate();
+
+            if (mActionBarCollapsed) {
+                mRecyclerView.scrollBy(0, mToolbar.getHeight());
+            }
         }
     }
 
