@@ -17,6 +17,8 @@
 
 package com.xlythe.textmanager.text.util;
 
+import android.util.SparseArray;
+
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 
@@ -115,13 +117,11 @@ public class CharacterSets {
             MIMENAME_UTF_16,
     };
 
-    private static final HashMap<Integer, String> MIBENUM_TO_NAME_MAP;
-    private static final HashMap<String, Integer> NAME_TO_MIBENUM_MAP;
+    private static final SparseArray<String> MIBENUM_TO_NAME_MAP = new SparseArray<>();
+    private static final HashMap<String, Integer> NAME_TO_MIBENUM_MAP = new HashMap<>();
 
     static {
         // Create the HashMaps.
-        MIBENUM_TO_NAME_MAP = new HashMap<Integer, String>();
-        NAME_TO_MIBENUM_MAP = new HashMap<String, Integer>();
         assert(MIBENUM_NUMBERS.length == MIME_NAMES.length);
         int count = MIBENUM_NUMBERS.length - 1;
         for(int i = 0; i <= count; i++) {
@@ -138,7 +138,7 @@ public class CharacterSets {
      *
      * @param mibEnumValue An IANA assigned MIBEnum number.
      * @return The name string of the charset.
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException when value is not found.
      */
     public static String getMimeName(int mibEnumValue)
             throws UnsupportedEncodingException {
@@ -154,7 +154,7 @@ public class CharacterSets {
      *
      * @param mimeName The charset name.
      * @return The MIBEnum number assigned by IANA for this charset.
-     * @throws UnsupportedEncodingException
+     * @throws UnsupportedEncodingException when mime is not found.
      */
     public static int getMibEnumValue(String mimeName)
             throws UnsupportedEncodingException {

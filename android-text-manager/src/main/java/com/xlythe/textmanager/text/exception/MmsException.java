@@ -1,8 +1,5 @@
 package com.xlythe.textmanager.text.exception;
 
-/**
- * Created by Niko on 12/16/15.
- */
 public class MmsException extends Exception {
     /**
      * Creates a new MmsException.
@@ -10,6 +7,7 @@ public class MmsException extends Exception {
     public MmsException() {
         super();
     }
+
     /**
      * Creates a new MmsException with the specified detail message.
      *
@@ -18,6 +16,7 @@ public class MmsException extends Exception {
     public MmsException(String message) {
         super(message);
     }
+
     /**
      * Creates a new MmsException with the specified cause.
      *
@@ -26,6 +25,7 @@ public class MmsException extends Exception {
     public MmsException(Throwable cause) {
         super(cause);
     }
+
     /**
      * Creates a new MmsException with the specified detail message and cause.
      *

@@ -8,19 +8,19 @@ import org.apache.http.entity.ByteArrayEntity;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ProgressCallbackEntity extends ByteArrayEntity {
+class ProgressCallbackEntity extends ByteArrayEntity {
     private static final int DEFAULT_PIECE_SIZE = 4096;
 
-    public static final String PROGRESS_STATUS_ACTION = "com.android.mms.PROGRESS_STATUS";
-    public static final int PROGRESS_START    = -1;
-    public static final int PROGRESS_ABORT    = -2;
-    public static final int PROGRESS_COMPLETE = 100;
+    private static final String PROGRESS_STATUS_ACTION = "com.android.mms.PROGRESS_STATUS";
+    private static final int PROGRESS_START    = -1;
+    private static final int PROGRESS_ABORT    = -2;
+    private static final int PROGRESS_COMPLETE = 100;
 
     private final Context mContext;
     private final byte[] mContent;
     private final long mToken;
 
-    public ProgressCallbackEntity(Context context, long token, byte[] b) {
+    ProgressCallbackEntity(Context context, long token, byte[] b) {
         super(b);
 
         mContext = context;

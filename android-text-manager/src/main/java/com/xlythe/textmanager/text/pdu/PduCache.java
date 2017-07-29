@@ -19,17 +19,18 @@ package com.xlythe.textmanager.text.pdu;
 import android.content.ContentUris;
 import android.content.UriMatcher;
 import android.net.Uri;
-import android.provider.Telephony.Mms;
+import android.support.v4.util.LongSparseArray;
 import android.util.Log;
+import android.util.SparseArray;
+import android.util.SparseIntArray;
 
+import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.util.AbstractCache;
 
-import java.util.HashMap;
 import java.util.HashSet;
 
 public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     private static final String TAG = "PduCache";
-    private static final boolean DEBUG = false;
     private static final boolean LOCAL_LOGV = false;
 
     private static final int MMS_ALL             = 0;
@@ -46,7 +47,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     private static final int MMS_CONVERSATION_ID = 11;
 
     private static final UriMatcher URI_MATCHER;
-    private static final HashMap<Integer, Integer> MATCH_TO_MSGBOX_ID_MAP;
+    private static final SparseIntArray MATCH_TO_MSGBOX_ID_MAP = new SparseIntArray();
 
     private static PduCache sInstance;
 
@@ -65,24 +66,20 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         URI_MATCHER.addURI("mms-sms", "conversations",   MMS_CONVERSATION);
         URI_MATCHER.addURI("mms-sms", "conversations/#", MMS_CONVERSATION_ID);
 
-        MATCH_TO_MSGBOX_ID_MAP = new HashMap<Integer, Integer>();
-        MATCH_TO_MSGBOX_ID_MAP.put(MMS_INBOX,  Mms.MESSAGE_BOX_INBOX);
-        MATCH_TO_MSGBOX_ID_MAP.put(MMS_SENT,   Mms.MESSAGE_BOX_SENT);
-        MATCH_TO_MSGBOX_ID_MAP.put(MMS_DRAFTS, Mms.MESSAGE_BOX_DRAFTS);
-        MATCH_TO_MSGBOX_ID_MAP.put(MMS_OUTBOX, Mms.MESSAGE_BOX_OUTBOX);
+        MATCH_TO_MSGBOX_ID_MAP.put(MMS_INBOX,  Mock.Telephony.Mms.MESSAGE_BOX_INBOX);
+        MATCH_TO_MSGBOX_ID_MAP.put(MMS_SENT,   Mock.Telephony.Mms.MESSAGE_BOX_SENT);
+        MATCH_TO_MSGBOX_ID_MAP.put(MMS_DRAFTS, Mock.Telephony.Mms.MESSAGE_BOX_DRAFTS);
+        MATCH_TO_MSGBOX_ID_MAP.put(MMS_OUTBOX, Mock.Telephony.Mms.MESSAGE_BOX_OUTBOX);
     }
 
-    private final HashMap<Integer, HashSet<Uri>> mMessageBoxes;
-    private final HashMap<Long, HashSet<Uri>> mThreads;
-    private final HashSet<Uri> mUpdating;
+    private final SparseArray<HashSet<Uri>> mMessageBoxes = new SparseArray<>();
+    private final LongSparseArray<HashSet<Uri>> mThreads = new LongSparseArray<>();
+    private final HashSet<Uri> mUpdating = new HashSet<>();
 
     private PduCache() {
-        mMessageBoxes = new HashMap<Integer, HashSet<Uri>>();
-        mThreads = new HashMap<Long, HashSet<Uri>>();
-        mUpdating = new HashSet<Uri>();
     }
 
-    synchronized public static final PduCache getInstance() {
+    public static synchronized PduCache getInstance() {
         if (sInstance == null) {
             if (LOCAL_LOGV) {
                 Log.v(TAG, "Constructing new PduCache instance.");
@@ -93,7 +90,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     }
 
     @Override
-    synchronized public boolean put(Uri uri, PduCacheEntry entry) {
+    public synchronized boolean put(Uri uri, PduCacheEntry entry) {
         int msgBoxId = entry.getMessageBox();
         HashSet<Uri> msgBox = mMessageBoxes.get(msgBoxId);
         if (msgBox == null) {
@@ -118,7 +115,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         return result;
     }
 
-    synchronized public void setUpdating(Uri uri, boolean updating) {
+    synchronized void setUpdating(Uri uri, boolean updating) {
         if (updating) {
             mUpdating.add(uri);
         } else {
@@ -126,12 +123,12 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         }
     }
 
-    synchronized public boolean isUpdating(Uri uri) {
+    synchronized boolean isUpdating(Uri uri) {
         return mUpdating.contains(uri);
     }
 
     @Override
-    synchronized public PduCacheEntry purge(Uri uri) {
+    public synchronized PduCacheEntry purge(Uri uri) {
         int match = URI_MATCHER.match(uri);
         switch (match) {
             case MMS_ALL_ID:
@@ -141,7 +138,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
             case MMS_DRAFTS_ID:
             case MMS_OUTBOX_ID:
                 String msgId = uri.getLastPathSegment();
-                return purgeSingleEntry(Uri.withAppendedPath(Mms.CONTENT_URI, msgId));
+                return purgeSingleEntry(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, msgId));
             // Implicit batch of purge, return null.
             case MMS_ALL:
             case MMS_CONVERSATION:
@@ -173,7 +170,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     }
 
     @Override
-    synchronized public void purgeAll() {
+    public synchronized void purgeAll() {
         super.purgeAll();
 
         mMessageBoxes.clear();
@@ -198,7 +195,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
             case MMS_DRAFTS_ID:
             case MMS_OUTBOX_ID:
                 String msgId = uri.getLastPathSegment();
-                normalizedKey = Uri.withAppendedPath(Mms.CONTENT_URI, msgId);
+                normalizedKey = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, msgId);
                 break;
             default:
                 return null;
@@ -216,7 +213,8 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         }
 
         if (msgBoxId != null) {
-            HashSet<Uri> msgBox = mMessageBoxes.remove(msgBoxId);
+            HashSet<Uri> msgBox = mMessageBoxes.get(msgBoxId);
+            mMessageBoxes.remove(msgBoxId);
             if (msgBox != null) {
                 for (Uri key : msgBox) {
                     mUpdating.remove(key);
@@ -241,7 +239,8 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
             Log.v(TAG, "Purge cache in thread: " + threadId);
         }
 
-        HashSet<Uri> thread = mThreads.remove(threadId);
+        HashSet<Uri> thread = mThreads.get(threadId);
+        mThreads.remove(threadId);
         if (thread != null) {
             for (Uri key : thread) {
                 mUpdating.remove(key);
@@ -254,7 +253,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     }
 
     private void removeFromMessageBoxes(Uri key, PduCacheEntry entry) {
-        HashSet<Uri> msgBox = mThreads.get(Long.valueOf(entry.getMessageBox()));
+        HashSet<Uri> msgBox = mThreads.get(entry.getMessageBox());
         if (msgBox != null) {
             msgBox.remove(key);
         }

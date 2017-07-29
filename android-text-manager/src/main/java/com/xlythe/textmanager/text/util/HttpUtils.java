@@ -20,14 +20,9 @@ import org.apache.http.params.HttpProtocolParams;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.SocketException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Locale;
 
-/**
- * Created by Niko on 7/28/15.
- */
 public class HttpUtils {
     private static final String DEFAULT_HTTP_KEY_X_WAP_PROFILE = "x-wap-profile";
     private static final String DEFAULT_USER_AGENT = "Android-Mms/2.0";
@@ -35,18 +30,13 @@ public class HttpUtils {
     /**
      * Whether to hide MMS functionality from the user (i.e. SMS only).
      */
-    private static int mMaxMessageSize = 300 * 1024;            // default to 300k max size
-    private static String mUserAgent = DEFAULT_USER_AGENT;
-    private static String mUaProfTagName = DEFAULT_HTTP_KEY_X_WAP_PROFILE;
-    private static String mUaProfUrl = null;
-    private static String mHttpParams = null;
-    private static String mHttpParamsLine1Key = null;
-    private static int mHttpSocketTimeout = 60*1000;            // default to 1 min
+    private static final int MAX_MESSAGE_SIZE = 300 * 1024;            // default to 300k max size
+    private static final String USER_AGENT = DEFAULT_USER_AGENT;
+    private static final String UA_PROF_TAG_NAME = DEFAULT_HTTP_KEY_X_WAP_PROFILE;
+    private static final int HTTP_SOCKET_TIMEOUT = 60*1000;            // default to 1 min
 
     public static final int HTTP_POST_METHOD = 1;
     public static final int HTTP_GET_METHOD = 2;
-
-    private static final int MMS_READ_BUFFER = 4096;
 
     // This is the value to use for the "Accept-Language" header.
     // Once it becomes possible for the user to change the locale
@@ -97,6 +87,10 @@ public class HttpUtils {
         Log.v("HttpUtils", "\tproxyHost\t= " + proxyHost);
         Log.v("HttpUtils", "\tproxyPort\t= " + proxyPort);
 
+        String mUaProfUrl = null;
+        String mHttpParams = null;
+        String mHttpParamsLine1Key = null;
+
         AndroidHttpClient client = null;
 
         try {
@@ -136,7 +130,7 @@ public class HttpUtils {
             // Set necessary HTTP headers for MMS transmission.
             req.addHeader(HDR_KEY_ACCEPT, HDR_VALUE_ACCEPT);
             {
-                String xWapProfileTagName = mUaProfTagName;
+                String xWapProfileTagName = UA_PROF_TAG_NAME;
                 String xWapProfileUrl = mUaProfUrl;
 
                 if (xWapProfileUrl != null) {
@@ -188,7 +182,7 @@ public class HttpUtils {
 
             // HTTP 200 is success.
             if (status.getStatusCode() != 200 && status.getStatusCode() != 201) {
-                throw new IOException(String.format("HTTP error[%d]: %s", status.getStatusCode(), status.getReasonPhrase()));
+                throw new IOException(String.format(Locale.ENGLISH, "HTTP error[%d]: %s", status.getStatusCode(), status.getReasonPhrase()));
             }
 
             HttpEntity entity = response.getEntity();
@@ -210,7 +204,7 @@ public class HttpUtils {
                     }
                     if (entity.isChunked()) {
                         Log.v("HttpUtils", "httpConnection: transfer encoding is chunked");
-                        int bytesTobeRead = mMaxMessageSize;
+                        int bytesTobeRead = MAX_MESSAGE_SIZE;
                         byte[] tempBody = new byte[bytesTobeRead];
                         DataInputStream dis = new DataInputStream(entity.getContent());
                         try {
@@ -250,20 +244,10 @@ public class HttpUtils {
                         }
                     }
                 } finally {
-                    if (entity != null) {
-                        entity.consumeContent();
-                    }
+                    entity.consumeContent();
                 }
             }
             return body;
-        } catch (URISyntaxException e) {
-            handleHttpConnectionException(e, url);
-        } catch (IllegalStateException e) {
-            handleHttpConnectionException(e, url);
-        } catch (IllegalArgumentException e) {
-            handleHttpConnectionException(e, url);
-        } catch (SocketException e) {
-            handleHttpConnectionException(e, url);
         } catch (Exception e) {
             handleHttpConnectionException(e, url);
         }
@@ -279,19 +263,17 @@ public class HttpUtils {
             throws IOException {
         // Inner exception should be logged to make life easier.
         Log.e("HttpUtils", "Url: " + url + "\n" + exception.getMessage(), exception);
-        IOException e = new IOException(exception.getMessage());
-        e.initCause(exception);
-        throw e;
+        throw new IOException(exception);
     }
 
     private static AndroidHttpClient createHttpClient(Context context) {
-        String userAgent = mUserAgent;
+        String userAgent = USER_AGENT;
         AndroidHttpClient client = AndroidHttpClient.newInstance(userAgent, context);
         HttpParams params = client.getParams();
         HttpProtocolParams.setContentCharset(params, "UTF-8");
 
         // set the socket timeout
-        int soTimeout = mHttpSocketTimeout;
+        int soTimeout = HTTP_SOCKET_TIMEOUT;
 
         Log.d("HttpUtils", "[HttpUtils] createHttpClient w/ socket timeout " + soTimeout + " ms, "
                 + ", UA=" + userAgent);
@@ -307,7 +289,7 @@ public class HttpUtils {
      * This code copied from the browser's WebSettings.java
      * @return Current AcceptLanguage String.
      */
-    public static String getCurrentAcceptLanguage(Locale locale) {
+    private static String getCurrentAcceptLanguage(Locale locale) {
         StringBuilder buffer = new StringBuilder();
         addLocaleToHttpAcceptLanguage(buffer, locale);
 
@@ -342,8 +324,7 @@ public class HttpUtils {
         return langCode;
     }
 
-    private static void addLocaleToHttpAcceptLanguage(StringBuilder builder,
-                                                      Locale locale) {
+    private static void addLocaleToHttpAcceptLanguage(StringBuilder builder, Locale locale) {
         String language = convertObsoleteLanguageCodeToNew(locale.getLanguage());
         if (language != null) {
             builder.append(language);

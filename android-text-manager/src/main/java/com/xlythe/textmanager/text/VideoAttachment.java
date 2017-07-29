@@ -1,25 +1,17 @@
 package com.xlythe.textmanager.text;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 
-import static com.xlythe.textmanager.text.TextManager.DEBUG;
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public final class VideoAttachment extends Attachment {

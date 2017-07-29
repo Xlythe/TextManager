@@ -21,17 +21,17 @@ public class Base64 {
     /**
      * Used to get the number of Quadruples.
      */
-    static final int FOURBYTE = 4;
+    private static final int FOURBYTE = 4;
 
     /**
      * Byte used to pad output.
      */
-    static final byte PAD = (byte) '=';
+    private static final byte PAD = (byte) '=';
 
     /**
      * The base length.
      */
-    static final int BASELENGTH = 255;
+    private static final int BASELENGTH = 255;
 
     // Create arrays to hold the base64 characters
     private static byte[] base64Alphabet = new byte[BASELENGTH];
@@ -148,13 +148,13 @@ public class Base64 {
      * @param data The base-64 encoded data to groom
      * @return The data, less non-base64 characters (see RFC 2045).
      */
-    static byte[] discardNonBase64(byte[] data) {
+    private static byte[] discardNonBase64(byte[] data) {
         byte groomedData[] = new byte[data.length];
         int bytesCopied = 0;
 
-        for (int i = 0; i < data.length; i++) {
-            if (isBase64(data[i])) {
-                groomedData[bytesCopied++] = data[i];
+        for (byte b : data) {
+            if (isBase64(b)) {
+                groomedData[bytesCopied++] = b;
             }
         }
 

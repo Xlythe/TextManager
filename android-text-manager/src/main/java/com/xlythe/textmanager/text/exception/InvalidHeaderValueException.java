@@ -10,6 +10,7 @@ public class InvalidHeaderValueException extends MmsException {
     public InvalidHeaderValueException() {
         super();
     }
+
     /**
      * Constructs an InvalidHeaderValueException with the specified detailed message.
      *

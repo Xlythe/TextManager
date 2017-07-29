@@ -29,7 +29,6 @@ import java.util.ArrayList;
  */
 public class EncodedStringValue implements Cloneable {
     private static final String TAG = "EncodedStringValue";
-    private static final boolean DEBUG = false;
     private static final boolean LOCAL_LOGV = false;
 
     /**
@@ -86,16 +85,6 @@ public class EncodedStringValue implements Cloneable {
      */
     public int getCharacterSet() {
         return mCharacterSet;
-    }
-
-    /**
-     * Set Char-set value.
-     *
-     * @param charset the Char-set value
-     */
-    public void setCharacterSet(int charset) {
-        // TODO: CharSet needs to be validated against MIBEnum.
-        mCharacterSet = charset;
     }
 
     /**
@@ -203,28 +192,6 @@ public class EncodedStringValue implements Cloneable {
     }
 
     /**
-     * Split this encoded string around matches of the given pattern.
-     *
-     * @param pattern the delimiting pattern
-     * @return the array of encoded strings computed by splitting this encoded
-     *         string around matches of the given pattern
-     */
-    public EncodedStringValue[] split(String pattern) {
-        String[] temp = getString().split(pattern);
-        EncodedStringValue[] ret = new EncodedStringValue[temp.length];
-        for (int i = 0; i < ret.length; ++i) {
-            try {
-                ret[i] = new EncodedStringValue(mCharacterSet,
-                        temp[i].getBytes());
-            } catch (NullPointerException _) {
-                // Can't arrive here
-                return null;
-            }
-        }
-        return ret;
-    }
-
-    /**
      * Extract an EncodedStringValue[] from a given String.
      */
     public static EncodedStringValue[] extract(String src) {
@@ -245,39 +212,11 @@ public class EncodedStringValue implements Cloneable {
         }
     }
 
-    /**
-     * Concatenate an EncodedStringValue[] into a single String.
-     */
-    public static String concat(EncodedStringValue[] addr) {
-        StringBuilder sb = new StringBuilder();
-        int maxIndex = addr.length - 1;
-        for (int i = 0; i <= maxIndex; i++) {
-            sb.append(addr[i].getString());
-            if (i < maxIndex) {
-                sb.append(";");
-            }
-        }
-
-        return sb.toString();
-    }
-
     public static EncodedStringValue copy(EncodedStringValue value) {
         if (value == null) {
             return null;
         }
 
         return new EncodedStringValue(value.mCharacterSet, value.mData);
-    }
-
-    public static EncodedStringValue[] encodeStrings(String[] array) {
-        int count = array.length;
-        if (count > 0) {
-            EncodedStringValue[] encodedArray = new EncodedStringValue[count];
-            for (int i = 0; i < count; i++) {
-                encodedArray[i] = new EncodedStringValue(array[i]);
-            }
-            return encodedArray;
-        }
-        return null;
     }
 }
