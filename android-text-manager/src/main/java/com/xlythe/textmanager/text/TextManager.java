@@ -804,7 +804,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     /**
-     * Santizies a phone number, stripping out any extensions and country codes.
+     * Sanitizes a phone number, stripping out any extensions and country codes.
      *
      * WARNING: If you then try to send a text to this number (and it was international),
      * the text will not send. The country code was stripped out.

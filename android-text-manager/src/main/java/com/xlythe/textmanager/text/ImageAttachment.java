@@ -44,7 +44,7 @@ public final class ImageAttachment extends Attachment {
         File file = new File(context.getCacheDir(), name + ".jpg");
         try {
             FileOutputStream out = new FileOutputStream(file);
-            if (type == Type.HIGH_RES) {
+            if (type == Type.HIGH_RES_IMAGE) {
                 image.compress(Bitmap.CompressFormat.PNG, 100, out);
             } else {
                 image.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -121,7 +121,7 @@ public final class ImageAttachment extends Attachment {
         }
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        if (getType() == Type.HIGH_RES) {
+        if (getType() == Type.HIGH_RES_IMAGE) {
             getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 100, stream);
         } else {
             getBitmap(context).get().compress(Bitmap.CompressFormat.JPEG, 100, stream);

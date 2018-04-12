@@ -51,11 +51,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- BroadcastReceiver that listens for deletion of notification -->
-        <receiver android:name=".receiver.Notifications$OnDismissReceiver"/>
+        <!-- Part of the custom NotificationManager class -->
+        <receiver android:name=".notification.MessageBasedNotificationManager$InlineReplyReceiver"/>
+        <receiver android:name=".notification.MessageBasedNotificationManager$OnDismissReceiver"/>
 
         <!-- BroadcastReceiver that listens for replies to notifications -->
-        <receiver android:name=".receiver.Notifications$OnReplyReceiver"/>
+        <receiver android:name=".receiver.MessageReceiver$OnQuickReplyReceiver"/>
 
         <!-- Shows all the user's texts -->
         <activity

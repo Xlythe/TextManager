@@ -336,7 +336,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                         break;
                     }
                     break;
-                case HIGH_RES:
+                case HIGH_RES_IMAGE:
                     nameBytes = "image".getBytes();
                     typeBytes = ContentType.IMAGE_PNG.getBytes();
                     dataBytes = ((ImageAttachment) mAttachment).getBytes(context);

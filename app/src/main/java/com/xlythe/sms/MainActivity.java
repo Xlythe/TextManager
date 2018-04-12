@@ -26,7 +26,7 @@ import android.widget.Button;
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.HeadersDecoration;
 import com.xlythe.sms.decoration.ThreadsItemDecoration;
-import com.xlythe.sms.receiver.Notifications;
+import com.xlythe.sms.notification.MessageBasedNotificationManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.Text;
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Notifications.dismissAllNotifications(getApplicationContext());
+        MessageBasedNotificationManager.from(this).cancelAll();
 
         mManager = TextManager.getInstance(getApplicationContext());
 

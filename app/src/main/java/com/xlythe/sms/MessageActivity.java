@@ -32,7 +32,7 @@ import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.fragment.StickerFragment;
-import com.xlythe.sms.receiver.Notifications;
+import com.xlythe.sms.notification.MessageBasedNotificationManager;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.swap.SwapEditText;
 import com.xlythe.textmanager.MessageObserver;
@@ -432,7 +432,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     @Override
     protected void onResume() {
         super.onResume();
-        Notifications.dismissNotification(getApplicationContext(), mThread);
+        MessageBasedNotificationManager.from(this).cancelThread(mThread.getId());
         mManager.markAsRead(mThread);
         sActiveThread = mThread;
     }

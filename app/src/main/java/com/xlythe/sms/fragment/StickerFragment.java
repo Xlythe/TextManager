@@ -44,7 +44,7 @@ public class StickerFragment extends Fragment {
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Sticker sticker) {
-                TextManager.getInstance(getContext()).send(new ImageAttachment(sticker.getUri(getContext()), Attachment.Type.HIGH_RES)).to(mText);
+                TextManager.getInstance(getContext()).send(new ImageAttachment(sticker.getUri(getContext()), Attachment.Type.HIGH_RES_IMAGE)).to(mText);
             }
 
             @Override
