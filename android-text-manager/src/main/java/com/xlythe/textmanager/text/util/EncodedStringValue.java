@@ -134,7 +134,7 @@ public class EncodedStringValue implements Cloneable {
                 }
                 try {
                     return new String(mData, CharacterSets.MIMENAME_ISO_8859_1);
-                } catch (UnsupportedEncodingException _) {
+                } catch (UnsupportedEncodingException e1) {
                     return new String(mData); // system default encoding.
                 }
             }

@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.WorkerThread;
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -46,24 +47,19 @@ public class SendService extends IntentService {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    @WorkerThread
     @Override
     protected void onHandleIntent(Intent intent) {
         final Text text = intent.getParcelableExtra(TEXT_EXTRA);
         final Uri uri = intent.getData();
 
         if (text.isMms()) {
-            final PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
-            Network.forceDataConnection(this, new Network.Callback() {
-                @Override
-                public void onSuccess() {
-                    sendMMS(getBaseContext(), text, sentMmsPendingIntent);
-                }
-
-                @Override
-                public void onFail() {
-                    sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
-                }
-            });
+            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
+            if (Network.forceDataConnection(this)) {
+                sendMMS(getBaseContext(), text, sentMmsPendingIntent);
+            } else {
+                sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
+            }
         } else {
             sendSMS(this, text, uri);
         }
