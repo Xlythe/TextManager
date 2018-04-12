@@ -31,6 +31,7 @@ dependencies {
     implementation 'com.android.support:cardview-v7:+'
     implementation 'com.android.support:support-v4:+'
     implementation 'com.android.support:design:+'
+    implementation 'com.android.support:exifinterface:+'
     implementation project(':android-text-manager'), withoutSupportLib
     implementation 'org.lucasr.twowayview:twowayview:0.1.4', withoutSupportLib
     implementation 'com.google.code.gson:gson:2.8.0', withoutSupportLib

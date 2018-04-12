@@ -17,6 +17,8 @@ import android.provider.BaseColumns;
 import android.provider.BlockedNumberContract;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
+import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -53,7 +55,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";
     private static final String TEXT_EXTRA = "text";
-    public static final String[] PROJECTION = new String[] {
+    private static final String[] PROJECTION = new String[] {
             // Determine if message is SMS or MMS
             Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
             // Base item ID
@@ -78,7 +80,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public static synchronized TextManager getInstance(Context context) {
         if (sTextManager == null) {
-            sTextManager = new TextManager(context);
+            sTextManager = new TextManager(context.getApplicationContext());
         }
         return sTextManager;
     }
@@ -100,70 +102,77 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-    private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
-        Context mContext;
-        public ReceivePushTask(Context context) {
+    private static class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
+        private final Context mContext;
+
+        ReceivePushTask(Context context) {
             mContext = context;
         }
 
+        @WorkerThread
         @Override
         protected Void doInBackground(Intent... intents) {
             Text text = intents[0].getParcelableExtra(TEXT_EXTRA);
-            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
-            wl.acquire();
-            final Uri uri = Uri.withAppendedPath(Mock.Telephony.Mms.Inbox.CONTENT_URI, text.getId());
+            PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            try {
+                wakelock.acquire();
 
-            final String[] proj = new String[] {
+                Uri databaseUri = Uri.withAppendedPath(Mock.Telephony.Mms.Inbox.CONTENT_URI, text.getId());
+                String url = getContentUrl(databaseUri);
+                if (url == null) {
+                    Log.e(TAG, "Failed to parse text " + text + ". Unable to receive text.");
+                    return null;
+                }
+
+                if (!Network.forceDataConnection(mContext)) {
+                    Log.e(TAG, "Failed to connect to a mobile network. Unable to receive text " + text);
+                    return null;
+                }
+
+                byte[] data = Receive.receive(mContext, url);
+                RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
+
+                PduPersister persister = PduPersister.getPduPersister(mContext);
+                Uri msgUri;
+                try {
+                    msgUri = persister.persist(retrieveConf, databaseUri, true, true, null);
+
+                    // Use local time instead of PDU time
+                    ContentValues values = new ContentValues(1);
+                    values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+                    values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+                    mContext.getContentResolver().update(msgUri, values, null, null);
+                } catch (MmsException e) {
+                    Log.e(TAG, "Failed to persist text " + text);
+                    return null;
+                }
+            } finally {
+                wakelock.release();
+            }
+
+            return null;
+        }
+
+        @Nullable
+        private String getContentUrl(Uri uri) {
+            String[] projection = new String[] {
                     Mock.Telephony.Mms.CONTENT_LOCATION
             };
-
-            Cursor cursor = mContext.getContentResolver().query(uri, proj, null, null, null);
-            final String url;
-
-            if (cursor != null) {
-                try {
-                    if ((cursor.getCount() == 1) && cursor.moveToFirst()) {
-                        url = cursor.getString(COLUMN_CONTENT_LOCATION);
-                    } else {
-                        return null;
-                    }
-                } finally {
-                    cursor.close();
-                }
-            } else {
+            Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null);
+            if (cursor == null) {
                 return null;
             }
 
-            Network.forceDataConnection(mContext, new Network.Callback() {
-                @Override
-                public void onSuccess() {
-                    byte[] data = Receive.receive(mContext, url);
-                    RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
-
-                    PduPersister persister = PduPersister.getPduPersister(mContext);
-                    Uri msgUri;
-                    try {
-                        msgUri = persister.persist(retrieveConf, uri, true, true, null);
-
-                        // Use local time instead of PDU time
-                        ContentValues values = new ContentValues(1);
-                        values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-                        mContext.getContentResolver().update(msgUri, values, null, null);
-                    } catch (MmsException e) {
-                        Log.e(TAG, "unable to persist message");
-                    }
+            try {
+                if (cursor.getCount() != 1 || !cursor.moveToFirst()) {
+                    return null;
                 }
 
-                @Override
-                public void onFail() {
-
-                }
-            });
-
-            wl.release();
-            return null;
+                return cursor.getString(COLUMN_CONTENT_LOCATION);
+            } finally {
+                cursor.close();
+            }
         }
     }
 
@@ -311,7 +320,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public Text.TextCursor getMessageCursor(String threadId) {
         ContentResolver contentResolver = mContext.getContentResolver();
-        final String[] projection = PROJECTION;
         Uri uri = Uri.withAppendedPath(Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, threadId);
         String order = "normalized_date ASC";
 
@@ -325,7 +333,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
         return new Text.TextCursor(
-                contentResolver.query(uri, projection, null, null, order),
+                contentResolver.query(uri, PROJECTION, null, null, order),
                 contentResolver.query(mmsUri, mmsProjection, null, null, null));
     }
 
@@ -337,7 +345,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 String clause = String.format("%s = %s",
                         Mock.Telephony.MmsSms._ID, messageId);
                 ContentResolver contentResolver = mContext.getContentResolver();
-                final String[] projection = PROJECTION;
                 Uri uri = Mock.Telephony.MmsSms.CONTENT_URI;
 
                 final String[] mmsProjection = new String[]{
@@ -350,7 +357,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
 
                 Text.TextCursor cursor = new Text.TextCursor(
-                        contentResolver.query(uri, projection, clause, null, null),
+                        contentResolver.query(uri, PROJECTION, clause, null, null),
                         contentResolver.query(mmsUri, mmsProjection, null, null, null));
                 try {
                     if (cursor.moveToFirst()) {
