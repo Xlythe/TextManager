@@ -210,13 +210,12 @@ public class MessageBasedNotificationManager {
             ensureNotificationChannel(notificationChannel);
         }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, notificationChannel.getId())
                 .setSmallIcon(notificationChannel.getAppIcon())
                 .setColor(notificationChannel.getAccentColor())
                 .setLights(Color.WHITE, 500, 1500)
                 .setDefaults(NotificationCompat.DEFAULT_SOUND)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setChannel(notificationChannel.getId())
                 .setAutoCancel(true)
                 .setContentTitle(notificationMessage.getSender())
                 .setLargeIcon(notificationMessage.getIcon())
