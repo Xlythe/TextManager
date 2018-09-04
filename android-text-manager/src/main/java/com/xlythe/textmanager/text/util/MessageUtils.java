@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.RemoteInput;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -16,6 +14,9 @@ import com.xlythe.textmanager.text.VideoAttachment;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+
+import androidx.annotation.Nullable;
+import androidx.core.app.RemoteInput;
 
 public class MessageUtils {
     private static final String TAG = MessageUtils.class.getSimpleName();

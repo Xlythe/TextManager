@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="80dp"
             style="@android:style/Widget.ProgressBar.Horizontal" />
-        <android.support.v7.widget.AppCompatImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/cancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
             android:layout_marginBottom="8dp" />
-        <android.support.design.widget.FloatingActionButton
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@id/confirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

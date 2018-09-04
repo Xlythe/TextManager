@@ -10,7 +10,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.PowerManager;
 import android.provider.BaseColumns;
-import android.support.annotation.WorkerThread;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
@@ -22,8 +21,7 @@ import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 import com.xlythe.textmanager.text.util.ContentType;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import androidx.annotation.WorkerThread;
 
 import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
 import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;

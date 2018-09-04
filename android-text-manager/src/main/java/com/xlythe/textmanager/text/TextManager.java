@@ -17,8 +17,6 @@ import android.provider.BaseColumns;
 import android.provider.BlockedNumberContract;
 import android.provider.ContactsContract;
 import android.provider.Telephony;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -44,6 +42,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 /**
  * Manages sms and mms messages

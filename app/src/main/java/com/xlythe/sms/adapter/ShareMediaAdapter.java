@@ -2,7 +2,6 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.LruCache;
 import android.view.LayoutInflater;
@@ -22,6 +21,8 @@ import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMediaAdapter.ViewHolder> {
     private static final int CACHE_SIZE = 50;

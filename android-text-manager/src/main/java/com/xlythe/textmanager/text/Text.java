@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
-import android.support.annotation.VisibleForTesting;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -31,6 +30,8 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.annotation.VisibleForTesting;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
 

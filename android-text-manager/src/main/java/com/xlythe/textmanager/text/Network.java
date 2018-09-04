@@ -12,12 +12,13 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
-import android.support.annotation.CheckResult;
-import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import androidx.annotation.CheckResult;
+import androidx.annotation.WorkerThread;
 
 public class Network {
     private static final String ENABLE_MMS = "enableMMS";

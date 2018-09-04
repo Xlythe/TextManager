@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
 import android.provider.MediaStore;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +13,12 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.R;
+import com.xlythe.view.camera.Image;
 
 import java.io.File;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdapter.ViewHolder> {
     private static final String TAG = AttachmentAdapter.class.getSimpleName();
@@ -55,11 +55,8 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
         public void setCursor(Cursor cursor, boolean isSelected, boolean selectMode, int color){
             String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Thumbnails.DATA));
             Log.d(TAG, "Color: " + color);
-            Glide.with(mContext)
+            Image.with(mContext)
                     .load(new File(path))
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .dontAnimate()
-                    .placeholder(R.color.loading)
                     .into(mImage);
 
             mButton.setScaleX(0);

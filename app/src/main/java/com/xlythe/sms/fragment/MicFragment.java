@@ -8,7 +8,6 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -22,6 +21,8 @@ import android.widget.TextView;
 import com.xlythe.sms.R;
 
 import java.io.IOException;
+
+import androidx.fragment.app.Fragment;
 
 public class MicFragment extends Fragment {
     private static final String LOG_TAG = "AudioRecordTest";

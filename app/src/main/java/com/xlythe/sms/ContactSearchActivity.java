@@ -2,9 +2,6 @@ package com.xlythe.sms;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
@@ -18,6 +15,10 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 
 import java.util.ArrayList;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactSearchActivity extends AppCompatActivity implements ContactAdapter.ClickListener {
     private static final String TAG = ContactSearchActivity.class.getSimpleName();

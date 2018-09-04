@@ -8,7 +8,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.WorkerThread;
 import android.telephony.SmsManager;
 import android.util.Log;
 
@@ -19,6 +18,8 @@ import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import androidx.annotation.WorkerThread;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();

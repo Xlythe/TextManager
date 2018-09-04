@@ -1,10 +1,10 @@
 package com.xlythe.sms.adapter;
 
-import android.support.v7.widget.RecyclerView;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public abstract class SelectableAdapter<S, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
     private final Set<S> mSelectedItems = new HashSet<>();

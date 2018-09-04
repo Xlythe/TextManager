@@ -2,9 +2,6 @@ package com.xlythe.sms.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +15,10 @@ import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
+
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class StickerFragment extends Fragment {
     private static final String TAG = StickerFragment.class.getSimpleName();
@@ -93,7 +94,7 @@ public class StickerFragment extends Fragment {
 
             if (mColumnWidthChanged && mColumnWidth > 0) {
                 int totalSpace;
-                if (getOrientation() == VERTICAL) {
+                if (getOrientation() == RecyclerView.VERTICAL) {
                     totalSpace = getWidth() - getPaddingRight() - getPaddingLeft();
                 } else {
                     totalSpace = getHeight() - getPaddingTop() - getPaddingBottom();

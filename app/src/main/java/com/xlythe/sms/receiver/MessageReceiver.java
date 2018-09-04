@@ -5,8 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -21,8 +19,12 @@ import com.xlythe.sms.util.BitmapUtils;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextReceiver;
+import com.xlythe.view.camera.Image;
 
 import java.util.concurrent.ExecutionException;
+
+import androidx.annotation.Nullable;
+import androidx.core.app.TaskStackBuilder;
 
 public class MessageReceiver extends TextReceiver {
     private static final String TAG = "Fetch";
@@ -122,9 +124,9 @@ public class MessageReceiver extends TextReceiver {
                     try {
                         return Glide
                                 .with(context)
-                                .load(text.getAttachment().getUri())
                                 .asBitmap()
-                                .into(1024, 512)
+                                .load(text.getAttachment().getUri())
+                                .submit(1024, 512)
                                 .get();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();

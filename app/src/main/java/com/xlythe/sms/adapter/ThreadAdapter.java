@@ -7,7 +7,6 @@ import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.Gravity;
@@ -18,8 +17,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.R;
@@ -33,11 +30,14 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.util.Utils;
+import com.xlythe.view.camera.Image;
 
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
     private static final Typeface TYPEFACE_NORMAL = Typeface.create("sans-serif-regular", Typeface.NORMAL);
@@ -204,11 +204,8 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 } else {
                     videoLabel.setVisibility(View.GONE);
                 }
-                Glide.with(getContext())
+                Image.with(getContext())
                         .load(latest.getAttachment().getUri())
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .dontAnimate()
-                        .placeholder(R.color.loading)
                         .into(attachment);
             }
 

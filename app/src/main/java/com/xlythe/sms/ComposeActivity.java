@@ -6,8 +6,6 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Menu;
@@ -22,6 +20,9 @@ import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.util.MessageUtils;
 
 import java.util.ArrayList;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CURSOR;
@@ -39,7 +40,7 @@ public class ComposeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_compose);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 

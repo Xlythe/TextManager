@@ -19,7 +19,6 @@ package com.xlythe.textmanager.text.pdu;
 import android.content.ContentUris;
 import android.content.UriMatcher;
 import android.net.Uri;
-import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -28,6 +27,8 @@ import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.util.AbstractCache;
 
 import java.util.HashSet;
+
+import androidx.collection.LongSparseArray;
 
 public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     private static final String TAG = "PduCache";

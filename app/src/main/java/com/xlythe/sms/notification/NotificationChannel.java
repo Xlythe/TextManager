@@ -1,8 +1,9 @@
 package com.xlythe.sms.notification;
 
-import android.support.annotation.ColorInt;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.StringRes;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
 
 public class NotificationChannel {
     private final String id;

@@ -1,7 +1,8 @@
 package com.xlythe.sms.notification;
 
 import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 
 public class NotificationMessage {
     private final NotificationThread notificationThread;

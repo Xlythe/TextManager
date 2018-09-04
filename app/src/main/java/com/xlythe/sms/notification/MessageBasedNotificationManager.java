@@ -12,10 +12,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.CallSuper;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.app.RemoteInput;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
@@ -25,6 +21,11 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.annotation.CallSuper;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.RemoteInput;
 
 /**
  * A NotificationManager that specifically displays notifications related to messages. Notifications

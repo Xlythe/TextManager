@@ -2,7 +2,6 @@ package com.xlythe.sms.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +10,8 @@ import android.widget.TextView;
 
 import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Contact;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageViewHolder> {
     private static final String TAG = ContactAdapter.class.getSimpleName();

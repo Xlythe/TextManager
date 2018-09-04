@@ -2,28 +2,28 @@ package com.xlythe.sms;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.util.MessageUtils;
+import com.xlythe.view.camera.Image;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
 
@@ -45,7 +45,7 @@ public class ShareMediaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_share_media);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mManager = TextManager.getInstance(getBaseContext());
@@ -93,11 +93,8 @@ public class ShareMediaActivity extends AppCompatActivity {
         if (attachment == null) {
             mImageView.setVisibility(View.GONE);
         } else {
-            Glide.with(getBaseContext())
+            Image.with(getBaseContext())
                     .load(attachment.getUri())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .dontAnimate()
-                    .placeholder(R.color.loading)
                     .into(mImageView);
         }
 

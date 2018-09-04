@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -15,8 +14,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
@@ -28,6 +25,9 @@ import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.concurrency.Future;
+import com.xlythe.view.camera.Image;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
@@ -308,11 +308,8 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else {
                 mVideoLabel.setVisibility(View.GONE);
             }
-            Glide.with(getContext())
+            Image.with(getContext())
                     .load(getMessage().getAttachment().getUri())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .dontAnimate()
-                    .placeholder(R.color.loading)
                     .into(mImageView);
         }
     }

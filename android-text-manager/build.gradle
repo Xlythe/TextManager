@@ -1,15 +1,14 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 27 // Cannot use api 26, because some connectivity methods used for backwards compatibility have been stripped
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 28
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 1
-        versionName "1.0.4"
+        versionName project.property("bintray.libraryVersion")
     }
     buildTypes {
         release {
@@ -20,12 +19,16 @@ android {
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar'])
-    api 'com.googlecode.libphonenumber:libphonenumber:7.3.2'
-    api 'com.android.support:support-v4:+'
+    api 'com.googlecode.libphonenumber:libphonenumber:8.9.12'
+    api 'androidx.legacy:legacy-support-v4:+'
 }
 
 apply from: 'https://raw.githubusercontent.com/bourdakos1/jCenter-Upload/master/upload.gradle'
