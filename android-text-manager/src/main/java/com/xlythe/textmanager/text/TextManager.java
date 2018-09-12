@@ -972,6 +972,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     /**
      * The default sms app. Before api 19, this returns null.
      */
+    @Nullable
     public String getDefaultSmsPackage() {
         if (Build.VERSION.SDK_INT >= 19) {
             return Telephony.Sms.getDefaultSmsPackage(mContext);
@@ -985,7 +986,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
      */
     public boolean isDefaultSmsPackage() {
         if (Build.VERSION.SDK_INT >= 19 && supportsSms()) {
-            return Telephony.Sms.getDefaultSmsPackage(mContext).equals(mContext.getPackageName());
+            return mContext.getPackageName().equals(getDefaultSmsPackage());
         } else {
             return supportsSms();
         }
