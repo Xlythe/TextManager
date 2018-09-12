@@ -41,17 +41,14 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
 
         mManager = TextManager.getInstance(getBaseContext());
 
-        mInputField = (ContactEditText) findViewById(R.id.field);
-        mInputField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    setResult();
-                    finish();
-                    return true;
-                }
-                return false;
+        mInputField = findViewById(R.id.field);
+        mInputField.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                setResult();
+                finish();
+                return true;
             }
+            return false;
         });
         mInputField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -66,7 +63,7 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
             }
         });
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.list);
+        mRecyclerView = findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new ContactAdapter(this, mManager.getContactCursor(""));

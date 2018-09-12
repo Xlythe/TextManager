@@ -50,22 +50,19 @@ public class ShareMediaActivity extends AppCompatActivity {
 
         mManager = TextManager.getInstance(getBaseContext());
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.list);
-        mIconRecyclerView = (RecyclerView) findViewById(R.id.icon_list);
-        mImageView = (ImageView) findViewById(R.id.media);
-        mEditText = (EditText) findViewById(R.id.message);
-        mSend = (ImageView) findViewById(R.id.send);
+        mRecyclerView = findViewById(R.id.list);
+        mIconRecyclerView = findViewById(R.id.icon_list);
+        mImageView = findViewById(R.id.media);
+        mEditText = findViewById(R.id.message);
+        mSend = findViewById(R.id.send);
 
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new ShareMediaAdapter(this, mManager.getThreadCursor());
-        mAdapter.setOnClickListener(new ShareMediaAdapter.OnClickListener() {
-            @Override
-            public void onClick(Set<Contact> contacts) {
-                // Toggles the original adapters data so everything is in sync
-                mAdapter.toggleSelection(contacts);
-                mContactAdapter.updateData(mAdapter.getSelectedItems());
-            }
+        mAdapter.setOnClickListener(contacts -> {
+            // Toggles the original adapters data so everything is in sync
+            mAdapter.toggleSelection(contacts);
+            mContactAdapter.updateData(mAdapter.getSelectedItems());
         });
         mRecyclerView.setAdapter(mAdapter);
 
@@ -73,13 +70,10 @@ public class ShareMediaActivity extends AppCompatActivity {
         //TODO: maybe change to true for RTL
         mIconRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         mContactAdapter = new ContactIconAdapter(this, mAdapter.getSelectedItems());
-        mContactAdapter.setOnClickListener(new ContactIconAdapter.OnClickListener() {
-            @Override
-            public void onClick(Set<Contact> contacts) {
-                // Toggles the original adapters data so everything is in sync
-                mAdapter.toggleSelection(contacts);
-                mContactAdapter.updateData(mAdapter.getSelectedItems());
-            }
+        mContactAdapter.setOnClickListener(contacts -> {
+            // Toggles the original adapters data so everything is in sync
+            mAdapter.toggleSelection(contacts);
+            mContactAdapter.updateData(mAdapter.getSelectedItems());
         });
         mIconRecyclerView.setAdapter(mContactAdapter);
 
@@ -98,29 +92,26 @@ public class ShareMediaActivity extends AppCompatActivity {
                     .into(mImageView);
         }
 
-        mSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message = mEditText.getText().toString();
-                for (Set<Contact> contacts: mAdapter.getSelectedItems()) {
-                    if (message.isEmpty() && attachment != null) {
-                        mManager.send(attachment).to(contacts);
-                    } else if (attachment != null) {
-                        mManager.send(message, attachment).to(contacts);
-                    } else {
-                        mManager.send(message).to(contacts);
-                    }
+        mSend.setOnClickListener(v -> {
+            String message = mEditText.getText().toString();
+            for (Set<Contact> contacts: mAdapter.getSelectedItems()) {
+                if (message.isEmpty() && attachment != null) {
+                    mManager.send(attachment).to(contacts);
+                } else if (attachment != null) {
+                    mManager.send(message, attachment).to(contacts);
+                } else {
+                    mManager.send(message).to(contacts);
                 }
-                if (mAdapter.getSelectedItemCount() == 1) {
-                    // TODO: go to the thread instead
-                    Intent intent = new Intent(getBaseContext(), MainActivity.class);
-                    startActivity(intent);
-                } else if (mAdapter.getSelectedItemCount() > 1) {
-                    Intent intent = new Intent(getBaseContext(), MainActivity.class);
-                    startActivity(intent);
-                }
-                finish();
             }
+            if (mAdapter.getSelectedItemCount() == 1) {
+                // TODO: go to the thread instead
+                Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                startActivity(intent);
+            } else if (mAdapter.getSelectedItemCount() > 1) {
+                Intent intent = new Intent(getBaseContext(), MainActivity.class);
+                startActivity(intent);
+            }
+            finish();
         });
     }
 

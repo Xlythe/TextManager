@@ -45,11 +45,11 @@ public class MediaActivity extends AppCompatActivity {
 
         mAttachment = getIntent().getParcelableExtra(EXTRA_ATTACHMENT);
 
-        final SubsamplingScaleImageView image = (SubsamplingScaleImageView) findViewById(R.id.image);
-        mPlayer = (VideoView) findViewById(R.id.video);
-        mPauseButton = (ImageButton) findViewById(R.id.play);
-        mCurrentTime = (TextView) findViewById(R.id.duration);
-        mProgress = (ProgressBar) findViewById(R.id.seek);
+        final SubsamplingScaleImageView image = findViewById(R.id.image);
+        mPlayer = findViewById(R.id.video);
+        mPauseButton = findViewById(R.id.play);
+        mCurrentTime = findViewById(R.id.duration);
+        mProgress = findViewById(R.id.seek);
         mProgress.setMax(1000);
 
         mPauseButton.setOnClickListener(mPauseListener);
@@ -61,12 +61,9 @@ public class MediaActivity extends AppCompatActivity {
             mPlayer.setVisibility(View.VISIBLE);
             mPlayer.setVideoURI(uri);
 
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(final MediaPlayer mp) {
-                    mPlayer.start();
-                    show();
-                }
+            mPlayer.setOnPreparedListener(mp -> {
+                mPlayer.start();
+                show();
             });
         } else {
             // Due to a bug in SubsamplingScaleImageView, it does not always read Exif rotation
@@ -106,11 +103,9 @@ public class MediaActivity extends AppCompatActivity {
         mHandler.sendEmptyMessage(PROGRESS);
     }
 
-    private View.OnClickListener mPauseListener = new View.OnClickListener() {
-        public void onClick(View v) {
-            doPauseResume();
-            show();
-        }
+    private View.OnClickListener mPauseListener = v -> {
+        doPauseResume();
+        show();
     };
 
     private String stringForTime(int timeMs) {

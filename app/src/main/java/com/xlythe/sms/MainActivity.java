@@ -89,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         setSupportActionBar(mToolbar);
         ((AppBarLayout) findViewById(R.id.appbar)).addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                 mActionBarCollapsed = verticalOffset < 0;
             }
         });

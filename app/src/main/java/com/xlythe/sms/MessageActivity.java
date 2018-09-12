@@ -41,6 +41,7 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
@@ -111,30 +112,22 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mAppbar = (AppBarLayout) findViewById(R.id.appbar);
+        mAppbar = findViewById(R.id.appbar);
 
-        mEditText = (SwapEditText) findViewById(R.id.edit_text);
-        mSendButton = (ImageView) findViewById(R.id.send);
+        mEditText = findViewById(R.id.edit_text);
+        mSendButton = findViewById(R.id.send);
 
         setSendable(false);
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                send();
-            }
-        });
+        mSendButton.setOnClickListener(v -> send());
 
-        mEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    if (mSendButton.isEnabled()) {
-                        send();
-                    }
-                    return true;
+        mEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                if (mSendButton.isEnabled()) {
+                    send();
                 }
-                return false;
+                return true;
             }
+            return false;
         });
 
         mEditText.addTextChangedListener(new TextWatcher() {
@@ -150,12 +143,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             public void afterTextChanged(Editable s) {}
         });
 
-        mEditText.setOnFragmentHiddenListener(new SwapEditText.OnFragmentHiddenListener() {
-            @Override
-            public void onFragmentHidden() {
-                clearAttachmentSelection();
-            }
-        });
+        mEditText.setOnFragmentHiddenListener(this::clearAttachmentSelection);
 
         mManager = TextManager.getInstance(getBaseContext());
         mThread = getIntent().getParcelableExtra(EXTRA_THREAD);
@@ -167,12 +155,8 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             Log.d(TAG, "Opening Activity for thread " + mThread);
         }
 
-        String name = Utils.join(", ", mManager.getMembersExceptMe(mThread.getLatestMessage()).get(), new Utils.Rule<Contact>() {
-            @Override
-            public String toString(Contact contact) {
-                return contact.getDisplayName();
-            }
-        });
+        String name = Utils.join(", ", mManager.getMembersExceptMe(mThread.getLatestMessage()).get(), Contact::getDisplayName);
+
         getSupportActionBar().setTitle(name);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -197,7 +181,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         // It bothers me when the keyboard doesnt collapse, remove it if you want
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState > 0) {
                     mEditText.hideKeyboard();
@@ -205,10 +189,10 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             }
         });
 
-        mGalleryAttachments = (ImageView) findViewById(R.id.gallery);
-        mCameraAttachments = (ImageView) findViewById(R.id.camera);
-        mStickerAttachments = (ImageView) findViewById(R.id.sticker);
-        mMicAttachments = (ImageView) findViewById(R.id.mic);
+        mGalleryAttachments = findViewById(R.id.gallery);
+        mCameraAttachments = findViewById(R.id.camera);
+        mStickerAttachments = findViewById(R.id.sticker);
+        mMicAttachments = findViewById(R.id.mic);
 
         // Hide the camera fragment if the device has no camera
         mCameraAttachments.setVisibility(getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) ? View.VISIBLE : View.GONE);

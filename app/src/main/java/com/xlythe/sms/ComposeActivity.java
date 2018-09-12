@@ -45,16 +45,11 @@ public class ComposeActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mManager = TextManager.getInstance(getBaseContext());
-        mContacts = (ContactEditText) findViewById(R.id.contacts);
-        mMessage = (TextView) findViewById(R.id.message);
+        mContacts = findViewById(R.id.contacts);
+        mMessage = findViewById(R.id.message);
         mActivity = this;
 
-        mContacts.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startContactSearch();
-            }
-        });
+        mContacts.setOnClickListener(v -> startContactSearch());
         mContacts.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             private boolean initialRun;
 

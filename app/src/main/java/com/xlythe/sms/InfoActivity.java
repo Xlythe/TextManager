@@ -45,14 +45,14 @@ public class InfoActivity extends AppCompatActivity {
         Thread thread = getIntent().getParcelableExtra(MessageActivity.EXTRA_THREAD);
         final Set<Contact> contacts = manager.getMembersExceptMe(thread.getLatestMessage()).get();
 
-        final TextView name = (TextView) findViewById(R.id.name);
-        final ImageView icon = (ImageView) findViewById(R.id.icon);
-        mBlock = (ViewGroup) findViewById(R.id.block);
+        final TextView name = findViewById(R.id.name);
+        final ImageView icon = findViewById(R.id.icon);
+        mBlock = findViewById(R.id.block);
 
         if (Build.VERSION.SDK_INT < 24) {
             mBlock.setVisibility(View.GONE);
         } else {
-            final CompoundButton btn = (CompoundButton) mBlock.findViewById(R.id.is_blocked);
+            final CompoundButton btn = mBlock.findViewById(R.id.is_blocked);
 
             for (Contact contact : contacts) {
                 if (manager.isBlocked(contact)) {
@@ -61,15 +61,12 @@ public class InfoActivity extends AppCompatActivity {
                 }
             }
 
-            btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                    for (Contact contact : contacts) {
-                        if (checked) {
-                            manager.block(contact);
-                        } else {
-                            manager.unblock(contact);
-                        }
+            btn.setOnCheckedChangeListener((compoundButton, checked) -> {
+                for (Contact contact : contacts) {
+                    if (checked) {
+                        manager.block(contact);
+                    } else {
+                        manager.unblock(contact);
                     }
                 }
             });
@@ -93,15 +90,15 @@ public class InfoActivity extends AppCompatActivity {
             View v = vi.inflate(R.layout.info_stub, null);
 
             // fill in any details dynamically here
-            TextView textView = (TextView) v.findViewById(R.id.number);
+            TextView textView = v.findViewById(R.id.number);
             textView.setText(contact.getNumber());
 
             // insert into main view
-            ViewGroup insertPoint = (ViewGroup) findViewById(R.id.holder);
+            ViewGroup insertPoint = findViewById(R.id.holder);
             insertPoint.addView(v, -1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
-        RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setHasFixedSize(true);
 
@@ -111,13 +108,10 @@ public class InfoActivity extends AppCompatActivity {
         MessageAttachmentAdapter adapter = new MessageAttachmentAdapter(this, attachments);
         recyclerView.setAdapter(adapter);
 
-        adapter.setOnClickListener(new MessageAttachmentAdapter.OnClickListener() {
-            @Override
-            public void onClick(Attachment attachment) {
-                Intent i = new Intent(getBaseContext(), MediaActivity.class);
-                i.putExtra(MediaActivity.EXTRA_ATTACHMENT, attachment);
-                startActivity(i);
-            }
+        adapter.setOnClickListener(attachment -> {
+            Intent i = new Intent(getBaseContext(), MediaActivity.class);
+            i.putExtra(MediaActivity.EXTRA_ATTACHMENT, attachment);
+            startActivity(i);
         });
     }
 
