@@ -24,25 +24,22 @@ public abstract class FutureImpl<T> implements Future<T> {
     }
 
     @Override
-    public void get(final Callback<T> callback) {
-        sExecutorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                // We got the result, but we're still on the background thread.
-                final T result = get();
+    public void get(Callback<T> callback) {
+        sExecutorService.submit(() -> {
+            // We got the result, but we're still on the background thread.
+            T result = get();
 
-                // If we know how to, post to get back to the calling thread.
-                if (mForegroundHandler != null) {
-                    mForegroundHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.get(result);
-                        }
-                    });
-                } else {
-                    // Otherwise, return from our background thread.
-                    callback.get(result);
-                }
+            // If we know how to, post to get back to the calling thread.
+            if (mForegroundHandler != null) {
+                mForegroundHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.get(result);
+                    }
+                });
+            } else {
+                // Otherwise, return from our background thread.
+                callback.get(result);
             }
         });
     }

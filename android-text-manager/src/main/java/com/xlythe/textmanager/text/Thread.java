@@ -12,6 +12,8 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.List;
 
+import androidx.annotation.VisibleForTesting;
+
 /**
  * An SMS conversation
  */
@@ -55,9 +57,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         mUnreadCount = unreadCount;
     }
 
-    /**
-     * @VisibleForTesting
-     * */
+    @VisibleForTesting
     Thread(long id, int count, int unreadCount, Text text) {
         mThreadId = id;
         mCount = count;
@@ -91,7 +91,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     @Override
     public boolean equals(Object o) {
-        if (o != null && o instanceof Thread) {
+        if (o instanceof Thread) {
             Thread a = (Thread) o;
             return Utils.equals(mThreadId, a.mThreadId)
                     && Utils.equals(mCount, a.mCount)

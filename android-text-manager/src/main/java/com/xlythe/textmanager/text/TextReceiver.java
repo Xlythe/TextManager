@@ -30,30 +30,33 @@ import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.SMS_RECEIVE
 
 public abstract class TextReceiver extends BroadcastReceiver {
     private static final String TAG = TextReceiver.class.getSimpleName();
+    private static final String TAG_TEXT = "sms:text";
+    private static final String TAG_MMS = "sms:mms";
+
+    private static final long TIMEOUT_TEXT = 1000;
+    private static final long TIMEOUT_MMS = 5000;
 
     public static final String ACTION_TEXT_RECEIVED = "com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED";
     public static final String EXTRA_TEXT = "text";
-
-    private static final int TIMEOUT = 2; // Minutes
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "onReceive{action=" + intent.getAction() + "}");
         if (ACTION_TEXT_RECEIVED.equals(intent.getAction())) {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TEXT_RECEIVED");
-            wl.acquire(1000);
-            onMessageReceived(context, (Text) intent.getParcelableExtra(EXTRA_TEXT));
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_TEXT);
+            wl.acquire(TIMEOUT_TEXT);
+            onMessageReceived(context, intent.getParcelableExtra(EXTRA_TEXT));
         } else if (WAP_PUSH_DELIVER_ACTION.equals(intent.getAction()) && ContentType.MMS_MESSAGE.equals(intent.getType())) {
             // Hold a wake lock for 5 seconds, enough to give any
             // services we start time to take their own wake locks.
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS PushReceiver");
-            wl.acquire(5000);
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_MMS);
+            wl.acquire(TIMEOUT_MMS);
 
             // TODO(will): This should be a foreground service. We have no guarantee that the process
             // will stay alive long enough to download this otherwise.
-            new ReceivePushTask(context).execute(intent);
+            new DownloadMmsTask(context).execute(intent);
         } else if (SMS_DELIVER_ACTION.equals(intent.getAction())) {
             SmsMessage[] messages = getMessagesFromIntent(intent);
             Text text = Receive.storeMessage(context, messages, 0);
@@ -66,10 +69,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
         }
     }
 
-    private class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
+    private class DownloadMmsTask extends AsyncTask<Intent, Void, Void> {
         private final Context mContext;
 
-        ReceivePushTask(Context context) {
+        DownloadMmsTask(Context context) {
             mContext = context;
         }
 
@@ -77,10 +80,10 @@ public abstract class TextReceiver extends BroadcastReceiver {
         @Override
         protected Void doInBackground(Intent... intents) {
             PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_MMS);
 
             try {
-                wakelock.acquire();
+                wakelock.acquire(TIMEOUT_MMS);
 
                 Intent intent = intents[0];
                 byte[] pushData = intent.getByteArrayExtra("data");

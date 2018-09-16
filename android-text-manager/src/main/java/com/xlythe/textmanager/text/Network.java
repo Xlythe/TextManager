@@ -120,10 +120,4 @@ public class Network {
 
         return false;
     }
-
-    public interface Callback {
-        void onSuccess();
-
-        void onFail();
-    }
 }

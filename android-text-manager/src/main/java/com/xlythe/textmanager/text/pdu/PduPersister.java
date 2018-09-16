@@ -11,17 +11,16 @@ import android.drm.DrmManagerClient;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.Telephony;
-import android.provider.Telephony.Mms;
-import android.provider.Telephony.Mms.Addr;
-import android.provider.Telephony.Mms.Part;
-import android.provider.Telephony.MmsSms;
-import android.provider.Telephony.MmsSms.PendingMessages;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.xlythe.textmanager.text.exception.InvalidHeaderValueException;
+import com.xlythe.textmanager.text.Mock.Telephony.Mms;
+import com.xlythe.textmanager.text.Mock.Telephony.Mms.Addr;
+import com.xlythe.textmanager.text.Mock.Telephony.Mms.Part;
+import com.xlythe.textmanager.text.Mock.Telephony.MmsSms;
+import com.xlythe.textmanager.text.Mock.Telephony.MmsSms.PendingMessages;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.util.CharacterSets;
 import com.xlythe.textmanager.text.util.ContentType;
@@ -178,33 +177,33 @@ public class PduPersister {
     private static final HashMap<Integer, String> OCTET_COLUMN_NAME_MAP;
     private static final HashMap<Integer, String> LONG_COLUMN_NAME_MAP;
     static {
-        MESSAGE_BOX_MAP = new HashMap<Uri, Integer>();
+        MESSAGE_BOX_MAP = new HashMap<>();
         MESSAGE_BOX_MAP.put(Mms.Inbox.CONTENT_URI,  Mms.MESSAGE_BOX_INBOX);
         MESSAGE_BOX_MAP.put(Mms.Sent.CONTENT_URI,   Mms.MESSAGE_BOX_SENT);
         MESSAGE_BOX_MAP.put(Mms.Draft.CONTENT_URI,  Mms.MESSAGE_BOX_DRAFTS);
         MESSAGE_BOX_MAP.put(Mms.Outbox.CONTENT_URI, Mms.MESSAGE_BOX_OUTBOX);
-        CHARSET_COLUMN_INDEX_MAP = new HashMap<Integer, Integer>();
+        CHARSET_COLUMN_INDEX_MAP = new HashMap<>();
         CHARSET_COLUMN_INDEX_MAP.put(PduHeaders.SUBJECT, PDU_COLUMN_SUBJECT_CHARSET);
         CHARSET_COLUMN_INDEX_MAP.put(PduHeaders.RETRIEVE_TEXT, PDU_COLUMN_RETRIEVE_TEXT_CHARSET);
-        CHARSET_COLUMN_NAME_MAP = new HashMap<Integer, String>();
+        CHARSET_COLUMN_NAME_MAP = new HashMap<>();
         CHARSET_COLUMN_NAME_MAP.put(PduHeaders.SUBJECT, Mms.SUBJECT_CHARSET);
         CHARSET_COLUMN_NAME_MAP.put(PduHeaders.RETRIEVE_TEXT, Mms.RETRIEVE_TEXT_CHARSET);
         // Encoded string field code -> column index/name map.
-        ENCODED_STRING_COLUMN_INDEX_MAP = new HashMap<Integer, Integer>();
+        ENCODED_STRING_COLUMN_INDEX_MAP = new HashMap<>();
         ENCODED_STRING_COLUMN_INDEX_MAP.put(PduHeaders.RETRIEVE_TEXT, PDU_COLUMN_RETRIEVE_TEXT);
         ENCODED_STRING_COLUMN_INDEX_MAP.put(PduHeaders.SUBJECT, PDU_COLUMN_SUBJECT);
-        ENCODED_STRING_COLUMN_NAME_MAP = new HashMap<Integer, String>();
+        ENCODED_STRING_COLUMN_NAME_MAP = new HashMap<>();
         ENCODED_STRING_COLUMN_NAME_MAP.put(PduHeaders.RETRIEVE_TEXT, Mms.RETRIEVE_TEXT);
         ENCODED_STRING_COLUMN_NAME_MAP.put(PduHeaders.SUBJECT, Mms.SUBJECT);
         // Text string field code -> column index/name map.
-        TEXT_STRING_COLUMN_INDEX_MAP = new HashMap<Integer, Integer>();
+        TEXT_STRING_COLUMN_INDEX_MAP = new HashMap<>();
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.CONTENT_LOCATION, PDU_COLUMN_CONTENT_LOCATION);
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.CONTENT_TYPE, PDU_COLUMN_CONTENT_TYPE);
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.MESSAGE_CLASS, PDU_COLUMN_MESSAGE_CLASS);
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.MESSAGE_ID, PDU_COLUMN_MESSAGE_ID);
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.RESPONSE_TEXT, PDU_COLUMN_RESPONSE_TEXT);
         TEXT_STRING_COLUMN_INDEX_MAP.put(PduHeaders.TRANSACTION_ID, PDU_COLUMN_TRANSACTION_ID);
-        TEXT_STRING_COLUMN_NAME_MAP = new HashMap<Integer, String>();
+        TEXT_STRING_COLUMN_NAME_MAP = new HashMap<>();
         TEXT_STRING_COLUMN_NAME_MAP.put(PduHeaders.CONTENT_LOCATION, Mms.CONTENT_LOCATION);
         TEXT_STRING_COLUMN_NAME_MAP.put(PduHeaders.CONTENT_TYPE, Mms.CONTENT_TYPE);
         TEXT_STRING_COLUMN_NAME_MAP.put(PduHeaders.MESSAGE_CLASS, Mms.MESSAGE_CLASS);
@@ -212,7 +211,7 @@ public class PduPersister {
         TEXT_STRING_COLUMN_NAME_MAP.put(PduHeaders.RESPONSE_TEXT, Mms.RESPONSE_TEXT);
         TEXT_STRING_COLUMN_NAME_MAP.put(PduHeaders.TRANSACTION_ID, Mms.TRANSACTION_ID);
         // Octet field code -> column index/name map.
-        OCTET_COLUMN_INDEX_MAP = new HashMap<Integer, Integer>();
+        OCTET_COLUMN_INDEX_MAP = new HashMap<>();
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.CONTENT_CLASS, PDU_COLUMN_CONTENT_CLASS);
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.DELIVERY_REPORT, PDU_COLUMN_DELIVERY_REPORT);
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.MESSAGE_TYPE, PDU_COLUMN_MESSAGE_TYPE);
@@ -223,7 +222,7 @@ public class PduPersister {
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.REPORT_ALLOWED, PDU_COLUMN_REPORT_ALLOWED);
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.RETRIEVE_STATUS, PDU_COLUMN_RETRIEVE_STATUS);
         OCTET_COLUMN_INDEX_MAP.put(PduHeaders.STATUS, PDU_COLUMN_STATUS);
-        OCTET_COLUMN_NAME_MAP = new HashMap<Integer, String>();
+        OCTET_COLUMN_NAME_MAP = new HashMap<>();
         OCTET_COLUMN_NAME_MAP.put(PduHeaders.CONTENT_CLASS, Mms.CONTENT_CLASS);
         OCTET_COLUMN_NAME_MAP.put(PduHeaders.DELIVERY_REPORT, Mms.DELIVERY_REPORT);
         OCTET_COLUMN_NAME_MAP.put(PduHeaders.MESSAGE_TYPE, Mms.MESSAGE_TYPE);
@@ -235,12 +234,12 @@ public class PduPersister {
         OCTET_COLUMN_NAME_MAP.put(PduHeaders.RETRIEVE_STATUS, Mms.RETRIEVE_STATUS);
         OCTET_COLUMN_NAME_MAP.put(PduHeaders.STATUS, Mms.STATUS);
         // Long field code -> column index/name map.
-        LONG_COLUMN_INDEX_MAP = new HashMap<Integer, Integer>();
+        LONG_COLUMN_INDEX_MAP = new HashMap<>();
         LONG_COLUMN_INDEX_MAP.put(PduHeaders.DATE, PDU_COLUMN_DATE);
         LONG_COLUMN_INDEX_MAP.put(PduHeaders.DELIVERY_TIME, PDU_COLUMN_DELIVERY_TIME);
         LONG_COLUMN_INDEX_MAP.put(PduHeaders.EXPIRY, PDU_COLUMN_EXPIRY);
         LONG_COLUMN_INDEX_MAP.put(PduHeaders.MESSAGE_SIZE, PDU_COLUMN_MESSAGE_SIZE);
-        LONG_COLUMN_NAME_MAP = new HashMap<Integer, String>();
+        LONG_COLUMN_NAME_MAP = new HashMap<>();
         LONG_COLUMN_NAME_MAP.put(PduHeaders.DATE, Mms.DATE);
         LONG_COLUMN_NAME_MAP.put(PduHeaders.DELIVERY_TIME, Mms.DELIVERY_TIME);
         LONG_COLUMN_NAME_MAP.put(PduHeaders.EXPIRY, Mms.EXPIRY);
@@ -249,12 +248,10 @@ public class PduPersister {
     }
     private final Context mContext;
     private final ContentResolver mContentResolver;
-    private final DrmManagerClient mDrmManagerClient;
     private final TelephonyManager mTelephonyManager;
     private PduPersister(Context context) {
         mContext = context;
         mContentResolver = context.getContentResolver();
-        mDrmManagerClient = new DrmManagerClient(context);
         mTelephonyManager = (TelephonyManager)context
                 .getSystemService(Context.TELEPHONY_SERVICE);
     }
@@ -290,7 +287,7 @@ public class PduPersister {
     }
     private void setOctetToHeaders(
             Cursor c, int columnIndex,
-            PduHeaders headers, int mapColumn) throws InvalidHeaderValueException {
+            PduHeaders headers, int mapColumn) {
         if (!c.isNull(columnIndex)) {
             int b = c.getInt(columnIndex);
             headers.setOctet(b, mapColumn);

@@ -136,7 +136,7 @@ public final class ImageAttachment extends Attachment {
 
     @Override
     public boolean equals(Object o) {
-        if (o != null && o instanceof ImageAttachment) {
+        if (o instanceof ImageAttachment) {
             ImageAttachment a = (ImageAttachment) o;
             return Utils.equals(getType(), a.getType())
                     && Utils.equals(getUri(), a.getUri());

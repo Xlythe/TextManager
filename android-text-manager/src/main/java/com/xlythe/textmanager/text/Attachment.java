@@ -69,7 +69,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
 
     @Override
     public boolean equals(Object o) {
-        if (o != null && o instanceof Attachment) {
+        if (o instanceof Attachment) {
             Attachment a = (Attachment) o;
             return Utils.equals(getType(), a.getType())
                     && Utils.equals(getUri(), a.getUri());

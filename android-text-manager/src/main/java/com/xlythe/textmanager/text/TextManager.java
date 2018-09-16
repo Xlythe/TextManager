@@ -51,7 +51,7 @@ import androidx.annotation.WorkerThread;
  */
 public class TextManager implements MessageManager<Text, Thread, Contact> {
     static final String TAG = TextManager.class.getSimpleName();
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = false;
     private static final int COLUMN_CONTENT_LOCATION = 0;
     private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";

@@ -19,14 +19,14 @@ import com.xlythe.textmanager.text.util.HttpUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
-    private static final String PREAMBLE = "com.xlythe.textmanager.text.";
-    private static final String SMS_SENT = PREAMBLE + "SMS_SENT";
-    private static final String SMS_DELIVERED = PREAMBLE + "SMS_DELIVERED";
-    private static final String MMS_SENT = PREAMBLE + "MMS_SENT";
+    private static final String ACTION_SMS_SENT = "com.xlythe.textmanager.text.SMS_SENT";
+    private static final String ACTION_SMS_DELIVERED = "com.xlythe.textmanager.text.SMS_DELIVERED";
+    private static final String ACTION_MMS_SENT = "com.xlythe.textmanager.text.MMS_SENT";
     public static final String TEXT_EXTRA = "text_extra";
 
     public SendService() {
@@ -111,6 +111,7 @@ public class SendService extends IntentService {
         }
     }
 
+    @Nullable
     private static Uri storeMMS(Context context, final Text text) {
         PduPersister p = PduPersister.getPduPersister(context);
 
@@ -125,7 +126,7 @@ public class SendService extends IntentService {
             uri = p.persist(text.getSendRequest(context), uri, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
-            uri = null;
+            return null;
         }
 
         ContentValues values = new ContentValues();
@@ -180,21 +181,21 @@ public class SendService extends IntentService {
      */
     private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
-        intent.setAction(SMS_SENT);
+        intent.setAction(ACTION_SMS_SENT);
         intent.setData(uri);
         return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
-        intent.setAction(SMS_DELIVERED);
+        intent.setAction(ACTION_SMS_DELIVERED);
         intent.setData(uri);
         return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
 
     private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
-        intent.setAction(MMS_SENT);
+        intent.setAction(ACTION_MMS_SENT);
         intent.setData(uri);
         return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
     }
