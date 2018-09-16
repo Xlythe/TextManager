@@ -18,6 +18,8 @@
 package com.xlythe.textmanager.text.util;
 
 public class Base64 {
+    public static int NO_WRAP = android.util.Base64.NO_WRAP;
+
     /**
      * Used to get the number of Quadruples.
      */
@@ -163,5 +165,9 @@ public class Base64 {
         System.arraycopy(groomedData, 0, packedData, 0, bytesCopied);
 
         return packedData;
+    }
+
+    public static String encodeToString(byte[] data, int flags) {
+        return android.util.Base64.encodeToString(data, flags);
     }
 }

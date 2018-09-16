@@ -1,27 +1,27 @@
 package com.xlythe.textmanager.text.util;
 
 import android.content.Context;
-import android.net.http.AndroidHttpClient;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.params.ConnRouteParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
+
+import cz.msebera.android.httpclient.HttpEntity;
+import cz.msebera.android.httpclient.HttpHost;
+import cz.msebera.android.httpclient.HttpRequest;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.StatusLine;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.methods.HttpGet;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.conn.params.ConnRouteParams;
+import cz.msebera.android.httpclient.params.HttpConnectionParams;
+import cz.msebera.android.httpclient.params.HttpParams;
+import cz.msebera.android.httpclient.params.HttpProtocolParams;
 
 public class HttpUtils {
     private static final String DEFAULT_HTTP_KEY_X_WAP_PROFILE = "x-wap-profile";

@@ -3,10 +3,10 @@ package com.xlythe.textmanager.text.util;
 import android.content.Context;
 import android.content.Intent;
 
-import org.apache.http.entity.ByteArrayEntity;
-
 import java.io.IOException;
 import java.io.OutputStream;
+
+import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 
 class ProgressCallbackEntity extends ByteArrayEntity {
     private static final int DEFAULT_PIECE_SIZE = 4096;
