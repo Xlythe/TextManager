@@ -10,6 +10,7 @@ public class MmsReceiver extends TextReceiver {
     @Override
     public void onMessageReceived(Context context, Text text) {
         Intent intent = new Intent(ACTION_TEXT_RECEIVED);
+        intent.setPackage(context.getPackageName());
         intent.putExtra(EXTRA_TEXT, text);
         context.sendBroadcast(intent);
     }
