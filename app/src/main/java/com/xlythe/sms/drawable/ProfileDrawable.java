@@ -82,10 +82,10 @@ public class ProfileDrawable extends Drawable {
                 size = Math.sqrt(2) * width / (Math.sqrt(2) + 1);
                 break;
             case 3:
-                size = width / 2;
+                size = width / 2f;
                 break;
             default:
-                size = width / 2;
+                size = width / 2f;
                 break;
         }
         return (int) size;
@@ -116,7 +116,7 @@ public class ProfileDrawable extends Drawable {
                 canvas.drawBitmap(mBitmaps[1], mDrawableSizeInPx - mBitmapSize, mDrawableSizeInPx - mBitmapSize, null);
                 break;
             case 3:
-                canvas.drawBitmap(mBitmaps[0], mBitmapSize / 2, 0, null);
+                canvas.drawBitmap(mBitmaps[0], mBitmapSize / 2f, 0, null);
                 canvas.drawBitmap(mBitmaps[1], 0, mBitmapSize, null);
                 canvas.drawBitmap(mBitmaps[2], mBitmapSize, mBitmapSize, null);
                 break;
@@ -215,8 +215,8 @@ public class ProfileDrawable extends Drawable {
 
         paint.setAntiAlias(true);
         canvas.drawARGB(0, 0, 0, 0);
-        canvas.drawCircle(bitmap.getWidth() / 2,
-                bitmap.getHeight() / 2, bitmap.getWidth() / 2, paint);
+        canvas.drawCircle(bitmap.getWidth() / 2f,
+                bitmap.getHeight() / 2f, bitmap.getWidth() / 2f, paint);
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, rect, rect, paint);
         return output;

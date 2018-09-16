@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageViewHolder> {
     private static final String TAG = ContactAdapter.class.getSimpleName();
-    private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
 
     private final Context mContext;

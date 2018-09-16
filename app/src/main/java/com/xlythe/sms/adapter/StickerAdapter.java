@@ -76,7 +76,7 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
             super(view);
             mContext = view.getContext();
             mClickListener = listener;
-            mImage = (ImageView) view.findViewById(R.id.image);
+            mImage = view.findViewById(R.id.image);
             view.setOnClickListener(this);
             view.setOnLongClickListener(this);
         }

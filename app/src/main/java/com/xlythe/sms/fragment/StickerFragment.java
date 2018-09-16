@@ -41,7 +41,7 @@ public class StickerFragment extends Fragment {
         mText = getArguments().getParcelable(ARG_MESSAGE);
 
         ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_sticker, container, false);
-        RecyclerView gridView = (RecyclerView) rootView.findViewById(R.id.content);
+        RecyclerView gridView = rootView.findViewById(R.id.content);
         gridView.setAdapter(new StickerAdapter(getContext(), new StickerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Sticker sticker) {

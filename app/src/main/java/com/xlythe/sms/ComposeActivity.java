@@ -21,6 +21,7 @@ import com.xlythe.textmanager.text.util.MessageUtils;
 
 import java.util.ArrayList;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -36,7 +37,7 @@ public class ComposeActivity extends AppCompatActivity {
     private TextManager mManager;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_compose);
@@ -159,7 +160,7 @@ public class ComposeActivity extends AppCompatActivity {
         intent.putExtra(EXTRA_CURSOR, mContacts.getSelectionStart());
         if (Build.VERSION.SDK_INT >= 21) {
             ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
-                    Pair.create((View) mContacts, "edit_text"));
+                    Pair.create(mContacts, "edit_text"));
             startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());
         } else {
             startActivityForResult(intent, REQUEST_CODE_CONTACT);

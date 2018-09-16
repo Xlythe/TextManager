@@ -21,7 +21,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class ContactEditText extends EditText {
+import androidx.appcompat.widget.AppCompatEditText;
+
+public class ContactEditText extends AppCompatEditText {
     private static final boolean DEBUG = true;
     private static final String TAG = ContactEditText.class.getSimpleName();
 
@@ -75,12 +77,7 @@ public class ContactEditText extends EditText {
                 // Grab all the spans currently in the EditText. They do not overlap, so we can sort by span start.
                 final Editable message = getEditableText();
                 ImageSpan[] spans = message.getSpans(0, message.length(), ImageSpan.class);
-                Arrays.sort(spans, new Comparator<ImageSpan>() {
-                    @Override
-                    public int compare(ImageSpan lhs, ImageSpan rhs) {
-                        return message.getSpanStart(lhs) - message.getSpanStart(rhs);
-                    }
-                });
+                Arrays.sort(spans, (lhs, rhs) -> message.getSpanStart(lhs) - message.getSpanStart(rhs));
 
                 // Find the block of text (if any) that does not have a span yet. This is our pending text.
                 int start = 0;

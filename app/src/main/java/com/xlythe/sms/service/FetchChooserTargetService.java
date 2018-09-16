@@ -66,13 +66,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
     }
 
     private String getTitle(Thread thread) {
-        String title = Utils.join(", ", mManager.getMembersExceptMe(thread.getLatestMessage()).get(), new Utils.Rule<Contact>() {
-            @Override
-            public String toString(Contact contact) {
-                return contact.getDisplayName();
-            }
-        });
-        return title;
+        return Utils.join(", ", mManager.getMembersExceptMe(thread.getLatestMessage()).get(), Contact::getDisplayName);
     }
 
     private Icon getIcon(Thread thread) {
@@ -106,11 +100,6 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private String getRecipients(Thread thread) {
         Set<Contact> contacts = mManager.getMembersExceptMe(thread.getLatestMessage()).get();
-        return Utils.join(';', contacts, new Utils.Rule<Contact>() {
-            @Override
-            public String toString(Contact contact) {
-                return contact.getNumber();
-            }
-        });
+        return Utils.join(';', contacts, Contact::getNumber);
     }
 }

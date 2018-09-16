@@ -28,7 +28,6 @@ android {
 }
 
 dependencies {
-    def withoutSupportLib = { exclude group: 'com.android.support' }
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:+'
     implementation 'androidx.cardview:cardview:+'
@@ -36,25 +35,18 @@ dependencies {
     implementation 'com.google.android.material:material:+'
     implementation 'androidx.exifinterface:exifinterface:+'
     implementation project(':android-text-manager')
-    implementation 'com.github.bumptech.glide:glide:4.8.0', withoutSupportLib
-    implementation 'org.lucasr.twowayview:twowayview:0.1.4', withoutSupportLib
+    implementation 'com.github.bumptech.glide:glide:4.8.0'
+    implementation 'org.lucasr.twowayview:twowayview:0.1.4'
     implementation 'com.google.code.gson:gson:2.8.2'
-    implementation 'de.hdodenhof:circleimageview:2.0.0', withoutSupportLib
+    implementation 'de.hdodenhof:circleimageview:2.0.0'
     implementation 'com.xlythe:sticky-headers-recyclerview:0.4.3'
-    implementation 'com.makeramen:roundedimageview:2.2.1', withoutSupportLib
-    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.6.0', withoutSupportLib
+    implementation 'com.makeramen:roundedimageview:2.2.1'
+    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.6.0'
     implementation 'com.xlythe:swap:1.0.2'
     implementation 'com.xlythe:camera-view:1.2.8'
     testImplementation "org.robolectric:robolectric:3.1.1"
 }
 
 configurations.all {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        def requested = details.requested
-        if (requested.group == 'com.android.support') {
-            if (!requested.name.startsWith("multidex")) {
-                details.useVersion '28.+'
-            }
-        }
-    }
+    exclude group: 'com.android.support'
 }

@@ -155,12 +155,9 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
             mAdapter.clearSelection();
             mAdapter.toggleSelection(position);
         }
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TextManager.getInstance(getContext()).send(buildAttachment(position)).to(mText);
-                mContainer.setVisibility(View.GONE);
-            }
+        button.setOnClickListener(v -> {
+            TextManager.getInstance(getContext()).send(buildAttachment(position)).to(mText);
+            mContainer.setVisibility(View.GONE);
         });
     }
 

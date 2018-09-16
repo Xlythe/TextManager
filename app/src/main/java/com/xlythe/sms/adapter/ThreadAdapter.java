@@ -125,14 +125,14 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
         public ThreadViewHolder(View view, OnClickListener listener) {
             super(view);
-            title = (TextView) view.findViewById(R.id.sender);
-            unread = (TextView) view.findViewById(R.id.unread);
-            message = (TextView) view.findViewById(R.id.message);
-            date = (TextView) view.findViewById(R.id.date);
-            attachment = (RoundedImageView) view.findViewById(R.id.attachment);
-            videoLabel = (ImageView) view.findViewById(R.id.video_label);
-            card = (ViewGroup) view.findViewById(R.id.card);
-            profile = (ImageView) view.findViewById(R.id.profile_image);
+            title = view.findViewById(R.id.sender);
+            unread = view.findViewById(R.id.unread);
+            message = view.findViewById(R.id.message);
+            date = view.findViewById(R.id.date);
+            attachment = view.findViewById(R.id.attachment);
+            videoLabel = view.findViewById(R.id.video_label);
+            card = view.findViewById(R.id.card);
+            profile = view.findViewById(R.id.profile_image);
 
             mListener = listener;
 
@@ -164,23 +164,15 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             Runnable myRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    manager.getMembersExceptMe(latest).get(new Future.Callback<Set<Contact>>() {
-                        @Override
-                        public void get(Set<Contact> instance) {
-                            String address = Utils.join(", ", instance, new Utils.Rule<Contact>() {
-                                @Override
-                                public String toString(Contact contact) {
-                                    return contact.getDisplayName();
-                                }
-                            });
-                            title.setText(address);
-                            profile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                            if (selectMode) {
-                                profile.setImageResource(android.R.color.transparent);
-                                profile.setBackgroundResource(R.drawable.selector);
-                            } else {
-                                profile.setBackgroundResource(android.R.color.transparent);
-                            }
+                    manager.getMembersExceptMe(latest).get(contacts -> {
+                        String address = Utils.join(", ", contacts, Contact::getDisplayName);
+                        title.setText(address);
+                        profile.setImageDrawable(new ProfileDrawable(getContext(), contacts));
+                        if (selectMode) {
+                            profile.setImageResource(android.R.color.transparent);
+                            profile.setBackgroundResource(R.drawable.selector);
+                        } else {
+                            profile.setBackgroundResource(android.R.color.transparent);
                         }
                     });
                 }
@@ -320,7 +312,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
         public SectionViewHolder(View view) {
             super(view);
-            title = (TextView) view.findViewById(R.id.section_text);
+            title = view.findViewById(R.id.section_text);
             Configuration config = view.getResources().getConfiguration();
             if(config.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
                 FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);

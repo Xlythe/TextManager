@@ -31,7 +31,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
     private static final String TAG = MessageAdapter.class.getSimpleName();
-    private static final boolean DEBUG = false;
     private static final int CACHE_SIZE = 50;
     private static final int CACHE_SIZE_NUMBER = 100;
 
@@ -108,9 +107,9 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             mListener = listener;
             v.setOnClickListener(this);
             v.setOnLongClickListener(this);
-            mDate = (TextView) v.findViewById(R.id.date);
-            mFrame = (FrameLayout) v.findViewById(R.id.frame);
-            mTextView = (TextView) v.findViewById(R.id.message);
+            mDate = v.findViewById(R.id.date);
+            mFrame = v.findViewById(R.id.frame);
+            mTextView = v.findViewById(R.id.message);
         }
 
         public void setMessage(Context context, Text text, boolean selected) {
@@ -202,7 +201,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public LeftViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
-            mProfile = (ImageView) v.findViewById(R.id.profile_image);
+            mProfile = v.findViewById(R.id.profile_image);
         }
 
         @Override
@@ -253,25 +252,19 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public AttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
-            mImageView = (RoundedImageView) v.findViewById(R.id.image);
-            mShare = (ImageButton) v.findViewById(R.id.share);
-            mVideoLabel = (ImageView) v.findViewById(R.id.video_label);
+            mImageView = v.findViewById(R.id.image);
+            mShare = v.findViewById(R.id.share);
+            mVideoLabel = v.findViewById(R.id.video_label);
 
-            mShare.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        mListener.onShareClicked(getMessage());
-                    }
+            mShare.setOnClickListener(view -> {
+                if (mListener != null) {
+                    mListener.onShareClicked(getMessage());
                 }
             });
 
-            mImageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        mListener.onAttachmentClicked(getMessage());
-                    }
+            mImageView.setOnClickListener(view -> {
+                if (mListener != null) {
+                    mListener.onAttachmentClicked(getMessage());
                 }
             });
         }
@@ -319,7 +312,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
 
         public LeftAttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
-            mProfile = (ImageView) v.findViewById(R.id.profile_image);
+            mProfile = v.findViewById(R.id.profile_image);
         }
 
         @Override

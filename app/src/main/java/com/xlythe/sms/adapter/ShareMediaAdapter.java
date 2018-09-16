@@ -91,10 +91,10 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         public ThreadViewHolder(View view) {
             super(view);
             view.setOnClickListener(this);
-            background = (LinearLayout) view.findViewById(R.id.background);
-            title = (TextView) view.findViewById(R.id.name);
-            profile = (ImageView) view.findViewById(R.id.icon);
-            checkBox = (CheckBox) view.findViewById(R.id.checkbox);
+            background = view.findViewById(R.id.background);
+            title = view.findViewById(R.id.name);
+            profile = view.findViewById(R.id.icon);
+            checkBox = view.findViewById(R.id.checkbox);
         }
 
         @Override

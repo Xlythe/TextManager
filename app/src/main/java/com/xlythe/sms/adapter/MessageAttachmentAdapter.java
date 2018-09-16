@@ -42,8 +42,8 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
         public AttachmentViewHolder(View itemView) {
             super(itemView);
             itemView.setOnClickListener(this);
-            mAttachmentView = (ImageView) itemView.findViewById(R.id.attachment);
-            videoLabel = (ImageView) itemView.findViewById(R.id.video_label);
+            mAttachmentView = itemView.findViewById(R.id.attachment);
+            videoLabel = itemView.findViewById(R.id.video_label);
         }
 
         public void setAttachment(Context context, Attachment attachment, OnClickListener onClickListener) {

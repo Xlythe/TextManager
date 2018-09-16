@@ -29,6 +29,7 @@ import com.xlythe.textmanager.text.Thread;
 
 import java.util.Set;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private boolean mActionBarCollapsed = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -87,25 +88,15 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
-        ((AppBarLayout) findViewById(R.id.appbar)).addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-                mActionBarCollapsed = verticalOffset < 0;
-            }
-        });
+        ((AppBarLayout) findViewById(R.id.appbar)).addOnOffsetChangedListener((appBarLayout, verticalOffset) -> mActionBarCollapsed = verticalOffset < 0);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.list);
-        mEmptyState = (ViewGroup) findViewById(R.id.empty_state);
+        mRecyclerView = findViewById(R.id.list);
+        mEmptyState = findViewById(R.id.empty_state);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(getApplicationContext(), ComposeActivity.class);
-                startActivity(i);
-            }
-        });
+        mFab = findViewById(R.id.fab);
+        mFab.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
 
         if (!mManager.isDefaultSmsPackage()) {
             Snackbar.make(findViewById(R.id.list), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
@@ -175,13 +166,10 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         final View errorBox = findViewById(R.id.layout_permissions);
         errorBox.setVisibility(View.VISIBLE);
 
-        Button button = (Button) errorBox.findViewById(R.id.request_permissions);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                errorBox.setVisibility(View.GONE);
-                ActivityCompat.requestPermissions(MainActivity.this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
-            }
+        Button button = errorBox.findViewById(R.id.request_permissions);
+        button.setOnClickListener(v -> {
+            errorBox.setVisibility(View.GONE);
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
         });
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
@@ -326,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
      * */
     private void markHasRequestedPermissions() {
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        prefs.edit().putBoolean(KEY_REQUEST_PERMISSIONS_FLAG, true).commit();
+        prefs.edit().putBoolean(KEY_REQUEST_PERMISSIONS_FLAG, true).apply();
     }
 
     /**
