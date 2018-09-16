@@ -218,6 +218,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     protected void onStart() {
         super.onStart();
         clearAttachmentSelection();
+        mEditText.setEnabled(mManager.isDefaultSmsPackage());
     }
 
     @Override

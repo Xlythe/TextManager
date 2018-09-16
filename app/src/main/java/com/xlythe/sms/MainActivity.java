@@ -30,6 +30,7 @@ import com.xlythe.textmanager.text.Thread;
 import java.util.Set;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         mManager = TextManager.getInstance(getApplicationContext());
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         ((AppBarLayout) findViewById(R.id.appbar)).addOnOffsetChangedListener((appBarLayout, verticalOffset) -> mActionBarCollapsed = verticalOffset < 0);
 
@@ -100,13 +101,10 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         if (!mManager.isDefaultSmsPackage()) {
             Snackbar.make(findViewById(R.id.list), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.btn_change, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Intent intent = new Intent(Mock.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-                            intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
-                            startActivity(intent);
-                        }
+                    .setAction(R.string.btn_change, v -> {
+                        Intent intent = new Intent(Mock.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+                        intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+                        startActivity(intent);
                     })
                     .show();
         }
@@ -257,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             switch (item.getItemId()) {
                 case R.id.menu_remove:
                     Set<Thread> threads = mAdapter.getSelectedItems();
-                    mManager.delete(threads.toArray(new Thread[threads.size()]));
+                    mManager.delete(threads.toArray(new Thread[0]));
                     mAdapter.clearSelection();
                     mode.finish();
                     return true;
@@ -299,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
             if (hasPermissions(this, REQUIRED_PERMISSIONS)) {
                 loadThreads();

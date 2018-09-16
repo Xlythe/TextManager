@@ -33,7 +33,6 @@ public class ComposeActivity extends AppCompatActivity {
 
     private ContactEditText mContacts;
     private TextView mMessage;
-    private Activity mActivity;
     private TextManager mManager;
 
     @Override
@@ -48,7 +47,6 @@ public class ComposeActivity extends AppCompatActivity {
         mManager = TextManager.getInstance(getBaseContext());
         mContacts = findViewById(R.id.contacts);
         mMessage = findViewById(R.id.message);
-        mActivity = this;
 
         mContacts.setOnClickListener(v -> startContactSearch());
         mContacts.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -88,6 +86,13 @@ public class ComposeActivity extends AppCompatActivity {
                 mMessage.setText(body);
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mContacts.setEnabled(mManager.isDefaultSmsPackage());
+        mMessage.setEnabled(mManager.isDefaultSmsPackage());
     }
 
     private void scheduleStartPostponedTransition(final View sharedElement) {
@@ -136,6 +141,7 @@ public class ComposeActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_compose, menu);
+        menu.findItem(R.id.action_send).setEnabled(mManager.isDefaultSmsPackage());
         return true;
     }
 
@@ -159,7 +165,7 @@ public class ComposeActivity extends AppCompatActivity {
         intent.putParcelableArrayListExtra(EXTRA_CONTACTS, mContacts.getContacts());
         intent.putExtra(EXTRA_CURSOR, mContacts.getSelectionStart());
         if (Build.VERSION.SDK_INT >= 21) {
-            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(mActivity,
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this,
                     Pair.create(mContacts, "edit_text"));
             startActivityForResult(intent, REQUEST_CODE_CONTACT, options.toBundle());
         } else {
