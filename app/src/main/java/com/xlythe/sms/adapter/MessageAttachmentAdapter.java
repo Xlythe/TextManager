@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.view.camera.Image;
@@ -54,7 +55,7 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
             } else {
                 videoLabel.setVisibility(View.GONE);
             }
-            Image.with(context)
+            Glide.with(context)
                     .load(attachment.getUri())
                     .into(mAttachmentView);
         }

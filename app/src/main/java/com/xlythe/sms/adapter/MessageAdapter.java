@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
@@ -301,7 +302,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             } else {
                 mVideoLabel.setVisibility(View.GONE);
             }
-            Image.with(getContext())
+            Glide.with(getContext())
                     .load(getMessage().getAttachment().getUri())
                     .into(mImageView);
         }

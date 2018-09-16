@@ -13,6 +13,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.xlythe.sms.R;
 import com.xlythe.view.camera.Image;
 
@@ -55,7 +56,7 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
         public void setCursor(Cursor cursor, boolean isSelected, boolean selectMode, int color){
             String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Thumbnails.DATA));
             Log.d(TAG, "Color: " + color);
-            Image.with(mContext)
+            Glide.with(mContext)
                     .load(new File(path))
                     .into(mImage);
 

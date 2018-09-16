@@ -17,6 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersAdapter;
 import com.xlythe.sms.R;
@@ -196,7 +197,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
                 } else {
                     videoLabel.setVisibility(View.GONE);
                 }
-                Image.with(getContext())
+                Glide.with(getContext())
                         .load(latest.getAttachment().getUri())
                         .into(attachment);
             }

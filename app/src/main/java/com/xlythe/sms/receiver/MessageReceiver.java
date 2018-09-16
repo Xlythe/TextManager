@@ -24,6 +24,7 @@ import com.xlythe.view.camera.Image;
 import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.core.app.TaskStackBuilder;
 
 public class MessageReceiver extends TextReceiver {
@@ -37,6 +38,11 @@ public class MessageReceiver extends TextReceiver {
             return;
         }
 
+        new Thread(() -> notify(context, text)).start();
+    }
+
+    @WorkerThread
+    private void notify(Context context, Text text) {
         TextManager textManager = TextManager.getInstance(context);
         MessageBasedNotificationManager notificationManager = MessageBasedNotificationManager.from(context);
 
@@ -112,6 +118,7 @@ public class MessageReceiver extends TextReceiver {
         return null;
     }
 
+    @WorkerThread
     @Nullable
     private Bitmap asBitmap(Context context, Text text) {
         if (text.getAttachment() != null) {

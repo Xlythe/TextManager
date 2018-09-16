@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.xlythe.sms.adapter.ContactIconAdapter;
 import com.xlythe.sms.adapter.ShareMediaAdapter;
 import com.xlythe.textmanager.text.Attachment;
@@ -88,7 +89,7 @@ public class ShareMediaActivity extends AppCompatActivity {
         if (attachment == null) {
             mImageView.setVisibility(View.GONE);
         } else {
-            Image.with(getBaseContext())
+            Glide.with(getBaseContext())
                     .load(attachment.getUri())
                     .into(mImageView);
         }
