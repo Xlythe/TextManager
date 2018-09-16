@@ -4,9 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
-import android.widget.TextView;
 
 import com.xlythe.sms.adapter.ContactAdapter;
 import com.xlythe.sms.decoration.DividerItemDecoration;

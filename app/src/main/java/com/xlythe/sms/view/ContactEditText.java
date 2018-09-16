@@ -10,7 +10,6 @@ import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.EditText;
 
 import com.xlythe.sms.drawable.ExtendedProfileDrawable;
 import com.xlythe.textmanager.text.Contact;

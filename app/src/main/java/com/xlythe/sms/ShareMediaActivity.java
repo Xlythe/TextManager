@@ -15,7 +15,6 @@ import com.xlythe.textmanager.text.Attachment;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.util.MessageUtils;
-import com.xlythe.view.camera.Image;
 
 import java.util.ArrayList;
 import java.util.HashSet;

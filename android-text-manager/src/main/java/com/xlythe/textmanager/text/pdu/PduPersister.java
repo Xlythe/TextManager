@@ -7,7 +7,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteException;
-import android.drm.DrmManagerClient;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.provider.Telephony;

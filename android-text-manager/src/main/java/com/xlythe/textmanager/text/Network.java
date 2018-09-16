@@ -1,7 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import static com.xlythe.textmanager.text.TextManager.TAG;
-
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.WorkerThread;
+
+import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public class Network {
     private static final String ENABLE_MMS = "enableMMS";

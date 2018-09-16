@@ -15,7 +15,6 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.xlythe.sms.R;
-import com.xlythe.view.camera.Image;
 
 import java.io.File;
 

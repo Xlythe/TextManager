@@ -11,15 +11,14 @@ import com.bumptech.glide.Glide;
 import com.xlythe.sms.MessageActivity;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
+import com.xlythe.sms.notification.MessageBasedNotificationManager;
 import com.xlythe.sms.notification.NotificationChannel;
 import com.xlythe.sms.notification.NotificationMessage;
-import com.xlythe.sms.notification.MessageBasedNotificationManager;
 import com.xlythe.sms.notification.NotificationThread;
 import com.xlythe.sms.util.BitmapUtils;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextReceiver;
-import com.xlythe.view.camera.Image;
 
 import java.util.concurrent.ExecutionException;
 

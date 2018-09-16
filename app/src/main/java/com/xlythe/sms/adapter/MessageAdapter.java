@@ -26,7 +26,6 @@ import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.concurrency.Future;
-import com.xlythe.view.camera.Image;
 
 import androidx.recyclerview.widget.RecyclerView;
 

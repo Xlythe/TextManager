@@ -1,7 +1,6 @@
 package com.xlythe.sms.notification;
 
 import android.annotation.TargetApi;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -17,7 +16,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.xlythe.sms.R;
-import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.HashSet;
 import java.util.Set;
