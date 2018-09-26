@@ -8,14 +8,16 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
+import com.xlythe.manager.notifications.messages.MessageBasedNotificationManager;
+import com.xlythe.manager.notifications.messages.NotificationChannel;
+import com.xlythe.manager.notifications.messages.NotificationContact;
+import com.xlythe.manager.notifications.messages.NotificationMessage;
+import com.xlythe.manager.notifications.messages.NotificationThread;
 import com.xlythe.sms.MessageActivity;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
-import com.xlythe.sms.notification.MessageBasedNotificationManager;
-import com.xlythe.sms.notification.NotificationChannel;
-import com.xlythe.sms.notification.NotificationMessage;
-import com.xlythe.sms.notification.NotificationThread;
 import com.xlythe.sms.util.BitmapUtils;
+import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextReceiver;
@@ -45,6 +47,16 @@ public class MessageReceiver extends TextReceiver {
         TextManager textManager = TextManager.getInstance(context);
         MessageBasedNotificationManager notificationManager = MessageBasedNotificationManager.from(context);
 
+        Contact sender = textManager.getSender(text).get();
+
+        // Sender state.
+        NotificationContact notificationContact = new NotificationContact.Builder()
+                .id(sender.getId())
+                .phoneNumber(sender.getNumber())
+                .name(sender.getDisplayName())
+                .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, sender)))
+                .build();
+
         // Global state for all notifications
         NotificationChannel notificationChannel = new NotificationChannel.Builder()
                 .id(MESSAGE_CHANNEL_ID)
@@ -59,14 +71,13 @@ public class MessageReceiver extends TextReceiver {
                 .id(text.getThreadId())
                 .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, textManager.getMembersExceptMe(text).get())))
                 .setOnClickIntent(createOnClickIntent(context, text.getThreadId()))
-                .setQuickReplyIntent(createQuickReplyIntent(context, text))
+                .setOnQuickReplyIntent(createQuickReplyIntent(context, text))
                 .build();
 
         // State specific to the single text
         NotificationMessage notificationMessage = new NotificationMessage.Builder(notificationThread)
                 .id(text.getId())
-                .sender(textManager.getSender(text).get().getDisplayName())
-                .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, textManager.getSender(text).get())))
+                .sender(notificationContact)
                 .body(body(context, text))
                 .image(asBitmap(context, text)) // Null is acceptable
                 .build();
@@ -166,6 +177,9 @@ public class MessageReceiver extends TextReceiver {
             Log.d(TAG, "User typed message " + reply + " in reply to " + originalText.getBody());
             textManager.send(reply).to(originalText);
             Log.d(TAG, "Reply successfully sent");
+
+            // We don't know the message ID of the reply yet, so just make one up.
+            setResultData(Long.toString(System.currentTimeMillis()));
         }
     }
 }

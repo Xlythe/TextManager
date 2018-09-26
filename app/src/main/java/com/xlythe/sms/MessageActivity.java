@@ -20,12 +20,12 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.xlythe.manager.notifications.messages.MessageBasedNotificationManager;
 import com.xlythe.sms.adapter.MessageAdapter;
 import com.xlythe.sms.fragment.CameraFragment;
 import com.xlythe.sms.fragment.GalleryFragment;
 import com.xlythe.sms.fragment.MicFragment;
 import com.xlythe.sms.fragment.StickerFragment;
-import com.xlythe.sms.notification.MessageBasedNotificationManager;
 import com.xlythe.sms.util.ColorUtils;
 import com.xlythe.swap.SwapEditText;
 import com.xlythe.textmanager.MessageObserver;
