@@ -104,6 +104,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     private static class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
+        private static final String TAG_MMS = "sms:mms";
+
         private final Context mContext;
 
         ReceivePushTask(Context context) {
@@ -115,9 +117,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         protected Void doInBackground(Intent... intents) {
             Text text = intents[0].getParcelableExtra(TEXT_EXTRA);
             PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MMS StoreMedia");
+            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_MMS);
             try {
-                wakelock.acquire();
+                wakelock.acquire(5000);
 
                 Uri databaseUri = Uri.withAppendedPath(Mock.Telephony.Mms.Inbox.CONTENT_URI, text.getId());
                 String url = getContentUrl(databaseUri);
@@ -203,7 +205,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-    public void send(final Text text) {
+    public void send(Text text) {
         Intent sendService = new Intent(mContext, SendService.class);
         sendService.putExtra(SendService.TEXT_EXTRA, text);
         mContext.startService(sendService);
@@ -211,8 +213,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     public class Builder {
         private final Context mContext;
-        private final String mMessage;
-        private final Attachment mAttachment;
+        @Nullable private final String mMessage;
+        @Nullable private final Attachment mAttachment;
 
         private Builder(Context context, String message) {
             mContext = context;
@@ -245,38 +247,23 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         public void to(String... addresses) {
-            Text.Builder builder = new Text.Builder().addRecipients(mContext, addresses);
-            send(builder);
+            send(new Text.Builder().addRecipients(mContext, addresses));
         }
 
         public void to(Collection<Contact> addresses) {
-            Text.Builder builder = new Text.Builder().addRecipients(addresses);
-            send(builder);
+            send(new Text.Builder().addRecipients(addresses));
         }
 
         public void to(Contact... addresses) {
-            Text.Builder builder = new Text.Builder().addRecipients(addresses);
-            send(builder);
+            send(new Text.Builder().addRecipients(addresses));
         }
 
         public void to(Text text) {
-            getMembersExceptMe(text).get(new Future.Callback<Set<Contact>>() {
-                @Override
-                public void get(Set<Contact> instance) {
-                    Text.Builder builder = new Text.Builder().addRecipients(instance);
-                        send(builder);
-                }
-            });
+            getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
 
         public void to(Thread thread) {
-            getMembersExceptMe(thread.getLatestMessage()).get(new Future.Callback<Set<Contact>>() {
-                @Override
-                public void get(Set<Contact> instance) {
-                    Text.Builder builder = new Text.Builder().addRecipients(instance);
-                        send(builder);
-                }
-            });
+            getMembersExceptMe(thread.getLatestMessage()).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
     }
 
@@ -419,11 +406,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     cType = threads.getString(threads.getColumnIndex(Mock.Telephony.Mms.CONTENT_TYPE));
                 }
                 // If content type is present, this is an MMS message
-                if (cType != null) {
-                    isMms = true;
-                } else {
-                    isMms = false;
-                }
+                isMms = cType != null;
             } else {
                 isMms = threads.getString(typeIndex).equals("mms");
             }
@@ -727,15 +710,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public void delete(Text... messages) {
-        String ids = "";
+        StringBuilder ids = new StringBuilder();
         for (Text text : messages) {
-            if (!ids.isEmpty()) {
-                ids += ",";
+            if (ids.length() > 0) {
+                ids.append(",");
             }
-            ids += text.getId();
+            ids.append(text.getId());
         }
-        String clause = String.format("%s in (%s)",
-                Mock.Telephony.Sms._ID, ids);
+        String clause = String.format("%s in (%s)", Mock.Telephony.Sms._ID, ids);
         int rowsDeleted = mContext.getContentResolver().delete(
                 Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
         if (DEBUG) {
@@ -745,15 +727,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public void delete(Thread... threads) {
-        String ids = "";
+        StringBuilder ids = new StringBuilder();
         for (Thread thread : threads) {
-            if (!ids.isEmpty()) {
-                ids += ",";
+            if (ids.length() > 0) {
+                ids.append(",");
             }
-            ids += thread.getId();
+            ids.append(thread.getId());
         }
-        String clause = String.format("%s in (%s)",
-                Mock.Telephony.Sms.THREAD_ID, ids);
+        String clause = String.format("%s in (%s)", Mock.Telephony.Sms.THREAD_ID, ids);
         int rowsDeleted = mContext.getContentResolver().delete(
                 Mock.Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
         if (DEBUG) {
