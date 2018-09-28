@@ -21,6 +21,9 @@
             </intent-filter>
         </receiver>
 
+        <!-- Service that handles downloading MMS texts. -->
+        <service android:name=".text.MmsReceiveService" />
+
         <!-- BroadcastReceiver that listens for incoming SMS messages -->
         <receiver
             android:name=".text.receiver.SmsReceiver"
