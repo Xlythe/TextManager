@@ -23,9 +23,9 @@ import com.xlythe.textmanager.text.util.ContentType;
 
 import androidx.annotation.WorkerThread;
 
-import static android.provider.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
-import static android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
-import static android.provider.Telephony.Sms.Intents.getMessagesFromIntent;
+import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.SMS_DELIVER_ACTION;
+import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION;
+import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.getMessagesFromIntent;
 import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.SMS_RECEIVED_ACTION;
 
 public abstract class TextReceiver extends BroadcastReceiver {
@@ -62,8 +62,7 @@ public abstract class TextReceiver extends BroadcastReceiver {
             Text text = Receive.storeMessage(context, messages, 0);
             onMessageReceived(context, text);
         } else if (Build.VERSION.SDK_INT < 19 && SMS_RECEIVED_ACTION.equals(intent.getAction())) {
-//            TODO: Build notifications for pre 19
-//            TODO: This is purely to display the notification! because main sms app stores the sms
+            // This is purely to display the notification! because main sms app stores the sms
             SmsMessage[] messages = getMessagesFromIntent(intent);
             onMessageReceived(context, new Text.Converter().toText(context, messages));
         }

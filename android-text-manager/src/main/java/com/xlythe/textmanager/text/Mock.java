@@ -1,10 +1,13 @@
 package com.xlythe.textmanager.text;
 
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.BaseColumns;
+import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Patterns;
 
@@ -211,6 +214,33 @@ public class Mock {
                         SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED_ACTION = "android.provider.Telephony.SMS_SERVICE_CATEGORY_PROGRAM_DATA_RECEIVED";
                         SIM_FULL_ACTION = "android.provider.Telephony.SIM_FULL";
                         SMS_REJECTED_ACTION = "android.provider.Telephony.SMS_REJECTED";
+                    }
+                }
+
+                public static SmsMessage[] getMessagesFromIntent(Intent intent) {
+                    if (Build.VERSION.SDK_INT >= 19) {
+                        return android.provider.Telephony.Sms.Intents.getMessagesFromIntent(intent);
+                    } else {
+                        Bundle extras = intent.getExtras();
+                        if (extras == null) {
+                            return new SmsMessage[0];
+                        }
+
+                        Object[] pdus = (Object[]) extras.get("pdus");
+                        if (pdus == null) {
+                            return new SmsMessage[0];
+                        }
+
+                        try {
+                            SmsMessage[] messages = new SmsMessage[pdus.length];
+                            for (int i = 0; i < pdus.length; i++) {
+                                messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+                            }
+                            return messages;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return new SmsMessage[0];
+                        }
                     }
                 }
             }
