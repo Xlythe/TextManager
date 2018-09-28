@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -44,6 +45,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 
 /**
@@ -206,9 +208,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public void send(Text text) {
-        Intent sendService = new Intent(mContext, SendService.class);
-        sendService.putExtra(SendService.TEXT_EXTRA, text);
-        mContext.startService(sendService);
+        SendService.schedule(mContext, text);
     }
 
     public class Builder {
@@ -241,9 +241,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             if (mAttachment != null) {
                 builder.attach(mAttachment);
             }
-            Intent sendService = new Intent(mContext, SendService.class);
-            sendService.putExtra(SendService.TEXT_EXTRA, builder.build());
-            mContext.startService(sendService);
+
+            SendService.schedule(mContext, builder.build());
         }
 
         public void to(String... addresses) {
@@ -258,10 +257,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             send(new Text.Builder().addRecipients(addresses));
         }
 
+        @RequiresPermission(Manifest.permission.READ_SMS)
         public void to(Text text) {
             getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
 
+        @RequiresPermission(Manifest.permission.READ_SMS)
         public void to(Thread thread) {
             getMembersExceptMe(thread.getLatestMessage()).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
@@ -853,6 +854,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return contact;
     }
 
+    @RequiresPermission(Manifest.permission.READ_SMS)
     public Contact getSelf() {
         TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
         String phoneNumber = manager.getLine1Number();
@@ -880,6 +882,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Override
+    @RequiresPermission(Manifest.permission.READ_SMS)
     public synchronized Future<Contact> getSender(final Text text) {
         final Contact sender = text.getSender();
         if (sender != null) {
@@ -887,6 +890,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         } else {
             return new FutureImpl<Contact>() {
                 @Override
+                @RequiresPermission(Manifest.permission.READ_SMS)
                 public Contact get() {
                     if (text.getSenderAddress() == null && text.isMms()) {
                         buildSender(text);
@@ -920,9 +924,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
+    @RequiresPermission(Manifest.permission.READ_SMS)
     public synchronized Future<Set<Contact>> getMembersExceptMe(final Text text) {
         return new FutureImpl<Set<Contact>>() {
             @Override
+            @RequiresPermission(Manifest.permission.READ_SMS)
             public Set<Contact> get() {
                 Set<Contact> members = new HashSet<>(getMembers(text).get());
                 if (members.size() == 1) {

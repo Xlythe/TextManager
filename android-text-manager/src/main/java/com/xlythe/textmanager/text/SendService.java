@@ -27,48 +27,39 @@ public class SendService extends IntentService {
     private static final String ACTION_SMS_SENT = "com.xlythe.textmanager.text.SMS_SENT";
     private static final String ACTION_SMS_DELIVERED = "com.xlythe.textmanager.text.SMS_DELIVERED";
     private static final String ACTION_MMS_SENT = "com.xlythe.textmanager.text.MMS_SENT";
-    public static final String TEXT_EXTRA = "text_extra";
+    private static final String EXTRA_TEXT = "text";
+
+    static void schedule(Context context, Text text) {
+        Intent sendService = new Intent(context, SendService.class);
+        sendService.putExtra(EXTRA_TEXT, text);
+        context.startService(sendService);
+    }
 
     public SendService() {
         super("SendService");
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Text text = intent.getParcelableExtra(TEXT_EXTRA);
-
-        final Uri uri;
-        if (text.isMms()) {
-            uri = storeMMS(this, text);
-        }  else {
-            uri = storeSMS(this, text);
-        }
-
-        intent.setData(uri);
-        return super.onStartCommand(intent, flags, startId);
-    }
-
     @WorkerThread
     @Override
     protected void onHandleIntent(Intent intent) {
-        final Text text = intent.getParcelableExtra(TEXT_EXTRA);
-        final Uri uri = intent.getData();
-
+        Text text = intent.getParcelableExtra(EXTRA_TEXT);
         if (text.isMms()) {
-            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(getBaseContext(), uri, text.getId());
+            Uri uri = storeMMS(text);
+            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(this, uri, text.getId());
             if (Network.forceDataConnection(this)) {
-                sendMMS(getBaseContext(), text, sentMmsPendingIntent);
+                sendMMS(text, sentMmsPendingIntent);
             } else {
                 sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
             }
         } else {
-            sendSMS(this, text, uri);
+            Uri uri = storeSMS(text);
+            sendSMS(text, uri);
         }
     }
 
-    private static Uri storeSMS(Context context, final Text text) {
+    private Uri storeSMS(Text text) {
         // Put together query data
-        TextManager manager = TextManager.getInstance(context);
+        TextManager manager = TextManager.getInstance(this);
         String address = manager.getMembers(text).get().iterator().next().getNumber();
         ContentValues values = new ContentValues();
         Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
@@ -78,20 +69,20 @@ public class SendService extends IntentService {
         String clause = String.format("%s = %s", Mock.Telephony.Sms._ID, text.getId());
 
         // Check if message exists already, if so update the data
-        int rowsUpdated = context.getContentResolver().update(uri, values, clause, null);
+        int rowsUpdated = getContentResolver().update(uri, values, clause, null);
 
         // Nothing was updated so insert a new one
         if (rowsUpdated == 0) {
-            uri = context.getContentResolver().insert(uri, values);
+            uri = getContentResolver().insert(uri, values);
         } else {
             uri = Uri.withAppendedPath(uri, text.getId());
         }
         return uri;
     }
 
-    private static void sendSMS(Context context, Text text, Uri uri) {
+    private void sendSMS(Text text, Uri uri) {
         SmsManager sms = SmsManager.getDefault();
-        TextManager manager = TextManager.getInstance(context);
+        TextManager manager = TextManager.getInstance(this);
         Contact contact = manager.getMembers(text).get().iterator().next();
         if (contact.equals(Contact.UNKNOWN)) {
             return;
@@ -103,17 +94,17 @@ public class SendService extends IntentService {
             // TODO: not sure if this works for everyone
             ArrayList<PendingIntent> sendIntent = new ArrayList<>();
             ArrayList<PendingIntent> deliveryIntent = new ArrayList<>();
-            sendIntent.add(newSmsSentPendingIntent(context, uri, text.getId()));
-            deliveryIntent.add(newSmsDeliveredPendingIntent(context, uri, text.getId()));
+            sendIntent.add(newSmsSentPendingIntent(this, uri, text.getId()));
+            deliveryIntent.add(newSmsDeliveredPendingIntent(this, uri, text.getId()));
             sms.sendMultipartTextMessage(address, null, sms.divideMessage(text.getBody()), sendIntent, deliveryIntent);
         } else {
-            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(context, uri, text.getId()), newSmsDeliveredPendingIntent(context, uri, text.getId()));
+            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(this, uri, text.getId()), newSmsDeliveredPendingIntent(this, uri, text.getId()));
         }
     }
 
     @Nullable
-    private static Uri storeMMS(Context context, final Text text) {
-        PduPersister p = PduPersister.getPduPersister(context);
+    private Uri storeMMS(Text text) {
+        PduPersister p = PduPersister.getPduPersister(this);
 
         Uri uri;
         String id = text.getId();
@@ -123,7 +114,7 @@ public class SendService extends IntentService {
             uri = Mock.Telephony.Mms.Sent.CONTENT_URI;
         }
         try {
-            uri = p.persist(text.getSendRequest(context), uri, true, true, null);
+            uri = p.persist(text.getSendRequest(this), uri, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
             return null;
@@ -131,7 +122,7 @@ public class SendService extends IntentService {
 
         ContentValues values = new ContentValues();
         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-        context.getContentResolver().update(uri, values, null, null);
+        getContentResolver().update(uri, values, null, null);
 
         return uri;
     }
@@ -139,18 +130,18 @@ public class SendService extends IntentService {
     /**
      * Send message
      */
-    public static void sendMMS(Context context, final Text text, final PendingIntent sentMmsPendingIntent) {
-        TextManager manager = TextManager.getInstance(context);
+    private void sendMMS(Text text, PendingIntent sentMmsPendingIntent) {
+        TextManager manager = TextManager.getInstance(this);
         Contact contact = manager.getMembers(text).get().iterator().next();
         if (contact.equals(Contact.UNKNOWN)) {
             return;
         }
         try {
-            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
+            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(this);
             HttpUtils.httpConnection(
-                    context, 4444L,
+                    this, 4444L,
                     apnParameters.getMmscUrl(),
-                    text.getByteData(context),
+                    text.getByteData(this),
                     HttpUtils.HTTP_POST_METHOD,
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
@@ -168,7 +159,7 @@ public class SendService extends IntentService {
      * @param pendingIntent intent to notify
      * @param result result to be updated
      */
-    private static void sendIntent(PendingIntent pendingIntent, int result) {
+    private void sendIntent(PendingIntent pendingIntent, int result) {
         try {
             pendingIntent.send(result);
         } catch (PendingIntent.CanceledException e) {
