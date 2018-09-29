@@ -8,7 +8,7 @@ Where to Download
 -----------------
 ```groovy
 dependencies {
-  implementation 'com.xlythe:android-text-manager:1.0.6'
+  implementation 'com.xlythe:android-text-manager:1.0.7'
 }
 ```
 
