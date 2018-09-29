@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -107,8 +108,12 @@ public class MessageReceiver extends TextReceiver {
 
     private PendingIntent createQuickReplyIntent(Context context, Text text) {
         Intent intent = new Intent(context, OnQuickReplyReceiver.class);
-        intent.putExtra(EXTRA_TEXT, text);
-        return PendingIntent.getBroadcast(context, text.getId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Note: The extras get lost when sending the broadcast, but the data is preserved.
+        // Not sure why, but we avoid the problem if we just stick to using the data uri. Meh.
+        intent.setData(Uri.parse("sms://threads/" + text.getThreadId()));
+
+        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Nullable
@@ -175,17 +180,17 @@ public class MessageReceiver extends TextReceiver {
     public static final class OnQuickReplyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            TextManager textManager = TextManager.getInstance(context);
-            Text originalText = intent.getParcelableExtra(EXTRA_TEXT);
-            if (originalText == null) {
+            if (intent.getData() == null) {
                 Log.w(TAG, "Attempted to send a reply, but the original text was forgotten");
                 setResultCode(Activity.RESULT_CANCELED);
                 return;
             }
 
+            TextManager textManager = TextManager.getInstance(context);
+            String threadId = intent.getData().getLastPathSegment();
+
             String reply = intent.getStringExtra(MessageBasedNotificationManager.EXTRA_REPLY);
-            Log.d(TAG, "User typed message " + reply + " in reply to " + originalText.getBody());
-            textManager.send(reply).to(originalText);
+            textManager.send(reply).to(textManager.getThread(threadId).get());
             Log.d(TAG, "Reply successfully sent");
 
             // We don't know the message ID of the reply yet, so just make one up.
