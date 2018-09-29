@@ -32,6 +32,8 @@ public class NetworkUtils {
     @WorkerThread
     @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
     public static boolean forceDataConnection(Context context) {
+        // NOTE! Ignore TYPE_MOBILE_MMS and NET_CAPABILITY_MMS. It's all lies. It doesn't work.
+        // Instead rely on CELLULAR and INTERNET.
         if (Build.VERSION.SDK_INT >= 21) {
             return request(context);
         } else {
