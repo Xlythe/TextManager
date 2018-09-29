@@ -21,7 +21,6 @@ import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-import androidx.core.util.Preconditions;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
@@ -47,7 +46,7 @@ public class SendService extends IntentService {
         if (text.isMms()) {
             Uri uri = storeMMS(text);
             PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(this, uri, text.getId());
-            if (Network.forceDataConnection(this)) {
+            if (NetworkUtils.forceDataConnection(this)) {
                 sendMMS(text, sentMmsPendingIntent);
             } else {
                 sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);

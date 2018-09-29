@@ -60,7 +60,7 @@ public class MmsReceiveService extends IntentService {
       byte[] location = notif.getContentLocation();
       String loc = new String(location);
 
-      if (!Network.forceDataConnection(this)) {
+      if (!NetworkUtils.forceDataConnection(this)) {
         markAsFailed(pdu);
         Log.d(TAG, "Failed to download MMS. No cell connection.");
         return;

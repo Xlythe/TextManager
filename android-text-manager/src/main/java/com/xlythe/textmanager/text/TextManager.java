@@ -130,7 +130,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     return null;
                 }
 
-                if (!Network.forceDataConnection(mContext)) {
+                if (!NetworkUtils.forceDataConnection(mContext)) {
                     Log.e(TAG, "Failed to connect to a mobile network. Unable to receive text " + text);
                     return null;
                 }
