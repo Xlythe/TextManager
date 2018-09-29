@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -13,6 +14,8 @@ import android.util.Patterns;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import androidx.annotation.Nullable;
 
 /**
  * Fakes the Telephony constants
@@ -51,6 +54,15 @@ public class Mock {
                 } else {
                     CONTENT_URI = Uri.parse("content://sms");
                     DEFAULT_SORT_ORDER = "date DESC";
+                }
+            }
+
+            @Nullable
+            public static String getDefaultSmsPackage(Context context) {
+                if (Build.VERSION.SDK_INT >= 19) {
+                    return android.provider.Telephony.Sms.getDefaultSmsPackage(context);
+                } else {
+                    return null;
                 }
             }
 

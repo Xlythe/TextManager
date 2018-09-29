@@ -23,7 +23,7 @@ import androidx.annotation.WorkerThread;
 
 public class MmsReceiveService extends IntentService {
   private static final String TAG = MmsReceiveService.class.getSimpleName();
-  private static final String EXTRA_TEXT = "text";
+  private static final String EXTRA_DATA = "data";
 
   private static final String TAG_MMS = "sms:mms";
   private static final long TIMEOUT_MMS = 5000;
@@ -47,7 +47,7 @@ public class MmsReceiveService extends IntentService {
     try {
       wakelock.acquire(TIMEOUT_MMS);
 
-      byte[] pushData = intent.getByteArrayExtra("data");
+      byte[] pushData = intent.getByteArrayExtra(EXTRA_DATA);
 
       PduParser parser = new PduParser(pushData, true);
       GenericPdu pdu = parser.parse();
@@ -141,7 +141,7 @@ public class MmsReceiveService extends IntentService {
   private void broadcastMmsDownloaded(Text text) {
     Intent intent = new Intent(TextReceiver.ACTION_TEXT_RECEIVED);
     intent.setPackage(getPackageName());
-    intent.putExtra(EXTRA_TEXT, text);
+    intent.putExtra(TextReceiver.EXTRA_TEXT, text);
     sendBroadcast(intent);
   }
 }
