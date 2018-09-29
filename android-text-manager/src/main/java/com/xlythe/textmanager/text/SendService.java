@@ -21,6 +21,7 @@ import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+import androidx.core.util.Preconditions;
 
 public class SendService extends IntentService {
     private static final String TAG = SendService.class.getSimpleName();
@@ -30,9 +31,9 @@ public class SendService extends IntentService {
     private static final String EXTRA_TEXT = "text";
 
     static void schedule(Context context, Text text) {
-        Intent sendService = new Intent(context, SendService.class);
-        sendService.putExtra(EXTRA_TEXT, text);
-        context.startService(sendService);
+        Intent intent = new Intent(context, SendService.class);
+        intent.putExtra(EXTRA_TEXT, text);
+        context.startService(intent);
     }
 
     public SendService() {

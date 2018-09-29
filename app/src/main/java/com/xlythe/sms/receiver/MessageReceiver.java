@@ -1,5 +1,6 @@
 package com.xlythe.sms.receiver;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -48,13 +49,20 @@ public class MessageReceiver extends TextReceiver {
         MessageBasedNotificationManager notificationManager = MessageBasedNotificationManager.from(context);
 
         Contact sender = textManager.getSender(text).get();
+        Contact self = textManager.getSelf();
 
-        // Sender state.
+        // Contact state.
         NotificationContact notificationContact = new NotificationContact.Builder()
                 .id(sender.getId())
                 .phoneNumber(sender.getNumber())
                 .name(sender.getDisplayName())
                 .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, sender)))
+                .build();
+        NotificationContact selfContact = new NotificationContact.Builder()
+                .id(self.getId())
+                .phoneNumber(self.getNumber())
+                .name(self.getDisplayName())
+                .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, self)))
                 .build();
 
         // Global state for all notifications
@@ -64,6 +72,7 @@ public class MessageReceiver extends TextReceiver {
                 .accentColor(context.getResources().getColor(R.color.colorPrimary))
                 .channelName(R.string.notification_channel_name)
                 .channelDescription(R.string.notification_channel_description)
+                .self(selfContact)
                 .build();
 
         // State specific to the conversation
@@ -170,6 +179,7 @@ public class MessageReceiver extends TextReceiver {
             Text originalText = intent.getParcelableExtra(EXTRA_TEXT);
             if (originalText == null) {
                 Log.w(TAG, "Attempted to send a reply, but the original text was forgotten");
+                setResultCode(Activity.RESULT_CANCELED);
                 return;
             }
 

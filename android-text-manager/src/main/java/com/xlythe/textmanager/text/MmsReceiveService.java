@@ -29,7 +29,7 @@ public class MmsReceiveService extends IntentService {
   private static final long TIMEOUT_MMS = 5000;
 
   static void schedule(Context context, Intent intent) {
-    intent.setComponent(new ComponentName(context, SendService.class));
+    intent.setComponent(new ComponentName(context, MmsReceiveService.class));
     context.startService(intent);
   }
 
@@ -40,6 +40,7 @@ public class MmsReceiveService extends IntentService {
   @WorkerThread
   @Override
   protected void onHandleIntent(Intent intent) {
+    Log.d(TAG, "Downloading MMS");
     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
     PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_MMS);
 
@@ -48,25 +49,27 @@ public class MmsReceiveService extends IntentService {
 
       byte[] pushData = intent.getByteArrayExtra("data");
 
-      final PduParser parser = new PduParser(pushData, true);
-      final GenericPdu pdu = parser.parse();
+      PduParser parser = new PduParser(pushData, true);
+      GenericPdu pdu = parser.parse();
       NotificationInd notif = (NotificationInd) pdu;
       if (pdu == null) {
-        Log.e(TAG, "Invalid PUSH data");
+        Log.d(TAG, "Failed to download MMS. Invalid PUSH data.");
         return;
       }
 
       byte[] location = notif.getContentLocation();
-      final String loc = new String (location);
+      String loc = new String(location);
 
       if (!Network.forceDataConnection(this)) {
         markAsFailed(pdu);
+        Log.d(TAG, "Failed to download MMS. No cell connection.");
         return;
       }
 
       byte[] data = Receive.receive(this, loc);
       if (data == null) {
         markAsFailed(pdu);
+        Log.d(TAG, "Failed to download MMS. No data.");
         return;
       }
 
@@ -74,36 +77,39 @@ public class MmsReceiveService extends IntentService {
       PduPersister persister = PduPersister.getPduPersister(this);
       Uri msgUri;
       try {
-        msgUri = persister.persist(retrieveConf, Mock.Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
+        msgUri = persister.persist(retrieveConf, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
       } catch (MmsException e) {
         markAsFailed(pdu);
+        Log.d(TAG, "Failed to download MMS. Unable to persist.");
         return;
       }
 
       // Use local time instead of PDU time
       ContentValues values = new ContentValues(1);
-      values.put(Mock.Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
+      values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
       getContentResolver().update(msgUri, values, null, null);
 
       Cursor textCursor = getContentResolver().query(msgUri, null, null, null, null);
       if (textCursor == null) {
         markAsFailed(pdu);
+        Log.d(TAG, "Failed to download MMS. No text cursor.");
         return;
       }
       textCursor.moveToFirst();
 
-      final String[] mmsProjection = new String[]{
+      String[] mmsProjection = new String[]{
               BaseColumns._ID,
-              Mock.Telephony.Mms.Part.CONTENT_TYPE,
-              Mock.Telephony.Mms.Part.TEXT,
-              Mock.Telephony.Mms.Part._DATA,
-              Mock.Telephony.Mms.Part.MSG_ID
+              Telephony.Mms.Part.CONTENT_TYPE,
+              Telephony.Mms.Part.TEXT,
+              Telephony.Mms.Part._DATA,
+              Telephony.Mms.Part.MSG_ID
       };
-      Uri mmsUri = Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "/part");
+      Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
       Cursor mmsCursor = getContentResolver().query(mmsUri, mmsProjection, null, null, null);
       if (mmsCursor == null) {
         textCursor.close();
         markAsFailed(pdu);
+        Log.d(TAG, "Failed to download MMS. No MMS cursor.");
         return;
       }
 
@@ -113,6 +119,7 @@ public class MmsReceiveService extends IntentService {
       textCursor.close();
       mmsCursor.close();
       broadcastMmsDownloaded(text);
+      Log.d(TAG, "Successfully downloaded MMS");
     } finally {
       wakelock.release();
     }
@@ -124,7 +131,7 @@ public class MmsReceiveService extends IntentService {
       Uri uri = p.persist(pdu, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);
       ContentValues values = new ContentValues(2);
       values.put(Telephony.Mms.STATUS, Telephony.Sms.Sent.STATUS_FAILED);
-      values.put(Telephony.Mms.DATE, System.currentTimeMillis());
+      values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000);
       getContentResolver().update(uri, values, null, null);
     } catch (MmsException e) {
       Log.e(TAG, "Persisting pdu failed", e);
