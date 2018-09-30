@@ -81,6 +81,7 @@ public class MessageReceiver extends TextReceiver {
                 .id(text.getThreadId())
                 .icon(BitmapUtils.toBitmap(new ProfileDrawable(context, textManager.getMembersExceptMe(text).get())))
                 .setOnClickIntent(createOnClickIntent(context, text.getThreadId()))
+                .setOnDismissIntent(createOnDismissIntent(context, text))
                 .setOnQuickReplyIntent(createQuickReplyIntent(context, text))
                 .build();
 
@@ -90,6 +91,7 @@ public class MessageReceiver extends TextReceiver {
                 .sender(notificationContact)
                 .body(body(context, text))
                 .image(asBitmap(context, text)) // Null is acceptable
+                .setOnDismissIntent(createOnDismissIntent(context, text))
                 .build();
 
         // Show the notification
@@ -104,6 +106,16 @@ public class MessageReceiver extends TextReceiver {
         stackBuilder.addParentStack(MessageActivity.class);
         stackBuilder.addNextIntent(intent);
         return stackBuilder.getPendingIntent(threadId.hashCode(), PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private static PendingIntent createOnDismissIntent(Context context, Text text) {
+        Intent intent = new Intent(context, OnDismissReceiver.class);
+
+        // Note: The extras get lost when sending the broadcast, but the data is preserved.
+        // Not sure why, but we avoid the problem if we just stick to using the data uri. Meh.
+        intent.setData(Uri.parse("sms://threads/" + text.getThreadId()));
+
+        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private PendingIntent createQuickReplyIntent(Context context, Text text) {
@@ -177,6 +189,23 @@ public class MessageReceiver extends TextReceiver {
         return "<i>" + string + "</i>";
     }
 
+    public static final class OnDismissReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getData() == null) {
+                Log.w(TAG, "Attempted to mark thread as read, but the original text was forgotten");
+                setResultCode(Activity.RESULT_CANCELED);
+                return;
+            }
+
+            TextManager textManager = TextManager.getInstance(context);
+            String threadId = intent.getData().getLastPathSegment();
+
+            textManager.markAsRead(textManager.getThread(threadId).get());
+            Log.d(TAG, "Notification dismissed. Marked thread as read.");
+        }
+    }
+
     public static final class OnQuickReplyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -190,7 +219,9 @@ public class MessageReceiver extends TextReceiver {
             String threadId = intent.getData().getLastPathSegment();
 
             String reply = intent.getStringExtra(MessageBasedNotificationManager.EXTRA_REPLY);
-            textManager.send(reply).to(textManager.getThread(threadId).get());
+            com.xlythe.textmanager.text.Thread thread = textManager.getThread(threadId).get();
+            textManager.markAsRead(thread);
+            textManager.send(reply).to(thread);
             Log.d(TAG, "Reply successfully sent");
 
             // We don't know the message ID of the reply yet, so just make one up.
