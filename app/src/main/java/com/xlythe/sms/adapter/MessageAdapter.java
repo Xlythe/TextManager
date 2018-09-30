@@ -221,12 +221,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             }
 
             if (mProfile != null) {
-                getManager().getSender(getMessage()).get(new Future.Callback<Contact>() {
-                    @Override
-                    public void get(Contact instance) {
-                        mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                    }
-                });
+                mProfile.setImageDrawable(new ProfileDrawable(getContext(), getManager().getSender(getMessage()).get()));
             }
         }
 
@@ -325,12 +320,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             }
 
             if (mProfile != null) {
-                getManager().getSender(getMessage()).get(new Future.Callback<Contact>() {
-                    @Override
-                    public void get(Contact instance) {
-                        mProfile.setImageDrawable(new ProfileDrawable(getContext(), instance));
-                    }
-                });
+                mProfile.setImageDrawable(new ProfileDrawable(getContext(), getManager().getSender(getMessage()).get()));
             }
         }
 
@@ -386,8 +376,12 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     @Override
-    public int getItemViewType(int position) {
+    public long getItemId(int position) {
+        return getText(position).getIdAsLong();
+    }
 
+    @Override
+    public int getItemViewType(int position) {
         TextManager manager = TextManager.getInstance(mContext);
         Text text = getText(position);
 
