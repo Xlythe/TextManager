@@ -49,10 +49,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Part of the custom NotificationManager class -->
-        <receiver android:name=".notification.MessageBasedNotificationManager$InlineReplyReceiver"/>
-        <receiver android:name=".notification.MessageBasedNotificationManager$OnDismissReceiver"/>
-
         <!-- BroadcastReceiver that listens for replies to notifications -->
         <receiver android:name=".receiver.MessageReceiver$OnQuickReplyReceiver"/>
 
