@@ -13,7 +13,7 @@ android {
         applicationId "com.xlythe.sms"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 9
+        versionCode 11
         versionName "2.0"
         vectorDrawables.useSupportLibrary = true
     }
@@ -50,4 +50,5 @@ dependencies {
 
 configurations.all {
     exclude group: 'com.android.support'
+    exclude group: 'com.google.guava', module: 'listenablefuture'
 }
