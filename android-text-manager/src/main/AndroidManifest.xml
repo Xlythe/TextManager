@@ -5,17 +5,20 @@
     <application>
         <!-- Service (and associated BroadcastReceivers) that handle sending texts even if the Activity has died. -->
         <service android:name=".text.SendService" />
-        <receiver android:name=".text.SendService$SmsSentReceiver">
+        <receiver android:name=".text.SendService$SmsSentReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.xlythe.textmanager.text.SMS_SENT" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".text.SendService$SmsDeliveredReceiver">
+        <receiver android:name=".text.SendService$SmsDeliveredReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.xlythe.textmanager.text.SMS_DELIVERED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".text.SendService$MmsSentReceiver">
+        <receiver android:name=".text.SendService$MmsSentReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.xlythe.textmanager.text.MMS_SENT" />
             </intent-filter>

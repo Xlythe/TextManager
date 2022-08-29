@@ -41,10 +41,23 @@ import androidx.recyclerview.widget.RecyclerView;
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
-    private static final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.READ_SMS,
-            Manifest.permission.READ_CONTACTS
-    };
+    private static final String[] REQUIRED_PERMISSIONS;
+
+    static {
+        if (Build.VERSION.SDK_INT >= 33) {
+            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.POST_NOTIFICATIONS
+            };
+        } else {
+            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.READ_CONTACTS
+            };
+        }
+    }
+
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private static final int REQUEST_CODE_WRITE_SETTINGS = 1001;
 
@@ -73,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         }
     };
 
-    private ActionModeCallback mActionModeCallback = new ActionModeCallback();
+    private final ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
 
     private boolean mActionBarCollapsed = false;

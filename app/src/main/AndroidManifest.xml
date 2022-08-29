@@ -43,7 +43,8 @@
         android:theme="@style/AppTheme">
 
         <!-- BroadcastReceiver that listens for incoming messages -->
-        <receiver android:name=".receiver.MessageReceiver">
+        <receiver android:name=".receiver.MessageReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED"/>
             </intent-filter>
@@ -59,7 +60,8 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.Main">
+            android:theme="@style/AppTheme.Main"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -82,7 +84,8 @@
         <activity
             android:name=".ComposeActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.Compose">
+            android:theme="@style/AppTheme.Compose"
+            android:exported="true">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xlythe.sms.MainActivity"/>
@@ -105,7 +108,8 @@
         <!-- On Android M+, you can share directly to contacts -->
         <service
             android:name=".service.FetchChooserTargetService"
-            android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
+            android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.service.chooser.ChooserTargetService"/>
             </intent-filter>
@@ -128,7 +132,8 @@
         <!-- For sharing a video or picture -->
         <activity
             android:name=".ShareMediaActivity"
-            android:windowSoftInputMode="stateHidden">
+            android:windowSoftInputMode="stateHidden"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
                 <action android:name="android.intent.action.SENDTO"/>
