@@ -7,5 +7,5 @@ public interface MessageObserver {
     /**
      * There has been a change, and you need to refresh the ui.
      * */
-    public void notifyDataChanged();
+    void notifyDataChanged();
 }

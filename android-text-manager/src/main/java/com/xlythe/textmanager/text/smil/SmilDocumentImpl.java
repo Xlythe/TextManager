@@ -127,33 +127,34 @@ public class SmilDocumentImpl extends DocumentImpl implements SMILDocument, Docu
     public Element createElement(String tagName) throws DOMException {
         // Find the appropriate class for this element
         tagName = tagName.toLowerCase();
-        if (tagName.equals("text") ||
-                tagName.equals("img") ||
-                tagName.equals("video")) {
-            return new SmilRegionMediaElementImpl(this, tagName);
-        } else if (tagName.equals("audio")) {
-            return new SmilMediaElementImpl(this, tagName);
-        } else if (tagName.equals("layout")) {
-            return new SmilLayoutElementImpl(this, tagName);
-        } else if (tagName.equals("root-layout")) {
-            return new SmilRootLayoutElementImpl(this, tagName);
-        } else if (tagName.equals("region")) {
-            return new SmilRegionElementImpl(this, tagName);
-        } else if (tagName.equals("ref")) {
-            return new SmilRefElementImpl(this, tagName);
-        } else if (tagName.equals("par")) {
-            return new SmilParElementImpl(this, tagName);
-        } else {
-            // This includes also the structural nodes SMIL,
-            // HEAD, BODY, for which no specific types are defined.
-            return new SmilElementImpl(this, tagName);
+        switch (tagName) {
+            case "text":
+            case "img":
+            case "video":
+                return new SmilRegionMediaElementImpl(this, tagName);
+            case "audio":
+                return new SmilMediaElementImpl(this, tagName);
+            case "layout":
+                return new SmilLayoutElementImpl(this, tagName);
+            case "root-layout":
+                return new SmilRootLayoutElementImpl(this, tagName);
+            case "region":
+                return new SmilRegionElementImpl(this, tagName);
+            case "ref":
+                return new SmilRefElementImpl(this, tagName);
+            case "par":
+                return new SmilParElementImpl(this, tagName);
+            default:
+                // This includes also the structural nodes SMIL,
+                // HEAD, BODY, for which no specific types are defined.
+                return new SmilElementImpl(this, tagName);
         }
     }
 
     @Override
     public SMILElement getDocumentElement() {
         Node rootElement = getFirstChild();
-        if (rootElement == null || !(rootElement instanceof SMILElement)) {
+        if (!(rootElement instanceof SMILElement)) {
             // The root doesn't exist. Create a new one.
             rootElement = createElement("smil");
             appendChild(rootElement);
@@ -169,7 +170,7 @@ public class SmilDocumentImpl extends DocumentImpl implements SMILDocument, Docu
     public SMILElement getHead() {
         Node rootElement = getDocumentElement();
         Node headElement = rootElement.getFirstChild();
-        if (headElement == null || !(headElement instanceof SMILElement)) {
+        if (!(headElement instanceof SMILElement)) {
             // The head doesn't exist. Create a new one.
             headElement = createElement("head");
             rootElement.appendChild(headElement);
@@ -182,7 +183,7 @@ public class SmilDocumentImpl extends DocumentImpl implements SMILDocument, Docu
         Node rootElement = getDocumentElement();
         Node headElement = getHead();
         Node bodyElement = headElement.getNextSibling();
-        if (bodyElement == null || !(bodyElement instanceof SMILElement)) {
+        if (!(bodyElement instanceof SMILElement)) {
             // The body doesn't exist. Create a new one.
             bodyElement = createElement("body");
             rootElement.appendChild(bodyElement);
@@ -233,7 +234,7 @@ public class SmilDocumentImpl extends DocumentImpl implements SMILDocument, Docu
 
     public SMILLayoutElement getLayout() {
         Node headElement = getHead();
-        Node layoutElement = null;
+        Node layoutElement;
 
         // Find the layout element under <code>HEAD</code>
         layoutElement = headElement.getFirstChild();

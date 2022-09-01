@@ -9,16 +9,16 @@
     <string name="action_copy">Copy text</string>
     <string name="action_reply">Reply</string>
 
-    <string name="title_selection">%s selected</string>
+    <string name="title_selection">%d selected</string>
 
     <string name="thread_title_today">Today</string>
     <string name="thread_title_yesterday">Yesterday</string>
     <string name="thread_title_week">This week</string>
     <string name="thread_title_month">This month</string>
 
-    <string name="thread_unread_messages">%s new</string>
+    <string name="thread_unread_messages">%d new</string>
 
-    <string name="thread_loading">Loading...</string>
+    <string name="thread_loading">Loading…</string>
 
     <string name="compose_hint">To</string>
     <string name="compose_msg_hint">Message</string>
@@ -27,6 +27,7 @@
     <string name="message_pending">Sending</string>
     <string name="message_failed_to_send">Failed to send</string>
     <string name="message_failed_to_receive">Failed to download</string>
+    <string name="message_tap_to_retry">Tap to retry</string>
 
     <string name="message_text_copied">Text Copied</string>
 

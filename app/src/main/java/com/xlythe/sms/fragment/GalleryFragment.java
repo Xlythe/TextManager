@@ -1,9 +1,11 @@
 package com.xlythe.sms.fragment;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.CursorLoader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -20,6 +22,8 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.VideoAttachment;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,9 +34,23 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
     public static final String ARG_COLOR = "color";
     public static final String ARG_MESSAGE = "message";
 
-    private static final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-    };
+    private static final String[] REQUIRED_PERMISSIONS;
+
+    static {
+        if (Build.VERSION.SDK_INT >= 33) {
+            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+            };
+        } else if (Build.VERSION.SDK_INT >= 16) {
+            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+            };
+        } else {
+            REQUIRED_PERMISSIONS = new String[0];
+        }
+    }
+
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 2;
 
     public static GalleryFragment newInstance(Text text, int color) {
@@ -44,7 +62,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         return fragment;
     }
 
-    private int mColor;
+    @ColorInt private int mColor;
     private Text mText;
     private Cursor mCursor;
     private AttachmentAdapter mAdapter;
@@ -53,7 +71,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
     private View mPermissionPrompt;
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
             if (hasPermissions(getContext(), REQUIRED_PERMISSIONS)) {
                 showGallery();
@@ -76,7 +94,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         mAttachments.addItemDecoration(new GalleryItemDecoration(getResources().getDrawable(R.drawable.divider_attach)));
         mAttachments.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 if (newState > 0) {
                     mAdapter.clearSelection();
                     mAdapter.notifyDataSetChanged();
@@ -161,6 +179,7 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         });
     }
 
+    @SuppressLint("Range")
     private Attachment buildAttachment(int position) {
         mCursor.moveToPosition(position);
         String mediaId = mCursor.getString(mCursor.getColumnIndex(MediaStore.Files.FileColumns._ID));
@@ -169,15 +188,12 @@ public class GalleryFragment extends Fragment implements AttachmentAdapter.OnIte
         Uri content = MediaStore.Files.getContentUri("external");
         Attachment attachment;
         Uri uri;
-        switch (type) {
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-                uri = Uri.withAppendedPath(content, mediaId);
-                attachment = new ImageAttachment(uri);
-                break;
-            default:
-                uri = Uri.parse(data);
-                attachment = new VideoAttachment(uri);
-                break;
+        if (type == MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE) {
+            uri = Uri.withAppendedPath(content, mediaId);
+            attachment = new ImageAttachment(uri);
+        } else {
+            uri = Uri.parse(data);
+            attachment = new VideoAttachment(uri);
         }
         return attachment;
     }

@@ -11,6 +11,8 @@ import android.text.style.ImageSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import androidx.appcompat.widget.AppCompatEditText;
+
 import com.xlythe.sms.drawable.ExtendedProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
@@ -18,9 +20,6 @@ import com.xlythe.textmanager.text.TextManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
-
-import androidx.appcompat.widget.AppCompatEditText;
 
 public class ContactEditText extends AppCompatEditText {
     private static final boolean DEBUG = true;
@@ -191,12 +190,7 @@ public class ContactEditText extends AppCompatEditText {
     public ArrayList<Contact> getContacts() {
         final Editable message = getEditableText();
         ImageSpan[] spans = message.getSpans(0, message.length(), ImageSpan.class);
-        Arrays.sort(spans, new Comparator<ImageSpan>() {
-            @Override
-            public int compare(ImageSpan lhs, ImageSpan rhs) {
-                return message.getSpanStart(lhs) - message.getSpanStart(rhs);
-            }
-        });
+        Arrays.sort(spans, (lhs, rhs) -> message.getSpanStart(lhs) - message.getSpanStart(rhs));
 
         ArrayList<Contact> contacts = new ArrayList<>(spans.length);
         for (ImageSpan span : spans) {

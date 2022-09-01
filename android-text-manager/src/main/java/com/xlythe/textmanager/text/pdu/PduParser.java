@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class PduParser {
-    private final String DEBUG_TAG = getClass().getSimpleName().toString();
+    private final String DEBUG_TAG = getClass().getSimpleName();
     /**
      *  The next are WAP values defined in WSP specification.
      */
@@ -59,7 +59,7 @@ public class PduParser {
     /**
      * The pdu data.
      */
-    private ByteArrayInputStream mPduDataStream = null;
+    private final ByteArrayInputStream mPduDataStream;
 
     /**
      * Store pdu headers
@@ -111,10 +111,6 @@ public class PduParser {
      *         null if parsing error happened or mandatory fields are not set.
      */
     public GenericPdu parse(){
-        if (mPduDataStream == null) {
-            return null;
-        }
-
         /* parse headers */
         mHeaders = parseHeaders(mPduDataStream);
         if (null == mHeaders) {
@@ -126,7 +122,7 @@ public class PduParser {
         int messageType = mHeaders.getOctet(PduHeaders.MESSAGE_TYPE);
 
         /* check mandatory header fields */
-        if (false == checkMandatoryHeader(mHeaders)) {
+        if (!checkMandatoryHeader(mHeaders)) {
             Log.d(DEBUG_TAG,"check mandatory headers failed!");
             return null;
         }
@@ -143,20 +139,16 @@ public class PduParser {
         switch (messageType) {
             case PduHeaders.MESSAGE_TYPE_SEND_REQ:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_REQ");
-                SendReq sendReq = new SendReq(mHeaders, mBody);
-                return sendReq;
+                return new SendReq(mHeaders, mBody);
             case PduHeaders.MESSAGE_TYPE_SEND_CONF:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_SEND_CONF");
-                SendConf sendConf = new SendConf(mHeaders);
-                return sendConf;
+                return new SendConf(mHeaders);
             case PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFICATION_IND");
-                NotificationInd notificationInd = new NotificationInd(mHeaders);
-                return notificationInd;
+                return new NotificationInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_NOTIFYRESP_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_NOTIFYRESP_IND");
-                NotifyRespInd notifyRespInd = new NotifyRespInd(mHeaders);
-                return notifyRespInd;
+                return new NotifyRespInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_RETRIEVE_CONF");
                 RetrieveConf retrieveConf = new RetrieveConf(mHeaders, mBody);
@@ -167,8 +159,7 @@ public class PduParser {
                 }
                 String ctTypeStr = new String(contentType);
                 if (ctTypeStr.equals(ContentType.MULTIPART_MIXED)
-                        || ctTypeStr.equals(ContentType.MULTIPART_RELATED)
-                        || ctTypeStr.equals(ContentType.MULTIPART_ALTERNATIVE)) {
+                        || ctTypeStr.equals(ContentType.MULTIPART_RELATED)) {
                     // The MMS content type must be "application/vnd.wap.multipart.mixed"
                     // or "application/vnd.wap.multipart.related"
                     // or "application/vnd.wap.multipart.alternative"
@@ -184,20 +175,16 @@ public class PduParser {
                 return null;
             case PduHeaders.MESSAGE_TYPE_DELIVERY_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_DELIVERY_IND");
-                DeliveryInd deliveryInd = new DeliveryInd(mHeaders);
-                return deliveryInd;
+                return new DeliveryInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_ACKNOWLEDGE_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_ACKNOWLEDGE_IND");
-                AcknowledgeInd acknowledgeInd = new AcknowledgeInd(mHeaders);
-                return acknowledgeInd;
+                return new AcknowledgeInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_READ_ORIG_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_ORIG_IND");
-                ReadOrigInd readOrigInd = new ReadOrigInd(mHeaders);
-                return readOrigInd;
+                return new ReadOrigInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_READ_REC_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_READ_REC_IND");
-                ReadRecInd readRecInd = new ReadRecInd(mHeaders);
-                return readRecInd;
+                return new ReadRecInd(mHeaders);
             default:
                 Log.v(LOG_TAG,"Parser doesn't support this message type in this version!");
                 return null;
@@ -286,7 +273,7 @@ public class PduParser {
                 case PduHeaders.CONTENT_CLASS:
                 case PduHeaders.RETRIEVE_STATUS:
                 case PduHeaders.STORE_STATUS:
-                    /**
+                    /*
                      * The following field has a different value when
                      * used in the M-Mbox-Delete.conf and M-Delete.conf PDU.
                      * For now we ignore this fact, since we do not support these PDUs
@@ -352,15 +339,15 @@ public class PduParser {
                 case PduHeaders.AUX_APPLIC_ID:
                 case PduHeaders.APPLIC_ID:
                 case PduHeaders.REPLY_APPLIC_ID:
-                    /**
-                     * The next three header fields are email addresses
-                     * as defined in RFC2822,
-                     * not including the characters "<" and ">"
+                    /*
+                      The next three header fields are email addresses
+                      as defined in RFC2822,
+                      not including the characters "<" and ">"
                      */
                 case PduHeaders.MESSAGE_ID:
                 case PduHeaders.REPLACE_ID:
                 case PduHeaders.CANCEL_ID:
-                    /**
+                    /*
                      * The following field has a different value when
                      * used in the M-Mbox-Delete.conf and M-Delete.conf PDU.
                      * For now we ignore this fact, since we do not support these PDUs
@@ -497,7 +484,7 @@ public class PduParser {
                      * Value-length
                      * (Address-present-token Encoded-string-value | Insert-address-token)
                      */
-                    EncodedStringValue from = null;
+                    EncodedStringValue from;
                     parseValueLength(pduDataStream); /* parse value-length */
 
                     /* Address-present-token or Insert-address-token */
@@ -536,7 +523,7 @@ public class PduParser {
                     try {
                         if (LOCAL_LOGV) {
                             Log.v(LOG_TAG, "parseHeaders: from address: " + headerField
-                                    + " value: " + from.getString());
+                                    + " value: " + (from != null ? from.getString() : null));
                         }
                         headers.setEncodedStringValue(from, PduHeaders.FROM);
                     } catch(NullPointerException e) {
@@ -747,7 +734,7 @@ public class PduParser {
 
                 case PduHeaders.CONTENT_TYPE: {
                     HashMap<Integer, Object> map =
-                            new HashMap<Integer, Object>();
+                            new HashMap<>();
                     byte[] contentType =
                             parseContentType(pduDataStream, map);
 
@@ -755,7 +742,7 @@ public class PduParser {
                         try {
                             if (LOCAL_LOGV) {
                                 Log.v(LOG_TAG, "parseHeaders: CONTENT_TYPE: " + headerField +
-                                        contentType.toString());
+                                        Arrays.toString(contentType));
                             }
                             headers.setTextString(contentType, PduHeaders.CONTENT_TYPE);
                         } catch(NullPointerException e) {
@@ -816,7 +803,7 @@ public class PduParser {
             }
 
             /* parse part's content-type */
-            HashMap<Integer, Object> map = new HashMap<Integer, Object>();
+            HashMap<Integer, Object> map = new HashMap<>();
             byte[] contentType = parseContentType(pduDataStream, map);
             if (null != contentType) {
                 part.setContentType(contentType);
@@ -840,8 +827,8 @@ public class PduParser {
             int endPos = pduDataStream.available();
             int partHeaderLen = headerLength - (startPos - endPos);
             if (partHeaderLen > 0) {
-                if (false == parsePartHeaders(pduDataStream, part, partHeaderLen)) {
-                    // Parse part header faild.
+                if (!parsePartHeaders(pduDataStream, part, partHeaderLen)) {
+                    // Parse part header failed.
                     return null;
                 }
             } else if (partHeaderLen < 0) {
@@ -880,8 +867,7 @@ public class PduParser {
                             partData = Base64.decodeBase64(partData);
                         } else if (encoding.equalsIgnoreCase(PduPart.P_QUOTED_PRINTABLE)) {
                             // Decode "quoted-printable" into "binary".
-                            partData = null;
-                            //partData = QuotedPrintable.decodeQuotedPrintable(partData);
+                            partData = QuotedPrintable.decodeQuotedPrintable(partData);
                         } else {
                             // "binary" is the default encoding.
                         }
@@ -925,7 +911,7 @@ public class PduParser {
      * @return the integer, -1 when failed
      */
     protected static int parseUnsignedInt(ByteArrayInputStream pduDataStream) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * The maximum size of a uintvar is 32 bits.
          * So it will be encoded in no more than 5 octets.
@@ -959,7 +945,7 @@ public class PduParser {
      * @return the integer
      */
     protected static int parseValueLength(ByteArrayInputStream pduDataStream) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Value-length = Short-length | (Length-quote Length)
          * Short-length = <Any octet 0-30>
@@ -988,13 +974,13 @@ public class PduParser {
      * @return the EncodedStringValue
      */
     protected static EncodedStringValue parseEncodedStringValue(ByteArrayInputStream pduDataStream){
-        /**
+        /*
          * From OMA-TS-MMS-ENC-V1_3-20050927-C.pdf
          * Encoded-string-value = Text-string | Value-length Char-set Text-string
          */
         assert(null != pduDataStream);
         pduDataStream.mark(1);
-        EncodedStringValue returnValue = null;
+        EncodedStringValue returnValue;
         int charset = 0;
         int temp = pduDataStream.read();
         assert(-1 != temp);
@@ -1035,7 +1021,7 @@ public class PduParser {
     protected static byte[] parseWapString(ByteArrayInputStream pduDataStream,
                                            int stringType) {
         assert(null != pduDataStream);
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Text-string = [Quote] *TEXT End-of-string
          * If the first character in the TEXT is in the range of 128-255,
@@ -1071,7 +1057,7 @@ public class PduParser {
         }
 
         // We are now definitely at the beginning of string
-        /**
+        /*
          * Return *TOKEN or *TEXT (Text-String without QUOTE,
          * Quoted-String without QUOTED_STRING_FLAG and without End-of-string)
          */
@@ -1084,7 +1070,7 @@ public class PduParser {
      * @return true when ch is TOKEN, false when ch is not TOKEN
      */
     protected static boolean isTokenCharacter(int ch) {
-        /**
+        /*
          * Token      = 1*<any CHAR except CTLs or separators>
          * separators = "("(40) | ")"(41) | "<"(60) | ">"(62) | "@"(64)
          *            | ","(44) | ";"(59) | ":"(58) | "\"(92) | <">(34)
@@ -1130,7 +1116,7 @@ public class PduParser {
      * @return true when ch is TEXT, false when ch is not TEXT
      */
     protected static boolean isText(int ch) {
-        /**
+        /*
          * TEXT = <any OCTET except CTLs,
          *      but including LWS>
          * CTL  = <any US-ASCII control character
@@ -1159,7 +1145,6 @@ public class PduParser {
         assert(null != pduDataStream);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int temp = pduDataStream.read();
-        assert(-1 != temp);
         while((-1 != temp) && ('\0' != temp)) {
             // check each of the character
             if (stringType == TYPE_TOKEN_STRING) {
@@ -1173,7 +1158,6 @@ public class PduParser {
             }
 
             temp = pduDataStream.read();
-            assert(-1 != temp);
         }
 
         if (out.size() > 0) {
@@ -1203,7 +1187,7 @@ public class PduParser {
      * @return the byte
      */
     protected static int parseShortInteger(ByteArrayInputStream pduDataStream) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Short-integer = OCTET
          * Integers in range 0-127 shall be encoded as a one
@@ -1223,7 +1207,7 @@ public class PduParser {
      * @return long integer
      */
     protected static long parseLongInteger(ByteArrayInputStream pduDataStream) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Long-integer = Short-length Multi-octet-integer
          * The Short-length indicates the length of the Multi-octet-integer
@@ -1261,7 +1245,7 @@ public class PduParser {
      * @return long integer
      */
     protected static long parseIntegerValue(ByteArrayInputStream pduDataStream) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Integer-Value = Short-integer | Long-integer
          */
@@ -1305,7 +1289,7 @@ public class PduParser {
      */
     protected static void parseContentTypeParams(ByteArrayInputStream pduDataStream,
                                                  HashMap<Integer, Object> map, Integer length) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Parameter = Typed-parameter | Untyped-parameter
          * Typed-parameter = Well-known-parameter-token Typed-value
@@ -1327,7 +1311,7 @@ public class PduParser {
         assert(length > 0);
 
         int startPos = pduDataStream.available();
-        int tempPos = 0;
+        int tempPos;
         int lastLen = length;
         while(0 < lastLen) {
             int param = pduDataStream.read();
@@ -1335,7 +1319,7 @@ public class PduParser {
             lastLen--;
 
             switch (param) {
-                /**
+                /*
                  * From rfc2387, chapter 3.1
                  * The type parameter must be specified and its value is the MIME media
                  * type of the "root" body part. It permits a MIME user agent to
@@ -1361,7 +1345,7 @@ public class PduParser {
                             byte[] type = (PduContentTypes.contentTypes[index]).getBytes();
                             map.put(PduPart.P_TYPE, type);
                         } else {
-                            //not support this type, ignore it.
+                            // not support this type, ignore it.
                         }
                     } else {
                         // Text-String (extension-media)
@@ -1375,7 +1359,7 @@ public class PduParser {
                     lastLen = length - (startPos - tempPos);
                     break;
 
-                /**
+                /*
                  * From oma-ts-mms-conf-v1_3.pdf, chapter 10.2.3.
                  * Start Parameter Referring to Presentation
                  *
@@ -1399,7 +1383,7 @@ public class PduParser {
                     lastLen = length - (startPos - tempPos);
                     break;
 
-                /**
+                /*
                  * From oma-ts-mms-conf-v1_3.pdf
                  * In creation, the character set SHALL be either us-ascii
                  * (IANA MIBenum 3) or utf-8 (IANA MIBenum 106)[Unicode].
@@ -1417,22 +1401,26 @@ public class PduParser {
                     pduDataStream.mark(1);
                     int firstValue = extractByteValue(pduDataStream);
                     pduDataStream.reset();
-                    //Check first char
+                    // Check first char
                     if (((firstValue > TEXT_MIN) && (firstValue < TEXT_MAX)) ||
                             (END_STRING_FLAG == firstValue)) {
-                        //Text-String (extension-charset)
+                        // Text-String (extension-charset)
                         byte[] charsetStr = parseWapString(pduDataStream, TYPE_TEXT_STRING);
                         try {
                             int charsetInt = CharacterSets.getMibEnumValue(
                                     new String(charsetStr));
-                            map.put(PduPart.P_CHARSET, charsetInt);
+                            if (map != null) {
+                                map.put(PduPart.P_CHARSET, charsetInt);
+                            }
                         } catch (UnsupportedEncodingException e) {
                             // Not a well-known charset, use "*".
                             Log.e(LOG_TAG, Arrays.toString(charsetStr), e);
-                            map.put(PduPart.P_CHARSET, CharacterSets.ANY_CHARSET);
+                            if (map != null) {
+                                map.put(PduPart.P_CHARSET, CharacterSets.ANY_CHARSET);
+                            }
                         }
                     } else {
-                        //Well-known-charset
+                        // Well-known-charset
                         int charset = (int) parseIntegerValue(pduDataStream);
                         if (map != null) {
                             map.put(PduPart.P_CHARSET, charset);
@@ -1443,7 +1431,7 @@ public class PduParser {
                     lastLen = length - (startPos - tempPos);
                     break;
 
-                /**
+                /*
                  * From oma-ts-mms-conf-v1_3.pdf
                  * A name for multipart object SHALL be encoded using name-parameter
                  * for Content-Type header in WSP multipart headers.
@@ -1488,7 +1476,7 @@ public class PduParser {
      */
     protected static byte[] parseContentType(ByteArrayInputStream pduDataStream,
                                              HashMap<Integer, Object> map) {
-        /**
+        /*
          * From wap-230-wsp-20010705-a.pdf
          * Content-type-value = Constrained-media | Content-general-form
          * Content-general-form = Value-length Media-type
@@ -1496,7 +1484,7 @@ public class PduParser {
          */
         assert(null != pduDataStream);
 
-        byte[] contentType = null;
+        byte[] contentType;
         pduDataStream.mark(1);
         int temp = pduDataStream.read();
         assert(-1 != temp);
@@ -1518,7 +1506,7 @@ public class PduParser {
             } else if (first > TEXT_MAX) {
                 int index = parseShortInteger(pduDataStream);
 
-                if (index < PduContentTypes.contentTypes.length) { //well-known type
+                if (index < PduContentTypes.contentTypes.length) { // well-known type
                     contentType = (PduContentTypes.contentTypes[index]).getBytes();
                 } else {
                     pduDataStream.reset();
@@ -1531,7 +1519,7 @@ public class PduParser {
 
             int endPos = pduDataStream.available();
             int parameterLen = length - (startPos - endPos);
-            if (parameterLen > 0) {//have parameters
+            if (parameterLen > 0) { // have parameters
                 parseContentTypeParams(pduDataStream, map, parameterLen);
             }
 
@@ -1563,7 +1551,7 @@ public class PduParser {
         assert(null != part);
         assert(length > 0);
 
-        /**
+        /*
          * From oma-ts-mms-conf-v1_3.pdf, chapter 10.2.
          * A name for multipart object SHALL be encoded using name-parameter
          * for Content-Type header in WSP multipart headers.
@@ -1580,7 +1568,7 @@ public class PduParser {
          * contain the corresponding definitions.
          */
         int startPos = pduDataStream.available();
-        int tempPos = 0;
+        int tempPos;
         int lastLen = length;
         while(0 < lastLen) {
             int header = pduDataStream.read();
@@ -1591,7 +1579,7 @@ public class PduParser {
                 // Number assigned headers.
                 switch (header) {
                     case PduPart.P_CONTENT_LOCATION:
-                        /**
+                        /*
                          * From wap-230-wsp-20010705-a.pdf, chapter 8.4.2.21
                          * Content-location-value = Uri-value
                          */
@@ -1604,7 +1592,7 @@ public class PduParser {
                         lastLen = length - (startPos - tempPos);
                         break;
                     case PduPart.P_CONTENT_ID:
-                        /**
+                        /*
                          * From wap-230-wsp-20010705-a.pdf, chapter 8.4.2.21
                          * Content-ID-value = Quoted-string
                          */
@@ -1618,7 +1606,7 @@ public class PduParser {
                         break;
                     case PduPart.P_DEP_CONTENT_DISPOSITION:
                     case PduPart.P_CONTENT_DISPOSITION:
-                        /**
+                        /*
                          * From wap-230-wsp-20010705-a.pdf, chapter 8.4.2.21
                          * Content-disposition-value = Value-length Disposition *(Parameter)
                          * Disposition = Form-data | Attachment | Inline | Token-text
@@ -1690,8 +1678,7 @@ public class PduParser {
                 byte[] tempValue = parseWapString(pduDataStream, TYPE_TEXT_STRING);
 
                 // Check the header whether it is "Content-Transfer-Encoding".
-                if (true ==
-                        PduPart.CONTENT_TRANSFER_ENCODING.equalsIgnoreCase(new String(tempHeader))) {
+                if (PduPart.CONTENT_TRANSFER_ENCODING.equalsIgnoreCase(new String(tempHeader))) {
                     part.setContentTransferEncoding(tempValue);
                 }
 
@@ -1736,7 +1723,7 @@ public class PduParser {
         if (null != mStartParam) {
             byte[] contentId = part.getContentId();
             if (null != contentId) {
-                if (true == Arrays.equals(mStartParam, contentId)) {
+                if (Arrays.equals(mStartParam, contentId)) {
                     return THE_FIRST_PART;
                 }
             }
@@ -1746,7 +1733,7 @@ public class PduParser {
         if (null != mTypeParam) {
             byte[] contentType = part.getContentType();
             if (null != contentType) {
-                if (true == Arrays.equals(mTypeParam, contentType)) {
+                if (Arrays.equals(mTypeParam, contentType)) {
                     return THE_FIRST_PART;
                 }
             }

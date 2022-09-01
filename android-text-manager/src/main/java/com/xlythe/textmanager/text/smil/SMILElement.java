@@ -9,8 +9,8 @@ public interface SMILElement extends Element {
      * @exception DOMException
      *    NO_MODIFICATION_ALLOWED_ERR: Raised if this attribute is readonly.
      */
-    public String getId();
-    public void setId(String id)
+    String getId();
+    void setId(String id)
             throws DOMException;
 
 }

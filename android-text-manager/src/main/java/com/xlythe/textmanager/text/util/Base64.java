@@ -36,7 +36,7 @@ public class Base64 {
     private static final int BASELENGTH = 255;
 
     // Create arrays to hold the base64 characters
-    private static byte[] base64Alphabet = new byte[BASELENGTH];
+    private static final byte[] base64Alphabet = new byte[BASELENGTH];
 
     // Populating the character arrays
     static {
@@ -73,13 +73,13 @@ public class Base64 {
         }
 
         int numberQuadruple = base64Data.length / FOURBYTE;
-        byte decodedData[] = null;
-        byte b1 = 0, b2 = 0, b3 = 0, b4 = 0, marker0 = 0, marker1 = 0;
+        byte[] decodedData;
+        byte b1, b2, b3, b4, marker0, marker1;
 
         // Throw away anything not in base64Data
 
         int encodedIndex = 0;
-        int dataIndex = 0;
+        int dataIndex;
         {
             // this sizes the output array properly - rlw
             int lastData = base64Data.length;
@@ -112,7 +112,7 @@ public class Base64 {
             } else if (marker0 == PAD) {
                 //Two PAD e.g. 3c[Pad][Pad]
                 decodedData[encodedIndex] = (byte) (b1 << 2 | b2 >> 4);
-            } else if (marker1 == PAD) {
+            } else {
                 //One PAD e.g. 3cQ[Pad]
                 b3 = base64Alphabet[marker0];
 
@@ -134,10 +134,8 @@ public class Base64 {
     private static boolean isBase64(byte octect) {
         if (octect == PAD) {
             return true;
-        } else if (base64Alphabet[octect] == -1) {
-            return false;
         } else {
-            return true;
+            return base64Alphabet[octect] != -1;
         }
     }
 
@@ -151,7 +149,7 @@ public class Base64 {
      * @return The data, less non-base64 characters (see RFC 2045).
      */
     private static byte[] discardNonBase64(byte[] data) {
-        byte groomedData[] = new byte[data.length];
+        byte[] groomedData = new byte[data.length];
         int bytesCopied = 0;
 
         for (byte b : data) {
@@ -160,7 +158,7 @@ public class Base64 {
             }
         }
 
-        byte packedData[] = new byte[bytesCopied];
+        byte[] packedData = new byte[bytesCopied];
 
         System.arraycopy(groomedData, 0, packedData, 0, bytesCopied);
 

@@ -7,7 +7,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.TypeInfo;
 
 public class AttrImpl extends NodeImpl implements Attr {
-    private String mName;
+    private final String mName;
     private String mValue;
 
 	/*

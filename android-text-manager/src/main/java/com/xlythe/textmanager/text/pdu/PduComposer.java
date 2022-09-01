@@ -69,22 +69,22 @@ public class PduComposer {
     /**
      * The output message.
      */
-    protected ByteArrayOutputStream mMessage = null;
+    protected ByteArrayOutputStream mMessage;
 
     /**
      * The PDU.
      */
-    private GenericPdu mPdu = null;
+    private GenericPdu mPdu;
 
     /**
      * Current visiting position of the mMessage.
      */
-    protected int mPosition = 0;
+    protected int mPosition;
 
     /**
      * Message compose buffer stack.
      */
-    private BufferStack mStack = null;
+    private final BufferStack mStack;
 
     /**
      * Content resolver.
@@ -94,15 +94,15 @@ public class PduComposer {
     /**
      * Header of this pdu.
      */
-    private PduHeaders mPduHeader = null;
+    private final PduHeaders mPduHeader;
 
     /**
      * Map of all content type
      */
-    private static HashMap<String, Integer> mContentTypeMap = null;
+    private static final HashMap<String, Integer> mContentTypeMap;
 
     static {
-        mContentTypeMap = new HashMap<String, Integer>();
+        mContentTypeMap = new HashMap<>();
 
         int i;
         for (i = 0; i < PduContentTypes.contentTypes.length; i++) {
@@ -353,7 +353,7 @@ public class PduComposer {
                 break;
             }
 
-            max = (max << 7) | 0x7fl;
+            max = (max << 7) | 0x7fL;
         }
 
         while(i > 0) {
@@ -437,7 +437,7 @@ public class PduComposer {
     }
 
     private EncodedStringValue appendAddressType(EncodedStringValue address) {
-        EncodedStringValue temp = null;
+        EncodedStringValue temp;
 
         try {
             int addressType = checkAddressType(address.getString());
@@ -497,8 +497,8 @@ public class PduComposer {
                 }
 
                 EncodedStringValue temp;
-                for (int i = 0; i < addr.length; i++) {
-                    temp = appendAddressType(addr[i]);
+                for (EncodedStringValue encodedStringValue : addr) {
+                    temp = appendAddressType(encodedStringValue);
                     if (temp == null) {
                         return PDU_COMPOSE_CONTENT_ERROR;
                     }
@@ -792,7 +792,7 @@ public class PduComposer {
         }
 
         // Need at least one of "cc", "bcc" and "to".
-        if (false == recipient) {
+        if (!recipient) {
             return PDU_COMPOSE_CONTENT_ERROR;
         }
 
@@ -839,7 +839,7 @@ public class PduComposer {
             return PDU_COMPOSE_CONTENT_ERROR;
         }
 
-        appendShortInteger(contentTypeIdentifier.intValue());
+        appendShortInteger(contentTypeIdentifier);
 
         // content-type parameter: start
         PduBody body = ((SendReq) mPdu).getBody();
@@ -902,7 +902,7 @@ public class PduComposer {
             if (partContentTypeIdentifier == null) {
                 appendTextString(partContentType);
             } else {
-                appendShortInteger(partContentTypeIdentifier.intValue());
+                appendShortInteger(partContentTypeIdentifier);
             }
 
             /* Content-type parameter : name.
@@ -973,7 +973,7 @@ public class PduComposer {
                 try {
                     byte[] buffer = new byte[PDU_COMPOSER_BLOCK_SIZE];
                     cr = mResolver.openInputStream(part.getDataUri());
-                    int len = 0;
+                    int len;
                     while ((len = cr.read(buffer)) != -1) {
                         mMessage.write(buffer, 0, len);
                         mPosition += len;
@@ -989,7 +989,7 @@ public class PduComposer {
                     if (cr != null) {
                         try {
                             cr.close();
-                        } catch (IOException e) {
+                        } catch (IOException ignored) {
                         }
                     }
                 }

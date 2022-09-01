@@ -60,7 +60,7 @@ public class ProfileDrawable extends Drawable {
 
         // Create an array of bitmaps (min 1, max 4) that hold the profile picture of a contact
         mBitmaps = new Bitmap[Math.min(4, contacts.size())];
-        Contact[] contactsArray = contacts.toArray(new Contact[contacts.size()]);
+        Contact[] contactsArray = contacts.toArray(new Contact[0]);
         for (int i = 0; i < mBitmaps.length; i++) {
             mBitmaps[i] = toBitmap(contactsArray[i]);
         }

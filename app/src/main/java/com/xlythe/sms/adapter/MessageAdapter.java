@@ -14,6 +14,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.xlythe.sms.R;
@@ -25,12 +28,8 @@ import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Status;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.concurrency.Future;
-
-import androidx.recyclerview.widget.RecyclerView;
 
 public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.MessageViewHolder> {
-    private static final String TAG = MessageAdapter.class.getSimpleName();
     private static final int CACHE_SIZE = 50;
     private static final int CACHE_SIZE_NUMBER = 100;
 
@@ -77,7 +76,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     private Text.TextCursor mCursor;
-    private Context mContext;
+    private final Context mContext;
     private MessageAdapter.OnClickListener mClickListener;
     private final LruCache<Integer, Text> mTextLruCache = new LruCache<>(CACHE_SIZE);
     private final LruCache<String, Contact> mNumberLruCache = new LruCache<>(CACHE_SIZE_NUMBER);
@@ -121,11 +120,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
                 setDateText(DateFormatter.getFormattedDate(text));
             }
 
-            if (hasFailed(text)) {
-                mTextView.setLinksClickable(false);
-            } else {
-                mTextView.setLinksClickable(true);
-            }
+            mTextView.setLinksClickable(!hasFailed(text));
 
             if (mDate != null) {
                 if (hasFailed(text)) {
@@ -197,7 +192,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     public static class LeftViewHolder extends MessageViewHolder {
-        private ImageView mProfile;
+        private final ImageView mProfile;
 
         public LeftViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
@@ -216,7 +211,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             // This is if a message failed to download
             if (mDate != null) {
                 if (hasFailed(text)) {
-                    mDate.setText("Message failed to download");
+                    mDate.setText(R.string.message_failed_to_receive);
                 }
             }
 
@@ -229,7 +224,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
             if (body == null) {
                 if (hasFailed(getMessage())) {
                     mFrame.setVisibility(View.VISIBLE);
-                    mTextView.setText("Tap to retry");
+                    mTextView.setText(R.string.message_tap_to_retry);
                 } else {
                     mFrame.setVisibility(View.GONE);
                 }
@@ -241,9 +236,9 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     public static class AttachmentViewHolder extends MessageViewHolder {
-        private RoundedImageView mImageView;
-        private ImageButton mShare;
-        private ImageView mVideoLabel;
+        private final RoundedImageView mImageView;
+        private final ImageButton mShare;
+        private final ImageView mVideoLabel;
 
         public AttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
@@ -303,7 +298,7 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     public static class LeftAttachmentViewHolder extends AttachmentViewHolder {
-        private ImageView mProfile;
+        private final ImageView mProfile;
 
         public LeftAttachmentViewHolder(View v, MessageAdapter.OnClickListener listener) {
             super(v, listener);
@@ -336,8 +331,9 @@ public class MessageAdapter extends SelectableAdapter<Text, MessageAdapter.Messa
     }
 
     // Create new views (invoked by the layout manager)
+    @NonNull
     @Override
-    public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false);
         switch(viewType) {
             case TYPE_TOP_RIGHT:

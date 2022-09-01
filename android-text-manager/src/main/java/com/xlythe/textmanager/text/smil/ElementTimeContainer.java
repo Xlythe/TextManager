@@ -9,7 +9,7 @@ public interface ElementTimeContainer extends ElementTime {
      * is more appropriate here than a node list but it requires Traversal
      * module support.
      */
-    public NodeList getTimeChildren();
+    NodeList getTimeChildren();
 
     /**
      *  Returns a list of child elements active at the specified invocation.
@@ -17,6 +17,6 @@ public interface ElementTimeContainer extends ElementTime {
      *   milliseconds.
      * @return  List of timed child-elements active at instant.
      */
-    public NodeList getActiveChildrenAt(float instant);
+    NodeList getActiveChildrenAt(float instant);
 
 }

@@ -49,13 +49,12 @@ public class Receive {
     public static byte[] receive(final Context context, String uri){
         ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
         try {
-            byte[] data = HttpUtils.httpConnection(
+            return HttpUtils.httpConnection(
                     context, -1L,
                     uri, null, HttpUtils.HTTP_GET_METHOD,
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
                     apnParameters.getProxyPort());
-            return data;
         } catch (IOException ioe){
             Log.e(TAG,"download failed due to network error");
             return null;

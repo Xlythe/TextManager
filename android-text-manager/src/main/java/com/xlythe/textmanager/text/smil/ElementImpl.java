@@ -8,8 +8,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 
 public class ElementImpl extends NodeImpl implements Element {
-    private String mTagName;
-    private NamedNodeMap mAttributes = new NamedNodeMapImpl();
+    private final String mTagName;
+    private final NamedNodeMap mAttributes = new NamedNodeMapImpl();
 
     /*
      * Internal methods

@@ -62,19 +62,17 @@ public final class AndroidHttpClient implements HttpClient {
     // Default connection and socket timeout of 60 seconds.  Tweak to taste.
     private static final int SOCKET_OPERATION_TIMEOUT = 60 * 1000;
     private static final String TAG = "AndroidHttpClient";
-    private static String[] textContentTypes = new String[] {
+    private static final String[] textContentTypes = new String[] {
             "text/",
             "application/xml",
             "application/json"
     };
     /** Interceptor throws an exception if the executing thread is blocked */
     private static final HttpRequestInterceptor sThreadCheckInterceptor =
-            new HttpRequestInterceptor() {
-                public void process(HttpRequest request, HttpContext context) {
-                    // Prevent the HttpRequest from being sent on the main thread
-                    if (Looper.myLooper() != null && Looper.myLooper() == Looper.getMainLooper() ) {
-                        throw new RuntimeException("This thread forbids HTTP requests");
-                    }
+            (request, context) -> {
+                // Prevent the HttpRequest from being sent on the main thread
+                if (Looper.myLooper() != null && Looper.myLooper() == Looper.getMainLooper() ) {
+                    throw new RuntimeException("This thread forbids HTTP requests");
                 }
             };
     /**
@@ -222,22 +220,21 @@ public final class AndroidHttpClient implements HttpClient {
     }
     public <T> T execute(HttpUriRequest request,
                          ResponseHandler<? extends T> responseHandler)
-            throws IOException, ClientProtocolException {
+            throws IOException {
         return delegate.execute(request, responseHandler);
     }
     public <T> T execute(HttpUriRequest request,
                          ResponseHandler<? extends T> responseHandler, HttpContext context)
-            throws IOException, ClientProtocolException {
+            throws IOException {
         return delegate.execute(request, responseHandler, context);
     }
     public <T> T execute(HttpHost target, HttpRequest request,
-                         ResponseHandler<? extends T> responseHandler) throws IOException,
-            ClientProtocolException {
+                         ResponseHandler<? extends T> responseHandler) throws IOException {
         return delegate.execute(target, request, responseHandler);
     }
     public <T> T execute(HttpHost target, HttpRequest request,
                          ResponseHandler<? extends T> responseHandler, HttpContext context)
-            throws IOException, ClientProtocolException {
+            throws IOException {
         return delegate.execute(target, request, responseHandler, context);
     }
     /**
@@ -247,7 +244,7 @@ public final class AndroidHttpClient implements HttpClient {
      * @param data The bytes to compress
      * @return Entity holding the data
      */
-    public static AbstractHttpEntity getCompressedEntity(byte data[], ContentResolver resolver)
+    public static AbstractHttpEntity getCompressedEntity(byte[] data, ContentResolver resolver)
             throws IOException {
         AbstractHttpEntity entity;
         if (data.length < getMinGzipSize(resolver)) {

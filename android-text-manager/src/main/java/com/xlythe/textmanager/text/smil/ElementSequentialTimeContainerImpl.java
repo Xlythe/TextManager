@@ -22,7 +22,7 @@ public abstract class ElementSequentialTimeContainerImpl extends
 
     public NodeList getActiveChildrenAt(float instant) {
         NodeList allChildren = this.getTimeChildren();
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Node> nodes = new ArrayList<>();
         for (int i = 0; i < allChildren.getLength(); i++) {
             instant -= ((ElementTime) allChildren.item(i)).getDur();
             if (instant < 0) {

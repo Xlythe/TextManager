@@ -1,5 +1,7 @@
 package com.xlythe.textmanager.text.concurrency;
 
+import androidx.annotation.NonNull;
+
 /**
  * Represents a variable that has already been loaded.
  */
@@ -20,6 +22,7 @@ public class Present<T> implements Future<T> {
         callback.get(mInstance);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return get().toString();

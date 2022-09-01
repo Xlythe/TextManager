@@ -115,7 +115,7 @@ public class MessageReceiver extends TextReceiver {
         // Not sure why, but we avoid the problem if we just stick to using the data uri. Meh.
         intent.setData(Uri.parse("sms://threads/" + text.getThreadId()));
 
-        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
     }
 
     private PendingIntent createQuickReplyIntent(Context context, Text text) {
@@ -125,7 +125,7 @@ public class MessageReceiver extends TextReceiver {
         // Not sure why, but we avoid the problem if we just stick to using the data uri. Meh.
         intent.setData(Uri.parse("sms://threads/" + text.getThreadId()));
 
-        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
     }
 
     @Nullable

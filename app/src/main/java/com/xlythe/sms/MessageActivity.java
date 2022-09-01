@@ -96,7 +96,7 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         }
     };
 
-    private ActionModeCallback mActionModeCallback = new ActionModeCallback();
+    private final ActionModeCallback mActionModeCallback = new ActionModeCallback();
     private ActionMode mActionMode;
 
     private ImageView mGalleryAttachments;

@@ -1,5 +1,7 @@
 package com.xlythe.textmanager.text;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
@@ -8,8 +10,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.telephony.SmsMessage;
-import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
+import androidx.annotation.VisibleForTesting;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.text.pdu.PduBody;
@@ -29,9 +35,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-
-import androidx.annotation.VisibleForTesting;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
@@ -56,7 +61,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private String mSenderAddress;
     private Contact mSender;
     private Set<String> mMemberAddresses = new HashSet<>();
-    private Set<Contact> mMembers = new HashSet<>();
+    private final Set<Contact> mMembers = new HashSet<>();
     private Attachment mAttachment;
     private byte[] mBytesToSend;
 
@@ -149,6 +154,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
     }
 
+    @SuppressLint("Range")
     private String getMessageType(Cursor cursor) {
         int typeIndex = cursor.getColumnIndex(Mock.Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
         if (typeIndex < 0) {
@@ -180,6 +186,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
     }
 
+    @SuppressLint("Range")
     private void parseMmsMessage(Cursor data, Cursor mmsCursor) {
         mIncoming = isIncomingMessage(data, false);
         mId = data.getLong(data.getColumnIndexOrThrow(BaseColumns._ID));
@@ -316,6 +323,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
         PduPart partPdu = new PduPart();
@@ -362,7 +371,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             partPdu.setContentType(typeBytes);
             partPdu.setData(dataBytes);
             pduBody.addPart(partPdu);
-            messageSize += (nameBytes.length + typeBytes.length + dataBytes.length);
+            messageSize += (nameBytes.length + typeBytes.length + (dataBytes != null ? dataBytes.length : 0));
         }
 
         // We can have an image with text, so we do this separate
@@ -395,8 +404,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
 
         // Set sender
-        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        sendRequest.setFrom(new EncodedStringValue(manager.getLine1Number()));
+        sendRequest.setFrom(new EncodedStringValue(Objects.requireNonNull(TextManager.getInstance(context).getPhoneNumber())));
 
         // Turn all the parts into a smil document
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -419,6 +427,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return sendRequest;
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     byte[] getByteData(Context context) {
         // create byte array which will actually be sent
         if (mBytesToSend != null) {
@@ -430,7 +440,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public byte[] toBytes() {
         Parcel parcel = Parcel.obtain();
-        writeToParcel(parcel, describeContents());
+        writeToParcel(parcel, 0);
         try {
             return parcel.marshall();
         } finally {
@@ -450,8 +460,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o != null && o instanceof Text) {
+    public boolean equals(@Nullable Object o) {
+        if (o instanceof Text) {
             Text a = (Text) o;
             return Utils.equals(mId, a.mId)
                     && Utils.equals(mThreadId, a.mThreadId)
@@ -483,6 +493,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 + Utils.hashCode(mAttachment);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s, " +
@@ -493,13 +504,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     @Override
     public int compareTo(Text text) {
-        if (text.getTimestamp() > getTimestamp()) {
-            return -1;
-        }
-        if(text.getTimestamp() < getTimestamp()) {
-            return 1;
-        }
-        return 0;
+        return Long.compare(getTimestamp(), text.getTimestamp());
     }
 
     @Override
@@ -618,7 +623,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public static class Builder {
         private String mMessage;
-        private HashSet<Contact> mRecipients = new HashSet<>();
+        private final Set<Contact> mRecipients = new HashSet<>();
         private Attachment mAttachment;
 
         public Builder addRecipient(Context context, String address) {

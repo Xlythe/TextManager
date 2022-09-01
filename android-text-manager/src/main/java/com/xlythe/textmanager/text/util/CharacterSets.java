@@ -122,7 +122,6 @@ public class CharacterSets {
 
     static {
         // Create the HashMaps.
-        assert(MIBENUM_NUMBERS.length == MIME_NAMES.length);
         int count = MIBENUM_NUMBERS.length - 1;
         for(int i = 0; i <= count; i++) {
             MIBENUM_TO_NAME_MAP.put(MIBENUM_NUMBERS[i], MIME_NAMES[i]);

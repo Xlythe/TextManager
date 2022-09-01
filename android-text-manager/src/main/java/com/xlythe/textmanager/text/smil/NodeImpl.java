@@ -12,7 +12,7 @@ import java.util.Vector;
 
 public abstract class NodeImpl implements Node, EventTarget {
     private Node mParentNode;
-    private final Vector<Node> mChildNodes = new Vector<Node>();
+    private final Vector<Node> mChildNodes = new Vector<>();
     DocumentImpl mOwnerDocument;
     private final EventTarget mEventTarget = new EventTargetImpl(this);
 

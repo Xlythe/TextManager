@@ -16,6 +16,7 @@ import com.xlythe.textmanager.text.ImageAttachment;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,8 +38,10 @@ public class StickerFragment extends Fragment {
     private Text mText;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mText = getArguments().getParcelable(ARG_MESSAGE);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (getArguments() != null) {
+            mText = getArguments().getParcelable(ARG_MESSAGE);
+        }
 
         ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_sticker, container, false);
         RecyclerView gridView = rootView.findViewById(R.id.content);

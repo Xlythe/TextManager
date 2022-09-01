@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import com.xlythe.sms.R;
 import com.xlythe.sms.pojo.Sticker;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHolder> {
@@ -41,16 +42,17 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
             new Sticker(R.drawable.thumb_unmotivated, R.raw.stickers_unmotivated)
     };
 
-    private StickerAdapter.OnItemClickListener mClickListener;
-    private Context mContext;
+    private final StickerAdapter.OnItemClickListener mClickListener;
+    private final Context mContext;
 
     public StickerAdapter(Context context, OnItemClickListener listener) {
         mContext = context;
         mClickListener = listener;
     }
 
+    @NonNull
     @Override
-    public StickerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public StickerAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.grid_item_sticker, parent, false);
         return new ViewHolder(layout, mClickListener);
     }
@@ -66,7 +68,6 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
-        private final Context mContext;
         private final StickerAdapter.OnItemClickListener mClickListener;
         private final ImageView mImage;
 
@@ -74,7 +75,6 @@ public class StickerAdapter extends RecyclerView.Adapter<StickerAdapter.ViewHold
 
         public ViewHolder(View view, StickerAdapter.OnItemClickListener listener) {
             super(view);
-            mContext = view.getContext();
             mClickListener = listener;
             mImage = view.findViewById(R.id.image);
             view.setOnClickListener(this);

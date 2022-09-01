@@ -48,7 +48,7 @@ public abstract class AbstractCache<K, V> {
         }
 
         if (key != null) {
-            CacheEntry<V> cacheEntry = new CacheEntry<V>();
+            CacheEntry<V> cacheEntry = new CacheEntry<>();
             cacheEntry.value = value;
             mCacheMap.put(key, cacheEntry);
 

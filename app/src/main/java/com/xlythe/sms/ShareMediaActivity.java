@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
 
 public class ShareMediaActivity extends AppCompatActivity {
-    private static final String TAG = ShareMediaActivity.class.getSimpleName();
     private static final int REQUEST_CODE_CONTACT = 10001;
 
     private TextManager mManager;

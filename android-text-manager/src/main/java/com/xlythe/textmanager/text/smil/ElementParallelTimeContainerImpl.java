@@ -73,7 +73,7 @@ public abstract class ElementParallelTimeContainerImpl extends ElementTimeContai
                     }
                     if (endTime.getResolved()) {
                         float end = (float)endTime.getResolvedOffset();
-                        dur = (end > dur) ? end : dur;
+                        dur = Math.max(end, dur);
                     }
                 }
             }
@@ -88,7 +88,7 @@ public abstract class ElementParallelTimeContainerImpl extends ElementTimeContai
          * Add ElementTime to list of active elements if the Time belongs to the begin-list,
          * do not add it otherwise.
          */
-        ArrayList<Node> activeChildren = new ArrayList<Node>();
+        ArrayList<Node> activeChildren = new ArrayList<>();
         NodeList children = getTimeChildren();
         int childrenLen = children.getLength();
         for (int i = 0; i < childrenLen; ++i) {

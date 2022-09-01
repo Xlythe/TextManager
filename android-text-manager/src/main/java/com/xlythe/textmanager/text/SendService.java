@@ -1,5 +1,7 @@
 package com.xlythe.textmanager.text;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.PendingIntent;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 
 public class SendService extends IntentService {
@@ -39,8 +42,10 @@ public class SendService extends IntentService {
         super("SendService");
     }
 
+    @SuppressLint("InlinedApi")
     @WorkerThread
     @Override
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.ACCESS_NETWORK_STATE})
     protected void onHandleIntent(Intent intent) {
         Text text = intent.getParcelableExtra(EXTRA_TEXT);
         if (text.isMms()) {
@@ -102,6 +107,8 @@ public class SendService extends IntentService {
         }
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @Nullable
     private Uri storeMMS(Text text) {
         PduPersister p = PduPersister.getPduPersister(this);
@@ -130,6 +137,8 @@ public class SendService extends IntentService {
     /**
      * Send message
      */
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void sendMMS(Text text, PendingIntent sentMmsPendingIntent) {
         TextManager manager = TextManager.getInstance(this);
         Contact contact = manager.getMembers(text).get().iterator().next();
@@ -170,25 +179,28 @@ public class SendService extends IntentService {
     /**
      * Pending Intents to notify when an MMS or SMS has been sent or failed to send
      */
+    @SuppressLint("InlinedApi")
     private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(ACTION_SMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    @SuppressLint("InlinedApi")
     private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(ACTION_SMS_DELIVERED);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    @SuppressLint("InlinedApi")
     private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri, String id) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(ACTION_MMS_SENT);
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT);
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     /**
@@ -199,15 +211,12 @@ public class SendService extends IntentService {
         public void onReceive(Context context, Intent intent) {
             Uri uri = intent.getData();
             ContentValues values = new ContentValues();
-            switch (getResultCode()) {
-                case Activity.RESULT_OK:
-                    Log.d(TAG, "SMS sent");
-                    values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-                    break;
-                default:
-                    Log.d(TAG, "SMS failed to send");
-                    values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                    break;
+            if (getResultCode() == Activity.RESULT_OK) {
+                Log.d(TAG, "SMS sent");
+                values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+            } else {
+                Log.d(TAG, "SMS failed to send");
+                values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             }
             context.getContentResolver().update(uri, values, null, null);
         }
@@ -232,15 +241,12 @@ public class SendService extends IntentService {
         public void onReceive(Context context, Intent intent) {
             Uri uri = intent.getData();
             ContentValues values = new ContentValues();
-            switch (getResultCode()) {
-                case Activity.RESULT_OK:
-                    Log.d(TAG, "MMS sent");
-                    values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-                    break;
-                default:
-                    Log.d(TAG, "MMS failed to send");
-                    values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-                    break;
+            if (getResultCode() == Activity.RESULT_OK) {
+                Log.d(TAG, "MMS sent");
+                values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
+            } else {
+                Log.d(TAG, "MMS failed to send");
+                values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             }
             context.getContentResolver().update(uri, values, null, null);
         }

@@ -5,6 +5,8 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.xlythe.textmanager.text.TextManager;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -98,7 +100,7 @@ public class HttpUtils {
             HttpHost target = new HttpHost(hostUrl.getHost(), hostUrl.getPort(), HttpHost.DEFAULT_SCHEME_NAME);
 
             client = createHttpClient(context);
-            HttpRequest req = null;
+            HttpRequest req;
             switch(method) {
                 case HTTP_POST_METHOD:
                     ProgressCallbackEntity entity = new ProgressCallbackEntity(context, token, pdu);
@@ -146,21 +148,18 @@ public class HttpUtils {
             String extraHttpParams = mHttpParams;
 
             if (extraHttpParams != null) {
-                String line1Number = ((TelephonyManager)context
-                        .getSystemService(Context.TELEPHONY_SERVICE))
-                        .getLine1Number();
-                String line1Key = mHttpParamsLine1Key;
-                String paramList[] = extraHttpParams.split("\\|");
+                String line1Number = TextManager.getInstance(context).getPhoneNumber();
+                String[] paramList = extraHttpParams.split("\\|");
 
                 for (String paramPair : paramList) {
-                    String splitPair[] = paramPair.split(":", 2);
+                    String[] splitPair = paramPair.split(":", 2);
 
                     if (splitPair.length == 2) {
                         String name = splitPair[0].trim();
                         String value = splitPair[1].trim();
 
-                        if (line1Key != null) {
-                            value = value.replace(line1Key, line1Number);
+                        if (mHttpParamsLine1Key != null) {
+                            value = value.replace(mHttpParamsLine1Key, line1Number);
                         }
                         if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(value)) {
                             req.addHeader(name, value);
@@ -209,12 +208,10 @@ public class HttpUtils {
                         try {
                             int bytesRead = 0;
                             int offset = 0;
-                            boolean readError = false;
                             do {
                                 try {
                                     bytesRead = dis.read(tempBody, offset, bytesTobeRead);
                                 } catch (IOException e) {
-                                    readError = true;
                                     Log.e("HttpUtils", "httpConnection: error reading input stream"
                                             + e.getMessage());
                                     break;
@@ -224,7 +221,7 @@ public class HttpUtils {
                                     offset += bytesRead;
                                 }
                             } while (bytesRead >= 0 && bytesTobeRead > 0);
-                            if (bytesRead == -1 && offset > 0 && !readError) {
+                            if (bytesRead == -1 && offset > 0) {
                                 // offset is same as total number of bytes read
                                 // bytesRead will be -1 if the data was read till the eof
                                 body = new byte[offset];
@@ -310,15 +307,16 @@ public class HttpUtils {
         if (langCode == null) {
             return null;
         }
-        if ("iw".equals(langCode)) {
-            // Hebrew
-            return "he";
-        } else if ("in".equals(langCode)) {
-            // Indonesian
-            return "id";
-        } else if ("ji".equals(langCode)) {
-            // Yiddish
-            return "yi";
+        switch (langCode) {
+            case "iw":
+                // Hebrew
+                return "he";
+            case "in":
+                // Indonesian
+                return "id";
+            case "ji":
+                // Yiddish
+                return "yi";
         }
         return langCode;
     }
@@ -328,10 +326,8 @@ public class HttpUtils {
         if (language != null) {
             builder.append(language);
             String country = locale.getCountry();
-            if (country != null) {
-                builder.append("-");
-                builder.append(country);
-            }
+            builder.append("-");
+            builder.append(country);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -173,7 +174,7 @@ public class Mock {
                 public static final int RESULT_SMS_UNSUPPORTED;
                 public static final int RESULT_SMS_DUPLICATED;
 
-                public static final String ACTION_CHANGE_DEFAULT;
+                @Deprecated public static final String ACTION_CHANGE_DEFAULT;
                 public static final String EXTRA_PACKAGE_NAME;
                 public static final String SMS_DELIVER_ACTION;
                 public static final String SMS_RECEIVED_ACTION;
@@ -253,6 +254,19 @@ public class Mock {
                             e.printStackTrace();
                             return new SmsMessage[0];
                         }
+                    }
+                }
+
+                public static Intent requestDefault(Context context) {
+                    if (Build.VERSION.SDK_INT >= 29) {
+                        RoleManager roleManager = (RoleManager) context.getSystemService(Context.ROLE_SERVICE);
+                        Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS);
+                        intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, context.getPackageName());
+                        return intent;
+                    } else {
+                        Intent intent = new Intent(Mock.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+                        intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, context.getPackageName());
+                        return intent;
                     }
                 }
             }

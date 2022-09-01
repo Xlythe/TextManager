@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.Manifest;
 import android.app.IntentService;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -19,6 +20,7 @@ import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
+import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 
 public class MmsReceiveService extends IntentService {
@@ -39,6 +41,7 @@ public class MmsReceiveService extends IntentService {
 
   @WorkerThread
   @Override
+  @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
   protected void onHandleIntent(Intent intent) {
     Log.d(TAG, "Downloading MMS");
     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);

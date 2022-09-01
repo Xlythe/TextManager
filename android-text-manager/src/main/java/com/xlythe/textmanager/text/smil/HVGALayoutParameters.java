@@ -7,7 +7,7 @@ public class HVGALayoutParameters implements LayoutParameters {
     private static final boolean DEBUG = false;
     private static final boolean LOCAL_LOGV = false;
 
-    private int mType = -1;
+    private int mType;
 
     private static int mImageHeightLandscape;
     private static int mTextHeightLandscape;

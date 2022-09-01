@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
@@ -150,6 +151,7 @@ public final class ImageAttachment extends Attachment {
                 + Utils.hashCode(getUri());
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format("ImageAttachment{type=%s, uri=%s}",

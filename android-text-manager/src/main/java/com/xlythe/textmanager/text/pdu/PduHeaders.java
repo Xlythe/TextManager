@@ -22,6 +22,7 @@ import android.util.Log;
 import com.xlythe.textmanager.text.util.EncodedStringValue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class PduHeaders {
@@ -324,13 +325,13 @@ public class PduHeaders {
     /**
      * The map contains the value of all headers.
      */
-    private HashMap<Integer, Object> mHeaderMap = null;
+    private final HashMap<Integer, Object> mHeaderMap;
 
     /**
      * Constructor of PduHeaders.
      */
     public PduHeaders() {
-        mHeaderMap = new HashMap<Integer, Object>();
+        mHeaderMap = new HashMap<>();
     }
 
     /**
@@ -357,7 +358,7 @@ public class PduHeaders {
      * @param field the field
      */
     protected void setOctet(int value, int field) {
-        /**
+        /*
          * Check whether this field can be set for specific
          * header and check validity of the field.
          */
@@ -511,7 +512,7 @@ public class PduHeaders {
      * @throws NullPointerException if the value is null.
      */
     protected void setTextString(byte[] value, int field) {
-        /**
+        /*
          * Check whether this field can be set for specific
          * header and check validity of the field.
          */
@@ -575,7 +576,7 @@ public class PduHeaders {
      * @throws NullPointerException if the value is null.
      */
     protected void setEncodedStringValue(EncodedStringValue value, int field) {
-        /**
+        /*
          * Check whether this field can be set for specific
          * header and check validity of the field.
          */
@@ -610,7 +611,7 @@ public class PduHeaders {
      * @throws NullPointerException if the value is null.
      */
     protected void setEncodedStringValues(EncodedStringValue[] value, int field) {
-        /**
+        /*
          * Check whether this field can be set for specific
          * header and check validity of the field.
          */
@@ -628,10 +629,8 @@ public class PduHeaders {
                 throw new RuntimeException("Invalid header field!");
         }
 
-        ArrayList<EncodedStringValue> list = new ArrayList<EncodedStringValue>();
-        for (int i = 0; i < value.length; i++) {
-            list.add(value[i]);
-        }
+        ArrayList<EncodedStringValue> list = new ArrayList<>();
+        Collections.addAll(list, value);
         mHeaderMap.put(field, list);
     }
 
@@ -660,7 +659,7 @@ public class PduHeaders {
         ArrayList<EncodedStringValue> list =
                 (ArrayList<EncodedStringValue>) mHeaderMap.get(field);
         if (null == list) {
-            list  = new ArrayList<EncodedStringValue>();
+            list  = new ArrayList<>();
         }
         list.add(value);
         mHeaderMap.put(field, list);
@@ -680,7 +679,7 @@ public class PduHeaders {
             return -1;
         }
 
-        return longInteger.longValue();
+        return longInteger;
     }
 
     /**
@@ -690,7 +689,7 @@ public class PduHeaders {
      * @param field the field
      */
     protected void setLongInteger(long value, int field) {
-        /**
+        /*
          * Check whether this field can be set for specific
          * header and check validity of the field.
          */

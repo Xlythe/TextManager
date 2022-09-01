@@ -8,6 +8,9 @@ import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -21,7 +24,7 @@ import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {
-        IMAGE, VIDEO, VOICE, HIGH_RES_IMAGE;
+        IMAGE, VIDEO, VOICE, HIGH_RES_IMAGE
     }
 
     private final Type mType;
@@ -68,7 +71,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (o instanceof Attachment) {
             Attachment a = (Attachment) o;
             return Utils.equals(getType(), a.getType())
@@ -83,6 +86,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
                 + Utils.hashCode(getUri());
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format("Attachment{type=%s, uri=%s}", getType(), getUri());
@@ -108,7 +112,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
             if (cursor != null) {
                 int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                 cursor.moveToFirst();
-                return new FileInputStream(new File(cursor.getString(column_index)));
+                return new FileInputStream(cursor.getString(column_index));
             }
         } finally {
             if (cursor != null) {
@@ -117,7 +121,7 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
         }
 
         // The normal case, for most files
-        return new FileInputStream(new File(uri.getPath()));
+        return new FileInputStream(uri.getPath());
     }
 
     protected static byte[] toBytes(File file) throws IOException {

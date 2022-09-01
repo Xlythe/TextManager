@@ -12,6 +12,7 @@ import com.xlythe.textmanager.text.Attachment;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
@@ -19,8 +20,8 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttachmentAdapter.AttachmentViewHolder> {
 
-    private List<Attachment> mAttachments;
-    private Context mContext;
+    private final List<Attachment> mAttachments;
+    private final Context mContext;
     private OnClickListener mOnClickListener;
 
     public MessageAttachmentAdapter(Context context, List<Attachment> attachments) {
@@ -34,8 +35,8 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
 
     public static class AttachmentViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private ImageView mAttachmentView;
-        private ImageView videoLabel;
+        private final ImageView mAttachmentView;
+        private final ImageView videoLabel;
         private OnClickListener mOnClickListener;
         private Attachment mAttachment;
 
@@ -69,8 +70,9 @@ public class MessageAttachmentAdapter  extends RecyclerView.Adapter<MessageAttac
         }
     }
 
+    @NonNull
     @Override
-    public AttachmentViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public AttachmentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layoutView = LayoutInflater.from(mContext).inflate(R.layout.list_item_message_attachment, parent, false);
         return new AttachmentViewHolder(layoutView);
     }

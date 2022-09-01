@@ -149,7 +149,7 @@ public class TimeImpl implements Time {
 
                 // Read Minutes
                 int minutes = (int)parseFloat(timeValues[indexOfMinutes], 0, false);
-                if ((minutes >= 00) && (minutes <= 59)) {
+                if ((minutes >= 0) && (minutes <= 59)) {
                     result += 60000*minutes;
                 } else {
                     throw new IllegalArgumentException();
@@ -157,7 +157,7 @@ public class TimeImpl implements Time {
 
                 // Read Seconds
                 float seconds = parseFloat(timeValues[indexOfMinutes + 1], 0, true);
-                if ((seconds >= 00) && (seconds < 60)) {
+                if ((seconds >= 0) && (seconds < 60)) {
                     result += 60000*seconds;
                 } else {
                     throw new IllegalArgumentException();

@@ -19,28 +19,28 @@ public interface Time {
      * container ends its simple duration (including when it repeats or
      * restarts).
      */
-    public boolean getResolved();
+    boolean getResolved();
 
     /**
      *  The clock value in seconds relative to the parent time container begin.
      *  This indicates the resolved time relationship to the parent time
      * container.  This is only valid if resolved is true.
      */
-    public double getResolvedOffset();
+    double getResolvedOffset();
 
     // TimeTypes
-    public static final short SMIL_TIME_INDEFINITE      = 0;
-    public static final short SMIL_TIME_OFFSET          = 1;
-    public static final short SMIL_TIME_SYNC_BASED      = 2;
-    public static final short SMIL_TIME_EVENT_BASED     = 3;
-    public static final short SMIL_TIME_WALLCLOCK       = 4;
-    public static final short SMIL_TIME_MEDIA_MARKER    = 5;
+    short SMIL_TIME_INDEFINITE      = 0;
+    short SMIL_TIME_OFFSET          = 1;
+    short SMIL_TIME_SYNC_BASED      = 2;
+    short SMIL_TIME_EVENT_BASED     = 3;
+    short SMIL_TIME_WALLCLOCK       = 4;
+    short SMIL_TIME_MEDIA_MARKER    = 5;
 
     /**
      *  A code representing the type of the underlying object, as defined
      * above.
      */
-    public short getTimeType();
+    short getTimeType();
 
     /**
      *  The clock value in seconds relative to the syncbase or eventbase.
@@ -49,8 +49,8 @@ public interface Time {
      *    NO_MODIFICATION_ALLOWED_ERR: Raised on attempts to modify this
      *   readonly attribute.
      */
-    public double getOffset();
-    public void setOffset(double offset)
+    double getOffset();
+    void setOffset(double offset)
             throws DOMException;
 
     /**
@@ -59,8 +59,8 @@ public interface Time {
      *    NO_MODIFICATION_ALLOWED_ERR: Raised on attempts to modify this
      *   readonly attribute.
      */
-    public Element getBaseElement();
-    public void setBaseElement(Element baseElement)
+    Element getBaseElement();
+    void setBaseElement(Element baseElement)
             throws DOMException;
 
     /**
@@ -71,8 +71,8 @@ public interface Time {
      *    NO_MODIFICATION_ALLOWED_ERR: Raised on attempts to modify this
      *   readonly attribute.
      */
-    public boolean getBaseBegin();
-    public void setBaseBegin(boolean baseBegin)
+    boolean getBaseBegin();
+    void setBaseBegin(boolean baseBegin)
             throws DOMException;
 
     /**
@@ -82,8 +82,8 @@ public interface Time {
      *    NO_MODIFICATION_ALLOWED_ERR: Raised on attempts to modify this
      *   readonly attribute.
      */
-    public String getEvent();
-    public void setEvent(String event)
+    String getEvent();
+    void setEvent(String event)
             throws DOMException;
 
     /**
@@ -93,8 +93,8 @@ public interface Time {
      *    NO_MODIFICATION_ALLOWED_ERR: Raised on attempts to modify this
      *   readonly attribute.
      */
-    public String getMarker();
-    public void setMarker(String marker)
+    String getMarker();
+    void setMarker(String marker)
             throws DOMException;
 
 }

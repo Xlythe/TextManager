@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class GalleryItemDecoration extends RecyclerView.ItemDecoration {
 
-    private Drawable mDivider;
+    private final Drawable mDivider;
     private boolean mShowFirstDivider = false;
     private boolean mShowLastDivider = false;
 

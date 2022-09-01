@@ -1,5 +1,7 @@
 package com.xlythe.textmanager.text.pdu;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -15,11 +17,15 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.RequiresPermission;
+
+import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.Mock.Telephony.Mms;
 import com.xlythe.textmanager.text.Mock.Telephony.Mms.Addr;
 import com.xlythe.textmanager.text.Mock.Telephony.Mms.Part;
 import com.xlythe.textmanager.text.Mock.Telephony.MmsSms;
 import com.xlythe.textmanager.text.Mock.Telephony.MmsSms.PendingMessages;
+import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.util.CharacterSets;
 import com.xlythe.textmanager.text.util.ContentType;
@@ -316,7 +322,7 @@ public class PduPersister {
         Cursor c = mContentResolver.query(
                 Uri.parse("content://mms/" + msgId + "/part"),
                 PART_PROJECTION, null, null, null);
-        PduPart[] parts = null;
+        PduPart[] parts;
         try {
             if ((c == null) || (c.getCount() == 0)) {
                 if (LOCAL_LOGV) {
@@ -465,7 +471,7 @@ public class PduPersister {
      */
     public GenericPdu load(Uri uri) throws MmsException {
         GenericPdu pdu = null;
-        PduCacheEntry cacheEntry = null;
+        PduCacheEntry cacheEntry;
         int msgBox = 0;
         long threadId = -1;
         try {
@@ -538,9 +544,8 @@ public class PduPersister {
                     || (msgType == PduHeaders.MESSAGE_TYPE_SEND_REQ)) {
                 PduPart[] parts = loadParts(msgId);
                 if (parts != null) {
-                    int partsNum = parts.length;
-                    for (int i = 0; i < partsNum; i++) {
-                        body.addPart(parts[i]);
+                    for (PduPart part : parts) {
+                        body.addPart(part);
                     }
                 }
             }
@@ -619,9 +624,11 @@ public class PduPersister {
             // TODO: add values to a seperate db for faster loading
         }
     }
+
     private static String getPartContentType(PduPart part) {
         return part.getContentType() == null ? null : toIsoString(part.getContentType());
     }
+
     public Uri persistPart(PduPart part, long msgId, HashMap<Uri, InputStream> preOpenedFiles)
             throws MmsException {
         Uri uri = Uri.parse("content://mms/" + msgId + "/part");
@@ -653,18 +660,18 @@ public class PduPersister {
             String name = new String(part.getName());
             values.put(Part.NAME, name);
         }
-        Object value = null;
+        String value;
         if (part.getContentDisposition() != null) {
             value = toIsoString(part.getContentDisposition());
-            values.put(Part.CONTENT_DISPOSITION, (String) value);
+            values.put(Part.CONTENT_DISPOSITION, value);
         }
         if (part.getContentId() != null) {
             value = toIsoString(part.getContentId());
-            values.put(Part.CONTENT_ID, (String) value);
+            values.put(Part.CONTENT_ID, value);
         }
         if (part.getContentLocation() != null) {
             value = toIsoString(part.getContentLocation());
-            values.put(Part.CONTENT_LOCATION, (String) value);
+            values.put(Part.CONTENT_LOCATION, value);
         }
         Uri res = mContentResolver.insert(uri, values);
         if (res == null) {
@@ -696,7 +703,7 @@ public class PduPersister {
         OutputStream os = null;
         InputStream is = null;
         DrmConvertSession drmConvertSession = null;
-        Uri dataUri = null;
+        Uri dataUri;
         String path = null;
         try {
             byte[] data = part.getData();
@@ -704,7 +711,7 @@ public class PduPersister {
                     || ContentType.APP_SMIL.equals(contentType)
                     || ContentType.TEXT_HTML.equals(contentType)) {
                 ContentValues cv = new ContentValues();
-                cv.put(Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString());
+                cv.put(Mock.Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString());
                 if (mContentResolver.update(uri, cv, null, null) != 1) {
                     throw new MmsException("unable to update " + uri.toString());
                 }
@@ -759,7 +766,7 @@ public class PduPersister {
                         Log.v(TAG, "Saving data to: " + uri);
                     }
                     byte[] buffer = new byte[8192];
-                    for (int len = 0; (len = is.read(buffer)) != -1; ) {
+                    for (int len; (len = is.read(buffer)) != -1; ) {
                         if (!isDrm) {
                             os.write(buffer, 0, len);
                         } else {
@@ -778,7 +785,6 @@ public class PduPersister {
                     if (!isDrm) {
                         os.write(data);
                     } else {
-                        dataUri = uri;
                         byte[] convertedData = drmConvertSession.convert(data, data.length);
                         if (convertedData != null) {
                             os.write(convertedData, 0, convertedData.length);
@@ -813,11 +819,14 @@ public class PduPersister {
                 drmConvertSession.close(path);
                 // Reset the permissions on the encrypted part file so everyone has only read
                 // permission.
-                File f = new File(path);
-                ContentValues values = new ContentValues(0);
-                mContentResolver.update(
-                        Uri.parse("content://mms/resetFilePerm/" + f.getName()),
-                        values, null, null);
+                if (path != null) {
+                    File f = new File(path);
+
+                    ContentValues values = new ContentValues(0);
+                    mContentResolver.update(
+                            Uri.parse("content://mms/resetFilePerm/" + f.getName()),
+                            values, null, null);
+                }
             }
         }
     }
@@ -838,10 +847,8 @@ public class PduPersister {
                 path = uri.toString();
             } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
                 String[] projection = new String[] {MediaStore.MediaColumns.DATA};
-                Cursor cursor = null;
-                try {
-                    cursor = context.getContentResolver().query(uri, projection, null,
-                            null, null);
+                try (Cursor cursor = context.getContentResolver().query(uri, projection, null,
+                        null, null)) {
                     if (null == cursor || 0 == cursor.getCount() || !cursor.moveToFirst()) {
                         throw new IllegalArgumentException("Given Uri could not be found" +
                                 " in media store");
@@ -851,10 +858,6 @@ public class PduPersister {
                 } catch (SQLiteException e) {
                     throw new IllegalArgumentException("Given Uri is not formatted in a way " +
                             "so that it can be found in media store.");
-                } finally {
-                    if (null != cursor) {
-                        cursor.close();
-                    }
                 }
             } else {
                 throw new IllegalArgumentException("Given Uri scheme is not supported");
@@ -937,7 +940,7 @@ public class PduPersister {
             values.put(Mms.MESSAGE_SIZE, messageSize);
         }
         PduHeaders headers = sendReq.getPduHeaders();
-        HashSet<String> recipients = new HashSet<String>();
+        HashSet<String> recipients = new HashSet<>();
         for (int addrType : ADDRESS_FIELDS) {
             EncodedStringValue[] array = null;
             if (addrType == PduHeaders.FROM) {
@@ -974,7 +977,7 @@ public class PduPersister {
         if (charset != 0 ) {
             values.put(Part.CHARSET, charset);
         }
-        String contentType = null;
+        String contentType;
         if (part.getContentType() != null) {
             contentType = toIsoString(part.getContentType());
             values.put(Part.CONTENT_TYPE, contentType);
@@ -989,18 +992,18 @@ public class PduPersister {
             String name = new String(part.getName());
             values.put(Part.NAME, name);
         }
-        Object value = null;
+        String value;
         if (part.getContentDisposition() != null) {
             value = toIsoString(part.getContentDisposition());
-            values.put(Part.CONTENT_DISPOSITION, (String) value);
+            values.put(Part.CONTENT_DISPOSITION, value);
         }
         if (part.getContentId() != null) {
             value = toIsoString(part.getContentId());
-            values.put(Part.CONTENT_ID, (String) value);
+            values.put(Part.CONTENT_ID, value);
         }
         if (part.getContentLocation() != null) {
             value = toIsoString(part.getContentLocation());
-            values.put(Part.CONTENT_LOCATION, (String) value);
+            values.put(Part.CONTENT_LOCATION, value);
         }
         mContentResolver.update(uri, values, null, null);
         // Only update the data when:
@@ -1042,8 +1045,8 @@ public class PduPersister {
                 // is currently being updated.
                 PDU_CACHE_INSTANCE.setUpdating(uri, true);
             }
-            ArrayList<PduPart> toBeCreated = new ArrayList<PduPart>();
-            HashMap<Uri, PduPart> toBeUpdated = new HashMap<Uri, PduPart>();
+            ArrayList<PduPart> toBeCreated = new ArrayList<>();
+            HashMap<Uri, PduPart> toBeUpdated = new HashMap<>();
             int partsNum = body.getPartsNum();
             StringBuilder filter = new StringBuilder().append('(');
             for (int i = 0; i < partsNum; i++) {
@@ -1096,6 +1099,8 @@ public class PduPersister {
      * @param preOpenedFiles if not null, a map of preopened InputStreams for the parts.
      * @return A Uri which can be used to access the stored PDU.
      */
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     public Uri persist(GenericPdu pdu, Uri uri, boolean createThreadId, boolean groupMmsEnabled,
                        HashMap<Uri, InputStream> preOpenedFiles)
             throws MmsException {
@@ -1132,7 +1137,7 @@ public class PduPersister {
         }
         PDU_CACHE_INSTANCE.purge(uri);
         PduHeaders header = pdu.getPduHeaders();
-        PduBody body = null;
+        PduBody body;
         ContentValues values = new ContentValues();
         Set<Entry<Integer, String>> set;
         set = ENCODED_STRING_COLUMN_NAME_MAP.entrySet();
@@ -1167,7 +1172,7 @@ public class PduPersister {
             }
         }
         HashMap<Integer, EncodedStringValue[]> addressMap =
-                new HashMap<Integer, EncodedStringValue[]>(ADDRESS_FIELDS.length);
+                new HashMap<>(ADDRESS_FIELDS.length);
         // Save address information.
         for (int addrType : ADDRESS_FIELDS) {
             EncodedStringValue[] array = null;
@@ -1182,7 +1187,7 @@ public class PduPersister {
             }
             addressMap.put(addrType, array);
         }
-        HashSet<String> recipients = new HashSet<String>();
+        HashSet<String> recipients = new HashSet<>();
         int msgType = pdu.getMessageType();
         // Here we only allocate thread ID for M-Notification.ind,
         // M-Retrieve.conf and M-Send.req.
@@ -1255,7 +1260,7 @@ public class PduPersister {
         // Record whether this mms message is a simple plain text or not. This is a hint for the
         // UI.
         values.put(Mms.TEXT_ONLY, textOnly ? 1 : 0);
-        Uri res = null;
+        Uri res;
         if (existingUri) {
             res = uri;
             mContentResolver.update(res, values, null, null);
@@ -1298,6 +1303,8 @@ public class PduPersister {
      * @param addressMap a HashMap of the addresses from the ADDRESS_FIELDS header
      * @param excludeMyNumber if true, the number of this phone will be excluded from recipients
      */
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void loadRecipients(int addressType, HashSet<String> recipients,
                                 HashMap<Integer, EncodedStringValue[]> addressMap, boolean excludeMyNumber) {
         EncodedStringValue[] array = addressMap.get(addressType);
@@ -1309,12 +1316,11 @@ public class PduPersister {
         if (excludeMyNumber && array.length == 1) {
             return;
         }
-        String myNumber = excludeMyNumber ? mTelephonyManager.getLine1Number() : null;
+        String myNumber = excludeMyNumber ? TextManager.getInstance(mContext).getPhoneNumber() : null;
         for (EncodedStringValue v : array) {
             if (v != null) {
                 String number = v.getString();
-                if ((myNumber == null || !PhoneNumberUtils.compare(number, myNumber)) &&
-                        !recipients.contains(number)) {
+                if ((myNumber == null || !PhoneNumberUtils.compare(number, myNumber))) {
                     // Only add numbers which aren't my own number.
                     recipients.add(number);
                 }
@@ -1415,8 +1421,6 @@ public class PduPersister {
             try {
                 if (cursor.moveToFirst()) {
                     return cursor.getLong(0);
-                } else {
-
                 }
             } finally {
                 cursor.close();

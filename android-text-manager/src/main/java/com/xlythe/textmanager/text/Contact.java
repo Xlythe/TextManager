@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
@@ -11,6 +12,9 @@ import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telephony.PhoneNumberUtils;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -31,12 +35,13 @@ public final class Contact implements User, Parcelable {
     static final Contact UNKNOWN = new Contact(null, "???");
 
     private final long mId;
+    private final String mLookupKey;
     private String mNumber;
     private final String mDisplayName;
     private final String mPhotoUri;
     private final String mPhotoThumbUri;
 
-    protected Contact(Cursor c) {
+    Contact(Cursor c) {
         if (DEBUG) {
             Log.d(TAG, "--------Printing Columns-------");
             for (int i = 0; i < c.getColumnCount(); i++) {
@@ -45,6 +50,7 @@ public final class Contact implements User, Parcelable {
         }
 
         mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+        mLookupKey = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.LOOKUP_KEY));
         // Number may not exist, so check first
         int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
         if (column != -1) {
@@ -55,8 +61,9 @@ public final class Contact implements User, Parcelable {
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
-    protected Contact(String phoneNumber, Cursor c) {
+    Contact(String phoneNumber, Cursor c) {
         mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+        mLookupKey = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.LOOKUP_KEY));
         // Number may not exist, so check first
         setNumber(phoneNumber);
         mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
@@ -64,12 +71,13 @@ public final class Contact implements User, Parcelable {
         mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
     }
 
-    protected Contact(String number) {
+    Contact(String number) {
         this(number, (String) null);
     }
 
-    protected Contact(String number, String displayName) {
+    Contact(String number, String displayName) {
         mId = -1;
+        mLookupKey = "";
         setNumber(number);
         mDisplayName = displayName;
         mPhotoUri = null;
@@ -78,6 +86,7 @@ public final class Contact implements User, Parcelable {
 
     private Contact(Parcel in) {
         mId = in.readLong();
+        mLookupKey = in.readString();
         mNumber = in.readString();
         mPhotoUri = in.readString();
         mDisplayName = in.readString();
@@ -92,6 +101,11 @@ public final class Contact implements User, Parcelable {
         return mId;
     }
 
+    public String getLookupKey() {
+        return mLookupKey;
+    }
+
+    @SuppressLint("Range")
     public synchronized Future<String> getMobileNumber(final Context context) {
         if (mNumber != null) {
             return new Present<>(mNumber);
@@ -147,6 +161,7 @@ public final class Contact implements User, Parcelable {
         return mNumber;
     }
 
+    @SuppressLint("Range")
     public List<String> getEmails(Context context) {
         List<String> emailAddresses = new LinkedList<>();
 
@@ -179,6 +194,7 @@ public final class Contact implements User, Parcelable {
         return emailAddresses;
     }
 
+    @SuppressLint("Range")
     public List<String> getNumbers(Context context) {
         List<String> phoneNumbers = new LinkedList<>();
 
@@ -235,8 +251,8 @@ public final class Contact implements User, Parcelable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o != null && o instanceof Contact) {
+    public boolean equals(@Nullable Object o) {
+        if (o instanceof Contact) {
             Contact a = (Contact) o;
             return Utils.equals(mNumber, a.mNumber)
                     && Utils.equals(mPhotoUri, a.mPhotoUri)
@@ -254,6 +270,7 @@ public final class Contact implements User, Parcelable {
                 + Utils.hashCode(mPhotoThumbUri);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format("Contact{number=%s, photo_uri=%s, display_name=%s, photo_thumb_uri=%s}",
@@ -268,6 +285,7 @@ public final class Contact implements User, Parcelable {
     @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeLong(mId);
+        out.writeString(mLookupKey);
         out.writeString(mNumber);
         out.writeString(mPhotoUri);
         out.writeString(mDisplayName);

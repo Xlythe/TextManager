@@ -1,6 +1,7 @@
 package com.xlythe.sms.fragment;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.media.MediaPlayer;
@@ -18,11 +19,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
+
 import com.xlythe.sms.R;
 
 import java.io.IOException;
-
-import androidx.fragment.app.Fragment;
 
 public class MicFragment extends Fragment {
     private static final String LOG_TAG = "AudioRecordTest";
@@ -51,6 +52,7 @@ public class MicFragment extends Fragment {
         mFileName += "/fail.3gp";
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment_mic, container, false);
@@ -71,7 +73,6 @@ public class MicFragment extends Fragment {
                 mRecord.getBackground().setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_IN);
                 Log.d("Recording","stop");
                 stopRecording();
-                return true;
             } else {
                 if (mRecorder==null) {
                     mMic.getBackground().setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_IN);
@@ -79,61 +80,56 @@ public class MicFragment extends Fragment {
                     Log.d("Recording", "start");
                     startTime = SystemClock.uptimeMillis();
                     startRecording();
-                    mThread = new Thread(new Runnable() {
-                        public void run() {
-                            while(mThread != null && !mThread.isInterrupted()){
-                                //Let's make the thread sleep for a the approximate sampling time
-                                try{Thread.sleep(SAMPLE_DELAY);}catch(InterruptedException ie){ie.printStackTrace();}
+                    mThread = new Thread(() -> {
+                        while(mThread != null && !mThread.isInterrupted()){
+                            //Let's make the thread sleep for a the approximate sampling time
+                            try{Thread.sleep(SAMPLE_DELAY);}catch(InterruptedException ie){ie.printStackTrace();}
 
-                                timeInMillies = SystemClock.uptimeMillis() - startTime;
-                                finalTime = timeSwap + timeInMillies;
+                            timeInMillies = SystemClock.uptimeMillis() - startTime;
+                            finalTime = timeSwap + timeInMillies;
 
-                                if(mRecorder!=null) {
-                                    mLastLevel = Math.min(mRecorder.getMaxAmplitude(), 30000);
-                                }
-                                getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        int seconds = (int) (finalTime / 1000);
-                                        int minutes = seconds / 60;
-                                        seconds = seconds % 60;
-                                        mTextTimer.setText("" + minutes + ":" + String.format("%02d", seconds));
-                                        if (mLastLevel > mImageView.getScaleX() * 30000f) {
-                                            float scaledLevel = Math.min(0.4f + (Float.parseFloat(mLastLevel + "") / 30000f), 1);
-                                            Log.d("Volume", scaledLevel + "");
-                                            mImageView.animate().cancel();
-                                            mImageView.animate().scaleY(scaledLevel).scaleX(scaledLevel).setDuration(300).setListener(new Animator.AnimatorListener() {
-                                                @Override
-                                                public void onAnimationStart(Animator animator) {
-
-                                                }
-
-                                                @Override
-                                                public void onAnimationEnd(Animator animator) {
-                                                    mImageView.animate().setListener(null);
-                                                    mImageView.animate().cancel();
-                                                    mImageView.animate().scaleY(0.4f).scaleX(0.4f).setDuration(1000);
-                                                }
-
-                                                @Override
-                                                public void onAnimationCancel(Animator animator) {
-                                                }
-
-                                                @Override
-                                                public void onAnimationRepeat(Animator animator) {
-
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
+                            if(mRecorder!=null) {
+                                mLastLevel = Math.min(mRecorder.getMaxAmplitude(), 30000);
                             }
+                            requireActivity().runOnUiThread(() -> {
+                                int seconds = (int) (finalTime / 1000);
+                                int minutes = seconds / 60;
+                                seconds = seconds % 60;
+                                mTextTimer.setText(minutes + ":" + String.format("%02d", seconds));
+                                if (mLastLevel > mImageView.getScaleX() * 30000f) {
+                                    float scaledLevel = Math.min(0.4f + (Float.parseFloat(mLastLevel + "") / 30000f), 1);
+                                    Log.d("Volume", scaledLevel + "");
+                                    mImageView.animate().cancel();
+                                    mImageView.animate().scaleY(scaledLevel).scaleX(scaledLevel).setDuration(300).setListener(new Animator.AnimatorListener() {
+                                        @Override
+                                        public void onAnimationStart(Animator animator) {
+
+                                        }
+
+                                        @Override
+                                        public void onAnimationEnd(Animator animator) {
+                                            mImageView.animate().setListener(null);
+                                            mImageView.animate().cancel();
+                                            mImageView.animate().scaleY(0.4f).scaleX(0.4f).setDuration(1000);
+                                        }
+
+                                        @Override
+                                        public void onAnimationCancel(Animator animator) {
+                                        }
+
+                                        @Override
+                                        public void onAnimationRepeat(Animator animator) {
+
+                                        }
+                                    });
+                                }
+                            });
                         }
                     });
                     mThread.start();
                 }
-                return true;
             }
+            return true;
         });
 
         return rootView;

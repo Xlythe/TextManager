@@ -1,5 +1,6 @@
 package com.xlythe.sms.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
@@ -18,17 +19,19 @@ import com.xlythe.sms.R;
 
 import java.io.File;
 
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdapter.ViewHolder> {
     private static final String TAG = AttachmentAdapter.class.getSimpleName();
 
-    private AttachmentAdapter.OnItemClickListener mClickListener;
-    private Context mContext;
-    private Cursor mCursor;
-    private int mColor;
+    private final AttachmentAdapter.OnItemClickListener mClickListener;
+    private final Context mContext;
+    private final Cursor mCursor;
+    @ColorInt private final int mColor;
 
-    public AttachmentAdapter(Context context, Cursor cursor, int color, AttachmentAdapter.OnItemClickListener listener) {
+    public AttachmentAdapter(Context context, Cursor cursor, @ColorInt int color, AttachmentAdapter.OnItemClickListener listener) {
         mContext = context;
         mCursor = cursor;
         mColor = color;
@@ -36,11 +39,11 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private OnItemClickListener mListener;
-        private ImageView mImage;
-        private ImageView mButton;
-        private ImageView mButtonShape;
-        private Context mContext;
+        private final OnItemClickListener mListener;
+        private final ImageView mImage;
+        private final ImageView mButton;
+        private final ImageView mButtonShape;
+        private final Context mContext;
 
         public ViewHolder(View view, OnItemClickListener listener, Context context) {
             super(view);
@@ -52,8 +55,8 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
             view.setOnClickListener(this);
         }
 
-        public void setCursor(Cursor cursor, boolean isSelected, boolean selectMode, int color){
-            String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Thumbnails.DATA));
+        public void setCursor(Cursor cursor, boolean isSelected, boolean selectMode, @ColorInt int color){
+            @SuppressLint("Range") String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Thumbnails.DATA));
             Log.d(TAG, "Color: " + color);
             Glide.with(mContext)
                     .load(new File(path))
@@ -92,8 +95,9 @@ public class AttachmentAdapter extends SelectableAdapter<Integer, AttachmentAdap
         }
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.attach_icon, parent, false);
         return new ViewHolder(layout, mClickListener, mContext);
     }

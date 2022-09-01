@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.os.Parcel;
@@ -12,6 +13,7 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 /**
@@ -21,7 +23,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
     private final long mThreadId;
     private Integer mCount;
-    private Integer mUnreadCount;
+    private final Integer mUnreadCount;
     private Text mText;
 
     // Thread ID isn't always different so need to change it here only
@@ -35,7 +37,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
         }
     }
 
-    protected Thread(Cursor cursor) {
+    @SuppressLint("Range")
+    Thread(Cursor cursor) {
         mThreadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID));
 
         for (Text text : ((ThreadCursor) cursor).getTexts()) {
@@ -109,6 +112,7 @@ public final class Thread implements MessageThread<Text>, Parcelable {
                 + Utils.hashCode(mText);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format("Thread{id=%s, count=%s, unread_count=%s, text=%s}",
@@ -139,8 +143,8 @@ public final class Thread implements MessageThread<Text>, Parcelable {
     };
 
     public static class ThreadCursor extends CursorWrapper {
-        private Cursor mUnreadCursor;
-        private List<Text> mTexts;
+        private final Cursor mUnreadCursor;
+        private final List<Text> mTexts;
 
         public ThreadCursor(Cursor cursor, Cursor unreadCursor, List<Text> texts) {
             super(cursor);

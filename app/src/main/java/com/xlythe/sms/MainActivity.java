@@ -1,18 +1,42 @@
 package com.xlythe.sms;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Person;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.Capability;
+import android.content.pm.CapabilityParams;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.service.chooser.ChooserTarget;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -21,22 +45,23 @@ import com.xlythe.manager.notifications.messages.MessageBasedNotificationManager
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.HeadersDecoration;
 import com.xlythe.sms.decoration.ThreadsItemDecoration;
+import com.xlythe.sms.drawable.ProfileDrawable;
+import com.xlythe.sms.service.FetchChooserTargetService;
 import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.text.Mock;
+import com.xlythe.textmanager.text.Contact;
+import com.xlythe.textmanager.text.Mock.Telephony;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.util.Utils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ActionMode;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
@@ -48,18 +73,26 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             REQUIRED_PERMISSIONS = new String[] {
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS,
-                    Manifest.permission.POST_NOTIFICATIONS
+                    Manifest.permission.POST_NOTIFICATIONS,
+                    Manifest.permission.READ_PHONE_NUMBERS,
+            };
+        } else if (Build.VERSION.SDK_INT >= 26) {
+            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.READ_PHONE_NUMBERS,
             };
         } else {
             REQUIRED_PERMISSIONS = new String[] {
                     Manifest.permission.READ_SMS,
-                    Manifest.permission.READ_CONTACTS
+                    Manifest.permission.READ_CONTACTS,
             };
         }
     }
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
-    private static final int REQUEST_CODE_WRITE_SETTINGS = 1001;
+    private static final int REQUEST_CODE_DEFAULT_SMS = 1001;
+    private static final int REQUEST_CODE_WRITE_SETTINGS = 1002;
 
     private static final int TOOLBAR_SCROLL_FLAGS =
             AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
@@ -83,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         public void notifyDataChanged() {
             mThreads = mManager.getThreadCursor();
             mAdapter.swapCursor(mThreads);
+            updateShortcuts();
         }
     };
 
@@ -111,19 +145,17 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         mFab = findViewById(R.id.fab);
         mFab.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
+    }
 
-        if (!mManager.isDefaultSmsPackage()) {
-            Snackbar.make(findViewById(R.id.list), R.string.msg_not_set_as_default, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.btn_change, v -> {
-                        Intent intent = new Intent(Mock.Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
-                        intent.putExtra(Mock.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
-                        startActivity(intent);
-                    })
-                    .show();
-        }
+    @SuppressLint("NewApi")
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-        if (hasPermissions(this, REQUIRED_PERMISSIONS)) {
+        if (mManager.isDefaultSmsPackage() && hasPermissions(this, REQUIRED_PERMISSIONS)) {
             loadThreads();
+        } else if (!mManager.isDefaultSmsPackage()) {
+            defaultSmsNotGranted();
         } else if (hasRequestedPermissions()) {
             requiredPermissionsNotGranted();
         } else {
@@ -171,6 +203,25 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             mEmptyState.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.VISIBLE);
         }
+        updateShortcuts();
+    }
+
+    private void defaultSmsNotGranted() {
+        final View errorBox = findViewById(R.id.layout_default_sms);
+        errorBox.setVisibility(View.VISIBLE);
+
+        Button button = errorBox.findViewById(R.id.request_default_sms);
+        button.setOnClickListener(v -> {
+            errorBox.setVisibility(View.GONE);
+            startActivityForResult(Telephony.Sms.Intents.requestDefault(this), REQUEST_CODE_DEFAULT_SMS);
+        });
+
+        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
+        params.setScrollFlags(0);
+        mToolbar.setLayoutParams(params);
+
+        mFab.setEnabled(false);
+        mRecyclerView.setVisibility(View.GONE);
     }
 
     private void requiredPermissionsNotGranted() {
@@ -254,6 +305,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             return true;
         }
 
+        @SuppressLint("WrongConstant")
         @Override
         public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
             AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
@@ -265,16 +317,14 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.menu_remove:
-                    Set<Thread> threads = mAdapter.getSelectedItems();
-                    mManager.delete(threads.toArray(new Thread[0]));
-                    mAdapter.clearSelection();
-                    mode.finish();
-                    return true;
-                default:
-                    return false;
+            if (item.getItemId() == R.id.menu_remove) {
+                Set<Thread> threads = mAdapter.getSelectedItems();
+                mManager.delete(threads.toArray(new Thread[0]));
+                mAdapter.clearSelection();
+                mode.finish();
+                return true;
             }
+            return false;
         }
 
         @Override
@@ -311,6 +361,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_REQUIRED_PERMISSIONS) {
             if (hasPermissions(this, REQUIRED_PERMISSIONS)) {
                 loadThreads();
@@ -332,7 +383,89 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
      * Returns true if we've already asked for permissions
      * */
     private boolean hasRequestedPermissions() {
+        boolean shouldShowRationale = false;
+        for (String permission : REQUIRED_PERMISSIONS) {
+            shouldShowRationale = shouldShowRationale || ActivityCompat.shouldShowRequestPermissionRationale(this, permission);
+        }
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
-        return prefs.getBoolean(KEY_REQUEST_PERMISSIONS_FLAG, false);
+        return shouldShowRationale || prefs.getBoolean(KEY_REQUEST_PERMISSIONS_FLAG, false);
+    }
+
+    private void updateShortcuts() {
+        if (Build.VERSION.SDK_INT < 25) {
+            return;
+        }
+
+        ShortcutManager shortcutManager = (ShortcutManager) getSystemService(Context.SHORTCUT_SERVICE);
+
+        ComponentName componentName = new ComponentName(this, MessageActivity.class);
+        List<ShortcutInfo> shortcutInfo = new ArrayList<>();
+        List<Thread> threads = getRecentThreads();
+        int position = 0;
+        for (Thread thread : threads) {
+            Set<Contact> contacts = mManager.getMembersExceptMe(thread.getLatestMessage()).get();
+
+            PersistableBundle extras = new PersistableBundle();
+            extras.putString(MessageActivity.EXTRA_THREAD_ID, thread.getId());
+            extras.putString(Intent.EXTRA_PHONE_NUMBER, getRecipients(contacts));
+
+            ShortcutInfo.Builder builder = new ShortcutInfo.Builder(this, thread.getId())
+                    .setActivity(componentName)
+                    .setExtras(extras)
+                    .setIcon(getIcon(contacts))
+                    .setRank(threads.size() - position);
+            if (Build.VERSION.SDK_INT >= 29) {
+                builder.setPersons(getPeople(contacts));
+            }
+            if (Build.VERSION.SDK_INT >= 33) {
+                builder.addCapabilityBinding(new Capability.Builder(Intent.ACTION_SENDTO).build(), new CapabilityParams.Builder("type", "sms").build());
+            }
+            shortcutInfo.add(builder.build());
+            position++;
+        }
+        shortcutManager.addDynamicShortcuts(shortcutInfo);
+    }
+
+    @RequiresApi(28)
+    private Person[] getPeople(Set<Contact> contacts) {
+        List<Person> people = new ArrayList<>();
+        for (Contact contact : contacts) {
+            people.add(new Person.Builder()
+                    .setKey(contact.getId())
+                    .setUri(ContactsContract.Contacts.getLookupUri(contact.getIdAsLong(), contact.getLookupKey()).toString())
+                    .setName(contact.getDisplayName())
+                    .setIcon(getIcon(Collections.singleton(contact)))
+                    .build());
+        }
+        Collections.sort(people, Comparator.comparing(p -> p.getName().toString()));
+        return people.toArray(new Person[0]);
+    }
+
+    @RequiresApi(23)
+    private Icon getIcon(Set<Contact> contacts) {
+        ProfileDrawable drawable = new ProfileDrawable(this, contacts);
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.draw(canvas);
+
+        return Icon.createWithBitmap(bitmap);
+    }
+
+    private List<Thread> getRecentThreads() {
+        List<Thread> recentThreads = new ArrayList<>(FetchChooserTargetService.SIZE);
+        if (mThreads.moveToFirst()) {
+            do {
+                if (mManager.getMembersExceptMe(mThreads.getThread().getLatestMessage()).get().size() == 0) {
+                    continue;
+                }
+                recentThreads.add(mThreads.getThread());
+            } while (mThreads.moveToNext() && recentThreads.size() < FetchChooserTargetService.SIZE);
+        }
+        return recentThreads;
+    }
+
+    private String getRecipients(Set<Contact> contacts) {
+        return Utils.join(';', contacts, Contact::getNumber);
     }
 }

@@ -29,7 +29,7 @@ public interface DocumentEvent {
      *   NOT_SUPPORTED_ERR: Raised if the implementation does not support the
      *   type of <code>Event</code> interface requested
      */
-    public Event createEvent(String eventType)
+    Event createEvent(String eventType)
             throws DOMException;
 
 }

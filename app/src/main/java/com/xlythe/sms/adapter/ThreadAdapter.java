@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.LruCache;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewHolder> implements StickyRecyclerHeadersAdapter<ThreadAdapter.SectionViewHolder> {
@@ -63,7 +65,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
     private final Context mContext;
     private Thread.ThreadCursor mCursor;
-    private OnClickListener mClickListener;
+    private final OnClickListener mClickListener;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
 
     public ThreadAdapter(Context context, Thread.ThreadCursor cursor) {
@@ -120,7 +122,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         public final ImageView videoLabel;
         public final ViewGroup card;
         public final ImageView profile;
-        private OnClickListener mListener;
+        private final OnClickListener mListener;
 
         public ThreadViewHolder(View view, OnClickListener listener) {
             super(view);
@@ -160,22 +162,17 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
 
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
-            Runnable myRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    manager.getMembersExceptMe(latest).get(contacts -> {
-                        String address = Utils.join(", ", contacts, Contact::getDisplayName);
-                        title.setText(address);
-                        profile.setImageDrawable(new ProfileDrawable(getContext(), contacts));
-                        if (selectMode) {
-                            profile.setImageResource(android.R.color.transparent);
-                            profile.setBackgroundResource(R.drawable.selector);
-                        } else {
-                            profile.setBackgroundResource(android.R.color.transparent);
-                        }
-                    });
+            Runnable myRunnable = () -> manager.getMembersExceptMe(latest).get(contacts -> {
+                String address = Utils.join(", ", contacts, Contact::getDisplayName);
+                title.setText(address);
+                profile.setImageDrawable(new ProfileDrawable(getContext(), contacts));
+                if (selectMode) {
+                    profile.setImageResource(android.R.color.transparent);
+                    profile.setBackgroundResource(R.drawable.selector);
+                } else {
+                    profile.setBackgroundResource(android.R.color.transparent);
                 }
-            };
+            });
             mainHandler.post(myRunnable);
 
             if (latest != null) {
@@ -189,7 +186,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             }
             date.setText(time);
 
-            if (attachment != null && latest.getAttachment() != null) {
+            if (attachment != null && latest != null && latest.getAttachment() != null) {
                 if (latest.getAttachment().getType() == Attachment.Type.VIDEO) {
                     videoLabel.setVisibility(View.VISIBLE);
                 } else {
@@ -256,7 +253,8 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
         }
     }
 
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    @NonNull
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(LAYOUT_MAP.get(viewType), parent, false);
         return new ThreadViewHolder(layout, mClickListener);
     }
@@ -313,7 +311,7 @@ public class ThreadAdapter extends SelectableAdapter<Thread, ThreadAdapter.ViewH
             super(view);
             title = view.findViewById(R.id.section_text);
             Configuration config = view.getResources().getConfiguration();
-            if(config.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            if(Build.VERSION.SDK_INT >= 17 && config.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
                 FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
                 params.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
                 title.setLayoutParams(params);

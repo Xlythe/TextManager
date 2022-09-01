@@ -77,13 +77,12 @@ public class NodeListImpl implements NodeList {
      *   <li> Traverse children from left to right in preorder.
      * </ul>
      * This method fills the live node list.
-     * @return The next match
      */
     private void fillList(Node node) {
         // (Re)-initialize the container if this is the start of the search.
         // Visit the root of this iteration otherwise.
         if (node == mRootNode) {
-            mSearchNodes = new ArrayList<Node>();
+            mSearchNodes = new ArrayList<>();
         } else {
             if ((mTagName == null) || node.getNodeName().equals(mTagName)) {
                 mSearchNodes.add(node);

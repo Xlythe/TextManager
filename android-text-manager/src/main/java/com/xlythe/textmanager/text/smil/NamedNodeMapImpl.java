@@ -8,7 +8,7 @@ import java.util.Vector;
 
 public class NamedNodeMapImpl implements NamedNodeMap {
 
-    private Vector<Node> mNodes = new Vector<Node>();
+    private Vector<Node> mNodes = new Vector<>();
 
     public int getLength() {
         return mNodes.size();

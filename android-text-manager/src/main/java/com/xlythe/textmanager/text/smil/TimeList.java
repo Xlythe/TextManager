@@ -10,12 +10,12 @@ public interface TimeList {
      *   <code>TimeList</code> , or <code>null</code> if that is not a valid
      *   index.
      */
-    public Time item(int index);
+    Time item(int index);
 
     /**
      *  The number of times in the list. The range of valid child time indices
      * is 0 to <code>length-1</code> inclusive.
      */
-    public int getLength();
+    int getLength();
 
 }

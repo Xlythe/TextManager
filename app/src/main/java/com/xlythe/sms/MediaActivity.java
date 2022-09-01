@@ -32,7 +32,7 @@ public class MediaActivity extends AppCompatActivity {
     private static final int PROGRESS = 0;
 
     private Attachment mAttachment;
-    private Handler mHandler = new MessageHandler(this);
+    private final Handler mHandler = new MessageHandler(this);
     private ProgressBar mProgress;
     private VideoView mPlayer;
     private ImageButton mPauseButton;
@@ -103,7 +103,7 @@ public class MediaActivity extends AppCompatActivity {
         mHandler.sendEmptyMessage(PROGRESS);
     }
 
-    private View.OnClickListener mPauseListener = v -> {
+    private final View.OnClickListener mPauseListener = v -> {
         doPauseResume();
         show();
     };

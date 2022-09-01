@@ -26,7 +26,7 @@ import java.util.Set;
 @TargetApi(23)
 public class FetchChooserTargetService extends ChooserTargetService {
     private static final String TAG = FetchChooserTargetService.class.getSimpleName();
-    private static final int SIZE = 3;
+    public static final int SIZE = 3;
 
     private TextManager mManager;
 
@@ -81,8 +81,7 @@ public class FetchChooserTargetService extends ChooserTargetService {
 
     private List<Thread> getRecentThreads() {
         List<Thread> recentThreads = new ArrayList<>(SIZE);
-        Thread.ThreadCursor cursor = mManager.getThreadCursor();
-        try {
+        try (Thread.ThreadCursor cursor = mManager.getThreadCursor()) {
             if (cursor.moveToFirst()) {
                 do {
                     if (mManager.getMembersExceptMe(cursor.getThread().getLatestMessage()).get().size() == 0) {
@@ -92,8 +91,6 @@ public class FetchChooserTargetService extends ChooserTargetService {
                     recentThreads.add(cursor.getThread());
                 } while (cursor.moveToNext() && recentThreads.size() < SIZE);
             }
-        } finally {
-            cursor.close();
         }
         return recentThreads;
     }

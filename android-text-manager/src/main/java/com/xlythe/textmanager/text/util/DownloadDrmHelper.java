@@ -43,7 +43,7 @@ public class DownloadDrmHelper {
         if (context != null) {
             try {
                 DrmManagerClient drmClient = new DrmManagerClient(context);
-                if (drmClient != null && mimetype != null && mimetype.length() > 0) {
+                if (mimetype != null && mimetype.length() > 0) {
                     result = drmClient.canHandle("", mimetype);
                 }
             } catch (IllegalArgumentException e) {

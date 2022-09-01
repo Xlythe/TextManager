@@ -3,6 +3,8 @@ package com.xlythe.textmanager.text.concurrency;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,12 +33,7 @@ public abstract class FutureImpl<T> implements Future<T> {
 
             // If we know how to, post to get back to the calling thread.
             if (mForegroundHandler != null) {
-                mForegroundHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.get(result);
-                    }
-                });
+                mForegroundHandler.post(() -> callback.get(result));
             } else {
                 // Otherwise, return from our background thread.
                 callback.get(result);
@@ -44,6 +41,7 @@ public abstract class FutureImpl<T> implements Future<T> {
         });
     }
 
+    @NonNull
     @Override
     public String toString() {
         return get().toString();

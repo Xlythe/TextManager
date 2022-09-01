@@ -9,6 +9,6 @@ public interface EventListener {
      *   and <code>preventDefault</code> methods which are used in
      *   determining the event's flow and default action.
      */
-    public void handleEvent(Event evt);
+    void handleEvent(Event evt);
 
 }

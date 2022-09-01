@@ -1,7 +1,9 @@
 package com.xlythe.textmanager.text;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -18,6 +20,7 @@ import android.os.PowerManager;
 import android.provider.BaseColumns;
 import android.provider.BlockedNumberContract;
 import android.provider.ContactsContract;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -45,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
@@ -52,6 +56,7 @@ import androidx.annotation.WorkerThread;
 /**
  * Manages sms and mms messages
  */
+@SuppressLint("Range")
 public class TextManager implements MessageManager<Text, Thread, Contact> {
     static final String TAG = TextManager.class.getSimpleName();
     static final boolean DEBUG = false;
@@ -80,6 +85,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Telephony.Mms.STATUS
     };
 
+    @SuppressLint("StaticFieldLeak")
     private static TextManager sTextManager;
 
     public static synchronized TextManager getInstance(Context context) {
@@ -89,7 +95,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return sTextManager;
     }
 
-    private Context mContext;
+    private final Context mContext;
     private final Set<MessageObserver> mObservers = new HashSet<>();
     private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
@@ -110,6 +116,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
         private static final String TAG_MMS = "sms:mms";
 
+        @SuppressLint("StaticFieldLeak")
         private final Context mContext;
 
         ReceivePushTask(Context context) {
@@ -219,19 +226,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         @Nullable private final String mMessage;
         @Nullable private final Attachment mAttachment;
 
-        private Builder(Context context, String message) {
+        private Builder(Context context, @NonNull String message) {
             mContext = context;
             mMessage = message;
             mAttachment = null;
         }
 
-        private Builder(Context context, Attachment attachment) {
+        private Builder(Context context, @NonNull Attachment attachment) {
             mContext = context;
             mMessage = null;
             mAttachment = attachment;
         }
 
-        private Builder(Context context, String message, Attachment attachment) {
+        private Builder(Context context, @NonNull String message, @NonNull Attachment attachment) {
             mContext = context;
             mMessage = message;
             mAttachment = attachment;
@@ -260,12 +267,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             send(new Text.Builder().addRecipients(addresses));
         }
 
-        @RequiresPermission(Manifest.permission.READ_SMS)
+        @SuppressLint("InlinedApi")
+        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
         public void to(Text text) {
             getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
 
-        @RequiresPermission(Manifest.permission.READ_SMS)
+        @SuppressLint("InlinedApi")
+        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
         public void to(Thread thread) {
             getMembersExceptMe(thread.getLatestMessage()).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
@@ -348,17 +357,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 };
                 Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
 
-                Text.TextCursor cursor = new Text.TextCursor(
+                try (Text.TextCursor cursor = new Text.TextCursor(
                         contentResolver.query(uri, PROJECTION, clause, null, null),
-                        contentResolver.query(mmsUri, mmsProjection, null, null, null));
-                try {
+                        contentResolver.query(mmsUri, mmsProjection, null, null, null))) {
                     if (cursor.moveToFirst()) {
                         return cursor.getText();
                     } else {
                         return null;
                     }
-                } finally {
-                    cursor.close();
                 }
             }
         };
@@ -439,13 +445,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 }
             } else {
                 if (PreKitKatUtils.requiresKitKatApis()) {
-                    Cursor smsSamsung = contentResolver.query(
+                    try (Cursor smsSamsung = contentResolver.query(
                             Uri.withAppendedPath(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId)),
                             PROJECTION,
                             null,
                             null,
-                            Mock.ORDER_NORMALIZED_DATE_ASC);
-                    try {
+                            Mock.ORDER_NORMALIZED_DATE_ASC)) {
                         if (smsSamsung.moveToLast()) {
                             id = smsSamsung.getLong(smsSamsung.getColumnIndexOrThrow(BaseColumns._ID));
                             int ti = smsSamsung.getColumnIndex(Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN);
@@ -457,11 +462,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                     cType = smsSamsung.getString(smsSamsung.getColumnIndex(Telephony.Mms.CONTENT_TYPE));
                                 }
                                 // If content type is present, this is an MMS message
-                                if (cType != null) {
-                                    isMms = true;
-                                } else {
-                                    isMms = false;
-                                }
+                                isMms = cType != null;
                             } else {
                                 isMms = smsSamsung.getString(ti).equals("mms");
                             }
@@ -487,26 +488,21 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                                 status = smsSamsung.getInt(smsSamsung.getColumnIndexOrThrow(Telephony.Sms.STATUS));
                             }
                         }
-                    } finally {
-                        smsSamsung.close();
                     }
                 } else {
                     senderAddress = threads.getString(threads.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
 
                     // If the sender is null that means its a failed mms, so populate data with a different message
                     if (senderAddress == null || senderAddress.equals(UNKNOWN)) {
-                        Cursor smsFailed = contentResolver.query(
+                        try (Cursor smsFailed = contentResolver.query(
                                 Uri.withAppendedPath(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, Long.toString(threadId)),
                                 PROJECTION,
                                 null,
                                 null,
-                                Mock.ORDER_NORMALIZED_DATE_ASC);
-                        try {
+                                Mock.ORDER_NORMALIZED_DATE_ASC)) {
                             while ((senderAddress == null || senderAddress.equals(UNKNOWN)) && smsFailed.moveToNext()) {
                                 senderAddress = smsFailed.getString(smsFailed.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
                             }
-                        } finally {
-                            smsFailed.close();
                         }
                     }
                     memberAddresses.add(senderAddress);
@@ -534,9 +530,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         String[] mmsArgs = new String[ids.size()];
         mmsArgs = ids.toArray(mmsArgs);
 
-        String mmsClause = Telephony.Mms.Part.MSG_ID + " = ?";
+        StringBuilder mmsClause = new StringBuilder(Telephony.Mms.Part.MSG_ID + " = ?");
         for (int i = 0; i < ids.size() - 1; i++) {
-            mmsClause += " OR " + Telephony.Mms.Part.MSG_ID + " = ?";
+            mmsClause.append(" OR ").append(Telephony.Mms.Part.MSG_ID).append(" = ?");
         }
 
         String unreadMessagesClause = String.format("%s=%s",  Telephony.Sms.READ, 0);
@@ -550,9 +546,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 Telephony.Mms.Part.MSG_ID
         };
         Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
-        Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause, mmsArgs, null);
 
-        try {
+        try (Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause.toString(), mmsArgs, null)) {
             for (Text text : recentTexts) {
                 mms.moveToFirst();
                 while (mms.moveToNext()) {
@@ -576,8 +571,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     }
                 }
             }
-        } finally {
-            mms.close();
         }
 
         return new Thread.ThreadCursor(threads,
@@ -624,16 +617,16 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         String[] args = new String[ids.size()];
         args = ids.toArray(args);
 
-        String clause = Telephony.Mms.Part.MSG_ID + " = ?";
+        StringBuilder clause = new StringBuilder(Telephony.Mms.Part.MSG_ID + " = ?");
         for (int i = 0; i < ids.size() - 1; i++) {
-            clause += " OR " + Telephony.Mms.Part.MSG_ID + " = ?";
+            clause.append(" OR ").append(Telephony.Mms.Part.MSG_ID).append(" = ?");
         }
 
         messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
         inner = mContext.getContentResolver().query(
                 messageUri,
                 MMS_PROJECTION,
-                clause,
+                clause.toString(),
                 args,
                 null
         );
@@ -691,25 +684,22 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 }
                 c.close();
 
-                Thread.ThreadCursor cursor = new Thread.ThreadCursor(
+                try (Thread.ThreadCursor cursor = new Thread.ThreadCursor(
                         contentResolver.query(uri, null, clause, null, order),
                         contentResolver.query(inboxUri, null, unreadMessagesClause, null, null),
-                        messages);
-                try {
+                        messages)) {
                     if (cursor.moveToFirst()) {
                         return cursor.getThread();
                     } else {
                         return null;
                     }
-                } finally {
-                    cursor.close();
                 }
             }
         };
     }
 
     public void delete(Collection<Text> messages) {
-        delete(messages.toArray(new Text[messages.size()]));
+        delete(messages.toArray(new Text[0]));
     }
 
     @Override
@@ -857,15 +847,28 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         return contact;
     }
 
-    @RequiresPermission(Manifest.permission.READ_SMS)
-    public Contact getSelf() {
-        TelephonyManager manager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        String phoneNumber = manager.getLine1Number();
-        if (phoneNumber == null) {
-            return Contact.UNKNOWN;
-        } else {
-            return lookupContact(phoneNumber);
+    @Nullable
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
+    public String getPhoneNumber() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            SubscriptionManager subscriptionManager = (SubscriptionManager) mContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+            String phoneNumber = subscriptionManager.getPhoneNumber(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+            if (phoneNumber != null) {
+                return phoneNumber;
+            }
         }
+
+        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        @SuppressLint("HardwareIds") String phoneNumber = telephonyManager.getLine1Number();
+        return phoneNumber;
+    }
+
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
+    public Contact getSelf() {
+        String phoneNumber = getPhoneNumber();
+        return phoneNumber != null ? lookupContact(phoneNumber) : Contact.UNKNOWN;
     }
 
     private void buildSender(Text text) {
@@ -892,8 +895,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             return new Present<>(sender);
         } else {
             return new FutureImpl<Contact>() {
+                @SuppressLint("InlinedApi")
                 @Override
-                @RequiresPermission(Manifest.permission.READ_SMS)
+                @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
                 public Contact get() {
                     if (text.getSenderAddress() == null && text.isMms()) {
                         buildSender(text);
@@ -927,11 +931,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-    @RequiresPermission(Manifest.permission.READ_SMS)
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     public synchronized Future<Set<Contact>> getMembersExceptMe(final Text text) {
         return new FutureImpl<Set<Contact>>() {
             @Override
-            @RequiresPermission(Manifest.permission.READ_SMS)
+            @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
             public Set<Contact> get() {
                 Set<Contact> members = new HashSet<>(getMembers(text).get());
                 if (members.size() == 1) {
@@ -971,7 +976,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
      * Returns true if your package is the default SMS app. Before API 19, that means everyone.
      */
     public boolean isDefaultSmsPackage() {
-        if (Build.VERSION.SDK_INT >= 19 && supportsSms()) {
+        if (Build.VERSION.SDK_INT >= 29 && supportsSms()) {
+            RoleManager roleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
+            return supportsSms() && roleManager.isRoleAvailable(RoleManager.ROLE_SMS) && roleManager.isRoleHeld(RoleManager.ROLE_SMS);
+        } else if (Build.VERSION.SDK_INT >= 19 && supportsSms()) {
             return mContext.getPackageName().equals(getDefaultSmsPackage());
         } else {
             return supportsSms();

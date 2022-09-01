@@ -95,14 +95,14 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         int msgBoxId = entry.getMessageBox();
         HashSet<Uri> msgBox = mMessageBoxes.get(msgBoxId);
         if (msgBox == null) {
-            msgBox = new HashSet<Uri>();
+            msgBox = new HashSet<>();
             mMessageBoxes.put(msgBoxId, msgBox);
         }
 
         long threadId = entry.getThreadId();
         HashSet<Uri> thread = mThreads.get(threadId);
         if (thread == null) {
-            thread = new HashSet<Uri>();
+            thread = new HashSet<>();
             mThreads.put(threadId, thread);
         }
 
@@ -185,7 +185,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
      */
     private Uri normalizeKey(Uri uri) {
         int match = URI_MATCHER.match(uri);
-        Uri normalizedKey = null;
+        Uri normalizedKey;
 
         switch (match) {
             case MMS_ALL_ID:

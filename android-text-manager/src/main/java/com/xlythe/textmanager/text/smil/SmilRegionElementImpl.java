@@ -2,6 +2,8 @@ package com.xlythe.textmanager.text.smil;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.w3c.dom.DOMException;
 
 public class SmilRegionElementImpl extends SmilElementImpl implements
@@ -201,7 +203,7 @@ public class SmilRegionElementImpl extends SmilElementImpl implements
     }
 
     public void setHeight(int height) throws DOMException {
-        this.setAttribute(HEIGHT_ATTRIBUTE_NAME, String.valueOf(height) + "px");
+        this.setAttribute(HEIGHT_ATTRIBUTE_NAME, height + "px");
     }
 
     public void setTitle(String title) throws DOMException {
@@ -209,7 +211,7 @@ public class SmilRegionElementImpl extends SmilElementImpl implements
     }
 
     public void setWidth(int width) throws DOMException {
-        this.setAttribute(WIDTH_ATTRIBUTE_NAME, String.valueOf(width) + "px");
+        this.setAttribute(WIDTH_ATTRIBUTE_NAME, width + "px");
     }
 
     /*
@@ -251,6 +253,7 @@ public class SmilRegionElementImpl extends SmilElementImpl implements
      * (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @NonNull
     @Override
     public String toString() {
         return super.toString()

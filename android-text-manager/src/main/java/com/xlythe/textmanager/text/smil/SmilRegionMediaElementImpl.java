@@ -14,7 +14,7 @@ public class SmilRegionMediaElementImpl extends SmilMediaElementImpl implements
         if (mRegion == null) {
             SMILDocument doc = (SMILDocument)this.getOwnerDocument();
             NodeList regions = doc.getLayout().getElementsByTagName("region");
-            SMILRegionElement region = null;
+            SMILRegionElement region;
             for (int i = 0; i < regions.getLength(); i++) {
                 region = (SMILRegionElement)regions.item(i);
                 if (region.getId().equals(this.getAttribute("region"))) {

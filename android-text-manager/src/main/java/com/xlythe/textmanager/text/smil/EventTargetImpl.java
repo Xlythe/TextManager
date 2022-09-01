@@ -7,7 +7,7 @@ import java.util.ArrayList;
 public class EventTargetImpl implements EventTarget {
     //private static final String TAG = LogTag.TAG;
     private ArrayList<EventListenerEntry> mListenerEntries;
-    private EventTarget mNodeTarget;
+    private final EventTarget mNodeTarget;
 
     static class EventListenerEntry
     {
@@ -36,7 +36,7 @@ public class EventTargetImpl implements EventTarget {
         removeEventListener(type, listener, useCapture);
 
         if (mListenerEntries == null) {
-            mListenerEntries = new ArrayList<EventListenerEntry>();
+            mListenerEntries = new ArrayList<>();
         }
         mListenerEntries.add(new EventListenerEntry(type, listener, useCapture));
     }
@@ -83,9 +83,7 @@ public class EventTargetImpl implements EventTarget {
             }
         }
 
-        if (eventImpl.getBubbles()) {
-            // TODO: BUBBLING_PHASE skipped
-        }
+        // TODO: BUBBLING_PHASE skipped
 
         return eventImpl.isPreventDefault();
     }

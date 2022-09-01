@@ -15,19 +15,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactIconAdapter extends RecyclerView.Adapter<ContactIconAdapter.ViewHolder> {
 
     private final Context mContext;
-    private List<Set<Contact>> mContactsSet = new ArrayList<>();
+    private final List<Set<Contact>> mContactsSet = new ArrayList<>();
     private OnClickListener mOnClickListener;
 
     public ContactIconAdapter(Context context, Set<Set<Contact>> contactsSet) {
         mContext = context;
-        for (Set<Contact> contacts: contactsSet) {
-            mContactsSet.add(contacts);
-        }
+        mContactsSet.addAll(contactsSet);
     }
 
     public void updateData(Set<Set<Contact>> contactsSet) {
@@ -97,12 +96,7 @@ public class ContactIconAdapter extends RecyclerView.Adapter<ContactIconAdapter.
 
         public void createView() {
             profile.setImageDrawable(new ProfileDrawable(getContext(), getContacts()));
-            profile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    getOnClickListener().onClick(getContacts());
-                }
-            });
+            profile.setOnClickListener(v -> getOnClickListener().onClick(getContacts()));
         }
 
         @Override
@@ -111,8 +105,9 @@ public class ContactIconAdapter extends RecyclerView.Adapter<ContactIconAdapter.
         }
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.list_item_contact_icon, parent, false);
         return new ContactViewHolder(layout);
     }

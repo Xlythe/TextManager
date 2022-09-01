@@ -11,15 +11,15 @@ import android.widget.TextView;
 import com.xlythe.sms.R;
 import com.xlythe.textmanager.text.Contact;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageViewHolder> {
-    private static final String TAG = ContactAdapter.class.getSimpleName();
     private static final int CACHE_SIZE = 50;
 
     private final Context mContext;
     private Contact.ContactCursor mCursor;
-    private ClickListener mClickListener;
+    private final ClickListener mClickListener;
     private final LruCache<Integer, Contact> mContactLruCache = new LruCache<>(CACHE_SIZE);
 
     public ContactAdapter(Context context, Contact.ContactCursor cursor) {
@@ -56,12 +56,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
         public ViewHolder(View v, final ClickListener clickListener) {
             super(v);
             mTextView = (TextView) v.findViewById(R.id.title);
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    clickListener.onItemClicked(getContact());
-                }
-            });
+            v.setOnClickListener(v1 -> clickListener.onItemClicked(getContact()));
         }
 
         public void setContact(Context context, Contact contact) {
@@ -75,8 +70,9 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.MessageV
     }
 
     // Create new views (invoked by the layout manager)
+    @NonNull
     @Override
-    public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.list_item_contact, parent, false);
         return new ViewHolder(layout, mClickListener);
     }

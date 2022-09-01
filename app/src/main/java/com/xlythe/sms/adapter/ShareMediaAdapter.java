@@ -22,13 +22,14 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMediaAdapter.ViewHolder> {
     private static final int CACHE_SIZE = 50;
 
     private final Context mContext;
-    private Thread.ThreadCursor mCursor;
+    private final Thread.ThreadCursor mCursor;
     private final LruCache<Integer, Thread> mThreadLruCache = new LruCache<>(CACHE_SIZE);
     private OnClickListener mOnClickListener;
 
@@ -116,12 +117,7 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
 
             contacts = TextManager.getInstance(getContext()).getMembersExceptMe(latest).get();
 
-            String address = Utils.join(", ", contacts, new Utils.Rule<Contact>() {
-                @Override
-                public String toString(Contact contact) {
-                    return contact.getDisplayName();
-                }
-            });
+            String address = Utils.join(", ", contacts, contact -> contact.getDisplayName());
 
             title.setText(address);
 
@@ -139,7 +135,8 @@ public class ShareMediaAdapter extends SelectableAdapter<Set<Contact>, ShareMedi
         }
     }
 
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    @NonNull
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layout = LayoutInflater.from(mContext).inflate(R.layout.list_item_share_media, parent, false);
         return new ThreadViewHolder(layout);
     }

@@ -107,7 +107,7 @@ public class PduPart {
     /**
      * Header of part.
      */
-    private Map<Integer, Object> mPartHeader = null;
+    private Map<Integer, Object> mPartHeader;
 
     /**
      * Data uri.
@@ -119,13 +119,11 @@ public class PduPart {
      */
     private byte[] mPartData = null;
 
-    private static final String TAG = "PduPart";
-
     /**
      * Empty Constructor.
      */
     public PduPart() {
-        mPartHeader = new HashMap<Integer, Object>();
+        mPartHeader = new HashMap<>();
     }
 
     /**
@@ -242,7 +240,7 @@ public class PduPart {
         if(charset == null) {
             return 0;
         } else {
-            return charset.intValue();
+            return charset;
         }
     }
 
