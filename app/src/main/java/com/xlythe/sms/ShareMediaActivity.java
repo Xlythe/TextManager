@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import static com.xlythe.sms.ContactSearchActivity.EXTRA_CONTACTS;
+import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class ShareMediaActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CONTACT = 10001;
@@ -49,6 +50,12 @@ public class ShareMediaActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mManager = TextManager.getInstance(getBaseContext());
+
+        if (!mManager.isDefaultSmsPackage() || !hasPermissions(this, MainActivity.REQUIRED_PERMISSIONS)) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
 
         mRecyclerView = findViewById(R.id.list);
         mIconRecyclerView = findViewById(R.id.icon_list);

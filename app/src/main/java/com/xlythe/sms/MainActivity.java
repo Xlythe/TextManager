@@ -50,7 +50,7 @@ import java.util.Set;
 import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
-    private static final String[] REQUIRED_PERMISSIONS;
+    static final String[] REQUIRED_PERMISSIONS;
     private static final String[] OPTIONAL_PERMISSIONS;
 
     static {
