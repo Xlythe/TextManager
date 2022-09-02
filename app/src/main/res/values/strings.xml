@@ -37,6 +37,9 @@
     <string name="error_permissions_not_granted">You have not granted the necessary permissions yet.</string>
     <string name="error_permissions_resolve">Request</string>
 
+    <string name="error_bubble_permissions_not_granted">Allow Fetch to show notifications as bubbles.</string>
+    <string name="error_bubble_permissions_resolve">Enable</string>
+
     <string name="notification_channel_name">Messages</string>
     <string name="notification_channel_description">Displays incoming text messages.</string>
     <string name="notification_label_picture">Picture</string>

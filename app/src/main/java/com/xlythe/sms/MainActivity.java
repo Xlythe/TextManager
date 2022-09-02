@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private static final int REQUEST_CODE_DEFAULT_SMS = 1001;
     private static final int REQUEST_CODE_WRITE_SETTINGS = 1002;
+    private static final int REQUEST_CODE_BUBBLE_NOTIFICATIONS = 1003;
 
     private static final int TOOLBAR_SCROLL_FLAGS =
             AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private static final int TOOLBAR_SCROLL_FLAGS_SELECT = 0;
 
     private static final String KEY_REQUEST_PERMISSIONS_FLAG = "request_permissions";
+    private static final String KEY_REQUEST_BUBBLE_PERMISSIONS_FLAG = "request_bubble_permissions";
 
     private TextManager mManager;
     private Thread.ThreadCursor mThreads;
@@ -160,6 +162,24 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
                         new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
                         REQUEST_CODE_WRITE_SETTINGS);
             }
+        }
+
+        // Apps cannot show notifications as bubbles by default. This will prompt the user to enable the feature.
+        MessageBasedNotificationManager notificationManager = MessageBasedNotificationManager.from(this);
+        boolean hasNotificationPermissions = Build.VERSION.SDK_INT < 33 || hasPermissions(this, Manifest.permission.POST_NOTIFICATIONS);
+        if (Build.VERSION.SDK_INT >= 30
+                && hasNotificationPermissions
+                && !notificationManager.canDisplayBubbles()
+                && !hasRequestedBubblePermissions()) {
+            Snackbar.make(findViewById(R.id.list), R.string.error_bubble_permissions_not_granted, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.error_bubble_permissions_resolve, v -> {
+                        markHasRequestedBubblePermissions();
+                        startActivityForResult(
+                                new Intent(Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS)
+                                        .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()),
+                                REQUEST_CODE_BUBBLE_NOTIFICATIONS);
+                    })
+                    .show();
         }
     }
 
@@ -385,6 +405,22 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         }
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         return shouldShowRationale || prefs.getBoolean(KEY_REQUEST_PERMISSIONS_FLAG, false);
+    }
+
+    /**
+     * Set a flag so that we don't ask for bubble permissions every time we're launched
+     * */
+    private void markHasRequestedBubblePermissions() {
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_REQUEST_BUBBLE_PERMISSIONS_FLAG, true).apply();
+    }
+
+    /**
+     * Returns true if we've already asked for bubble permissions
+     * */
+    private boolean hasRequestedBubblePermissions() {
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        return prefs.getBoolean(KEY_REQUEST_BUBBLE_PERMISSIONS_FLAG, false);
     }
 
     @SuppressLint("InlinedApi")
