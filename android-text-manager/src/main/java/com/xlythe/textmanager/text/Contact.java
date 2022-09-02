@@ -19,6 +19,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.graphics.drawable.IconCompat;
 
 import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -26,7 +27,6 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -261,7 +261,16 @@ public final class Contact implements User, Parcelable {
                 .setKey(getId())
                 .setUri(ContactsContract.Contacts.getLookupUri(getIdAsLong(), getLookupKey()).toString())
                 .setName(getDisplayName())
-                .setIcon(Icon.createWithContentUri(getPhotoUri()))
+                .setIcon(getPhotoUri() != null ? Icon.createWithContentUri(getPhotoUri()) : null)
+                .build();
+    }
+
+    public androidx.core.app.Person asPersonCompat() {
+        return new androidx.core.app.Person.Builder()
+                .setKey(getId())
+                .setUri(ContactsContract.Contacts.getLookupUri(getIdAsLong(), getLookupKey()).toString())
+                .setName(getDisplayName())
+                .setIcon(getPhotoUri() != null ? IconCompat.createWithContentUri(getPhotoUri()) : null)
                 .build();
     }
 

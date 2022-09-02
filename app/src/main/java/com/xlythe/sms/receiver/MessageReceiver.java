@@ -1,5 +1,7 @@
 package com.xlythe.sms.receiver;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -7,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import com.bumptech.glide.Glide;
@@ -19,16 +22,22 @@ import com.xlythe.sms.MessageActivity;
 import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.util.BitmapUtils;
+import com.xlythe.sms.util.ShortcutUtils;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextReceiver;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.TaskStackBuilder;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 
 public class MessageReceiver extends TextReceiver {
     private static final String TAG = "Fetch";
@@ -44,6 +53,8 @@ public class MessageReceiver extends TextReceiver {
         new Thread(() -> notify(context, text)).start();
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @WorkerThread
     private void notify(Context context, Text text) {
         TextManager textManager = TextManager.getInstance(context);
@@ -83,6 +94,7 @@ public class MessageReceiver extends TextReceiver {
                 .setOnClickIntent(createOnClickIntent(context, text.getThreadId()))
                 .setOnDismissIntent(createOnDismissIntent(context, text))
                 .setOnQuickReplyIntent(createQuickReplyIntent(context, text))
+                .setShortcutIntent(createShortcutIntent(context, text.getThreadId()))
                 .build();
 
         // State specific to the single text
@@ -96,6 +108,13 @@ public class MessageReceiver extends TextReceiver {
 
         // Show the notification
         notificationManager.notify(notificationMessage);
+
+        // Make sure we have a shortcut for this thread.
+        if (Build.VERSION.SDK_INT >= 25) {
+            List<ShortcutInfoCompat> shortcutInfo = new ArrayList<>();
+            shortcutInfo.add(ShortcutUtils.createShortcutInfo(context, textManager.getThread(text.getThreadId()).get()));
+            ShortcutManagerCompat.addDynamicShortcuts(context, shortcutInfo);
+        }
     }
 
     private PendingIntent createOnClickIntent(Context context, String threadId) {
@@ -126,6 +145,13 @@ public class MessageReceiver extends TextReceiver {
         intent.setData(Uri.parse("sms://threads/" + text.getThreadId()));
 
         return PendingIntent.getBroadcast(context, text.getThreadId().hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+    }
+
+    private Intent createShortcutIntent(Context context, String threadId) {
+        Intent intent = new Intent(context, MessageActivity.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.putExtra(MessageActivity.EXTRA_THREAD_ID, threadId);
+        return intent;
     }
 
     @Nullable

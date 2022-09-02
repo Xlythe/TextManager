@@ -2,22 +2,12 @@ package com.xlythe.sms;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Person;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.Capability;
-import android.content.pm.CapabilityParams;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,12 +17,13 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,20 +34,16 @@ import com.xlythe.manager.notifications.messages.MessageBasedNotificationManager
 import com.xlythe.sms.adapter.ThreadAdapter;
 import com.xlythe.sms.decoration.HeadersDecoration;
 import com.xlythe.sms.decoration.ThreadsItemDecoration;
-import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.service.FetchChooserTargetService;
 import com.xlythe.sms.util.ArrayUtils;
+import com.xlythe.sms.util.ShortcutUtils;
 import com.xlythe.textmanager.MessageObserver;
-import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Mock.Telephony;
 import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.Thread;
-import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -407,57 +394,11 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             return;
         }
 
-        ShortcutManager shortcutManager = (ShortcutManager) getSystemService(Context.SHORTCUT_SERVICE);
-
-        ComponentName componentName = new ComponentName(this, MessageActivity.class);
-        List<ShortcutInfo> shortcutInfo = new ArrayList<>();
-        List<Thread> threads = getRecentThreads();
-        int position = 0;
-        for (Thread thread : threads) {
-            Set<Contact> contacts = mManager.getMembersExceptMe(thread.getLatestMessage()).get();
-
-            PersistableBundle extras = new PersistableBundle();
-            extras.putString(MessageActivity.EXTRA_THREAD_ID, thread.getId());
-            extras.putString(Intent.EXTRA_PHONE_NUMBER, getRecipients(contacts));
-
-            ShortcutInfo.Builder builder = new ShortcutInfo.Builder(this, thread.getId())
-                    .setActivity(componentName)
-                    .setExtras(extras)
-                    .setLongLived(true)
-                    .setShortLabel(thread.getLatestMessage().getBody())
-                    .setIcon(getIcon(contacts))
-                    .setRank(threads.size() - position);
-            if (Build.VERSION.SDK_INT >= 29) {
-                builder.setPersons(getPeople(contacts));
-            }
-            if (Build.VERSION.SDK_INT >= 33) {
-                builder.addCapabilityBinding(new Capability.Builder(Intent.ACTION_SENDTO).build(), new CapabilityParams.Builder("type", "sms").build());
-            }
-            shortcutInfo.add(builder.build());
-            position++;
+        List<ShortcutInfoCompat> shortcutInfo = new ArrayList<>();
+        for (Thread thread : getRecentThreads()) {
+            shortcutInfo.add(ShortcutUtils.createShortcutInfo(this, thread));
         }
-        shortcutManager.addDynamicShortcuts(shortcutInfo);
-    }
-
-    @RequiresApi(28)
-    private Person[] getPeople(Set<Contact> contacts) {
-        List<Person> people = new ArrayList<>();
-        for (Contact contact : contacts) {
-            people.add(contact.asPerson());
-        }
-        Collections.sort(people, Comparator.comparing(p -> p.getName().toString()));
-        return people.toArray(new Person[0]);
-    }
-
-    @RequiresApi(23)
-    private Icon getIcon(Set<Contact> contacts) {
-        ProfileDrawable drawable = new ProfileDrawable(this, contacts);
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.draw(canvas);
-
-        return Icon.createWithBitmap(bitmap);
+        ShortcutManagerCompat.addDynamicShortcuts(this, shortcutInfo);
     }
 
     @SuppressLint("InlinedApi")
@@ -473,9 +414,5 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             } while (mThreads.moveToNext() && recentThreads.size() < FetchChooserTargetService.SIZE);
         }
         return recentThreads;
-    }
-
-    private String getRecipients(Set<Contact> contacts) {
-        return Utils.join(';', contacts, Contact::getNumber);
     }
 }
