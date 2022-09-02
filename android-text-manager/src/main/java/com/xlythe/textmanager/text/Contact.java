@@ -1,10 +1,13 @@
 package com.xlythe.textmanager.text;
 
 import android.annotation.SuppressLint;
+import android.app.Person;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.ContactsContract;
@@ -15,6 +18,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.xlythe.textmanager.User;
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -22,6 +26,7 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -248,6 +253,16 @@ public final class Contact implements User, Parcelable {
 
     public Uri getThumbnailUri() {
         return mPhotoThumbUri != null ? Uri.parse(mPhotoThumbUri) : null;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.P)
+    public Person asPerson() {
+        return new Person.Builder()
+                .setKey(getId())
+                .setUri(ContactsContract.Contacts.getLookupUri(getIdAsLong(), getLookupKey()).toString())
+                .setName(getDisplayName())
+                .setIcon(Icon.createWithContentUri(getPhotoUri()))
+                .build();
     }
 
     @Override

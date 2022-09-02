@@ -81,9 +81,6 @@ public class ProfileDrawable extends Drawable {
             case 2:
                 size = Math.sqrt(2) * width / (Math.sqrt(2) + 1);
                 break;
-            case 3:
-                size = width / 2f;
-                break;
             default:
                 size = width / 2f;
                 break;

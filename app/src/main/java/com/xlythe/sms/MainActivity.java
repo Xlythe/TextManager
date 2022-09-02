@@ -18,10 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.provider.ContactsContract;
 import android.provider.Settings;
-import android.service.chooser.ChooserTarget;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +28,7 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
@@ -47,6 +45,7 @@ import com.xlythe.sms.decoration.HeadersDecoration;
 import com.xlythe.sms.decoration.ThreadsItemDecoration;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.sms.service.FetchChooserTargetService;
+import com.xlythe.sms.util.ArrayUtils;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.Mock.Telephony;
@@ -56,10 +55,8 @@ import com.xlythe.textmanager.text.Thread;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -67,6 +64,7 @@ import static com.xlythe.sms.util.PermissionUtils.hasPermissions;
 
 public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnClickListener {
     private static final String[] REQUIRED_PERMISSIONS;
+    private static final String[] OPTIONAL_PERMISSIONS;
 
     static {
         if (Build.VERSION.SDK_INT >= 33) {
@@ -76,17 +74,22 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
                     Manifest.permission.POST_NOTIFICATIONS,
                     Manifest.permission.READ_PHONE_NUMBERS,
             };
+            OPTIONAL_PERMISSIONS = new String[] {
+                    Manifest.permission.POST_NOTIFICATIONS,
+            };
         } else if (Build.VERSION.SDK_INT >= 26) {
             REQUIRED_PERMISSIONS = new String[] {
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.READ_PHONE_NUMBERS,
             };
+            OPTIONAL_PERMISSIONS = new String[0];
         } else {
             REQUIRED_PERMISSIONS = new String[] {
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS,
             };
+            OPTIONAL_PERMISSIONS = new String[0];
         }
     }
 
@@ -112,6 +115,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private RecyclerView mRecyclerView;
     private ThreadAdapter mAdapter;
     private final MessageObserver mMessageObserver = new MessageObserver() {
+        @SuppressLint("InlinedApi")
+        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
         @Override
         public void notifyDataChanged() {
             mThreads = mManager.getThreadCursor();
@@ -147,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         mFab.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
     }
 
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @SuppressLint("NewApi")
     @Override
     protected void onResume() {
@@ -160,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             requiredPermissionsNotGranted();
         } else {
             markHasRequestedPermissions();
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+            ActivityCompat.requestPermissions(this, ArrayUtils.concat(REQUIRED_PERMISSIONS, OPTIONAL_PERMISSIONS), REQUEST_CODE_REQUIRED_PERMISSIONS);
             // We do this on 6.0 because this issue is resolved in 6.0.1
             if (Build.VERSION.RELEASE.equals("6.0") && !Settings.System.canWrite(this)) {
                 startActivityForResult(
@@ -180,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         super.onDestroy();
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void loadThreads() {
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
@@ -231,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         Button button = errorBox.findViewById(R.id.request_permissions);
         button.setOnClickListener(v -> {
             errorBox.setVisibility(View.GONE);
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_REQUIRED_PERMISSIONS);
+            ActivityCompat.requestPermissions(this, ArrayUtils.concat(REQUIRED_PERMISSIONS, OPTIONAL_PERMISSIONS), REQUEST_CODE_REQUIRED_PERMISSIONS);
         });
 
         AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) mToolbar.getLayoutParams();
@@ -359,6 +367,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -391,6 +400,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         return shouldShowRationale || prefs.getBoolean(KEY_REQUEST_PERMISSIONS_FLAG, false);
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void updateShortcuts() {
         if (Build.VERSION.SDK_INT < 25) {
             return;
@@ -412,6 +423,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
             ShortcutInfo.Builder builder = new ShortcutInfo.Builder(this, thread.getId())
                     .setActivity(componentName)
                     .setExtras(extras)
+                    .setLongLived(true)
+                    .setShortLabel(thread.getLatestMessage().getBody())
                     .setIcon(getIcon(contacts))
                     .setRank(threads.size() - position);
             if (Build.VERSION.SDK_INT >= 29) {
@@ -430,12 +443,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private Person[] getPeople(Set<Contact> contacts) {
         List<Person> people = new ArrayList<>();
         for (Contact contact : contacts) {
-            people.add(new Person.Builder()
-                    .setKey(contact.getId())
-                    .setUri(ContactsContract.Contacts.getLookupUri(contact.getIdAsLong(), contact.getLookupKey()).toString())
-                    .setName(contact.getDisplayName())
-                    .setIcon(getIcon(Collections.singleton(contact)))
-                    .build());
+            people.add(contact.asPerson());
         }
         Collections.sort(people, Comparator.comparing(p -> p.getName().toString()));
         return people.toArray(new Person[0]);
@@ -452,6 +460,8 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         return Icon.createWithBitmap(bitmap);
     }
 
+    @SuppressLint("InlinedApi")
+    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private List<Thread> getRecentThreads() {
         List<Thread> recentThreads = new ArrayList<>(FetchChooserTargetService.SIZE);
         if (mThreads.moveToFirst()) {
