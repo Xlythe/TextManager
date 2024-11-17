@@ -9,11 +9,11 @@ Properties localProperties = new Properties()
 localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 35
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 33
+        minSdkVersion 21
+        targetSdkVersion 35
     }
     buildTypes {
         release {
@@ -34,6 +34,7 @@ android {
             withJavadocJar()
         }
     }
+    namespace 'com.xlythe.textmanager'
 }
 
 afterEvaluate {
@@ -94,7 +95,7 @@ signing {
 
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar'])
-    api 'com.googlecode.libphonenumber:libphonenumber:[8.9.12,)'
-    api 'com.loopj.android:android-async-http:[1.4.9,)'
+    api 'com.googlecode.libphonenumber:libphonenumber:[8.13.50,)'
+    api 'com.loopj.android:android-async-http:[1.4.11,)'
     api 'androidx.legacy:legacy-support-v4:[1.0.0,)'
 }

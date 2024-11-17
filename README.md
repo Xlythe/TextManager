@@ -34,7 +34,7 @@ And the same is true for texts
 List<Text> texts = manager.getMessages(thread).get();
 ```
 ```java
-Text.TextCursor texts = manager.getMessageCursor(thread)
+Text.TextCursor texts = manager.getMessageCursor(thread);
 ```
 
 Texts have information on the sender, content, and timestamp.
