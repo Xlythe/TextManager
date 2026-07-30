@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.net.Uri;
+import android.os.BadParcelableException;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
@@ -149,8 +150,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         mAttachment = in.readParcelable(Attachment.class.getClassLoader());
 
-        if (in.readInt() > 0) {
-            in.readByteArray(mBytesToSend);
+        int expectedByteCount = in.readInt();
+        mBytesToSend = in.createByteArray();
+        if (mBytesToSend == null || mBytesToSend.length != expectedByteCount) {
+            throw new BadParcelableException("Invalid prepared message payload");
         }
     }
 
@@ -537,11 +540,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         out.writeParcelable(mAttachment, flags);
 
-        if (mBytesToSend == null) {
-            mBytesToSend = new byte[0];
-        }
-        out.writeInt(mBytesToSend.length);
-        out.writeByteArray(mBytesToSend);
+        byte[] bytesToSend = mBytesToSend != null ? mBytesToSend : new byte[0];
+        out.writeInt(bytesToSend.length);
+        out.writeByteArray(bytesToSend);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {

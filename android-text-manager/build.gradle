@@ -107,6 +107,7 @@ signing {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16'
 
     api fileTree(dir: 'libs', include: ['*.jar'])
     api 'com.googlecode.libphonenumber:libphonenumber:[8.13.50,)'
