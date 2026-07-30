@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -17,7 +16,6 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
@@ -54,35 +52,32 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private static final String[] OPTIONAL_PERMISSIONS;
 
     static {
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (Build.VERSION.SDK_INT >= 26) {
             REQUIRED_PERMISSIONS = new String[] {
-                    Manifest.permission.READ_SMS,
-                    Manifest.permission.READ_CONTACTS,
-                    Manifest.permission.POST_NOTIFICATIONS,
-                    Manifest.permission.READ_PHONE_NUMBERS,
-            };
-            OPTIONAL_PERMISSIONS = new String[] {
-                    Manifest.permission.POST_NOTIFICATIONS,
-            };
-        } else if (Build.VERSION.SDK_INT >= 26) {
-            REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.SEND_SMS,
+                    Manifest.permission.RECEIVE_SMS,
+                    Manifest.permission.RECEIVE_MMS,
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.READ_PHONE_NUMBERS,
             };
-            OPTIONAL_PERMISSIONS = new String[0];
         } else {
             REQUIRED_PERMISSIONS = new String[] {
+                    Manifest.permission.SEND_SMS,
+                    Manifest.permission.RECEIVE_SMS,
+                    Manifest.permission.RECEIVE_MMS,
                     Manifest.permission.READ_SMS,
                     Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.READ_PHONE_STATE,
             };
-            OPTIONAL_PERMISSIONS = new String[0];
         }
+        OPTIONAL_PERMISSIONS = Build.VERSION.SDK_INT >= 33
+                ? new String[] {Manifest.permission.POST_NOTIFICATIONS}
+                : new String[0];
     }
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private static final int REQUEST_CODE_DEFAULT_SMS = 1001;
-    private static final int REQUEST_CODE_WRITE_SETTINGS = 1002;
     private static final int REQUEST_CODE_BUBBLE_NOTIFICATIONS = 1003;
 
     private static final int TOOLBAR_SCROLL_FLAGS =
@@ -105,8 +100,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     private ThreadAdapter mAdapter;
     private final MessageObserver mMessageObserver = new MessageObserver() {
         @SuppressLint("InlinedApi")
-        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
-        @Override
+            @Override
         public void notifyDataChanged() {
             mThreads = mManager.getThreadCursor();
             mAdapter.swapCursor(mThreads);
@@ -141,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         mFab.setOnClickListener(v -> startActivity(new Intent(this, ComposeActivity.class)));
     }
 
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @SuppressLint("NewApi")
     @Override
     protected void onResume() {
@@ -156,12 +149,7 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
         } else {
             markHasRequestedPermissions();
             ActivityCompat.requestPermissions(this, ArrayUtils.concat(REQUIRED_PERMISSIONS, OPTIONAL_PERMISSIONS), REQUEST_CODE_REQUIRED_PERMISSIONS);
-            // We do this on 6.0 because this issue is resolved in 6.0.1
-            if (Build.VERSION.RELEASE.equals("6.0") && !Settings.System.canWrite(this)) {
-                startActivityForResult(
-                        new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())),
-                        REQUEST_CODE_WRITE_SETTINGS);
-            }
+
         }
 
         // Apps cannot show notifications as bubbles by default. This will prompt the user to enable the feature.
@@ -194,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     }
 
     @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void loadThreads() {
         mManager.registerObserver(mMessageObserver);
         mThreads = mManager.getThreadCursor();
@@ -424,7 +411,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     }
 
     @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void updateShortcuts() {
         if (Build.VERSION.SDK_INT < 25) {
             return;
@@ -438,7 +424,6 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
     }
 
     @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private List<Thread> getRecentThreads() {
         List<Thread> recentThreads = new ArrayList<>(FetchChooserTargetService.SIZE);
         if (mThreads.moveToFirst()) {
