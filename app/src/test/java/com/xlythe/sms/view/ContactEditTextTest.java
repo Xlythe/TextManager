@@ -2,7 +2,6 @@ package com.xlythe.sms.view;
 
 import android.content.Context;
 
-import com.xlythe.sms.BuildConfig;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.ShadowContact;
 import com.xlythe.textmanager.text.ShadowTextManager;
@@ -11,24 +10,23 @@ import com.xlythe.textmanager.text.TextManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
-import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  *
  */
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(sdk=23, shadows={ShadowTextManager.class, ShadowContact.class}, constants = BuildConfig.class)
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk=23, shadows={ShadowTextManager.class, ShadowContact.class})
 public class ContactEditTextTest {
     private static final String ME = "111-111-1111";
     private static final Contact NAMELESS = ShadowContact.getInstance("444444444");
@@ -48,11 +46,11 @@ public class ContactEditTextTest {
         ShadowLog.stream = System.out;
 
         // Setup variables
-        mContext = RuntimeEnvironment.application;
+        mContext = RuntimeEnvironment.getApplication();
         mEditText = new ContactEditText(mContext);
 
         // Update the owner's contact in TextManager
-        ShadowTextManager shadowTextManager = (ShadowTextManager) ShadowExtractor.extract(TextManager.getInstance(mContext));
+        ShadowTextManager shadowTextManager = (ShadowTextManager) org.robolectric.shadow.api.Shadow.extract(TextManager.getInstance(mContext));
         shadowTextManager.setSelf(ME);
         shadowTextManager.addContact(NAMELESS);
         shadowTextManager.addContact(ALICE);

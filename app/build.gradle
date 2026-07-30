@@ -21,6 +21,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
     lint {
         abortOnError false
     }
@@ -54,6 +57,7 @@ dependencies {
     }
     implementation 'com.xlythe:message-based-notifications:1.2.2'
     implementation 'com.google.guava:guava:31.1-android'
+    testImplementation 'junit:junit:4.13.2'
     testImplementation "org.robolectric:robolectric:4.14"
 }
 
