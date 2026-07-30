@@ -15,7 +15,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <ImageButton style="@style/Share"/>
+        <ImageButton
+            android:id="@+id/share"
+            style="@style/Share"/>
 
         <FrameLayout
             android:layout_toRightOf="@id/share"
