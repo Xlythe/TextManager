@@ -243,19 +243,15 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         Text text = mThread.getLatestMessage();
 
         view.setEnabled(false);
-        switch (view.getId()) {
-            case R.id.gallery:
-                mEditText.showFragment(GalleryFragment.newInstance(text, color));
-                break;
-            case R.id.camera:
-                mEditText.showFragment(CameraFragment.newInstance(text));
-                break;
-            case R.id.sticker:
-                mEditText.showFragment(StickerFragment.newInstance(text));
-                break;
-            case R.id.mic:
-                mEditText.showFragment(new MicFragment());
-                break;
+        int viewId = view.getId();
+        if (viewId == R.id.gallery) {
+            mEditText.showFragment(GalleryFragment.newInstance(text, color));
+        } else if (viewId == R.id.camera) {
+            mEditText.showFragment(CameraFragment.newInstance(text));
+        } else if (viewId == R.id.sticker) {
+            mEditText.showFragment(StickerFragment.newInstance(text));
+        } else if (viewId == R.id.mic) {
+            mEditText.showFragment(new MicFragment());
         }
     }
 
@@ -369,31 +365,31 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             Set<Text> texts = mAdapter.getSelectedItems();
-            switch (item.getItemId()) {
-                case R.id.menu_remove:
-                    mManager.delete(texts);
-                    mAdapter.clearSelection();
-                    mode.finish();
-                    return true;
-                case R.id.menu_copy:
-                    StringBuilder copy = new StringBuilder();
-                    for (Text text : texts) {
-                        if (copy.length() > 0) {
-                            copy.append("\n");
-                        }
-                        if (!TextUtils.isEmpty(text.getBody())) {
-                            copy.append(text.getBody());
-                        }
-                    }
-                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText(getString(R.string.app_name), copy);
-                    clipboard.setPrimaryClip(clip);
-                    Toast.makeText(getBaseContext(), R.string.message_text_copied, Toast.LENGTH_SHORT).show();
-                    mode.finish();
-                    return true;
-                default:
-                    return false;
+            int itemId = item.getItemId();
+            if (itemId == R.id.menu_remove) {
+                mManager.delete(texts);
+                mAdapter.clearSelection();
+                mode.finish();
+                return true;
             }
+            if (itemId == R.id.menu_copy) {
+                StringBuilder copy = new StringBuilder();
+                for (Text text : texts) {
+                    if (copy.length() > 0) {
+                        copy.append("\n");
+                    }
+                    if (!TextUtils.isEmpty(text.getBody())) {
+                        copy.append(text.getBody());
+                    }
+                }
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText(getString(R.string.app_name), copy);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(getBaseContext(), R.string.message_text_copied, Toast.LENGTH_SHORT).show();
+                mode.finish();
+                return true;
+            }
+            return false;
         }
 
         @Override
