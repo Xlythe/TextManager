@@ -7,12 +7,12 @@ repositories {
 }
 
 android {
-    compileSdkVersion 35
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.xlythe.sms"
-        minSdkVersion 21
-        targetSdkVersion 35
+        minSdk 21
+        targetSdk 37
         versionCode 14
         versionName "2.1.2"
         vectorDrawables.useSupportLibrary = true
