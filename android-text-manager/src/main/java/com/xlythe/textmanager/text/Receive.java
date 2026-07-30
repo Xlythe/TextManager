@@ -9,10 +9,6 @@ import android.telephony.SmsMessage;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.xlythe.textmanager.text.util.ApnDefaults;
-import com.xlythe.textmanager.text.util.HttpUtils;
-
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Random;
@@ -45,21 +41,6 @@ public class Receive {
 
     // Name Address Email Pattern.
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
-
-    public static byte[] receive(final Context context, String uri){
-        ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(context);
-        try {
-            return HttpUtils.httpConnection(
-                    context, -1L,
-                    uri, null, HttpUtils.HTTP_GET_METHOD,
-                    apnParameters.isProxySet(),
-                    apnParameters.getProxyAddress(),
-                    apnParameters.getProxyPort());
-        } catch (IOException ioe){
-            Log.e(TAG,"download failed due to network error");
-            return null;
-        }
-    }
 
     /**
      * Store message in the content provider.

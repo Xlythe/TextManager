@@ -114,7 +114,6 @@ dependencies {
 
     api fileTree(dir: 'libs', include: ['*.jar'])
     api 'com.googlecode.libphonenumber:libphonenumber:9.0.35'
-    api 'com.loopj.android:android-async-http:1.4.11'
     api 'androidx.legacy:legacy-support-v4:1.0.0'
 }
 jacoco {
