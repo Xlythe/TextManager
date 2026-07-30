@@ -584,8 +584,13 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         @Override
         public void close() {
-            super.close();
-            mMMSCursor.close();
+            try {
+                super.close();
+            } finally {
+                if (mMMSCursor != null) {
+                    mMMSCursor.close();
+                }
+            }
         }
     }
 

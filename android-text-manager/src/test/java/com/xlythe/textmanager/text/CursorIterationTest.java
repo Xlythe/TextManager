@@ -27,4 +27,13 @@ public class CursorIterationTest {
 
         assertEquals(1, cursor.getThread().getUnreadCount());
     }
-}
+
+    @Test
+    public void textCursorClosesWithoutMmsCursor() {
+        MatrixCursor messages = new MatrixCursor(new String[] {"_id"});
+        Text.TextCursor cursor = new Text.TextCursor(messages, null);
+
+        cursor.close();
+
+        assertEquals(true, messages.isClosed());
+    }}
