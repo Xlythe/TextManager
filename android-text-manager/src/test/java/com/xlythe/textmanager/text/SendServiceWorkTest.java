@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.telephony.SmsManager;
 
 import androidx.work.Configuration;
 import androidx.work.WorkInfo;
@@ -50,5 +51,12 @@ public class SendServiceWorkTest {
         assertEquals(1, work.size());
         assertEquals(WorkInfo.State.SUCCEEDED, work.get(0).getState());
         assertTrue(work.get(0).getTags().contains(SendService.class.getName()));
+    }
+
+    @Test
+    public void explicitSubscriptionSelectsMatchingSmsManager() {
+        SmsManager smsManager = SendService.resolveSmsManager(7);
+
+        assertEquals(7, smsManager.getSubscriptionId());
     }
 }

@@ -11,6 +11,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.telephony.SmsMessage;
+import android.telephony.SubscriptionManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -65,6 +66,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private final Set<Contact> mMembers = new HashSet<>();
     private Attachment mAttachment;
     private byte[] mBytesToSend;
+    private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
     private Text() {}
 
@@ -154,6 +156,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mBytesToSend = in.createByteArray();
         if (mBytesToSend == null || mBytesToSend.length != expectedByteCount) {
             throw new BadParcelableException("Invalid prepared message payload");
+        }
+        if (in.dataAvail() >= Integer.BYTES) {
+            mSubscriptionId = in.readInt();
         }
     }
 
@@ -289,6 +294,11 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     public long getIdAsLong() {
         return mId;
+    }
+
+    /** Returns the explicit SIM subscription for this SMS, or INVALID_SUBSCRIPTION_ID. */
+    public int getSubscriptionId() {
+        return mSubscriptionId;
     }
 
     @Override
@@ -470,6 +480,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                     && Utils.equals(mThreadId, a.mThreadId)
                     && Utils.equals(mDate, a.mDate)
                     && Utils.equals(mMmsId, a.mMmsId)
+                    && Utils.equals(mSubscriptionId, a.mSubscriptionId)
                     && Utils.equals(mSenderAddress, a.mSenderAddress)
                     && Utils.equals(mBody, a.mBody)
                     && Utils.equals(mIncoming, a.mIncoming)
@@ -487,6 +498,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 + Utils.hashCode(mThreadId)
                 + Utils.hashCode(mDate)
                 + Utils.hashCode(mMmsId)
+                + Utils.hashCode(mSubscriptionId)
                 + Utils.hashCode(mSenderAddress)
                 + Utils.hashCode(mBody)
                 + Utils.hashCode(mIncoming)
@@ -500,9 +512,9 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     @Override
     public String toString() {
         return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s, " +
-                        "incoming=%s, is_mms=%s, sender=%s, recipient=%s, attachment=%s}",
+                        "incoming=%s, is_mms=%s, subscription_id=%s, sender=%s, recipient=%s, attachment=%s}",
                 mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mIncoming, mIsMms,
-                mSender, mMembers, mAttachment);
+                mSubscriptionId, mSender, mMembers, mAttachment);
     }
 
     @Override
@@ -543,6 +555,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         byte[] bytesToSend = mBytesToSend != null ? mBytesToSend : new byte[0];
         out.writeInt(bytesToSend.length);
         out.writeByteArray(bytesToSend);
+        out.writeInt(mSubscriptionId);
     }
 
     public static final Parcelable.Creator<Text> CREATOR = new Parcelable.Creator<Text>() {
@@ -626,6 +639,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         private String mMessage;
         private final Set<Contact> mRecipients = new HashSet<>();
         private Attachment mAttachment;
+        private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
         public Builder addRecipient(Context context, String address) {
             mRecipients.add(TextManager.getInstance(context).lookupContact(address));
@@ -665,9 +679,20 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             return this;
         }
 
+        /** Routes an outgoing SMS through a specific active SIM subscription. */
+        public Builder subscriptionId(int subscriptionId) {
+            if (subscriptionId < 0
+                    && subscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                throw new IllegalArgumentException("subscriptionId must be valid or INVALID_SUBSCRIPTION_ID");
+            }
+            mSubscriptionId = subscriptionId;
+            return this;
+        }
+
         public Text build() {
             Text text = new Text();
             text.mBody = mMessage;
+            text.mSubscriptionId = mSubscriptionId;
             text.mMembers.addAll(mRecipients);
             if (mRecipients.size() > 1) {
                 text.mIsMms = true;
@@ -742,6 +767,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         public DebugBuilder message(String message) {
             super.message(message);
+            return this;
+        }
+
+        @Override
+        public DebugBuilder subscriptionId(int subscriptionId) {
+            super.subscriptionId(subscriptionId);
             return this;
         }
 

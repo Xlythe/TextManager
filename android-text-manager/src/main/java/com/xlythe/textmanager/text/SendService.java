@@ -9,7 +9,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.exception.MmsException;
@@ -147,7 +149,7 @@ public class SendService extends Worker {
                             uri.getLastPathSegment(),
                             request.getRecipient(),
                             request.getBody());
-            dispatchSMS(persistedRequest, uri);
+            dispatchSMS(persistedRequest, uri, text.getSubscriptionId());
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to send SMS " + request.getMessageId(), e);
             if (uri != null) {
@@ -156,8 +158,8 @@ public class SendService extends Worker {
         }
     }
 
-    private void dispatchSMS(SmsSendRequest request, Uri uri) {
-        SmsGateway<PendingIntent> gateway = new AndroidSmsGateway(SmsManager.getDefault());
+    private void dispatchSMS(SmsSendRequest request, Uri uri, int subscriptionId) {
+        SmsGateway<PendingIntent> gateway = new AndroidSmsGateway(resolveSmsManager(subscriptionId));
         SmsCallbackFactory<PendingIntent> callbackFactory =
                 new SmsCallbackFactory<PendingIntent>() {
                     @Override
@@ -199,6 +201,15 @@ public class SendService extends Worker {
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to persist SMS failure for " + uri, e);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    static SmsManager resolveSmsManager(int subscriptionId) {
+        if (subscriptionId == SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
+            return SmsManager.getDefault();
+        }
+        return SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
     }
 
     private static final class AndroidSmsGateway implements SmsGateway<PendingIntent> {

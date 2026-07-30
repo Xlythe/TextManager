@@ -223,6 +223,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         private final Context mContext;
         @Nullable private final String mMessage;
         @Nullable private final Attachment mAttachment;
+        private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
         private Builder(Context context, @NonNull String message) {
             mContext = context;
@@ -249,8 +250,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             if (mAttachment != null) {
                 builder.attach(mAttachment);
             }
+            builder.subscriptionId(mSubscriptionId);
 
             SendService.schedule(mContext, builder.build());
+        }
+
+        /** Routes this outgoing SMS through a specific active SIM subscription. */
+        public Builder usingSubscription(int subscriptionId) {
+            if (subscriptionId < 0
+                    && subscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                throw new IllegalArgumentException("subscriptionId must be valid or INVALID_SUBSCRIPTION_ID");
+            }
+            mSubscriptionId = subscriptionId;
+            return this;
         }
 
         public void to(String... addresses) {

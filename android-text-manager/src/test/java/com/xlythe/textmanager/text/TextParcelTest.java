@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
@@ -25,6 +26,25 @@ public class TextParcelTest {
         Text restored = Text.fromBytes(original.toBytes());
 
         assertArrayEquals(new byte[] {1, 2, 3, 4}, getPreparedPayload(restored));
+    }
+
+    @Test
+    public void subscriptionIdRoundTrips() {
+        Text original = new Text.DebugBuilder()
+                .setSender("+15551234567")
+                .message("hello")
+                .subscriptionId(7)
+                .build();
+
+        Text restored = Text.fromBytes(original.toBytes());
+
+        assertEquals(7, restored.getSubscriptionId());
+        assertEquals(original, restored);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void invalidSubscriptionIdIsRejected() {
+        new Text.Builder().subscriptionId(-2);
     }
 
     @Test
