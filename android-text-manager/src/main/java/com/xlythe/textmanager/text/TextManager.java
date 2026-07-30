@@ -96,7 +96,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     private final Context mContext;
-    private final Set<MessageObserver> mObservers = new HashSet<>();
+    private final MessageObserverRegistry mObservers = new MessageObserverRegistry();
     private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
     private TextManager(Context context) {
@@ -192,11 +192,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public void registerObserver(MessageObserver observer) {
-        mObservers.add(observer);
+        mObservers.register(observer);
     }
 
     public void unregisterObserver(MessageObserver observer) {
-        mObservers.remove(observer);
+        mObservers.unregister(observer);
     }
 
     private class TextObserver extends ContentObserver {
@@ -211,9 +211,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            for (MessageObserver observer : mObservers) {
-                observer.notifyDataChanged();
-            }
+            mObservers.notifyDataChanged();
         }
     }
 
