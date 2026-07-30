@@ -128,6 +128,7 @@ public class ContactEditText extends AppCompatEditText {
 
     @Override
     protected void onSelectionChanged(int selStart, int selEnd) {
+        super.onSelectionChanged(selStart, selEnd);
         // This gets called in the super constructor, before we're set up. Ignore it in that case.
         if (mPendingText == null) return;
 
