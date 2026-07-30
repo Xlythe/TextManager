@@ -16,7 +16,6 @@ android {
         versionCode 14
         versionName "2.1.2"
         vectorDrawables.useSupportLibrary = true
-        multiDexEnabled true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -30,11 +29,13 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:+'
-    implementation 'androidx.cardview:cardview:+'
-    implementation 'androidx.legacy:legacy-support-v4:+'
-    implementation 'com.google.android.material:material:+'
-    implementation 'androidx.exifinterface:exifinterface:+'
+    implementation('androidx.appcompat:appcompat:1.7.1') {
+        version { strictly '1.7.1' }
+    }
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'androidx.exifinterface:exifinterface:1.4.2'
     implementation project(':android-text-manager')
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     implementation 'org.lucasr.twowayview:twowayview:0.1.4'
@@ -45,9 +46,14 @@ dependencies {
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.6.0'
     implementation 'com.xlythe:swap:1.1'
     implementation 'com.xlythe:camera-view:2.0.7'
+    constraints {
+        implementation('androidx.camera:camera-core:1.4.2') { version { strictly '1.4.2' } }
+        implementation('androidx.camera:camera-camera2:1.4.2') { version { strictly '1.4.2' } }
+        implementation('androidx.camera:camera-lifecycle:1.4.2') { version { strictly '1.4.2' } }
+        implementation('androidx.camera:camera-video:1.4.2') { version { strictly '1.4.2' } }
+    }
     implementation 'com.xlythe:message-based-notifications:1.2.2'
     implementation 'com.google.guava:guava:31.1-android'
-    implementation 'androidx.multidex:multidex:+'
     testImplementation "org.robolectric:robolectric:4.14"
 }
 
