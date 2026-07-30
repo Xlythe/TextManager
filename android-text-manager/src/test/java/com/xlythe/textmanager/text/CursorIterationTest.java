@@ -1,6 +1,7 @@
 package com.xlythe.textmanager.text;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import android.database.MatrixCursor;
 
@@ -36,4 +37,12 @@ public class CursorIterationTest {
         cursor.close();
 
         assertEquals(true, messages.isClosed());
-    }}
+    }
+
+    @Test
+    public void mmsPartSelectionHandlesEmptyAndMultipleMessageSets() {
+        assertNull(TextManager.buildMmsPartSelection(0));
+        assertEquals("mid = ?", TextManager.buildMmsPartSelection(1));
+        assertEquals("mid = ? OR mid = ? OR mid = ?", TextManager.buildMmsPartSelection(3));
+    }
+}

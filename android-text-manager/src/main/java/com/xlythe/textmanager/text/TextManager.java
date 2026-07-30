@@ -254,7 +254,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 Telephony.Mms.Part._DATA,
                 Telephony.Mms.Part.MSG_ID
         };
-        Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
+        Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part");
 
         return new Text.TextCursor(
                 contentResolver.query(uri, PROJECTION, null, null, order),
@@ -278,7 +278,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         Telephony.Mms.Part._DATA,
                         Telephony.Mms.Part.MSG_ID
                 };
-                Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
+                Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part");
 
                 try (Text.TextCursor cursor = new Text.TextCursor(
                         contentResolver.query(uri, PROJECTION, clause, null, null),
@@ -450,129 +450,125 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             ));
         }
 
-        String[] mmsArgs = new String[ids.size()];
-        mmsArgs = ids.toArray(mmsArgs);
+        if (!ids.isEmpty()) {
+            String[] mmsArgs = ids.toArray(new String[0]);
+            final String[] mmsProjection = new String[]{
+                    BaseColumns._ID,
+                    Telephony.Mms.Part.CONTENT_TYPE,
+                    Telephony.Mms.Part.TEXT,
+                    Telephony.Mms.Part._DATA,
+                    Telephony.Mms.Part.MSG_ID
+            };
+            Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part");
 
-        StringBuilder mmsClause = new StringBuilder(Telephony.Mms.Part.MSG_ID + " = ?");
-        for (int i = 0; i < ids.size() - 1; i++) {
-            mmsClause.append(" OR ").append(Telephony.Mms.Part.MSG_ID).append(" = ?");
-        }
-
-        String unreadMessagesClause = String.format("%s=%s",  Telephony.Sms.READ, 0);
-        Uri inboxUri = Telephony.Sms.Inbox.CONTENT_URI;
-
-        final String[] mmsProjection = new String[]{
-                BaseColumns._ID,
-                Telephony.Mms.Part.CONTENT_TYPE,
-                Telephony.Mms.Part.TEXT,
-                Telephony.Mms.Part._DATA,
-                Telephony.Mms.Part.MSG_ID
-        };
-        Uri mmsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
-
-        try (Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause.toString(), mmsArgs, null)) {
-            for (Text text : recentTexts) {
-                if (!mms.moveToFirst()) {
-                    continue;
-                }
-                do {
-                    if (mms.getLong(mms.getColumnIndex(Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
-                        String contentType = mms.getString(mms.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
-                        if (contentType == null) {
+            try (Cursor mms = contentResolver.query(
+                    mmsUri, mmsProjection, buildMmsPartSelection(ids.size()), mmsArgs, null)) {
+                if (mms != null) {
+                    for (Text text : recentTexts) {
+                        if (!mms.moveToFirst()) {
                             continue;
                         }
+                        do {
+                            if (mms.getLong(mms.getColumnIndexOrThrow(Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
+                                String contentType = mms.getString(mms.getColumnIndexOrThrow(Telephony.Mms.Part.CONTENT_TYPE));
+                                if (contentType == null) {
+                                    continue;
+                                }
 
-                        if (contentType.matches("image/.*")) {
-                            // Find any part that is an image attachment
-                            long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-                            text.setAttachment(new ImageAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
-                        } else if (contentType.matches("text/.*")) {
-                            // Find any part that is text data
-                            text.setBody(mms.getString(mms.getColumnIndex(Telephony.Mms.Part.TEXT)));
-                        } else if (contentType.matches("video/.*")) {
-                            long partId = mms.getLong(mms.getColumnIndex(BaseColumns._ID));
-                            text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
-                        }
+                                if (contentType.matches("image/.*")) {
+                                    long partId = mms.getLong(mms.getColumnIndexOrThrow(BaseColumns._ID));
+                                    text.setAttachment(new ImageAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                                } else if (contentType.matches("text/.*")) {
+                                    text.setBody(mms.getString(mms.getColumnIndexOrThrow(Telephony.Mms.Part.TEXT)));
+                                } else if (contentType.matches("video/.*")) {
+                                    long partId = mms.getLong(mms.getColumnIndexOrThrow(BaseColumns._ID));
+                                    text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                                }
+                            }
+                        } while (mms.moveToNext());
                     }
-                } while (mms.moveToNext());
+                }
             }
         }
 
+        String unreadMessagesClause = String.format("%s=%s", Telephony.Sms.READ, 0);
+        Uri inboxUri = Telephony.Sms.Inbox.CONTENT_URI;
         return new Thread.ThreadCursor(threads,
                 contentResolver.query(inboxUri, null, unreadMessagesClause, null, null),
                 recentTexts);
     }
 
+    static String buildMmsPartSelection(int messageCount) {
+        if (messageCount <= 0) {
+            return null;
+        }
+        StringBuilder selection = new StringBuilder(Telephony.Mms.Part.MSG_ID + " = ?");
+        for (int i = 1; i < messageCount; i++) {
+            selection.append(" OR ").append(Telephony.Mms.Part.MSG_ID).append(" = ?");
+        }
+        return selection.toString();
+    }
+
     public List<Attachment> getAttachments(Thread thread) {
         List<Attachment> attachments = new ArrayList<>();
         List<String> ids = new ArrayList<>();
-
-        String[] MMS_PROJECTION = new String[]{
+        ContentResolver resolver = mContext.getContentResolver();
+        String[] messageProjection = new String[]{
                 BaseColumns._ID,
-                Telephony.Mms.THREAD_ID,
                 Telephony.Mms.TEXT_ONLY
         };
 
-        Uri messageUri = Telephony.Mms.CONTENT_URI;
-        Cursor inner = mContext.getContentResolver().query(
-                messageUri,
-                MMS_PROJECTION,
-                Telephony.Mms.THREAD_ID + " = " + thread.getId(),
-                null,
-                null
-        );
-
-        while (inner.moveToNext()) {
-            int contentType = inner.getInt(inner.getColumnIndex(Telephony.Mms.TEXT_ONLY));
-            if (contentType == 1) {
-                continue;
+        try (Cursor messages = resolver.query(
+                Telephony.Mms.CONTENT_URI,
+                messageProjection,
+                Telephony.Mms.THREAD_ID + " = ?",
+                new String[]{thread.getId()},
+                null)) {
+            if (messages == null) {
+                return attachments;
             }
-            if (contentType == 0) {
-                ids.add(inner.getString(inner.getColumnIndex(BaseColumns._ID)));
+            while (messages.moveToNext()) {
+                if (messages.getInt(messages.getColumnIndexOrThrow(Telephony.Mms.TEXT_ONLY)) == 0) {
+                    ids.add(messages.getString(messages.getColumnIndexOrThrow(BaseColumns._ID)));
+                }
             }
         }
-        inner.close();
 
-        MMS_PROJECTION = new String[]{
+        if (ids.isEmpty()) {
+            return attachments;
+        }
+
+        String[] partProjection = new String[]{
                 BaseColumns._ID,
                 Telephony.Mms.Part.CONTENT_TYPE,
                 Telephony.Mms.Part.MSG_ID
         };
-
-        String[] args = new String[ids.size()];
-        args = ids.toArray(args);
-
-        StringBuilder clause = new StringBuilder(Telephony.Mms.Part.MSG_ID + " = ?");
-        for (int i = 0; i < ids.size() - 1; i++) {
-            clause.append(" OR ").append(Telephony.Mms.Part.MSG_ID).append(" = ?");
-        }
-
-        messageUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "/part");
-        inner = mContext.getContentResolver().query(
-                messageUri,
-                MMS_PROJECTION,
-                clause.toString(),
-                args,
-                null
-        );
-
-        while (inner.moveToNext()) {
-            String contentType = inner.getString(inner.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
-            if (contentType == null) {
-                continue;
+        Uri partsUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part");
+        try (Cursor parts = resolver.query(
+                partsUri,
+                partProjection,
+                buildMmsPartSelection(ids.size()),
+                ids.toArray(new String[0]),
+                null)) {
+            if (parts == null) {
+                return attachments;
             }
+            while (parts.moveToNext()) {
+                String contentType = parts.getString(
+                        parts.getColumnIndexOrThrow(Telephony.Mms.Part.CONTENT_TYPE));
+                if (contentType == null) {
+                    continue;
+                }
 
-            if (contentType.matches("image/.*")) {
-                // Find any part that is an image attachment
-                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                attachments.add(new ImageAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
-            } else if (contentType.matches("video/.*")) {
-                long partId = inner.getLong(inner.getColumnIndex(BaseColumns._ID));
-                attachments.add(new VideoAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
+                long partId = parts.getLong(parts.getColumnIndexOrThrow(BaseColumns._ID));
+                Uri partUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
+                if (contentType.matches("image/.*")) {
+                    attachments.add(new ImageAttachment(partUri));
+                } else if (contentType.matches("video/.*")) {
+                    attachments.add(new VideoAttachment(partUri));
+                }
             }
         }
-        inner.close();
-
         return attachments;
     }
 
