@@ -12,6 +12,7 @@ import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.telephony.SmsMessage;
 import android.telephony.SubscriptionManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -334,9 +335,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 return Status.FAILED;
         return Status.NONE;
     }
-
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
         PduPart partPdu = new PduPart();
@@ -416,7 +414,11 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
 
         // Set sender
-        sendRequest.setFrom(new EncodedStringValue(Objects.requireNonNull(TextManager.getInstance(context).getPhoneNumber())));
+        String phoneNumber = TextManager.getInstance(context).getPhoneNumber();
+        if (TextUtils.isEmpty(phoneNumber)) {
+            throw new IllegalStateException("A phone number permission is required to send MMS");
+        }
+        sendRequest.setFrom(new EncodedStringValue(phoneNumber));
 
         // Turn all the parts into a smil document
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -438,9 +440,6 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         return sendRequest;
     }
-
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     byte[] getByteData(Context context) {
         // create byte array which will actually be sent
         if (mBytesToSend != null) {

@@ -3,6 +3,7 @@ package com.xlythe.textmanager.text;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.content.Context;
 import android.telephony.SmsManager;
 
@@ -17,7 +18,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import org.robolectric.shadow.api.Shadow;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +33,7 @@ public class SendServiceWorkTest {
     @Before
     public void setUp() {
         context = RuntimeEnvironment.getApplication();
+        ((ShadowApplication) Shadow.extract(RuntimeEnvironment.getApplication())).grantPermissions(Manifest.permission.SEND_SMS);
         Configuration configuration = new Configuration.Builder()
                 .setExecutor(new SynchronousExecutor())
                 .build();

@@ -95,6 +95,12 @@ public class MmsReceiveService extends Worker {
     int subscriptionId = getInputData().getInt(
         INPUT_SUBSCRIPTION_ID, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
 
+    if (!TelephonyPermissions.canReceiveMms(context)) {
+      Log.e(TAG, "MMS receive permission is unavailable");
+      markAsFailed(context, notificationPdu, messageUri);
+      return Result.failure();
+    }
+
     final String location;
     if (notificationPdu != null) {
       NotificationInd notification = parseNotification(notificationPdu);

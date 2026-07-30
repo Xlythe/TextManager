@@ -1,7 +1,5 @@
 package com.xlythe.textmanager.text.pdu;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -17,7 +15,6 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.RequiresPermission;
 
 import com.xlythe.textmanager.text.Mock;
 import com.xlythe.textmanager.text.Mock.Telephony.Mms;
@@ -1099,8 +1096,6 @@ public class PduPersister {
      * @param preOpenedFiles if not null, a map of preopened InputStreams for the parts.
      * @return A Uri which can be used to access the stored PDU.
      */
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     public Uri persist(GenericPdu pdu, Uri uri, boolean createThreadId, boolean groupMmsEnabled,
                        HashMap<Uri, InputStream> preOpenedFiles)
             throws MmsException {
@@ -1303,8 +1298,6 @@ public class PduPersister {
      * @param addressMap a HashMap of the addresses from the ADDRESS_FIELDS header
      * @param excludeMyNumber if true, the number of this phone will be excluded from recipients
      */
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void loadRecipients(int addressType, HashSet<String> recipients,
                                 HashMap<Integer, EncodedStringValue[]> addressMap, boolean excludeMyNumber) {
         EncodedStringValue[] array = addressMap.get(addressType);

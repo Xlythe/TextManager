@@ -779,24 +779,33 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     @Nullable
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
+    @SuppressLint({"HardwareIds", "InlinedApi", "MissingPermission"})
     public String getPhoneNumber() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            SubscriptionManager subscriptionManager = (SubscriptionManager) mContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-            String phoneNumber = subscriptionManager.getPhoneNumber(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
-            if (phoneNumber != null) {
-                return phoneNumber;
-            }
+        if (!TelephonyPermissions.canReadPhoneNumber(mContext)) {
+            return null;
         }
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                SubscriptionManager subscriptionManager =
+                        (SubscriptionManager) mContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+                if (subscriptionManager != null) {
+                    String phoneNumber = subscriptionManager.getPhoneNumber(
+                            SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+                    if (!TextUtils.isEmpty(phoneNumber)) {
+                        return phoneNumber;
+                    }
+                }
+            }
 
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        @SuppressLint("HardwareIds") String phoneNumber = telephonyManager.getLine1Number();
-        return phoneNumber;
+            TelephonyManager telephonyManager =
+                    (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+            return telephonyManager == null ? null : telephonyManager.getLine1Number();
+        } catch (SecurityException | UnsupportedOperationException e) {
+            Log.w(TAG, "Phone number is unavailable", e);
+            return null;
+        }
     }
 
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     public Contact getSelf() {
         String phoneNumber = getPhoneNumber();
         return phoneNumber != null ? lookupContact(phoneNumber) : Contact.UNKNOWN;
@@ -828,7 +837,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             return new FutureImpl<Contact>() {
                 @SuppressLint("InlinedApi")
                 @Override
-                @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
                 public Contact get() {
                     if (text.getSenderAddress() == null && text.isMms()) {
                         buildSender(text);
@@ -861,13 +869,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             };
         }
     }
-
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     public synchronized Future<Set<Contact>> getMembersExceptMe(final Text text) {
         return new FutureImpl<Set<Contact>>() {
             @Override
-            @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
             public Set<Contact> get() {
                 Set<Contact> members = new HashSet<>(getMembers(text).get());
                 if (members.size() == 1) {

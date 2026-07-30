@@ -69,7 +69,6 @@ public class SendService extends Worker {
     @SuppressLint("InlinedApi")
     @WorkerThread
     @Override
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.ACCESS_NETWORK_STATE})
     public Result doWork() {
         byte[] serializedText = getInputData().getByteArray(EXTRA_TEXT);
         if (serializedText == null) {
@@ -86,6 +85,15 @@ public class SendService extends Worker {
         }
 
         Context context = getApplicationContext();
+        if (text.isMms() && !TelephonyPermissions.canSendMms(context)) {
+            Log.e(TAG, "MMS send permissions are unavailable");
+            return Result.failure();
+        }
+        if (!text.isMms() && !TelephonyPermissions.canSendSms(context)) {
+            Log.e(TAG, "SMS send permission is unavailable");
+            return Result.failure();
+        }
+
         if (text.isMms()) {
             Uri messageUri = storeMMS(text);
             if (messageUri == null) {
@@ -261,7 +269,6 @@ public class SendService extends Worker {
     }
 
     @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @Nullable
     private Uri storeMMS(Text text) {
         PduPersister p = PduPersister.getPduPersister(getApplicationContext());
