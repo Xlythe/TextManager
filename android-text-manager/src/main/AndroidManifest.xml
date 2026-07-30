@@ -3,8 +3,6 @@
     package="com.xlythe.textmanager">
 
     <application>
-        <!-- Service (and associated BroadcastReceivers) that handle sending texts even if the Activity has died. -->
-        <service android:name=".text.SendService" />
         <receiver android:name=".text.SendService$SmsSentReceiver"
             android:exported="false">
             <intent-filter>

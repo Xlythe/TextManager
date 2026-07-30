@@ -3,7 +3,6 @@ package com.xlythe.textmanager.text;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -28,11 +27,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
-public class SendService extends IntentService {
+public class SendService extends Worker {
     private static final String TAG = SendService.class.getSimpleName();
     private static final String ACTION_SMS_SENT = "com.xlythe.textmanager.text.SMS_SENT";
     private static final String ACTION_SMS_DELIVERED = "com.xlythe.textmanager.text.SMS_DELIVERED";
@@ -41,27 +46,48 @@ public class SendService extends IntentService {
     private static final String EXTRA_SMS_MESSAGE_ID = "sms_message_id";
     private static final String EXTRA_SMS_PART_INDEX = "sms_part_index";
     private static final String EXTRA_SMS_PART_COUNT = "sms_part_count";
+    static final String WORK_TAG = "com.xlythe.textmanager.text.SEND";
 
     static void schedule(Context context, Text text) {
-        Intent intent = new Intent(context, SendService.class);
-        intent.putExtra(EXTRA_TEXT, text);
-        context.startService(intent);
+        Data inputData = new Data.Builder()
+                .putByteArray(EXTRA_TEXT, text.toBytes())
+                .build();
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(SendService.class)
+                .setInputData(inputData)
+                .addTag(WORK_TAG)
+                .build();
+        WorkManager.getInstance(context.getApplicationContext()).enqueue(request);
     }
 
-    public SendService() {
-        super("SendService");
+    public SendService(@NonNull Context context, @NonNull WorkerParameters workerParameters) {
+        super(context, workerParameters);
     }
 
+    @NonNull
     @SuppressLint("InlinedApi")
     @WorkerThread
     @Override
     @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.ACCESS_NETWORK_STATE})
-    protected void onHandleIntent(Intent intent) {
-        Text text = intent.getParcelableExtra(EXTRA_TEXT);
+    public Result doWork() {
+        byte[] serializedText = getInputData().getByteArray(EXTRA_TEXT);
+        if (serializedText == null) {
+            Log.e(TAG, "Send work is missing its text payload");
+            return Result.failure();
+        }
+
+        final Text text;
+        try {
+            text = Text.fromBytes(serializedText);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Send work contains an invalid text payload", e);
+            return Result.failure();
+        }
+
+        Context context = getApplicationContext();
         if (text.isMms()) {
             Uri uri = storeMMS(text);
-            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(this, uri, text.getId());
-            if (NetworkUtils.forceDataConnection(this)) {
+            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(context, uri, text.getId());
+            if (NetworkUtils.forceDataConnection(context)) {
                 sendMMS(text, sentMmsPendingIntent);
             } else {
                 sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
@@ -69,6 +95,7 @@ public class SendService extends IntentService {
         } else {
             sendSMS(text);
         }
+        return Result.success();
     }
 
     private Uri storeSMS(Text text, String address) {
@@ -80,15 +107,15 @@ public class SendService extends IntentService {
         String clause = Mock.Telephony.Sms._ID + " = ?";
         String[] selectionArgs = new String[] {text.getId()};
 
-        int rowsUpdated = getContentResolver().update(uri, values, clause, selectionArgs);
+        int rowsUpdated = getApplicationContext().getContentResolver().update(uri, values, clause, selectionArgs);
         if (rowsUpdated == 0) {
-            return getContentResolver().insert(uri, values);
+            return getApplicationContext().getContentResolver().insert(uri, values);
         }
         return Uri.withAppendedPath(uri, text.getId());
     }
 
     private void sendSMS(Text text) {
-        Set<Contact> contacts = TextManager.getInstance(this).getMembers(text).get();
+        Set<Contact> contacts = TextManager.getInstance(getApplicationContext()).getMembers(text).get();
         if (contacts.size() != 1) {
             Log.e(TAG, "SMS requires exactly one recipient; found " + contacts.size());
             return;
@@ -135,7 +162,7 @@ public class SendService extends IntentService {
                 new SmsCallbackFactory<PendingIntent>() {
                     @Override
                     public void initialize(SmsSendRequest ignored, int partCount) {
-                        new SmsStatusTracker(new SharedPreferencesSmsStatusStore(SendService.this))
+                        new SmsStatusTracker(new SharedPreferencesSmsStatusStore(getApplicationContext()))
                                 .reset(request.getMessageId(), partCount);
                     }
 
@@ -143,7 +170,7 @@ public class SendService extends IntentService {
                     public PendingIntent createSent(
                             SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsSentPendingIntent(
-                                SendService.this,
+                                getApplicationContext(),
                                 uri,
                                 request.getMessageId(),
                                 partIndex,
@@ -154,7 +181,7 @@ public class SendService extends IntentService {
                     public PendingIntent createDelivered(
                             SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsDeliveredPendingIntent(
-                                SendService.this,
+                                getApplicationContext(),
                                 uri,
                                 request.getMessageId(),
                                 partIndex,
@@ -168,7 +195,7 @@ public class SendService extends IntentService {
         ContentValues values = new ContentValues();
         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
         try {
-            getContentResolver().update(uri, values, null, null);
+            getApplicationContext().getContentResolver().update(uri, values, null, null);
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to persist SMS failure for " + uri, e);
         }
@@ -215,7 +242,7 @@ public class SendService extends IntentService {
     @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @Nullable
     private Uri storeMMS(Text text) {
-        PduPersister p = PduPersister.getPduPersister(this);
+        PduPersister p = PduPersister.getPduPersister(getApplicationContext());
 
         Uri uri;
         String id = text.getId();
@@ -225,7 +252,7 @@ public class SendService extends IntentService {
             uri = Mock.Telephony.Mms.Sent.CONTENT_URI;
         }
         try {
-            uri = p.persist(text.getSendRequest(this), uri, true, true, null);
+            uri = p.persist(text.getSendRequest(getApplicationContext()), uri, true, true, null);
         } catch (MmsException e) {
             Log.e(TAG, "persisting pdu failed", e);
             return null;
@@ -233,7 +260,7 @@ public class SendService extends IntentService {
 
         ContentValues values = new ContentValues();
         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-        getContentResolver().update(uri, values, null, null);
+        getApplicationContext().getContentResolver().update(uri, values, null, null);
 
         return uri;
     }
@@ -244,17 +271,17 @@ public class SendService extends IntentService {
     @SuppressLint("InlinedApi")
     @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     private void sendMMS(Text text, PendingIntent sentMmsPendingIntent) {
-        TextManager manager = TextManager.getInstance(this);
+        TextManager manager = TextManager.getInstance(getApplicationContext());
         Contact contact = manager.getMembers(text).get().iterator().next();
         if (contact.equals(Contact.UNKNOWN)) {
             return;
         }
         try {
-            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(this);
+            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getApplicationContext());
             HttpUtils.httpConnection(
-                    this, 4444L,
+                    getApplicationContext(), 4444L,
                     apnParameters.getMmscUrl(),
-                    text.getByteData(this),
+                    text.getByteData(getApplicationContext()),
                     HttpUtils.HTTP_POST_METHOD,
                     apnParameters.isProxySet(),
                     apnParameters.getProxyAddress(),
@@ -366,7 +393,7 @@ public class SendService extends IntentService {
                         ? Mock.Telephony.Sms.Sent.STATUS_COMPLETE
                         : Mock.Telephony.Sms.Sent.STATUS_FAILED);
         try {
-            context.getContentResolver().update(uri, values, null, null);
+            context.getApplicationContext().getContentResolver().update(uri, values, null, null);
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to persist SMS callback status for " + uri, e);
         }
@@ -402,7 +429,7 @@ public class SendService extends IntentService {
                 Log.d(TAG, "MMS failed to send");
                 values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             }
-            context.getContentResolver().update(uri, values, null, null);
+            context.getApplicationContext().getContentResolver().update(uri, values, null, null);
         }
     }
 }
