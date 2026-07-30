@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
 apply plugin: 'signing'
 
 Properties projectProperties = new Properties()
@@ -27,6 +28,14 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    testOptions {
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = ['jdk.internal.*']
+            }
+        }
     }
     lint {
         abortOnError false
@@ -97,8 +106,57 @@ signing {
 }
 
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
+
     api fileTree(dir: 'libs', include: ['*.jar'])
     api 'com.googlecode.libphonenumber:libphonenumber:[8.13.50,)'
     api 'com.loopj.android:android-async-http:[1.4.11,)'
     api 'androidx.legacy:legacy-support-v4:[1.0.0,)'
+}
+jacoco {
+    toolVersion = '0.8.15'
+}
+
+def coreSmsClasses = fileTree(
+        dir: layout.buildDirectory.dir('intermediates/javac/debug/compileDebugJavaWithJavac/classes').get().asFile,
+        includes: ['com/xlythe/textmanager/text/sms/**/*.class'])
+def coreSmsSources = files('src/main/java')
+def unitTestExecutionData = layout.buildDirectory.file('jacoco/testDebugUnitTest.exec').get().asFile
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn 'testDebugUnitTest'
+    classDirectories.setFrom(coreSmsClasses)
+    sourceDirectories.setFrom(coreSmsSources)
+    executionData.setFrom(unitTestExecutionData)
+    onlyIf {
+        unitTestExecutionData.exists() && !coreSmsClasses.isEmpty()
+    }
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    dependsOn 'jacocoTestReport'
+    classDirectories.setFrom(coreSmsClasses)
+    sourceDirectories.setFrom(coreSmsSources)
+    executionData.setFrom(unitTestExecutionData)
+    onlyIf {
+        unitTestExecutionData.exists() && !coreSmsClasses.isEmpty()
+    }
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'jacocoTestCoverageVerification'
 }
