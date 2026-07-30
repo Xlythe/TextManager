@@ -193,6 +193,14 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mSenderAddress = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.ADDRESS));
         mBody = data.getString(data.getColumnIndexOrThrow(Mock.Telephony.Sms.BODY));
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Sms.STATUS));
+        parseSubscriptionId(data);
+    }
+
+    private void parseSubscriptionId(Cursor data) {
+        int subscriptionIndex = data.getColumnIndex(Mock.Telephony.Sms.SUBSCRIPTION_ID);
+        if (subscriptionIndex >= 0 && !data.isNull(subscriptionIndex)) {
+            mSubscriptionId = data.getInt(subscriptionIndex);
+        }
     }
 
     @SuppressLint("Range")
@@ -203,6 +211,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mDate = data.getLong(data.getColumnIndexOrThrow(Mock.Telephony.Sms.Conversations.DATE)) * SEC_TO_MILLI;
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
+        parseSubscriptionId(data);
 
         if (mmsCursor != null && mmsCursor.moveToFirst()) {
             do {

@@ -79,6 +79,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Telephony.Sms.BODY,
             Telephony.Sms.TYPE,
             Telephony.Sms.STATUS,
+            Telephony.Sms.SUBSCRIPTION_ID,
             // For MMS only
             Telephony.Mms.SUBJECT,
             Telephony.Mms.MESSAGE_BOX,
