@@ -16,7 +16,7 @@
     <EditText
         android:id="@+id/message"
         android:padding="16dp"
-        android:gravity="top"
+        android:gravity="top|start"
         android:inputType="textCapSentences|textMultiLine"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
