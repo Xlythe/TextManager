@@ -29,6 +29,7 @@ public class MmsPduStoreTest {
 
         assertTrue(uri.toString().startsWith("content://" + context.getPackageName()));
         assertArrayEquals(pdu, Files.readAllBytes(MmsPduStore.resolve(context, uri).toPath()));
+        assertArrayEquals(pdu, MmsPduStore.read(context, uri));
     }
 
     @Test

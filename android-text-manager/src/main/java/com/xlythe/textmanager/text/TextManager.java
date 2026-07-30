@@ -104,90 +104,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         context.getContentResolver().registerContentObserver(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, true, new TextObserver(new Handler(Looper.getMainLooper())));
     }
 
-    public void downloadAttachment(Text text){
-        if (text.isMms()) {
-            Intent intent = new Intent();
-            intent.putExtra(TEXT_EXTRA, text);
-            new ReceivePushTask(mContext).execute(intent);
-        }
-    }
-
-    // TODO: Merge with MmsReceiveService
-    private static class ReceivePushTask extends AsyncTask<Intent, Void, Void> {
-        private static final String TAG_MMS = "sms:mms";
-
-        @SuppressLint("StaticFieldLeak")
-        private final Context mContext;
-
-        ReceivePushTask(Context context) {
-            mContext = context;
-        }
-
-        @WorkerThread
-        @Override
-        @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-        protected Void doInBackground(Intent... intents) {
-            Text text = intents[0].getParcelableExtra(TEXT_EXTRA);
-            PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG_MMS);
-            try {
-                wakelock.acquire(5000);
-
-                Uri databaseUri = Uri.withAppendedPath(Telephony.Mms.Inbox.CONTENT_URI, text.getId());
-                String url = getContentUrl(databaseUri);
-                if (url == null) {
-                    Log.e(TAG, "Failed to parse text " + text + ". Unable to receive text.");
-                    return null;
-                }
-
-                if (!NetworkUtils.forceDataConnection(mContext)) {
-                    Log.e(TAG, "Failed to connect to a mobile network. Unable to receive text " + text);
-                    return null;
-                }
-
-                byte[] data = Receive.receive(mContext, url);
-                RetrieveConf retrieveConf = (RetrieveConf) new PduParser(data, true).parse();
-
-                PduPersister persister = PduPersister.getPduPersister(mContext);
-                Uri msgUri;
-                try {
-                    msgUri = persister.persist(retrieveConf, databaseUri, true, true, null);
-
-                    // Use local time instead of PDU time
-                    ContentValues values = new ContentValues(1);
-                    values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
-                    values.put(Telephony.Mms.STATUS, Telephony.Sms.Sent.STATUS_COMPLETE);
-                    mContext.getContentResolver().update(msgUri, values, null, null);
-                } catch (MmsException e) {
-                    Log.e(TAG, "Failed to persist text " + text);
-                    return null;
-                }
-            } finally {
-                wakelock.release();
-            }
-
-            return null;
-        }
-
-        @Nullable
-        private String getContentUrl(Uri uri) {
-            String[] projection = new String[] {
-                    Telephony.Mms.CONTENT_LOCATION
-            };
-            Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null);
-            if (cursor == null) {
-                return null;
-            }
-
-            try {
-                if (cursor.getCount() != 1 || !cursor.moveToFirst()) {
-                    return null;
-                }
-
-                return cursor.getString(COLUMN_CONTENT_LOCATION);
-            } finally {
-                cursor.close();
-            }
+    public void downloadAttachment(Text text) {
+        if (text != null && text.isMms()) {
+            MmsReceiveService.schedule(mContext, text);
         }
     }
 

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.net.Uri;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
@@ -43,6 +45,22 @@ public final class MmsPduStore {
         return uriFor(context, name);
     }
 
+    public static byte[] read(Context context, Uri uri) throws IOException {
+        File file = resolve(context, uri);
+        long length = file.length();
+        if (length <= 0 || length > 25L * 1024L * 1024L) {
+            throw new IOException("Invalid MMS PDU size: " + length);
+        }
+        try (FileInputStream input = new FileInputStream(file);
+             ByteArrayOutputStream output = new ByteArrayOutputStream((int) length)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            return output.toByteArray();
+        }
+    }
     public static boolean delete(Context context, Uri uri) {
         try {
             return resolve(context, uri).delete();
