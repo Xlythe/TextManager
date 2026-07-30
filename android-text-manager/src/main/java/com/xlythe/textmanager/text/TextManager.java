@@ -195,15 +195,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         public void to(Contact... addresses) {
             send(new Text.Builder().addRecipients(addresses));
         }
-
-        @SuppressLint("InlinedApi")
-        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
         public void to(Text text) {
             getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
-
-        @SuppressLint("InlinedApi")
-        @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
         public void to(Thread thread) {
             getMembersExceptMe(thread.getLatestMessage()).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
         }
@@ -812,30 +806,40 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     private void buildSender(Text text) {
+        if (!TelephonyPermissions.has(mContext, Manifest.permission.READ_SMS)) {
+            return;
+        }
         Uri addressUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, text.getId() + "/addr");
 
-        // Query the address information for this message
-        Cursor addr = mContext.getContentResolver().query(addressUri, null, null, null, null);
-        while (addr.moveToNext()) {
-            if (addr.getLong(addr.getColumnIndex(Telephony.Mms.Addr.MSG_ID)) == text.getMmsId()) {
-                if (addr.getLong(addr.getColumnIndex(Telephony.Mms.Addr.TYPE)) == Text.TYPE_SENDER) {
-                    text.setSenderAddress(addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS)));
-                }
-                text.setMemberAddress(addr.getString(addr.getColumnIndex(Telephony.Mms.Addr.ADDRESS)));
+        try (Cursor addresses = mContext.getContentResolver().query(
+                addressUri, null, null, null, null)) {
+            if (addresses == null) {
+                return;
             }
+            while (addresses.moveToNext()) {
+                if (addresses.getLong(addresses.getColumnIndex(Telephony.Mms.Addr.MSG_ID))
+                        == text.getMmsId()) {
+                    String address = addresses.getString(
+                            addresses.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
+                    if (addresses.getLong(addresses.getColumnIndex(Telephony.Mms.Addr.TYPE))
+                            == Text.TYPE_SENDER) {
+                        text.setSenderAddress(address);
+                    }
+                    text.setMemberAddress(address);
+                }
+            }
+        } catch (SecurityException e) {
+            Log.w(TAG, "MMS addresses are unavailable", e);
         }
-        addr.close();
     }
 
     @Override
-    @RequiresPermission(Manifest.permission.READ_SMS)
     public synchronized Future<Contact> getSender(final Text text) {
         final Contact sender = text.getSender();
         if (sender != null) {
             return new Present<>(sender);
         } else {
             return new FutureImpl<Contact>() {
-                @SuppressLint("InlinedApi")
                 @Override
                 public Contact get() {
                     if (text.getSenderAddress() == null && text.isMms()) {

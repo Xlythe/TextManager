@@ -1,12 +1,12 @@
 package com.xlythe.sms.receiver;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.pm.ShortcutInfoCompat;
@@ -45,6 +44,16 @@ public class MessageReceiver extends TextReceiver {
 
     @Override
     public void onMessageReceived(Context context, Text text) {
+        if (text == null) {
+            Log.w(TAG, "Ignoring an empty message callback");
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 33
+                && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Notification permission is unavailable");
+            return;
+        }
         if (MessageActivity.isVisible(text.getThreadId())) {
             Log.w(TAG, "Received message, but not showing a notification because the thread is already visible to the user");
             return;
@@ -52,11 +61,13 @@ public class MessageReceiver extends TextReceiver {
 
         new Thread(() -> notify(context, text)).start();
     }
-
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
     @WorkerThread
     private void notify(Context context, Text text) {
+        if (Build.VERSION.SDK_INT >= 33
+                && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         TextManager textManager = TextManager.getInstance(context);
         MessageBasedNotificationManager notificationManager = MessageBasedNotificationManager.from(context);
 

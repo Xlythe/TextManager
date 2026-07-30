@@ -1,14 +1,11 @@
 package com.xlythe.sms.util;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 
 import androidx.annotation.RequiresApi;
-import androidx.annotation.RequiresPermission;
 import androidx.core.app.Person;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.graphics.drawable.IconCompat;
@@ -28,8 +25,6 @@ import java.util.Set;
 public class ShortcutUtils {
   private ShortcutUtils() {}
 
-  @SuppressLint("InlinedApi")
-  @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
   @RequiresApi(25)
   public static ShortcutInfoCompat createShortcutInfo(Context context, Thread thread) {
     TextManager textManager = TextManager.getInstance(context);
