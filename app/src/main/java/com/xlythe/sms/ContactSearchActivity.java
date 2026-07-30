@@ -14,6 +14,7 @@ import com.xlythe.textmanager.text.TextManager;
 
 import java.util.ArrayList;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,6 +38,14 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_search);
         setResult(RESULT_OK);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                setResult();
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
 
         mManager = TextManager.getInstance(getBaseContext());
 
@@ -82,12 +91,6 @@ public class ContactSearchActivity extends AppCompatActivity implements ContactA
     @Override
     public void onItemClicked(Contact contact) {
         mInputField.insert(contact);
-    }
-
-    @Override
-    public void onBackPressed() {
-        setResult();
-        super.onBackPressed();
     }
 
     private void setResult() {

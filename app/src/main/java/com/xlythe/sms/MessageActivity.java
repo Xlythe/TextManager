@@ -39,6 +39,7 @@ import com.xlythe.textmanager.text.util.Utils;
 
 import java.util.Set;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -108,6 +109,17 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (mEditText.getFragmentVisibility()) {
+                    mEditText.hideKeyboard();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -398,15 +410,6 @@ public class MessageActivity extends AppCompatActivity implements MessageAdapter
             mAdapter.clearSelection();
             mActionMode = null;
             mRecyclerView.setNestedScrollingEnabled(true);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mEditText.getFragmentVisibility()) {
-            mEditText.hideKeyboard();
-        } else {
-            super.onBackPressed();
         }
     }
 
