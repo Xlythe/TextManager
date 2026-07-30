@@ -21,6 +21,21 @@ public class SmsSendCoordinatorTest {
     }
 
     @Test
+    public void rejectsMissingMessageId() {
+        assertInvalidRequest(null, "+15551234567", "hello", "messageId must not be blank");
+    }
+
+    @Test
+    public void rejectsMissingRecipient() {
+        assertInvalidRequest("42", "  ", "hello", "recipient must not be blank");
+    }
+
+    @Test
+    public void rejectsMissingBody() {
+        assertInvalidRequest("42", "+15551234567", "", "body must not be blank");
+    }
+
+    @Test
     public void sendsSinglePartWithSentAndDeliveryCallbacks() {
         FakeGateway gateway = new FakeGateway(Collections.singletonList("hello"));
         SmsSendCoordinator<String> coordinator =
@@ -49,6 +64,17 @@ public class SmsSendCoordinatorTest {
         assertEquals(
                 Collections.singletonList("delivered:7:0/2"), gateway.deliveredCallbacks);
         assertNull(gateway.body);
+    }
+
+    private static void assertInvalidRequest(
+            String messageId, String recipient, String body, String expectedMessage) {
+        try {
+            new SmsSendRequest(messageId, recipient, body);
+        } catch (IllegalArgumentException expected) {
+            assertEquals(expectedMessage, expected.getMessage());
+            return;
+        }
+        throw new AssertionError("Expected an IllegalArgumentException");
     }
 
     private static final class FakeCallbackFactory implements SmsCallbackFactory<String> {

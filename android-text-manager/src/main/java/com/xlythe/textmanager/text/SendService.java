@@ -25,6 +25,7 @@ import com.xlythe.textmanager.text.util.HttpUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
@@ -62,60 +63,92 @@ public class SendService extends IntentService {
                 sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
             }
         } else {
-            Uri uri = storeSMS(text);
-            sendSMS(text, uri);
+            sendSMS(text);
         }
     }
 
-    private Uri storeSMS(Text text) {
-        // Put together query data
-        TextManager manager = TextManager.getInstance(this);
-        String address = manager.getMembers(text).get().iterator().next().getNumber();
+    private Uri storeSMS(Text text, String address) {
         ContentValues values = new ContentValues();
         Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
         values.put(Mock.Telephony.Sms.ADDRESS, address);
         values.put(Mock.Telephony.Sms.BODY, text.getBody());
         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
-        String clause = String.format("%s = %s", Mock.Telephony.Sms._ID, text.getId());
+        String clause = Mock.Telephony.Sms._ID + " = ?";
+        String[] selectionArgs = new String[] {text.getId()};
 
-        // Check if message exists already, if so update the data
-        int rowsUpdated = getContentResolver().update(uri, values, clause, null);
-
-        // Nothing was updated so insert a new one
+        int rowsUpdated = getContentResolver().update(uri, values, clause, selectionArgs);
         if (rowsUpdated == 0) {
-            uri = getContentResolver().insert(uri, values);
-        } else {
-            uri = Uri.withAppendedPath(uri, text.getId());
+            return getContentResolver().insert(uri, values);
         }
-        return uri;
+        return Uri.withAppendedPath(uri, text.getId());
     }
 
-    private void sendSMS(Text text, Uri uri) {
-        TextManager manager = TextManager.getInstance(this);
-        Contact contact = manager.getMembers(text).get().iterator().next();
-        if (contact.equals(Contact.UNKNOWN)) {
+    private void sendSMS(Text text) {
+        Set<Contact> contacts = TextManager.getInstance(this).getMembers(text).get();
+        if (contacts.size() != 1) {
+            Log.e(TAG, "SMS requires exactly one recipient; found " + contacts.size());
             return;
         }
 
+        Contact contact = contacts.iterator().next();
+        if (contact.equals(Contact.UNKNOWN)) {
+            Log.e(TAG, "SMS recipient could not be resolved");
+            return;
+        }
+
+        final SmsSendRequest request;
+        try {
+            request = new SmsSendRequest(text.getId(), contact.getNumber(), text.getBody());
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Invalid outgoing SMS", e);
+            return;
+        }
+
+        Uri uri = null;
+        try {
+            uri = storeSMS(text, request.getRecipient());
+            if (uri == null) {
+                Log.e(TAG, "Failed to persist outgoing SMS " + request.getMessageId());
+                return;
+            }
+            dispatchSMS(request, uri);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to send SMS " + request.getMessageId(), e);
+            if (uri != null) {
+                markSmsFailed(uri);
+            }
+        }
+    }
+
+    private void dispatchSMS(SmsSendRequest request, Uri uri) {
         SmsGateway<PendingIntent> gateway = new AndroidSmsGateway(SmsManager.getDefault());
         SmsCallbackFactory<PendingIntent> callbackFactory =
                 new SmsCallbackFactory<PendingIntent>() {
                     @Override
                     public PendingIntent createSent(
-                            SmsSendRequest request, int partIndex, int partCount) {
+                            SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsSentPendingIntent(
                                 SendService.this, uri, request.getMessageId());
                     }
 
                     @Override
                     public PendingIntent createDelivered(
-                            SmsSendRequest request, int partIndex, int partCount) {
+                            SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsDeliveredPendingIntent(
                                 SendService.this, uri, request.getMessageId());
                     }
                 };
-        new SmsSendCoordinator<>(gateway, callbackFactory)
-                .send(new SmsSendRequest(text.getId(), contact.getNumber(), text.getBody()));
+        new SmsSendCoordinator<>(gateway, callbackFactory).send(request);
+    }
+
+    private void markSmsFailed(Uri uri) {
+        ContentValues values = new ContentValues();
+        values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
+        try {
+            getContentResolver().update(uri, values, null, null);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to persist SMS failure for " + uri, e);
+        }
     }
 
     private static final class AndroidSmsGateway implements SmsGateway<PendingIntent> {
