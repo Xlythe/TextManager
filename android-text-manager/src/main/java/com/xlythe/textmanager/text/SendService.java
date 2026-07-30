@@ -21,8 +21,7 @@ import com.xlythe.textmanager.text.sms.SmsGateway;
 import com.xlythe.textmanager.text.sms.SmsSendCoordinator;
 import com.xlythe.textmanager.text.sms.SmsSendRequest;
 import com.xlythe.textmanager.text.sms.SmsStatusTracker;
-import com.xlythe.textmanager.text.util.ApnDefaults;
-import com.xlythe.textmanager.text.util.HttpUtils;
+import com.xlythe.textmanager.text.mms.MmsPduStore;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +47,7 @@ public class SendService extends Worker {
     private static final String EXTRA_SMS_MESSAGE_ID = "sms_message_id";
     private static final String EXTRA_SMS_PART_INDEX = "sms_part_index";
     private static final String EXTRA_SMS_PART_COUNT = "sms_part_count";
+    private static final String EXTRA_MMS_PDU_URI = "mms_pdu_uri";
     static final String WORK_TAG = "com.xlythe.textmanager.text.SEND";
 
     static void schedule(Context context, Text text) {
@@ -87,12 +87,23 @@ public class SendService extends Worker {
 
         Context context = getApplicationContext();
         if (text.isMms()) {
-            Uri uri = storeMMS(text);
-            PendingIntent sentMmsPendingIntent = newMmsSentPendingIntent(context, uri, text.getId());
-            if (NetworkUtils.forceDataConnection(context)) {
-                sendMMS(text, sentMmsPendingIntent);
-            } else {
-                sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
+            Uri messageUri = storeMMS(text);
+            if (messageUri == null) {
+                return Result.failure();
+            }
+            Uri pduUri = null;
+            try {
+                pduUri = MmsPduStore.write(context, text.getByteData(context));
+                PendingIntent sentIntent =
+                        newMmsSentPendingIntent(context, messageUri, pduUri, text.getId());
+                sendMMS(text, pduUri, sentIntent);
+            } catch (IOException | RuntimeException e) {
+                Log.e(TAG, "Failed to dispatch MMS through the platform service", e);
+                if (pduUri != null) {
+                    MmsPduStore.delete(context, pduUri);
+                }
+                markMmsFailed(messageUri);
+                return Result.failure();
             }
         } else {
             sendSMS(text);
@@ -276,31 +287,20 @@ public class SendService extends Worker {
         return uri;
     }
 
-    /**
-     * Send message
-     */
-    @SuppressLint("InlinedApi")
-    @RequiresPermission(allOf = {Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_NUMBERS})
-    private void sendMMS(Text text, PendingIntent sentMmsPendingIntent) {
-        TextManager manager = TextManager.getInstance(getApplicationContext());
-        Contact contact = manager.getMembers(text).get().iterator().next();
-        if (contact.equals(Contact.UNKNOWN)) {
-            return;
-        }
+    /** Dispatches the raw PDU to Android's telephony-managed MMS transport. */
+    private void sendMMS(Text text, Uri pduUri, PendingIntent sentMmsPendingIntent) {
+        SmsManager smsManager = resolveSmsManager(text.getSubscriptionId());
+        smsManager.sendMultimediaMessage(
+                getApplicationContext(), pduUri, null, null, sentMmsPendingIntent);
+    }
+
+    private void markMmsFailed(Uri uri) {
+        ContentValues values = new ContentValues();
+        values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
         try {
-            ApnDefaults.ApnParameters apnParameters = ApnDefaults.getApnParameters(getApplicationContext());
-            HttpUtils.httpConnection(
-                    getApplicationContext(), 4444L,
-                    apnParameters.getMmscUrl(),
-                    text.getByteData(getApplicationContext()),
-                    HttpUtils.HTTP_POST_METHOD,
-                    apnParameters.isProxySet(),
-                    apnParameters.getProxyAddress(),
-                    apnParameters.getProxyPort());
-            sendIntent(sentMmsPendingIntent, Activity.RESULT_OK);
-        } catch(IOException e){
-            Log.e(TAG, "Failed to connect to the MMS server", e);
-            sendIntent(sentMmsPendingIntent, Activity.RESULT_CANCELED);
+            getApplicationContext().getContentResolver().update(uri, values, null, null);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to persist MMS failure for " + uri, e);
         }
     }
 
@@ -360,11 +360,17 @@ public class SendService extends Worker {
     }
 
     @SuppressLint("InlinedApi")
-    private static PendingIntent newMmsSentPendingIntent(Context context, Uri uri, String id) {
+    private static PendingIntent newMmsSentPendingIntent(
+            Context context, Uri messageUri, Uri pduUri, String id) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(ACTION_MMS_SENT);
-        intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        intent.setData(messageUri);
+        intent.putExtra(EXTRA_MMS_PDU_URI, pduUri);
+        return PendingIntent.getBroadcast(
+                context,
+                id.hashCode(),
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     /**
@@ -431,16 +437,30 @@ public class SendService extends Worker {
     public static final class MmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Uri uri = intent.getData();
+            Context applicationContext = context.getApplicationContext();
+            Uri pduUri = intent.getParcelableExtra(EXTRA_MMS_PDU_URI);
+            if (pduUri != null) {
+                MmsPduStore.delete(applicationContext, pduUri);
+            }
+
+            Uri messageUri = intent.getData();
+            if (messageUri == null) {
+                Log.e(TAG, "MMS callback is missing its message URI");
+                return;
+            }
             ContentValues values = new ContentValues();
             if (getResultCode() == Activity.RESULT_OK) {
                 Log.d(TAG, "MMS sent");
                 values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
             } else {
-                Log.d(TAG, "MMS failed to send");
+                Log.d(TAG, "MMS failed to send with result " + getResultCode());
                 values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
             }
-            context.getApplicationContext().getContentResolver().update(uri, values, null, null);
+            try {
+                applicationContext.getContentResolver().update(messageUri, values, null, null);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to persist MMS callback status for " + messageUri, e);
+            }
         }
     }
 }

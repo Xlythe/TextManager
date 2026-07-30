@@ -3,6 +3,11 @@
     package="com.xlythe.textmanager">
 
     <application>
+        <provider
+            android:name=".text.mms.MmsPduProvider"
+            android:authorities="${applicationId}.textmanager.mms"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <receiver android:name=".text.SendService$SmsSentReceiver"
             android:exported="false">
             <intent-filter>
