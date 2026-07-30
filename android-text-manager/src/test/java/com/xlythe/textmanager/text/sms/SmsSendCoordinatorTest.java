@@ -36,6 +36,21 @@ public class SmsSendCoordinatorTest {
     }
 
     @Test
+    public void rejectsEmptySegmentationResult() {
+        FakeGateway gateway = new FakeGateway(Collections.emptyList());
+        SmsSendCoordinator<String> coordinator =
+                new SmsSendCoordinator<>(gateway, new FakeCallbackFactory());
+
+        try {
+            coordinator.send(new SmsSendRequest("42", "+15551234567", "hello"));
+        } catch (IllegalStateException expected) {
+            assertEquals("SMS gateway returned no message parts", expected.getMessage());
+            return;
+        }
+        throw new AssertionError("Expected an IllegalStateException");
+    }
+
+    @Test
     public void sendsSinglePartWithSentAndDeliveryCallbacks() {
         FakeGateway gateway = new FakeGateway(Collections.singletonList("hello"));
         SmsSendCoordinator<String> coordinator =
@@ -51,7 +66,7 @@ public class SmsSendCoordinatorTest {
     }
 
     @Test
-    public void preservesLegacySingleCallbackForMultipartDispatch() {
+    public void createsDistinctCallbacksForEveryMultipartSegment() {
         FakeGateway gateway = new FakeGateway(Arrays.asList("one", "two"));
         SmsSendCoordinator<String> coordinator =
                 new SmsSendCoordinator<>(gateway, new FakeCallbackFactory());
@@ -60,9 +75,10 @@ public class SmsSendCoordinatorTest {
 
         assertEquals("+15557654321", gateway.recipient);
         assertEquals(Arrays.asList("one", "two"), gateway.parts);
-        assertEquals(Collections.singletonList("sent:7:0/2"), gateway.sentCallbacks);
+        assertEquals(Arrays.asList("sent:7:0/2", "sent:7:1/2"), gateway.sentCallbacks);
         assertEquals(
-                Collections.singletonList("delivered:7:0/2"), gateway.deliveredCallbacks);
+                Arrays.asList("delivered:7:0/2", "delivered:7:1/2"),
+                gateway.deliveredCallbacks);
         assertNull(gateway.body);
     }
 
@@ -78,6 +94,8 @@ public class SmsSendCoordinatorTest {
     }
 
     private static final class FakeCallbackFactory implements SmsCallbackFactory<String> {
+        @Override
+        public void initialize(SmsSendRequest request, int partCount) {}
         @Override
         public String createSent(SmsSendRequest request, int partIndex, int partCount) {
             return "sent:" + request.getMessageId() + ":" + partIndex + "/" + partCount;

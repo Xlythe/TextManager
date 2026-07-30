@@ -19,6 +19,7 @@ import com.xlythe.textmanager.text.sms.SmsCallbackFactory;
 import com.xlythe.textmanager.text.sms.SmsGateway;
 import com.xlythe.textmanager.text.sms.SmsSendCoordinator;
 import com.xlythe.textmanager.text.sms.SmsSendRequest;
+import com.xlythe.textmanager.text.sms.SmsStatusTracker;
 import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
@@ -37,6 +38,9 @@ public class SendService extends IntentService {
     private static final String ACTION_SMS_DELIVERED = "com.xlythe.textmanager.text.SMS_DELIVERED";
     private static final String ACTION_MMS_SENT = "com.xlythe.textmanager.text.MMS_SENT";
     private static final String EXTRA_TEXT = "text";
+    private static final String EXTRA_SMS_MESSAGE_ID = "sms_message_id";
+    private static final String EXTRA_SMS_PART_INDEX = "sms_part_index";
+    private static final String EXTRA_SMS_PART_COUNT = "sms_part_count";
 
     static void schedule(Context context, Text text) {
         Intent intent = new Intent(context, SendService.class);
@@ -111,7 +115,12 @@ public class SendService extends IntentService {
                 Log.e(TAG, "Failed to persist outgoing SMS " + request.getMessageId());
                 return;
             }
-            dispatchSMS(request, uri);
+            SmsSendRequest persistedRequest =
+                    new SmsSendRequest(
+                            uri.getLastPathSegment(),
+                            request.getRecipient(),
+                            request.getBody());
+            dispatchSMS(persistedRequest, uri);
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to send SMS " + request.getMessageId(), e);
             if (uri != null) {
@@ -125,17 +134,31 @@ public class SendService extends IntentService {
         SmsCallbackFactory<PendingIntent> callbackFactory =
                 new SmsCallbackFactory<PendingIntent>() {
                     @Override
+                    public void initialize(SmsSendRequest ignored, int partCount) {
+                        new SmsStatusTracker(new SharedPreferencesSmsStatusStore(SendService.this))
+                                .reset(request.getMessageId(), partCount);
+                    }
+
+                    @Override
                     public PendingIntent createSent(
                             SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsSentPendingIntent(
-                                SendService.this, uri, request.getMessageId());
+                                SendService.this,
+                                uri,
+                                request.getMessageId(),
+                                partIndex,
+                                partCount);
                     }
 
                     @Override
                     public PendingIntent createDelivered(
                             SmsSendRequest ignored, int partIndex, int partCount) {
                         return newSmsDeliveredPendingIntent(
-                                SendService.this, uri, request.getMessageId());
+                                SendService.this,
+                                uri,
+                                request.getMessageId(),
+                                partIndex,
+                                partCount);
                     }
                 };
         new SmsSendCoordinator<>(gateway, callbackFactory).send(request);
@@ -261,19 +284,41 @@ public class SendService extends IntentService {
      * Pending Intents to notify when an MMS or SMS has been sent or failed to send
      */
     @SuppressLint("InlinedApi")
-    private static PendingIntent newSmsSentPendingIntent(Context context, Uri uri, String id) {
+    private static PendingIntent newSmsSentPendingIntent(
+            Context context, Uri uri, String id, int partIndex, int partCount) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
         intent.setAction(ACTION_SMS_SENT);
-        intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        addSmsCallbackMetadata(intent, uri, id, partIndex, partCount);
+        return PendingIntent.getBroadcast(
+                context,
+                callbackRequestCode(id, partIndex),
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     @SuppressLint("InlinedApi")
-    private static PendingIntent newSmsDeliveredPendingIntent(Context context, Uri uri, String id) {
+    private static PendingIntent newSmsDeliveredPendingIntent(
+            Context context, Uri uri, String id, int partIndex, int partCount) {
         Intent intent = new Intent(context, SmsDeliveredReceiver.class);
         intent.setAction(ACTION_SMS_DELIVERED);
+        addSmsCallbackMetadata(intent, uri, id, partIndex, partCount);
+        return PendingIntent.getBroadcast(
+                context,
+                callbackRequestCode(id, partIndex),
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static void addSmsCallbackMetadata(
+            Intent intent, Uri uri, String id, int partIndex, int partCount) {
         intent.setData(uri);
-        return PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        intent.putExtra(EXTRA_SMS_MESSAGE_ID, id);
+        intent.putExtra(EXTRA_SMS_PART_INDEX, partIndex);
+        intent.putExtra(EXTRA_SMS_PART_COUNT, partCount);
+    }
+
+    private static int callbackRequestCode(String id, int partIndex) {
+        return 31 * id.hashCode() + partIndex;
     }
 
     @SuppressLint("InlinedApi")
@@ -287,33 +332,61 @@ public class SendService extends IntentService {
     /**
      * Receivers to update content provided when an MMS or SMS has been sent or failed to send
      */
+    private static void recordSmsResult(
+            Context context,
+            Intent intent,
+            SmsStatusTracker.Phase phase,
+            boolean successful) {
+        Uri uri = intent.getData();
+        String messageId = intent.getStringExtra(EXTRA_SMS_MESSAGE_ID);
+        int partIndex = intent.getIntExtra(EXTRA_SMS_PART_INDEX, -1);
+        int partCount = intent.getIntExtra(EXTRA_SMS_PART_COUNT, 0);
+        if (uri == null) {
+            Log.e(TAG, "SMS callback is missing its message URI");
+            return;
+        }
+
+        final SmsStatusTracker.Status status;
+        try {
+            status =
+                    new SmsStatusTracker(new SharedPreferencesSmsStatusStore(context))
+                            .record(messageId, phase, partIndex, partCount, successful);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Invalid SMS callback metadata", e);
+            return;
+        }
+        if (status == SmsStatusTracker.Status.PENDING) {
+            return;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(
+                Mock.Telephony.Sms.Sent.STATUS,
+                status == SmsStatusTracker.Status.COMPLETE
+                        ? Mock.Telephony.Sms.Sent.STATUS_COMPLETE
+                        : Mock.Telephony.Sms.Sent.STATUS_FAILED);
+        try {
+            context.getContentResolver().update(uri, values, null, null);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to persist SMS callback status for " + uri, e);
+        }
+    }
+
     public static final class SmsSentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Uri uri = intent.getData();
-            ContentValues values = new ContentValues();
-            if (getResultCode() == Activity.RESULT_OK) {
-                Log.d(TAG, "SMS sent");
-                values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_COMPLETE);
-            } else {
-                Log.d(TAG, "SMS failed to send");
-                values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_FAILED);
-            }
-            context.getContentResolver().update(uri, values, null, null);
+            boolean successful = getResultCode() == Activity.RESULT_OK;
+            Log.d(TAG, successful ? "SMS part sent" : "SMS part failed to send");
+            recordSmsResult(context, intent, SmsStatusTracker.Phase.SENT, successful);
         }
     }
 
     public static final class SmsDeliveredReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (getResultCode()) {
-                case Activity.RESULT_OK:
-                    Log.d(TAG, "SMS delivered");
-                    break;
-                case Activity.RESULT_CANCELED:
-                    Log.d(TAG, "SMS not delivered");
-                    break;
-            }
+            boolean successful = getResultCode() == Activity.RESULT_OK;
+            Log.d(TAG, successful ? "SMS part delivered" : "SMS part not delivered");
+            recordSmsResult(context, intent, SmsStatusTracker.Phase.DELIVERED, successful);
         }
     }
 
