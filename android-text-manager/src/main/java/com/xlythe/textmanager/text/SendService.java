@@ -15,11 +15,16 @@ import android.util.Log;
 
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.pdu.PduPersister;
+import com.xlythe.textmanager.text.sms.SmsCallbackFactory;
+import com.xlythe.textmanager.text.sms.SmsGateway;
+import com.xlythe.textmanager.text.sms.SmsSendCoordinator;
+import com.xlythe.textmanager.text.sms.SmsSendRequest;
 import com.xlythe.textmanager.text.util.ApnDefaults;
 import com.xlythe.textmanager.text.util.HttpUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
@@ -86,24 +91,67 @@ public class SendService extends IntentService {
     }
 
     private void sendSMS(Text text, Uri uri) {
-        SmsManager sms = SmsManager.getDefault();
         TextManager manager = TextManager.getInstance(this);
         Contact contact = manager.getMembers(text).get().iterator().next();
         if (contact.equals(Contact.UNKNOWN)) {
             return;
         }
-        String address = contact.getNumber();
 
-        ArrayList<String> messages = sms.divideMessage(text.getBody());
-        if (messages.size() > 1) {
-            // TODO: not sure if this works for everyone
-            ArrayList<PendingIntent> sendIntent = new ArrayList<>();
-            ArrayList<PendingIntent> deliveryIntent = new ArrayList<>();
-            sendIntent.add(newSmsSentPendingIntent(this, uri, text.getId()));
-            deliveryIntent.add(newSmsDeliveredPendingIntent(this, uri, text.getId()));
-            sms.sendMultipartTextMessage(address, null, sms.divideMessage(text.getBody()), sendIntent, deliveryIntent);
-        } else {
-            sms.sendTextMessage(address, null, text.getBody(), newSmsSentPendingIntent(this, uri, text.getId()), newSmsDeliveredPendingIntent(this, uri, text.getId()));
+        SmsGateway<PendingIntent> gateway = new AndroidSmsGateway(SmsManager.getDefault());
+        SmsCallbackFactory<PendingIntent> callbackFactory =
+                new SmsCallbackFactory<PendingIntent>() {
+                    @Override
+                    public PendingIntent createSent(
+                            SmsSendRequest request, int partIndex, int partCount) {
+                        return newSmsSentPendingIntent(
+                                SendService.this, uri, request.getMessageId());
+                    }
+
+                    @Override
+                    public PendingIntent createDelivered(
+                            SmsSendRequest request, int partIndex, int partCount) {
+                        return newSmsDeliveredPendingIntent(
+                                SendService.this, uri, request.getMessageId());
+                    }
+                };
+        new SmsSendCoordinator<>(gateway, callbackFactory)
+                .send(new SmsSendRequest(text.getId(), contact.getNumber(), text.getBody()));
+    }
+
+    private static final class AndroidSmsGateway implements SmsGateway<PendingIntent> {
+        private final SmsManager smsManager;
+
+        AndroidSmsGateway(SmsManager smsManager) {
+            this.smsManager = smsManager;
+        }
+
+        @Override
+        public List<String> divideMessage(String body) {
+            return smsManager.divideMessage(body);
+        }
+
+        @Override
+        public void sendText(
+                String recipient,
+                String body,
+                PendingIntent sentCallback,
+                PendingIntent deliveredCallback) {
+            smsManager.sendTextMessage(
+                    recipient, null, body, sentCallback, deliveredCallback);
+        }
+
+        @Override
+        public void sendMultipartText(
+                String recipient,
+                List<String> parts,
+                List<PendingIntent> sentCallbacks,
+                List<PendingIntent> deliveredCallbacks) {
+            smsManager.sendMultipartTextMessage(
+                    recipient,
+                    null,
+                    new ArrayList<>(parts),
+                    new ArrayList<>(sentCallbacks),
+                    new ArrayList<>(deliveredCallbacks));
         }
     }
 
