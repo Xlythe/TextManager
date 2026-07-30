@@ -310,21 +310,6 @@ public class SendService extends Worker {
             Log.e(TAG, "Failed to persist MMS failure for " + uri, e);
         }
     }
-
-    /**
-     * Notify receivers that something has happened with sending a message
-     *
-     * @param pendingIntent intent to notify
-     * @param result result to be updated
-     */
-    private void sendIntent(PendingIntent pendingIntent, int result) {
-        try {
-            pendingIntent.send(result);
-        } catch (PendingIntent.CanceledException e) {
-            Log.e(TAG, "Failed to notified mms sent", e);
-        }
-    }
-
     /**
      * Pending Intents to notify when an MMS or SMS has been sent or failed to send
      */
