@@ -101,7 +101,7 @@ public class InfoActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        recyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(false);
 
         List<Attachment> attachments = manager.getAttachments(thread);
         Collections.reverse(attachments);
