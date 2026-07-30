@@ -203,9 +203,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mMmsId = data.getLong(data.getColumnIndex(Mock.Telephony.Mms._ID));
         mStatus = data.getInt(data.getColumnIndexOrThrow(Mock.Telephony.Mms.STATUS));
 
-        if (mmsCursor != null) {
-            mmsCursor.moveToFirst();
-            while (mmsCursor.moveToNext()) {
+        if (mmsCursor != null && mmsCursor.moveToFirst()) {
+            do {
                 if (mmsCursor.getLong(mmsCursor.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == mMmsId) {
                     String contentType = mmsCursor.getString(mmsCursor.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
                     if (contentType == null) {
@@ -224,7 +223,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                         mAttachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
                     }
                 }
-            }
+            } while (mmsCursor.moveToNext());
         }
     }
 

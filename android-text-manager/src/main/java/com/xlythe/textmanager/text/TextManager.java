@@ -559,8 +559,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
         try (Cursor mms = contentResolver.query(mmsUri, mmsProjection, mmsClause.toString(), mmsArgs, null)) {
             for (Text text : recentTexts) {
-                mms.moveToFirst();
-                while (mms.moveToNext()) {
+                if (!mms.moveToFirst()) {
+                    continue;
+                }
+                do {
                     if (mms.getLong(mms.getColumnIndex(Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
                         String contentType = mms.getString(mms.getColumnIndex(Telephony.Mms.Part.CONTENT_TYPE));
                         if (contentType == null) {
@@ -579,7 +581,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
                         }
                     }
-                }
+                } while (mms.moveToNext());
             }
         }
 

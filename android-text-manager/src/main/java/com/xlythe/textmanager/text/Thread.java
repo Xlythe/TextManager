@@ -49,13 +49,12 @@ public final class Thread implements MessageThread<Text>, Parcelable {
 
         Cursor unreadCursor = ((ThreadCursor) cursor).getUnreadCursor();
         int unreadCount = 0;
-        if (unreadCursor != null) {
-            unreadCursor.moveToFirst();
-            while (unreadCursor.moveToNext()) {
+        if (unreadCursor != null && unreadCursor.moveToFirst()) {
+            do {
                 if (unreadCursor.getLong(unreadCursor.getColumnIndex(THREAD_ID)) == mThreadId) {
                     unreadCount++;
                 }
-            }
+            } while (unreadCursor.moveToNext());
         }
         mUnreadCount = unreadCount;
     }
