@@ -76,9 +76,9 @@ public class SmilHelper {
                         ELEMENT_TAG_AUDIO, document, part.generateLocation());
                 par.appendChild(audioElement);
                 hasMedia = true;
-            } else if (contentType.equals(ContentType.TEXT_VCARD)) {
+            } else if (contentType.equalsIgnoreCase(ContentType.TEXT_VCARD) || contentType.equalsIgnoreCase("text/vcard")) {
                 SMILMediaElement textElement = createMediaElement(
-                        ELEMENT_TAG_VCARD, document, part.generateLocation());
+                        "ref", document, part.generateLocation());
                 par.appendChild(textElement);
                 hasMedia = true;
             } else {
@@ -101,7 +101,7 @@ public class SmilHelper {
             String tag, SMILDocument document, String src) {
         SMILMediaElement mediaElement =
                 (SMILMediaElement) document.createElement(tag);
-        mediaElement.setSrc(escapeXML(src));
+        mediaElement.setSrc(src);
         return mediaElement;
     }
 

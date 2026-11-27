@@ -158,7 +158,7 @@ public class TimeImpl implements Time {
                 // Read Seconds
                 float seconds = parseFloat(timeValues[indexOfMinutes + 1], 0, true);
                 if ((seconds >= 0) && (seconds < 60)) {
-                    result += 60000*seconds;
+                    result += 1000*seconds;
                 } else {
                     throw new IllegalArgumentException();
                 }

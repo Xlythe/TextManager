@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -11,6 +10,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.telephony.SubscriptionManager;
 import android.util.Log;
 
@@ -30,15 +30,16 @@ import com.xlythe.textmanager.text.sms.SmsSendRequest;
 import com.xlythe.textmanager.text.sms.SmsStatusTracker;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.annotation.RequiresPermission;
 import androidx.annotation.WorkerThread;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -66,16 +67,55 @@ public class SendService extends Worker {
     }
 
     static void schedule(Context context, Text text, boolean separateParts, boolean deliveryReports) {
-        Data inputData = new Data.Builder()
-                .putByteArray(EXTRA_TEXT, text.toBytes())
+        schedule(context, text, separateParts, deliveryReports, null, false, false);
+    }
+
+    static void schedule(Context context, Text text, boolean separateParts, boolean deliveryReports,
+            String subject, boolean mmsDeliveryReport, boolean mmsReadReport) {
+        Data.Builder options = new Data.Builder()
+                .putBoolean("mms_delivery_report", mmsDeliveryReport)
+                .putBoolean("mms_read_report", mmsReadReport)
                 .putBoolean(SEPARATE_PARTS, separateParts)
-                .putBoolean(DELIVERY_REPORTS, deliveryReports)
-                .build();
+                .putBoolean(DELIVERY_REPORTS, deliveryReports);
+        enqueue(context, options, text.toBytes(), subject);
+    }
+
+    static void scheduleMms(Context context, byte[] bytes, int subscriptionId) {
+        enqueue(context, new Data.Builder().putBoolean("raw_mms", true)
+                .putInt("subscription_id", subscriptionId), bytes, null);
+    }
+
+    private static void enqueue(Context context, Data.Builder options, byte[] bytes, String subject) {
+        Context app = context.getApplicationContext();
+        WorkManager manager = WorkManager.getInstance(app);
+        QueuedSend.prune(app, manager);
+        UUID id = UUID.randomUUID();
+        Data data;
+        data = null;
+        if (bytes.length <= Data.MAX_DATA_BYTES) {
+            try {
+                data = new Data.Builder().putAll(options.build()).putByteArray(EXTRA_TEXT, bytes)
+                        .putString("mms_subject", subject).build();
+            } catch (IllegalStateException oversized) {
+                // WorkManager includes serialized headers and options in its size limit.
+            }
+        }
+        if (data == null) {
+            try {
+                QueuedSend.write(app, id, bytes, subject);
+            } catch (IOException e) {
+                throw new IllegalStateException("Unable to queue outgoing message", e);
+            }
+            data = options.putBoolean("file_payload", true).build();
+        }
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(SendService.class)
-                .setInputData(inputData)
-                .addTag(WORK_TAG)
-                .build();
-        WorkManager.getInstance(context.getApplicationContext()).enqueue(request);
+                .setId(id).setInputData(data).addTag(WORK_TAG).build();
+        try {
+            manager.enqueue(request);
+        } catch (RuntimeException failure) {
+            if (data.getBoolean("file_payload", false)) QueuedSend.delete(app, id);
+            throw failure;
+        }
     }
 
     public SendService(@NonNull Context context, @NonNull WorkerParameters workerParameters) {
@@ -87,17 +127,24 @@ public class SendService extends Worker {
     @WorkerThread
     @Override
     public Result doWork() {
-        byte[] serializedText = getInputData().getByteArray(EXTRA_TEXT);
+        if (!getInputData().getBoolean("file_payload", false)) {
+            return send(getInputData().getByteArray(EXTRA_TEXT), getInputData().getString("mms_subject"));
+        }
+        try {
+            QueuedSend payload = QueuedSend.read(getApplicationContext(), getId());
+            return send(payload.text, payload.subject);
+        } catch (IOException | RuntimeException e) {
+            Log.e(TAG, "Unable to read queued message", e);
+            return Result.failure();
+        } finally {
+            QueuedSend.delete(getApplicationContext(), getId());
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private Result send(byte[] serializedText, String subject) {
         if (serializedText == null) {
             Log.e(TAG, "Send work is missing its text payload");
-            return Result.failure();
-        }
-
-        final Text text;
-        try {
-            text = Text.fromBytes(serializedText);
-        } catch (RuntimeException e) {
-            Log.e(TAG, "Send work contains an invalid text payload", e);
             return Result.failure();
         }
 
@@ -106,46 +153,67 @@ public class SendService extends Worker {
             Log.e(TAG, "SEND_SMS permission is unavailable");
             return Result.failure();
         }
-
-        if (text.isMms()) {
-            Uri messageUri = null;
-            Uri pduUri = null;
+        final Text text;
+        try {
+            if (getInputData().getBoolean("raw_mms", false)) {
+                GenericPdu parsed = new PduParser(serializedText, true).parse();
+                if (!(parsed instanceof SendReq)) return Result.failure();
+                return dispatchMms((SendReq) parsed, serializedText, "-1", getInputData().getInt("subscription_id", -1));
+            }
+            text = Text.fromBytes(serializedText);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Invalid queued message", e);
+            return Result.failure();
+        }
+        boolean deliveryReport = getInputData().getBoolean("mms_delivery_report", false);
+        boolean readReport = getInputData().getBoolean("mms_read_report", false);
+        if (text.isMms() || subject != null || deliveryReport || readReport) {
             try {
-                SendReq request = text.getSendRequest(context);
-                messageUri = storeMMS(text, request);
-                if (messageUri == null) return Result.failure();
-                byte[] data = text.getByteData();
-                if (data == null || data.length == 0) {
-                    throw new IOException("Invalid outgoing MMS size");
-                }
-                if (Build.VERSION.SDK_INT < 21) {
-                    verifyConfirmation(request, LegacyMmsTransport.transfer(context, null, data));
-                    finishMms(context, messageUri, true);
-                    return Result.success();
-                }
-                pduUri = MmsPduStore.write(context, data);
-                PendingIntent sentIntent =
-                        newMmsSentPendingIntent(context, messageUri, pduUri, text.getId());
-                sendMMS(text, pduUri, sentIntent);
-            } catch (IOException | RuntimeException e) {
-                Log.e(TAG, "Failed to send MMS", e);
-                if (pduUri != null) {
-                    MmsPduStore.delete(context, pduUri);
-                }
-                if (messageUri != null) finishMms(context, messageUri, false);
+                SendReq request = text.getSendRequest(context, subject, deliveryReport, readReport);
+                return dispatchMms(request, text.getByteData(), text.getId(), text.getSubscriptionId());
+            } catch (RuntimeException failed) {
+                Log.e(TAG, "Could not compose outgoing MMS", failed);
                 return Result.failure();
             }
-        } else {
-            return sendSMS(text) ? Result.success() : Result.failure();
         }
-        return Result.success();
+        return sendSMS(text) ? Result.success() : Result.failure();
+    }
+
+    @SuppressLint("MissingPermission")
+    private Result dispatchMms(SendReq request, byte[] data, String id, int subscription) {
+        Context context = getApplicationContext();
+        Uri messageUri = null;
+        Uri file = null;
+        try {
+            if (data == null || data.length == 0 || data.length > MmsPduStore.MAX_PDU_BYTES) return Result.failure();
+            messageUri = storeMMS(id, subscription, request);
+            if (messageUri == null) return Result.failure();
+            if (Build.VERSION.SDK_INT < 21) {
+                SendConf confirmation = verifyConfirmation(request.getTransactionId(), LegacyMmsTransport.transfer(context, null, data));
+                finishMms(context, messageUri, true, confirmation.getMessageId());
+            } else {
+                file = MmsPduStore.write(context, data);
+                PendingIntent sent = newMmsSentPendingIntent(context, messageUri, file, request.getTransactionId());
+                resolveSmsManager(subscription).sendMultimediaMessage(context, file, null, null, sent);
+            }
+            return Result.success();
+        } catch (IOException | RuntimeException failed) {
+            Log.e(TAG, "Failed to send MMS", failed);
+            if (file != null) MmsPduStore.delete(context, file);
+            if (messageUri != null) finishMms(context, messageUri, false, null);
+            return Result.failure();
+        }
     }
 
     private Uri storeSMS(Text text, String address) {
         ContentValues values = new ContentValues();
         Uri uri = Mock.Telephony.Sms.Sent.CONTENT_URI;
+        if (Build.VERSION.SDK_INT >= 22 && text.getSubscriptionId() >= 0) {
+            values.put(Mock.Telephony.Sms.SUBSCRIPTION_ID, text.getSubscriptionId());
+        }
         values.put(Mock.Telephony.Sms.ADDRESS, address);
         values.put(Mock.Telephony.Sms.BODY, text.getBody());
+        values.put(Mock.Telephony.Sms.DATE, text.getTimestamp());
         values.put(Mock.Telephony.Sms.Sent.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
         String clause = Mock.Telephony.Sms._ID + " = ?";
         String[] selectionArgs = new String[] {text.getId()};
@@ -172,7 +240,7 @@ public class SendService extends Worker {
 
         final SmsSendRequest request;
         try {
-            request = new SmsSendRequest(text.getId(), contact.getNumber(), text.getBody());
+            request = new SmsSendRequest(text.getId(), contact.getMobileNumber(getApplicationContext()).get(), text.getBody());
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid outgoing SMS", e);
             return false;
@@ -306,11 +374,10 @@ public class SendService extends Worker {
 
     @SuppressLint("InlinedApi")
     @Nullable
-    private Uri storeMMS(Text text, SendReq request) {
+    private Uri storeMMS(String id, int subscription, SendReq request) {
         PduPersister p = PduPersister.getPduPersister(getApplicationContext());
 
         Uri uri;
-        String id = text.getId();
         if (Long.parseLong(id) != -1) {
             uri = Uri.withAppendedPath(Mock.Telephony.Mms.Sent.CONTENT_URI, id);
         } else {
@@ -324,18 +391,13 @@ public class SendService extends Worker {
         }
 
         ContentValues values = new ContentValues();
+        if (Build.VERSION.SDK_INT >= 22 && subscription >= 0) {
+            values.put(Mock.Telephony.Mms.SUBSCRIPTION_ID, subscription);
+        }
         values.put(Mock.Telephony.Mms.STATUS, Mock.Telephony.Sms.Sent.STATUS_PENDING);
         getApplicationContext().getContentResolver().update(uri, values, null, null);
 
         return uri;
-    }
-
-    /** Dispatches the raw PDU to Android's telephony-managed MMS transport. */
-    @RequiresApi(21)
-    private void sendMMS(Text text, Uri pduUri, PendingIntent sentMmsPendingIntent) {
-        SmsManager smsManager = resolveSmsManager(text.getSubscriptionId());
-        smsManager.sendMultimediaMessage(
-                getApplicationContext(), pduUri, null, null, sentMmsPendingIntent);
     }
 
     /**
@@ -365,7 +427,7 @@ public class SendService extends Worker {
                 context,
                 callbackRequestCode(id, partIndex),
                 intent,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+                Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
     }
 
     private static void addSmsCallbackMetadata(
@@ -382,16 +444,17 @@ public class SendService extends Worker {
 
     @SuppressLint("InlinedApi")
     private static PendingIntent newMmsSentPendingIntent(
-            Context context, Uri messageUri, Uri pduUri, String id) {
+            Context context, Uri messageUri, Uri pduUri, byte[] transactionId) {
         Intent intent = new Intent(context, MmsSentReceiver.class);
         intent.setAction(ACTION_MMS_SENT);
         intent.setData(messageUri);
         intent.putExtra(EXTRA_MMS_PDU_URI, pduUri);
+        intent.putExtra("transaction_id", transactionId);
         return PendingIntent.getBroadcast(
                 context,
-                id.hashCode(),
+                pduUri.hashCode(),
                 intent,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent.FLAG_ONE_SHOT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0));
     }
 
     /**
@@ -450,10 +513,35 @@ public class SendService extends Worker {
     public static final class SmsDeliveredReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean successful = getResultCode() == Activity.RESULT_OK;
-            Log.d(TAG, successful ? "SMS part delivered" : "SMS part not delivered");
-            recordSmsResult(context, intent, SmsStatusTracker.Phase.DELIVERED, successful);
+            if (getResultCode() != Activity.RESULT_OK) {
+                recordSmsResult(context, intent, SmsStatusTracker.Phase.DELIVERED, false);
+                return;
+            }
+            byte[] pdu = intent.getByteArrayExtra("pdu");
+            if (pdu == null) return;
+            String format = intent.getStringExtra("format");
+            SmsMessage report = Build.VERSION.SDK_INT >= 23 && format != null
+                    ? SmsMessage.createFromPdu(pdu, format) : SmsMessage.createFromPdu(pdu);
+            if (report == null) return;
+            boolean cdma = "3gpp2".equals(format) || (report.getStatus() >>> 16) != 0;
+            if (!cdma && !report.isStatusReportMessage()) return;
+            SmsStatusTracker.Status status = deliveryStatus(report.getStatus(), cdma);
+            if (status != SmsStatusTracker.Status.PENDING) {
+                recordSmsResult(context, intent, SmsStatusTracker.Phase.DELIVERED, status == SmsStatusTracker.Status.COMPLETE);
+            }
         }
+    }
+
+    static SmsStatusTracker.Status deliveryStatus(int status, boolean cdma) {
+        if (cdma) {
+            int errorClass = (status >>> 24) & 3;
+            if (errorClass == 3) return SmsStatusTracker.Status.FAILED;
+            if (errorClass == 0 && ((status >>> 16) & 255) == 2) return SmsStatusTracker.Status.COMPLETE;
+            return SmsStatusTracker.Status.PENDING;
+        }
+        if (status < 0x20) return SmsStatusTracker.Status.COMPLETE;
+        if (status < 0x40) return SmsStatusTracker.Status.PENDING;
+        return SmsStatusTracker.Status.FAILED;
     }
 
     public static final class MmsSentReceiver extends BroadcastReceiver {
@@ -470,22 +558,34 @@ public class SendService extends Worker {
                 Log.e(TAG, "MMS callback is missing its message URI");
                 return;
             }
-            finishMms(applicationContext, messageUri, getResultCode() == Activity.RESULT_OK);
+            boolean sent = getResultCode() == Activity.RESULT_OK;
+            byte[] id = null;
+            byte[] response = intent.getByteArrayExtra(SmsManager.EXTRA_MMS_DATA);
+            if (sent && response != null) {
+                try {
+                    id = verifyConfirmation(intent.getByteArrayExtra("transaction_id"), response).getMessageId();
+                } catch (IOException | RuntimeException invalid) {
+                    sent = false;
+                }
+            }
+            finishMms(applicationContext, messageUri, sent, id);
         }
     }
 
-    static void verifyConfirmation(SendReq request, byte[] bytes) throws IOException {
+    static SendConf verifyConfirmation(byte[] transaction, byte[] bytes) throws IOException {
         GenericPdu response = new PduParser(bytes, true).parse();
         if (!(response instanceof SendConf)) throw new IOException("MMSC did not return a send confirmation");
         SendConf confirmation = (SendConf) response;
         if (confirmation.getResponseStatus() != PduHeaders.RESPONSE_STATUS_OK
-                || !Arrays.equals(request.getTransactionId(), confirmation.getTransactionId())) {
+                || !Arrays.equals(transaction, confirmation.getTransactionId())) {
             throw new IOException("MMSC rejected the message or returned a different transaction");
         }
+        return confirmation;
     }
 
-    private static void finishMms(Context context, Uri messageUri, boolean success) {
+    private static void finishMms(Context context, Uri messageUri, boolean success, byte[] id) {
         ContentValues values = new ContentValues();
+        if (id != null) values.put(Mock.Telephony.Mms.MESSAGE_ID, new String(id, Charset.forName("ISO-8859-1")));
         values.put(Mock.Telephony.Mms.STATUS, success ? Mock.Telephony.Sms.Sent.STATUS_COMPLETE : Mock.Telephony.Sms.Sent.STATUS_FAILED);
         try {
             context.getContentResolver().update(messageUri, values, null, null);

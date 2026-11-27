@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text.pdu;
 
+import java.nio.charset.Charset;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -43,7 +44,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -389,8 +389,15 @@ public class PduPersister {
                     if (ContentType.TEXT_PLAIN.equals(type) || ContentType.APP_SMIL.equals(type)
                             || ContentType.TEXT_HTML.equals(type)) {
                         String text = c.getString(PART_COLUMN_TEXT);
-                        byte [] blob = new EncodedStringValue(text != null ? text : "")
-                                .getTextString();
+                        String charsetName = CharacterSets.MIMENAME_UTF_8;
+                        if (part.getCharset() != CharacterSets.ANY_CHARSET) {
+                            try {
+                                charsetName = CharacterSets.getMimeName(part.getCharset());
+                            } catch (UnsupportedEncodingException unknown) {
+                                charsetName = CharacterSets.MIMENAME_ISO_8859_1;
+                            }
+                        }
+                        byte[] blob = (text == null ? "" : text).getBytes(Charset.forName(charsetName));
                         baos.write(blob, 0, blob.length);
                     } else {
                         try {
@@ -473,26 +480,22 @@ public class PduPersister {
         PduCacheEntry cacheEntry;
         int msgBox = 0;
         long threadId = -1;
-        try {
-            synchronized(PDU_CACHE_INSTANCE) {
-                if (PDU_CACHE_INSTANCE.isUpdating(uri)) {
-                    if (LOCAL_LOGV) {
-                        Log.v(TAG, "load: " + uri + " blocked by isUpdating()");
-                    }
-                    try {
-                        PDU_CACHE_INSTANCE.wait();
-                    } catch (InterruptedException e) {
-                        Log.e(TAG, "load: ", e);
-                    }
-                    cacheEntry = PDU_CACHE_INSTANCE.get(uri);
-                    if (cacheEntry != null) {
-                        return cacheEntry.getPdu();
-                    }
+        synchronized (PDU_CACHE_INSTANCE) {
+            boolean waited = false;
+            while (PDU_CACHE_INSTANCE.isUpdating(uri)) {
+                waited = true;
+                try {
+                    PDU_CACHE_INSTANCE.wait();
+                } catch (InterruptedException e) {
+                    java.lang.Thread.currentThread().interrupt();
+                    throw new MmsException("Interrupted waiting for MMS", e);
                 }
-                // Tell the cache to indicate to other callers that this item
-                // is currently being updated.
-                PDU_CACHE_INSTANCE.setUpdating(uri, true);
             }
+            cacheEntry = PDU_CACHE_INSTANCE.get(uri);
+            if (waited && cacheEntry != null) return cacheEntry.getPdu();
+            PDU_CACHE_INSTANCE.setUpdating(uri, true);
+        }
+        try {
             Cursor c = mContentResolver.query( uri,
                     PDU_PROJECTION, null, null, null);
             PduHeaders headers = new PduHeaders();
@@ -598,7 +601,6 @@ public class PduPersister {
         } finally {
             synchronized(PDU_CACHE_INSTANCE) {
                 if (pdu != null) {
-                    assert(PDU_CACHE_INSTANCE.get(uri) == null);
                     // Update the cache entry with the real info
                     cacheEntry = new PduCacheEntry(pdu, msgBox, threadId);
                     PDU_CACHE_INSTANCE.put(uri, cacheEntry);
@@ -710,7 +712,7 @@ public class PduPersister {
                     || ContentType.APP_SMIL.equals(contentType)
                     || ContentType.TEXT_HTML.equals(contentType)) {
                 ContentValues cv = new ContentValues();
-                cv.put(Mock.Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString());
+                cv.put(Mock.Telephony.Mms.Part.TEXT, new EncodedStringValue(part.getCharset(), data).getString());
                 if (mContentResolver.update(uri, cv, null, null) != 1) {
                     throw new MmsException("unable to update " + uri.toString());
                 }
@@ -965,7 +967,7 @@ public class PduPersister {
         }
         if (!recipients.isEmpty()) {
             long threadId = getOrCreateThreadId(mContext, recipients);
-            values.put(Mms.THREAD_ID, threadId);
+            if (threadId >= 0) values.put(Mms.THREAD_ID, threadId);
         }
         mContentResolver.update(uri, values, null, null);
     }
@@ -1213,6 +1215,8 @@ public class PduPersister {
                     break;
                 case PduHeaders.MESSAGE_TYPE_SEND_REQ:
                     loadRecipients(PduHeaders.TO, recipients, addressMap, false);
+                    loadRecipients(PduHeaders.CC, recipients, addressMap, false);
+                    loadRecipients(PduHeaders.BCC, recipients, addressMap, false);
                     break;
             }
             long threadId = 0;
@@ -1221,7 +1225,7 @@ public class PduPersister {
                 // correct thread.
                 threadId = getOrCreateThreadId(mContext, recipients);
             }
-            values.put(Mms.THREAD_ID, threadId);
+            if (threadId >= 0) values.put(Mms.THREAD_ID, threadId);
         }
         // Save parts first to avoid inconsistent message is loaded
         // while saving the parts.
@@ -1433,8 +1437,7 @@ public class PduPersister {
             }
         }
 
-        Random random = new Random();
-        return random.nextLong();
+        return -1;
     }
 
     /**

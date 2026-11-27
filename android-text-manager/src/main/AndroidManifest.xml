@@ -30,6 +30,8 @@
             android:name=".text.MmsReceiveService$MmsDownloadedReceiver"
             android:exported="false" />
 
+        <receiver android:name=".text.MmsReceiveService$ResponseSentReceiver" android:exported="false" />
+
         <!-- BroadcastReceiver that listens for incoming SMS messages -->
         <receiver
             android:name=".text.receiver.SmsReceiver"

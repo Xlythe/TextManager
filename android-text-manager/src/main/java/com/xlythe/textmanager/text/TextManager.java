@@ -1,17 +1,19 @@
 package com.xlythe.textmanager.text;
 
+import java.util.Iterator;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.PendingIntent;
 import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -23,26 +25,25 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.LruCache;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
 import com.xlythe.textmanager.MessageManager;
 import com.xlythe.textmanager.MessageObserver;
 import com.xlythe.textmanager.text.concurrency.Future;
 import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
-import com.xlythe.textmanager.text.exception.MmsException;
-import com.xlythe.textmanager.text.pdu.PduParser;
+import com.xlythe.textmanager.text.pdu.PduHeaders;
+import com.xlythe.textmanager.text.pdu.PduComposer;
+import com.xlythe.textmanager.text.pdu.SendReq;
+import com.xlythe.textmanager.text.mms.MmsPduStore;
+import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.pdu.PduPersister;
-import com.xlythe.textmanager.text.pdu.RetrieveConf;
 import com.xlythe.textmanager.text.util.PreKitKatUtils;
 import com.xlythe.textmanager.text.Mock.Telephony;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -61,7 +62,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     static final String TAG = TextManager.class.getSimpleName();
     static final boolean DEBUG = false;
     private static final int COLUMN_CONTENT_LOCATION = 0;
-    private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";
     private static final String TEXT_EXTRA = "text";
     private static final String[] PROJECTION = messageProjection();
@@ -97,18 +97,53 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static TextManager sTextManager;
 
     public static synchronized TextManager getInstance(Context context) {
-        if (sTextManager == null) {
-            sTextManager = new TextManager(context.getApplicationContext());
+        Context app = context.getApplicationContext();
+        if (sTextManager == null || sTextManager.mContext != app) {
+            sTextManager = new TextManager(app);
         }
         return sTextManager;
     }
 
     private final Context mContext;
     private final MessageObserverRegistry mObservers = new MessageObserverRegistry();
-    private final LruCache<String, Contact> mContactCache = new LruCache<>(CACHE_SIZE);
 
     private TextManager(Context context) {
         mContext = context;
+    }
+
+    public static final class MmsDetails {
+        public final String subject;
+        public final String messageId;
+        public final boolean readReportRequested;
+
+        private MmsDetails(String subject, String messageId, boolean readReportRequested) {
+            this.subject = subject;
+            this.messageId = messageId;
+            this.readReportRequested = readReportRequested;
+        }
+    }
+
+    /** Carrier headers for a stored message, including the ID delivered in MMS report callbacks. */
+    @Nullable
+    public MmsDetails getMmsDetails(Text message) {
+        if (!message.isMms() || message.getIdAsLong() < 0
+                || !TelephonyPermissions.has(mContext, Manifest.permission.READ_SMS)) return null;
+        Uri uri = ContentUris.withAppendedId(Telephony.Mms.CONTENT_URI, message.getIdAsLong());
+        String[] columns = {Telephony.Mms.SUBJECT, Telephony.Mms.SUBJECT_CHARSET, Telephony.Mms.MESSAGE_ID, Telephony.Mms.READ_REPORT};
+        try (Cursor c = mContext.getContentResolver().query(uri, columns, null, null, null)) {
+            if (c == null || !c.moveToFirst()) return null;
+            String subject = c.getString(0);
+            if (subject != null) subject = new EncodedStringValue(c.getInt(1), PduPersister.getBytes(subject)).getString();
+            return new MmsDetails(subject, c.getString(2), c.getInt(3) == PduHeaders.VALUE_YES);
+        } catch (SecurityException denied) {
+            return null;
+        }
+    }
+
+    /** Call once, with the user's consent, when an incoming MMS is read or deleted unread. */
+    @WorkerThread
+    public void sendMmsReadReport(Text message, boolean deletedUnread) {
+        MmsReceiveService.scheduleReadReport(mContext, message, deletedUnread);
     }
 
     public void downloadAttachment(Text text) {
@@ -156,8 +191,13 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         private final Context mContext;
         @Nullable private final String mMessage;
         @Nullable private final Attachment mAttachment;
+        private final List<Attachment> additionalAttachments = new ArrayList<>();
+        private String mSubject;
+        private boolean mMmsDeliveryReport;
+        private boolean mMmsReadReport;
         private boolean mSeparateParts;
         private boolean mDeliveryReports = true;
+        private boolean explicitSubscription;
         private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
         private Builder(Context context, @NonNull String message) {
@@ -179,15 +219,37 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
 
         private void send(Text.Builder builder) {
+            send(builder, mSubscriptionId);
+        }
+
+        private void send(Text.Builder builder, int subscription) {
             if (mMessage != null) {
                 builder.message(mMessage);
             }
             if (mAttachment != null) {
                 builder.attach(mAttachment);
             }
-            builder.subscriptionId(mSubscriptionId);
+            for (Attachment attachment : additionalAttachments) builder.addAttachment(attachment);
+            builder.subscriptionId(subscription);
 
-            SendService.schedule(mContext, builder.build(), mSeparateParts, mDeliveryReports);
+            SendService.schedule(mContext, builder.build(), mSeparateParts, mDeliveryReports, mSubject, mMmsDeliveryReport, mMmsReadReport);
+        }
+
+        public Builder addAttachment(Attachment attachment) {
+            if (attachment == null) throw new IllegalArgumentException("Missing attachment");
+            additionalAttachments.add(attachment);
+            return this;
+        }
+
+        public Builder subject(String subject) {
+            mSubject = subject;
+            return this;
+        }
+
+        public Builder requestMmsReports(boolean delivery, boolean read) {
+            mMmsDeliveryReport = delivery;
+            mMmsReadReport = read;
+            return this;
         }
 
         /** Send long SMS as independent messages instead of concatenated multipart SMS. */
@@ -208,12 +270,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     && subscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
                 throw new IllegalArgumentException("subscriptionId must be valid or INVALID_SUBSCRIPTION_ID");
             }
+            explicitSubscription = true;
             mSubscriptionId = subscriptionId;
             return this;
         }
 
         public void to(String... addresses) {
-            send(new Text.Builder().addRecipients(mContext, addresses));
+            Text.Builder builder = new Text.Builder();
+            for (String address : addresses) builder.addRecipient(mSubscriptionId < 0 ? lookupContact(address) : lookupContact(address, mSubscriptionId));
+            send(builder);
         }
 
         public void to(Collection<Contact> addresses) {
@@ -224,11 +289,33 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             send(new Text.Builder().addRecipients(addresses));
         }
         public void to(Text text) {
-            getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
+            getMembersExceptMe(text).get(contacts -> send(new Text.Builder().addRecipients(contacts),
+                    explicitSubscription ? mSubscriptionId : text.getSubscriptionId()));
         }
         public void to(Thread thread) {
-            getMembersExceptMe(thread.getLatestMessage()).get(contacts -> send(new Text.Builder().addRecipients(contacts)));
+            to(thread.getLatestMessage());
         }
+    }
+
+    /** Queue a complete MM1 Send.req, including Cc, Bcc, priority, expiry and MIME body. */
+    @WorkerThread
+    public void sendMms(SendReq request, int subscriptionId) {
+        if (subscriptionId < -1) throw new IllegalArgumentException("Invalid subscription");
+        byte[] bytes = new PduComposer(mContext, request).make();
+        if (bytes == null || bytes.length > MmsPduStore.MAX_PDU_BYTES) {
+            throw new IllegalArgumentException("Invalid or oversized MMS send request");
+        }
+        SendService.scheduleMms(mContext, bytes, subscriptionId);
+    }
+
+    /** Send a single binary SMS to an application port. The platform supplies the callback results. */
+    @RequiresPermission(Manifest.permission.SEND_SMS)
+    public void sendDataSms(String destination, int port, byte[] payload, int subscriptionId,
+            PendingIntent sent, PendingIntent delivered) {
+        if (TextUtils.isEmpty(destination) || port < 0 || port > 65535 || payload == null || payload.length == 0) {
+            throw new IllegalArgumentException("Missing destination, invalid port or empty data SMS");
+        }
+        SendService.resolveSmsManager(subscriptionId).sendDataMessage(destination, null, (short) port, payload, sent, delivered);
     }
 
     public Builder send(String message) {
@@ -497,21 +584,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                             continue;
                         }
                         do {
-                            if (mms.getLong(mms.getColumnIndexOrThrow(Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
-                                String contentType = mms.getString(mms.getColumnIndexOrThrow(Telephony.Mms.Part.CONTENT_TYPE));
-                                if (contentType == null) {
-                                    continue;
-                                }
-
-                                if (contentType.matches("image/.*")) {
-                                    long partId = mms.getLong(mms.getColumnIndexOrThrow(BaseColumns._ID));
-                                    text.setAttachment(new ImageAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
-                                } else if (contentType.matches("text/.*")) {
-                                    text.setBody(mms.getString(mms.getColumnIndexOrThrow(Telephony.Mms.Part.TEXT)));
-                                } else if (contentType.matches("video/.*")) {
-                                    long partId = mms.getLong(mms.getColumnIndexOrThrow(BaseColumns._ID));
-                                    text.setAttachment(new VideoAttachment(Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId)));
-                                }
+                            if (text.isMms() && mms.getLong(mms.getColumnIndexOrThrow(Telephony.Mms.Part.MSG_ID)) == text.getIdAsLong()) {
+                                text.readPart(mms);
                             }
                         } while (mms.moveToNext());
                     }
@@ -541,10 +615,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         List<Attachment> attachments = new ArrayList<>();
         List<String> ids = new ArrayList<>();
         ContentResolver resolver = mContext.getContentResolver();
-        String[] messageProjection = new String[]{
-                BaseColumns._ID,
-                Telephony.Mms.TEXT_ONLY
-        };
+        String[] messageProjection = {BaseColumns._ID};
 
         try (Cursor messages = resolver.query(
                 Telephony.Mms.CONTENT_URI,
@@ -556,9 +627,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                 return attachments;
             }
             while (messages.moveToNext()) {
-                if (messages.getInt(messages.getColumnIndexOrThrow(Telephony.Mms.TEXT_ONLY)) == 0) {
-                    ids.add(messages.getString(messages.getColumnIndexOrThrow(BaseColumns._ID)));
-                }
+                ids.add(messages.getString(messages.getColumnIndexOrThrow(BaseColumns._ID)));
             }
         }
 
@@ -590,11 +659,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
                 long partId = parts.getLong(parts.getColumnIndexOrThrow(BaseColumns._ID));
                 Uri partUri = Uri.withAppendedPath(Telephony.Mms.CONTENT_URI, "part/" + partId);
-                if (contentType.matches("image/.*")) {
-                    attachments.add(new ImageAttachment(partUri));
-                } else if (contentType.matches("video/.*")) {
-                    attachments.add(new VideoAttachment(partUri));
-                }
+                Attachment attachment = Attachment.fromPart(contentType, partUri);
+                if (attachment != null) attachments.add(attachment);
             }
         }
         return attachments;
@@ -708,9 +774,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public Contact.ContactCursor getContactCursor(Contact.Sort sortOrder) {
-        ContentResolver contentResolver = mContext.getContentResolver();
-        Uri uri = ContactsContract.Contacts.CONTENT_URI;
-        return new Contact.ContactCursor(contentResolver.query(uri, null, null, null, sortOrder.getKey()));
+        return queryContacts(ContactsContract.Contacts.CONTENT_URI, null, sortOrder);
     }
 
     public Contact.ContactCursor getContactCursor(String partialName) {
@@ -718,80 +782,121 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public Contact.ContactCursor getContactCursor(String partialName, Contact.Sort sortOrder) {
-        String clause = String.format("%s = 1",
-                ContactsContract.PhoneLookup.HAS_PHONE_NUMBER);
-
-        ContentResolver contentResolver = mContext.getContentResolver();
-        Uri uri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_FILTER_URI, partialName);
-        return new Contact.ContactCursor(contentResolver.query(uri, null, clause, null, sortOrder.getKey()));
+        Uri uri = ContactsContract.Contacts.CONTENT_FILTER_URI.buildUpon().appendPath(partialName).build();
+        return queryContacts(uri, ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1", sortOrder);
     }
 
-    /**
-     * Sanitizes a phone number, stripping out any extensions and country codes.
-     *
-     * WARNING: If you then try to send a text to this number (and it was international),
-     * the text will not send. The country code was stripped out.
-     */
-    private String sanitizeNumber(String phoneNumber) {
-        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-        try {
-            Phonenumber.PhoneNumber numberProto = phoneUtil.parse(phoneNumber, Locale.getDefault().getCountry());
-            return Long.toString(numberProto.getNationalNumber());
-        } catch (NumberParseException e) {
-            e.printStackTrace();
-        }
-        return phoneNumber;
-    }
-
-    public Contact lookupContact(String phoneNumber) {
-        if (TextUtils.isEmpty(phoneNumber)) return Contact.UNKNOWN;
-        if (!TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) {
-            return new Contact(phoneNumber);
-        }
-        String sanitizedNumber = sanitizeNumber(phoneNumber);
-        if (sanitizedNumber == null) {
-            return Contact.UNKNOWN;
-        }
-        Contact contact = mContactCache.get(phoneNumber);
-        if (contact == null) {
-            Cursor c;
-            if (phoneNumber.matches(".*\\d+.*")) {
-                // Found a phone number (probably). We'll look up using the sanitized number,
-                // as that will match even if the international number is stored as a contact.
-                ContentResolver contentResolver = mContext.getContentResolver();
-                Uri uri = Uri.withAppendedPath(
-                        ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                        Uri.encode(sanitizedNumber));
-
-                c = contentResolver.query(uri, null, null, null, null);
-            } else {
-                // This isn't a phone number! This is a name!
-                c = getContactCursor(phoneNumber);
-            }
-
+    private Contact.ContactCursor queryContacts(Uri uri, String selection, Contact.Sort order) {
+        if (TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) {
             try {
-                if (c != null && c.moveToFirst()) {
-                    contact = new Contact(phoneNumber, c);
-                } else {
-                    // There was no contact with this number. Use the full (unsanitized) number
-                    // so that we don't lose any information (such as country code).
-                    contact = new Contact(phoneNumber);
+                Cursor c = mContext.getContentResolver().query(uri, null, selection, null, order.getKey());
+                if (c != null) return new Contact.ContactCursor(c);
+            } catch (SecurityException revoked) {
+                // Return an empty cursor if the grant changed during the query.
+            }
+        }
+        return new Contact.ContactCursor(new MatrixCursor(new String[]{BaseColumns._ID}));
+    }
 
-                    if (TextUtils.isEmpty(contact.getNumber())) {
-                        contact = Contact.UNKNOWN;
+    /** Personal dialing records on one active SIM. Android exposes this provider from API 31. */
+    public List<Contact> getSimContacts(int subscriptionId) {
+        if (Build.VERSION.SDK_INT < 31 || subscriptionId < 0
+                || !TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) return Collections.emptyList();
+        return SimContacts.read(mContext.getContentResolver(), subscriptionId);
+    }
+
+    public List<Contact> getSimContacts() {
+        List<Contact> contacts = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= 31 && TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) {
+            for (int sub : SimContacts.subscriptions(mContext.getContentResolver())) contacts.addAll(getSimContacts(sub));
+        }
+        return contacts;
+    }
+
+    public Contact lookupContact(String address) {
+        int subscription = Build.VERSION.SDK_INT >= 24 ? SubscriptionManager.getDefaultSmsSubscriptionId() : -1;
+        return lookupContact(address, subscription);
+    }
+
+    String dialingRegion(int subscription) {
+        try {
+            TelephonyManager phone = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+            if (phone != null) {
+                if (Build.VERSION.SDK_INT >= 24 && subscription >= 0) phone = phone.createForSubscriptionId(subscription);
+                if (phone != null) {
+                    String iso = phone.getSimCountryIso();
+                    if (!TextUtils.isEmpty(iso)) return iso;
+                    iso = phone.getNetworkCountryIso();
+                    if (!TextUtils.isEmpty(iso)) return iso;
+                }
+            }
+        } catch (SecurityException | UnsupportedOperationException unavailable) {
+            // Devices without a usable telephony subscription can still resolve local contacts.
+        }
+        return Locale.getDefault().getCountry();
+    }
+
+    public Contact lookupContact(String address, int subscriptionId) {
+        if (address != null && address.matches("[\\p{L}][\\p{L} .'-]*")
+                && TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) {
+            Contact selected = null;
+            try (Contact.ContactCursor rows = getContactCursor(address)) {
+                while (rows.moveToNext()) {
+                    Contact candidate = rows.getContact();
+                    if (address.equalsIgnoreCase(candidate.getDisplayName())) {
+                        if (selected != null) return Contact.UNKNOWN;
+                        selected = candidate;
                     }
                 }
-            } finally {
-                if (c != null) c.close();
             }
-            mContactCache.put(phoneNumber, contact);
+            if (selected != null) return selected;
         }
-        return contact;
+        return lookupAddress(address, subscriptionId);
+    }
+
+    private Contact lookupAddress(String address, int subscriptionId) {
+        if (TextUtils.isEmpty(address)) return Contact.UNKNOWN;
+        Contact fallback = new Contact(address);
+        if (!TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) return fallback;
+        String region = dialingRegion(subscriptionId);
+        String key = PhoneNumbers.normalize(address, region);
+        boolean email = address.contains("@");
+        Uri base = email ? ContactsContract.CommonDataKinds.Email.CONTENT_LOOKUP_URI
+                : ContactsContract.PhoneLookup.CONTENT_FILTER_URI;
+        try (Cursor rows = mContext.getContentResolver().query(base.buildUpon().appendPath(key).build(),
+                null, null, null, null)) {
+            while (rows != null && rows.moveToNext()) {
+                String stored = email ? rows.getString(rows.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Email.ADDRESS))
+                        : rows.getString(rows.getColumnIndexOrThrow(ContactsContract.PhoneLookup.NUMBER));
+                if (email ? address.equalsIgnoreCase(stored) : key.equals(PhoneNumbers.normalize(stored, region))) {
+                    return new Contact(address, rows);
+                }
+            }
+        } catch (SecurityException revoked) {
+            return fallback;
+        }
+        if (!email) {
+            List<Contact> matches = subscriptionId >= 0 ? getSimContacts(subscriptionId) : getSimContacts();
+            Contact match = null;
+            for (Contact sim : matches) {
+                if (key.equals(PhoneNumbers.normalize(sim.getNumber(), region))) {
+                    if (match != null) return fallback;
+                    match = new Contact(address, sim.getDisplayName(), sim.getSimRecordUri());
+                }
+            }
+            if (match != null) return match;
+        }
+        return fallback;
     }
 
     @Nullable
     @SuppressLint({"HardwareIds", "InlinedApi", "MissingPermission"})
     public String getPhoneNumber() {
+        return getPhoneNumber(-1);
+    }
+
+    @SuppressLint({"HardwareIds", "MissingPermission"})
+    String getPhoneNumber(int subscription) {
         if (!TelephonyPermissions.canReadPhoneNumber(mContext)) {
             return null;
         }
@@ -801,7 +906,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         (SubscriptionManager) mContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
                 if (subscriptionManager != null) {
                     String phoneNumber = subscriptionManager.getPhoneNumber(
-                            SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
+                            subscription < 0 ? SubscriptionManager.getDefaultSmsSubscriptionId() : subscription);
                     if (!TextUtils.isEmpty(phoneNumber)) {
                         return phoneNumber;
                     }
@@ -810,6 +915,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
             TelephonyManager telephonyManager =
                     (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+            if (Build.VERSION.SDK_INT >= 24 && subscription >= 0 && telephonyManager != null) {
+                telephonyManager = telephonyManager.createForSubscriptionId(subscription);
+            }
             return telephonyManager == null ? null : telephonyManager.getLine1Number();
         } catch (SecurityException | UnsupportedOperationException e) {
             Log.w(TAG, "Phone number is unavailable", e);
@@ -838,11 +946,12 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         == text.getMmsId()) {
                     String address = addresses.getString(
                             addresses.getColumnIndex(Telephony.Mms.Addr.ADDRESS));
-                    if (addresses.getLong(addresses.getColumnIndex(Telephony.Mms.Addr.TYPE))
-                            == Text.TYPE_SENDER) {
+                    int type = addresses.getInt(addresses.getColumnIndexOrThrow(Telephony.Mms.Addr.TYPE));
+                    if (type == PduHeaders.BCC) continue; // A reply must not disclose blind recipients.
+                    if (type == Text.TYPE_SENDER) {
                         text.setSenderAddress(address);
                     }
-                    text.setMemberAddress(address);
+                    if (!TextUtils.isEmpty(address) && !"insert-address-token".equals(address)) text.setMemberAddress(address);
                 }
             }
         } catch (SecurityException e) {
@@ -862,7 +971,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     if (text.getSenderAddress() == null && text.isMms()) {
                         buildSender(text);
                     }
-                    Contact sender = text.isIncoming() ? lookupContact(text.getSenderAddress()) : getSelf();
+                    Contact sender = text.isIncoming() ? lookupAddress(text.getSenderAddress(), text.getSubscriptionId()) : getSelf();
                     text.setSender(sender);
                     return sender;
                 }
@@ -883,9 +992,9 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                         buildSender(text);
                     }
                     for (String address : text.getMemberAddresses()) {
-                        text.addMember(lookupContact(address));
+                        text.addMember(lookupAddress(address, text.getSubscriptionId()));
                     }
-                    return members;
+                    return text.getMembers();
                 }
             };
         }
@@ -899,7 +1008,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
                     // It's possible to text yourself. To account for that, don't remove yourself if there's only one member.
                     return members;
                 }
-                members.remove(getSelf());
+                String self = getPhoneNumber(text.getSubscriptionId());
+                if (!TextUtils.isEmpty(self)) {
+                    String region = dialingRegion(text.getSubscriptionId());
+                    String key = PhoneNumbers.normalize(self, region);
+                    Iterator<Contact> iterator = members.iterator();
+                    while (iterator.hasNext()) {
+                        if (key.equals(PhoneNumbers.normalize(iterator.next().getNumber(), region))) iterator.remove();
+                    }
+                }
                 return members;
             }
         };

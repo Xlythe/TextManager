@@ -129,6 +129,7 @@ dependencies {
     implementation 'androidx.work:work-runtime:2.9.1'
 
     api fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.googlecode.libphonenumber:geocoder:3.35'
     api 'com.googlecode.libphonenumber:libphonenumber:9.0.35'
     api 'androidx.legacy:legacy-support-v4:1.0.0'
 }
@@ -176,6 +177,21 @@ tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
     }
 }
 
+tasks.register('libraryCoverageVerification', JacocoCoverageVerification) {
+    dependsOn 'jacocoTestReport'
+    classDirectories.setFrom(tasks.named('jacocoTestReport').get().classDirectories)
+    executionData.setFrom(unitTestExecutionData)
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.50
+            }
+        }
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'jacocoTestCoverageVerification'
+    dependsOn 'jacocoTestCoverageVerification', 'libraryCoverageVerification'
 }

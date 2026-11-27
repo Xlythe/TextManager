@@ -1,18 +1,21 @@
 package com.xlythe.textmanager.text;
 
+import java.util.ArrayList;
+import java.util.List;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import java.util.Arrays;
 import android.provider.BaseColumns;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.Random;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +50,12 @@ public class Receive {
         SmsMessage first = messages[0];
         String address = first.getDisplayOriginatingAddress();
         long thread = address == null ? -1 : getOrCreateThreadId(context, address);
+        return fromBroadcast(messages, thread);
+    }
+
+    static Text fromBroadcast(SmsMessage[] messages, long thread) {
+        SmsMessage first = messages[0];
+        String address = first.getDisplayOriginatingAddress();
         return new Text(-1, thread, checkDate(first), -1, Mock.Telephony.Sms.STATUS_NONE,
                 messageBody(messages), true, false, address, Collections.singleton(address), null);
     }
@@ -66,11 +75,16 @@ public class Receive {
      * @param error Error code
      */
     public static Text storeMessage(Context context, SmsMessage[] msgs, int error) {
+        return storeMessage(context, msgs, error, -1);
+    }
+
+    static Text storeMessage(Context context, SmsMessage[] msgs, int error, int subscription) {
         SmsMessage sms = msgs[0];
 
         // Add everything but the message body
         ContentValues values = extractContentValues(sms);
         values.put(Mock.Telephony.Sms.ERROR_CODE, error);
+        if (Build.VERSION.SDK_INT >= 22 && subscription >= 0) values.put(Mock.Telephony.Sms.SUBSCRIPTION_ID, subscription);
 
         // Add the message body
         values.put(Mock.Telephony.Sms.Inbox.BODY, messageBody(msgs));
@@ -82,18 +96,24 @@ public class Receive {
         // If it doesn't exist, create a thread id.
         if(((threadId == null) || (threadId == 0)) && (address != null)) {
             threadId = getOrCreateThreadId(context, address);
-            values.put(Mock.Telephony.Sms.THREAD_ID, threadId);
+            if (threadId >= 0) values.put(Mock.Telephony.Sms.THREAD_ID, threadId);
         }
 
         // Add to content provider
         Uri msg = context.getContentResolver().insert(Mock.Telephony.Sms.Inbox.CONTENT_URI, values);
         if (msg == null) return null;
-        Cursor c = context.getContentResolver().query(msg, SMS_PROJECTION, null, null, "date ASC");
-        if (c == null) return null;
-        c.moveToFirst();
-        Text text = new Text(new Text.TextCursor(c, null));
-        c.close();
-        return text;
+        String[] projection = SMS_PROJECTION;
+        if (Build.VERSION.SDK_INT >= 22) {
+            projection = Arrays.copyOf(SMS_PROJECTION, SMS_PROJECTION.length + 1);
+            projection[SMS_PROJECTION.length] = Mock.Telephony.Sms.SUBSCRIPTION_ID;
+        } else if (Build.VERSION.SDK_INT < 16) {
+            List<String> columns = new ArrayList<>(Arrays.asList(SMS_PROJECTION));
+            columns.remove(Mock.Telephony.Sms.DATE_SENT);
+            projection = columns.toArray(new String[0]);
+        }
+        try (Cursor c = context.getContentResolver().query(msg, projection, null, null, null)) {
+            return c != null && c.moveToFirst() ? new Text(c, null) : null;
+        }
     }
 
     /**
@@ -168,7 +188,7 @@ public class Receive {
             }
         }
 
-        return new Random().nextLong();
+        return -1L;
     }
 
     /**

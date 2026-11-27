@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /** Stores short-lived raw MMS PDUs for the platform MMS service. */
 public final class MmsPduStore {
-    static final int MAX_PDU_BYTES = 25 * 1024 * 1024;
+    public static final int MAX_PDU_BYTES = 25 * 1024 * 1024;
     static final String DIRECTORY = "textmanager-mms";
 
     private MmsPduStore() {}
@@ -57,7 +57,7 @@ public final class MmsPduStore {
         }
     }
 
-    static byte[] readBounded(InputStream input, int limit) throws IOException {
+    public static byte[] readBounded(InputStream input, int limit) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int count;

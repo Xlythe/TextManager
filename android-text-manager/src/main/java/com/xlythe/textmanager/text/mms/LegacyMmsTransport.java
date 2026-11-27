@@ -40,7 +40,16 @@ public final class LegacyMmsTransport {
 
     // The legacy connectivity service tracks enableMMS by process, not by individual request.
     @SuppressLint("MissingPermission") // Optional for clients. Checked before using the route.
-    public static synchronized byte[] transfer(Context context, String location, byte[] outgoing) throws IOException {
+    public static byte[] transfer(Context context, String location, byte[] outgoing) throws IOException {
+        return transfer(context, location, outgoing, true);
+    }
+
+    public static void sendResponse(Context context, byte[] response) throws IOException {
+        transfer(context, null, response, false);
+    }
+
+    @SuppressLint("MissingPermission")
+    private static synchronized byte[] transfer(Context context, String location, byte[] outgoing, boolean readBody) throws IOException {
         if (outgoing != null && outgoing.length > MmsPduStore.MAX_PDU_BYTES) {
             throw new IOException("Oversized outgoing MMS");
         }
@@ -76,7 +85,7 @@ public final class LegacyMmsTransport {
             }
             Proxy proxy = carrier.proxy == null ? Proxy.NO_PROXY
                     : new Proxy(Proxy.Type.HTTP, new InetSocketAddress(addresses[0], carrier.port));
-            return exchange(endpoint, proxy, outgoing);
+            return exchange(endpoint, proxy, outgoing, readBody);
         } finally {
             try {
                 networkFeature(cm, "stopUsingNetworkFeature");
@@ -105,6 +114,10 @@ public final class LegacyMmsTransport {
     }
 
     static byte[] exchange(URL endpoint, Proxy proxy, byte[] outgoing) throws IOException {
+        return exchange(endpoint, proxy, outgoing, true);
+    }
+
+    private static byte[] exchange(URL endpoint, Proxy proxy, byte[] outgoing, boolean readBody) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) endpoint.openConnection(proxy);
         try {
             connection.setConnectTimeout(NETWORK_TIMEOUT_MS);
@@ -122,6 +135,7 @@ public final class LegacyMmsTransport {
                 }
             }
             int status = connection.getResponseCode();
+            if (!readBody && status >= 200 && status < 300) return new byte[0];
             if (status != HttpURLConnection.HTTP_OK) throw new IOException("MMSC returned HTTP " + status);
             try (InputStream input = connection.getInputStream()) {
                 return MmsPduStore.readBounded(input, outgoing == null ? MmsPduStore.MAX_PDU_BYTES : 64 * 1024);

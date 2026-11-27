@@ -22,6 +22,14 @@ import com.xlythe.textmanager.text.mms.MmsPduStore;
 import com.xlythe.textmanager.text.mms.LegacyMmsTransport;
 import com.xlythe.textmanager.text.pdu.GenericPdu;
 import com.xlythe.textmanager.text.pdu.NotificationInd;
+import com.xlythe.textmanager.text.pdu.NotifyRespInd;
+import com.xlythe.textmanager.text.pdu.AcknowledgeInd;
+import com.xlythe.textmanager.text.pdu.PduComposer;
+import com.xlythe.textmanager.text.pdu.DeliveryInd;
+import com.xlythe.textmanager.text.pdu.ReadOrigInd;
+import com.xlythe.textmanager.text.pdu.ReadRecInd;
+import com.xlythe.textmanager.text.pdu.PduHeaders;
+import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.pdu.PduParser;
 import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
@@ -46,6 +54,8 @@ public class MmsReceiveService extends Worker {
   private static final String INPUT_SUBSCRIPTION_ID = "subscription_id";
   private static final String INPUT_RAW_PDU_URI = "raw_pdu_uri";
   private static final String INPUT_RESULT_CODE = "result_code";
+  private static final String INPUT_PUSH_URI = "push_uri";
+  private static final String INPUT_READ_PDU = "read_pdu";
   private static final int NO_RESULT = Integer.MIN_VALUE;
   static final String WORK_TAG = "com.xlythe.textmanager.text.MMS_DOWNLOAD";
 
@@ -59,10 +69,7 @@ public class MmsReceiveService extends Worker {
       Log.e(TAG, "Ignoring MMS notification without push data");
       return;
     }
-    enqueue(context, new Data.Builder()
-        .putByteArray(INPUT_NOTIFICATION_PDU, pushData)
-        .putInt(INPUT_SUBSCRIPTION_ID, getSubscriptionId(intent))
-        .build());
+    enqueuePush(context, new Data.Builder().putInt(INPUT_SUBSCRIPTION_ID, getSubscriptionId(intent)), pushData);
   }
 
   static void schedule(Context context, Text text) {
@@ -71,6 +78,43 @@ public class MmsReceiveService extends Worker {
         .putString(INPUT_MESSAGE_URI, messageUri.toString())
         .putInt(INPUT_SUBSCRIPTION_ID, text.getSubscriptionId())
         .build());
+  }
+
+  static void scheduleReadReport(Context context, Text message, boolean deletedUnread) {
+    if (!message.isIncoming() || !message.isMms() || message.getIdAsLong() < 0)
+      throw new IllegalArgumentException("Expected a stored incoming MMS");
+    TextManager.MmsDetails details = TextManager.getInstance(context).getMmsDetails(message);
+    if (details == null || !details.readReportRequested || TextUtils.isEmpty(details.messageId)) return;
+    Uri addresses = Uri.parse("content://mms/" + message.getId() + "/addr");
+    String[] columns = {Telephony.Mms.Addr.ADDRESS, Telephony.Mms.Addr.CHARSET};
+    try (Cursor rows = context.getContentResolver().query(addresses, columns, Telephony.Mms.Addr.TYPE + "=?",
+        new String[]{Integer.toString(PduHeaders.FROM)}, null)) {
+      if (rows == null || !rows.moveToFirst() || TextUtils.isEmpty(rows.getString(0))) return;
+      EncodedStringValue to = new EncodedStringValue(rows.getInt(1), PduPersister.getBytes(rows.getString(0)));
+      int status = deletedUnread ? PduHeaders.READ_STATUS__DELETED_WITHOUT_BEING_READ : PduHeaders.READ_STATUS_READ;
+      ReadRecInd report = new ReadRecInd(new EncodedStringValue(PduHeaders.FROM_INSERT_ADDRESS_TOKEN_STR),
+          PduPersister.getBytes(details.messageId), PduHeaders.CURRENT_MMS_VERSION, status, new EncodedStringValue[]{to});
+      report.setDate(System.currentTimeMillis() / 1000L);
+      byte[] bytes = new PduComposer(context, report).make();
+      if (bytes != null) enqueue(context, new Data.Builder().putByteArray(INPUT_READ_PDU, bytes)
+          .putInt(INPUT_SUBSCRIPTION_ID, message.getSubscriptionId()).build());
+    }
+  }
+
+  private static void enqueuePush(Context context, Data.Builder input, byte[] bytes) {
+    Data data;
+    try {
+      data = input.putByteArray(INPUT_NOTIFICATION_PDU, bytes).build();
+    } catch (IllegalStateException oversized) {
+      try {
+        Uri file = MmsPduStore.write(context, bytes);
+        data = input.putByteArray(INPUT_NOTIFICATION_PDU, null).putString(INPUT_PUSH_URI, file.toString()).build();
+      } catch (IOException e) {
+        Log.e(TAG, "Unable to queue the MMS push", e);
+        return;
+      }
+    }
+    enqueue(context, data);
   }
 
   private static void enqueue(Context context, Data data) {
@@ -84,13 +128,28 @@ public class MmsReceiveService extends Worker {
   @NonNull
   @Override
   public Result doWork() {
+    byte[] read = getInputData().getByteArray(INPUT_READ_PDU);
+    if (read != null) {
+      return TelephonyPermissions.canSendSms(getApplicationContext())
+          && sendResponse(getApplicationContext(), read, getInputData().getInt(INPUT_SUBSCRIPTION_ID, -1))
+          ? Result.success() : Result.failure();
+    }
     int resultCode = getInputData().getInt(INPUT_RESULT_CODE, NO_RESULT);
-    return resultCode == NO_RESULT ? dispatchDownload() : persistDownload(resultCode);
+    Uri pushFile = parseUri(getInputData().getString(INPUT_PUSH_URI));
+    try {
+      byte[] push = pushFile == null ? getInputData().getByteArray(INPUT_NOTIFICATION_PDU)
+          : MmsPduStore.read(getApplicationContext(), pushFile);
+      return resultCode == NO_RESULT ? dispatchDownload(push) : persistDownload(resultCode, push);
+    } catch (IOException e) {
+      Log.e(TAG, "Unable to read queued MMS push", e);
+      return Result.failure();
+    } finally {
+      if (pushFile != null) MmsPduStore.delete(getApplicationContext(), pushFile);
+    }
   }
 
-  private Result dispatchDownload() {
+  private Result dispatchDownload(byte[] notificationPdu) {
     Context context = getApplicationContext();
-    byte[] notificationPdu = getInputData().getByteArray(INPUT_NOTIFICATION_PDU);
     String messageUriValue = getInputData().getString(INPUT_MESSAGE_URI);
     Uri messageUri = messageUriValue == null ? null : Uri.parse(messageUriValue);
     int subscriptionId = getInputData().getInt(
@@ -104,7 +163,9 @@ public class MmsReceiveService extends Worker {
 
     final String location;
     if (notificationPdu != null) {
-      NotificationInd notification = parseNotification(notificationPdu);
+      GenericPdu push = parsePush(notificationPdu);
+      if (broadcastReport(context, push, subscriptionId)) return Result.success();
+      NotificationInd notification = push instanceof NotificationInd ? (NotificationInd) push : null;
       if (notification == null || notification.getContentLocation() == null) {
         return Result.failure();
       }
@@ -139,9 +200,8 @@ public class MmsReceiveService extends Worker {
     }
   }
 
-  private Result persistDownload(int resultCode) {
+  private Result persistDownload(int resultCode, byte[] notificationPdu) {
     Uri rawPduUri = parseUri(getInputData().getString(INPUT_RAW_PDU_URI));
-    byte[] notificationPdu = getInputData().getByteArray(INPUT_NOTIFICATION_PDU);
     Uri messageUri = parseUri(getInputData().getString(INPUT_MESSAGE_URI));
     int subscriptionId = getInputData().getInt(
         INPUT_SUBSCRIPTION_ID, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
@@ -159,7 +219,8 @@ public class MmsReceiveService extends Worker {
       }
 
       GenericPdu parsed = new PduParser(MmsPduStore.read(context, rawPduUri), true).parse();
-      if (!(parsed instanceof RetrieveConf)) {
+      if (!(parsed instanceof RetrieveConf) || (((RetrieveConf) parsed).getRetrieveStatus() != 0
+          && ((RetrieveConf) parsed).getRetrieveStatus() != PduHeaders.RETRIEVE_STATUS_OK)) {
         Log.e(TAG, "Downloaded MMS did not contain a retrieve confirmation");
         markAsFailed(context, notificationPdu, messageUri);
         return Result.failure();
@@ -176,6 +237,14 @@ public class MmsReceiveService extends Worker {
       }
       context.getContentResolver().update(persisted, values, null, null);
 
+      NotificationInd notice = parseNotification(notificationPdu);
+      GenericPdu response = null;
+      if (notice != null) {
+        response = new NotifyRespInd(notice.getMmsVersion(), notice.getTransactionId(), PduHeaders.STATUS_RETRIEVED);
+      } else if (((RetrieveConf) parsed).getTransactionId() != null) {
+        response = new AcknowledgeInd(parsed.getMmsVersion(), ((RetrieveConf) parsed).getTransactionId());
+      }
+      if (response != null) sendResponse(context, new PduComposer(context, response).make(), subscriptionId);
       Text text = loadText(context, persisted);
       if (text != null) {
         Intent received = new Intent(TextReceiver.ACTION_TEXT_RECEIVED)
@@ -192,6 +261,34 @@ public class MmsReceiveService extends Worker {
       if (rawPduUri != null) {
         MmsPduStore.delete(context, rawPduUri);
       }
+    }
+  }
+
+  private static boolean sendResponse(Context context, byte[] bytes, int subscription) {
+    Uri file = null;
+    try {
+      if (bytes == null) throw new IOException("Unable to compose retrieval response");
+      if (Build.VERSION.SDK_INT < 21) {
+        LegacyMmsTransport.sendResponse(context, bytes);
+        return true;
+      }
+      file = MmsPduStore.write(context, bytes);
+      Intent sent = new Intent(context, ResponseSentReceiver.class).setData(file);
+      PendingIntent callback = PendingIntent.getBroadcast(context, 0, sent,
+          PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+      SendService.resolveSmsManager(subscription).sendMultimediaMessage(context, file, null, null, callback);
+      return true;
+    } catch (RuntimeException | IOException e) {
+      if (file != null) MmsPduStore.delete(context, file);
+      Log.w(TAG, "Could not dispatch MMS control message", e);
+      return false;
+    }
+  }
+
+  public static final class ResponseSentReceiver extends BroadcastReceiver {
+    @Override public void onReceive(Context context, Intent intent) {
+      if (intent.getData() != null) MmsPduStore.delete(context, intent.getData());
+      if (getResultCode() != Activity.RESULT_OK) Log.w(TAG, "Carrier rejected MMS retrieval response");
     }
   }
 
@@ -213,7 +310,42 @@ public class MmsReceiveService extends Worker {
         PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
   }
 
+  private static boolean broadcastReport(Context context, GenericPdu pdu, int subscriptionId) {
+    byte[] id;
+    int status;
+    long date;
+    EncodedStringValue[] parties;
+    if (pdu instanceof DeliveryInd) {
+      DeliveryInd delivery = (DeliveryInd) pdu;
+      id = delivery.getMessageId();
+      status = delivery.getStatus();
+      date = delivery.getDate();
+      parties = delivery.getTo();
+    } else if (pdu instanceof ReadOrigInd) {
+      ReadOrigInd read = (ReadOrigInd) pdu;
+      id = read.getMessageId();
+      status = read.getReadStatus();
+      date = read.getDate();
+      parties = new EncodedStringValue[]{read.getFrom()};
+    } else {
+      return false;
+    }
+    String[] addresses = new String[parties.length];
+    for (int i = 0; i < parties.length; i++) addresses[i] = parties[i].getString();
+    context.sendBroadcast(new Intent(TextReceiver.ACTION_MMS_REPORT).setPackage(context.getPackageName())
+        .putExtra("message_id", new String(id, Charset.forName("ISO-8859-1")))
+        .putExtra("message_type", pdu.getMessageType()).putExtra("status", status)
+        .putExtra("addresses", addresses).putExtra("date_seconds", date)
+        .putExtra(INPUT_SUBSCRIPTION_ID, subscriptionId));
+    return true;
+  }
+
   private static NotificationInd parseNotification(byte[] data) {
+    GenericPdu pdu = parsePush(data);
+    return pdu instanceof NotificationInd ? (NotificationInd) pdu : null;
+  }
+
+  private static GenericPdu parsePush(byte[] data) {
     if (data == null || data.length == 0) {
       return null;
     }
@@ -224,7 +356,7 @@ public class MmsReceiveService extends Worker {
       Log.e(TAG, "Invalid MMS notification PDU", e);
       return null;
     }
-    return parsed instanceof NotificationInd ? (NotificationInd) parsed : null;
+    return parsed;
   }
 
   private static String getContentLocation(Context context, Uri uri) {
@@ -288,7 +420,7 @@ public class MmsReceiveService extends Worker {
     }
   }
 
-  private static int getSubscriptionId(Intent intent) {
+  static int getSubscriptionId(Intent intent) {
     int subscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
     if (Build.VERSION.SDK_INT >= 28) {
       subscriptionId = intent.getIntExtra(TelephonyManager.EXTRA_SUBSCRIPTION_ID, subscriptionId);
@@ -311,15 +443,13 @@ public class MmsReceiveService extends Worker {
         Log.e(TAG, "MMS download callback is missing its raw PDU URI");
         return;
       }
-      Data data = new Data.Builder()
+      Data.Builder data = new Data.Builder()
           .putString(INPUT_RAW_PDU_URI, rawPduUri.toString())
-          .putByteArray(INPUT_NOTIFICATION_PDU, intent.getByteArrayExtra(INPUT_NOTIFICATION_PDU))
           .putString(INPUT_MESSAGE_URI, intent.getStringExtra(INPUT_MESSAGE_URI))
           .putInt(INPUT_SUBSCRIPTION_ID, intent.getIntExtra(
               INPUT_SUBSCRIPTION_ID, SubscriptionManager.INVALID_SUBSCRIPTION_ID))
-          .putInt(INPUT_RESULT_CODE, getResultCode())
-          .build();
-      enqueue(context, data);
+          .putInt(INPUT_RESULT_CODE, getResultCode());
+      enqueuePush(context, data, intent.getByteArrayExtra(INPUT_NOTIFICATION_PDU));
     }
   }
 }

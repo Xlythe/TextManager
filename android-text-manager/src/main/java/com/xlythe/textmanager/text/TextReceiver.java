@@ -19,6 +19,8 @@ import static com.xlythe.textmanager.text.Mock.Telephony.Sms.Intents.getMessages
 public abstract class TextReceiver extends BroadcastReceiver {
     private static final String TAG = TextReceiver.class.getSimpleName();
     public static final String ACTION_TEXT_RECEIVED = "com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED";
+    public static final String ACTION_FLASH_SMS = "com.xlythe.textmanager.text.ACTION_FLASH_SMS";
+    public static final String ACTION_MMS_REPORT = "com.xlythe.textmanager.text.ACTION_MMS_REPORT";
     public static final String EXTRA_TEXT = "text";
 
     @Override
@@ -37,10 +39,15 @@ public abstract class TextReceiver extends BroadcastReceiver {
             for (SmsMessage message : messages) {
                 if (message == null) return;
             }
+            if (messages[0].getMessageClass() == SmsMessage.MessageClass.CLASS_0) {
+                context.sendBroadcast(new Intent(ACTION_FLASH_SMS).setPackage(context.getPackageName())
+                        .putExtra(EXTRA_TEXT, Receive.fromBroadcast(messages, -1)));
+                return;
+            }
             // Before KitKat the stock messaging app persists SMS_RECEIVED.
             Text text = Build.VERSION.SDK_INT < 19 ? Receive.fromBroadcast(context, messages)
-                    : Receive.storeMessage(context, messages, 0);
-            onMessageReceived(context, text);
+                    : Receive.storeMessage(context, messages, 0, MmsReceiveService.getSubscriptionId(intent));
+            if (text != null) onMessageReceived(context, text);
         }
     }
 
