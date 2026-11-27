@@ -1,11 +1,9 @@
 package com.xlythe.textmanager.text;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -99,33 +97,16 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
             Log.d(TAG, "getInputStream(): " + uri);
         }
 
-        // Special case for MMS
-        if (uri.toString().startsWith("content://mms/part")) {
-            return context.getContentResolver().openInputStream(uri);
-        }
-
-        // Special case for files from gallery
-        Cursor cursor = null;
-        try {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            cursor = context.getContentResolver().query(uri,  proj, null, null, null);
-            if (cursor != null) {
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                return new FileInputStream(cursor.getString(column_index));
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-
-        // The normal case, for most files
-        return new FileInputStream(uri.getPath());
+        if (uri.getScheme() == null) return new FileInputStream(uri.getPath());
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        if (stream == null) throw new IOException("Attachment provider is unavailable");
+        return stream;
     }
 
     protected static byte[] toBytes(File file) throws IOException {
-        return toBytes(new FileInputStream(file));
+        try (InputStream stream = new FileInputStream(file)) {
+            return toBytes(stream);
+        }
     }
 
     protected static byte[] toBytes(InputStream is) throws IOException {

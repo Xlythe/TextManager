@@ -21,6 +21,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
+import org.robolectric.shadows.ShadowSmsManager;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,8 +43,9 @@ public class SendServiceWorkTest {
 
     @Test
     public void scheduleExecutesPersistentSendWork() throws Exception {
-        Text text = new Text.DebugBuilder()
-                .setSender("+15551234567")
+        Text text = new Text.Builder()
+                .subscriptionId(7)
+                .addRecipient(new Contact("+15551234567"))
                 .message("hello")
                 .build();
 
@@ -54,7 +56,18 @@ public class SendServiceWorkTest {
                 .get(5, TimeUnit.SECONDS);
         assertEquals(1, work.size());
         assertEquals(WorkInfo.State.SUCCEEDED, work.get(0).getState());
+        ShadowSmsManager gateway = Shadow.extract(SendService.resolveSmsManager(7));
+        assertEquals("hello", gateway.getLastSentTextMessageParams().getText());
+        assertEquals("+15551234567", gateway.getLastSentTextMessageParams().getDestinationAddress());
         assertTrue(work.get(0).getTags().contains(SendService.class.getName()));
+    }
+
+    @Test
+    public void missingRecipientFailsTheWorker() throws Exception {
+        SendService.schedule(context, new Text.Builder().message("no recipient").build());
+        List<WorkInfo> work = WorkManager.getInstance(context).getWorkInfosByTag(SendService.WORK_TAG)
+                .get(5, TimeUnit.SECONDS);
+        assertEquals(WorkInfo.State.FAILED, work.get(0).getState());
     }
 
     @Test

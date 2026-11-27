@@ -50,9 +50,18 @@ public class SendService extends Worker {
     private static final String EXTRA_MMS_PDU_URI = "mms_pdu_uri";
     static final String WORK_TAG = "com.xlythe.textmanager.text.SEND";
 
+    private static final String SEPARATE_PARTS = "separate_parts";
+    private static final String DELIVERY_REPORTS = "delivery_reports";
+
     static void schedule(Context context, Text text) {
+        schedule(context, text, false, true);
+    }
+
+    static void schedule(Context context, Text text, boolean separateParts, boolean deliveryReports) {
         Data inputData = new Data.Builder()
                 .putByteArray(EXTRA_TEXT, text.toBytes())
+                .putBoolean(SEPARATE_PARTS, separateParts)
+                .putBoolean(DELIVERY_REPORTS, deliveryReports)
                 .build();
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(SendService.class)
                 .setInputData(inputData)
@@ -85,22 +94,17 @@ public class SendService extends Worker {
         }
 
         Context context = getApplicationContext();
-        if (text.isMms() && !TelephonyPermissions.canSendMms(context)) {
-            Log.e(TAG, "MMS send permissions are unavailable");
-            return Result.failure();
-        }
-        if (!text.isMms() && !TelephonyPermissions.canSendSms(context)) {
-            Log.e(TAG, "SMS send permission is unavailable");
+        if (!TelephonyPermissions.canSendSms(context)) {
+            Log.e(TAG, "SEND_SMS permission is unavailable");
             return Result.failure();
         }
 
         if (text.isMms()) {
-            Uri messageUri = storeMMS(text);
-            if (messageUri == null) {
-                return Result.failure();
-            }
+            Uri messageUri = null;
             Uri pduUri = null;
             try {
+                messageUri = storeMMS(text);
+                if (messageUri == null) return Result.failure();
                 pduUri = MmsPduStore.write(context, text.getByteData(context));
                 PendingIntent sentIntent =
                         newMmsSentPendingIntent(context, messageUri, pduUri, text.getId());
@@ -110,11 +114,11 @@ public class SendService extends Worker {
                 if (pduUri != null) {
                     MmsPduStore.delete(context, pduUri);
                 }
-                markMmsFailed(messageUri);
+                if (messageUri != null) markMmsFailed(messageUri);
                 return Result.failure();
             }
         } else {
-            sendSMS(text);
+            return sendSMS(text) ? Result.success() : Result.failure();
         }
         return Result.success();
     }
@@ -135,17 +139,17 @@ public class SendService extends Worker {
         return Uri.withAppendedPath(uri, text.getId());
     }
 
-    private void sendSMS(Text text) {
+    private boolean sendSMS(Text text) {
         Set<Contact> contacts = TextManager.getInstance(getApplicationContext()).getMembers(text).get();
         if (contacts.size() != 1) {
             Log.e(TAG, "SMS requires exactly one recipient; found " + contacts.size());
-            return;
+            return false;
         }
 
         Contact contact = contacts.iterator().next();
         if (contact.equals(Contact.UNKNOWN)) {
             Log.e(TAG, "SMS recipient could not be resolved");
-            return;
+            return false;
         }
 
         final SmsSendRequest request;
@@ -153,15 +157,21 @@ public class SendService extends Worker {
             request = new SmsSendRequest(text.getId(), contact.getNumber(), text.getBody());
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid outgoing SMS", e);
-            return;
+            return false;
         }
 
         Uri uri = null;
         try {
+            Context context = getApplicationContext();
+            if (!TextManager.getInstance(context).isDefaultSmsPackage()) {
+                // Android persists sends from non-default apps. They cannot update the SMS provider.
+                dispatchSMS(request, null, text.getSubscriptionId());
+                return true;
+            }
             uri = storeSMS(text, request.getRecipient());
             if (uri == null) {
                 Log.e(TAG, "Failed to persist outgoing SMS " + request.getMessageId());
-                return;
+                return false;
             }
             SmsSendRequest persistedRequest =
                     new SmsSendRequest(
@@ -169,15 +179,18 @@ public class SendService extends Worker {
                             request.getRecipient(),
                             request.getBody());
             dispatchSMS(persistedRequest, uri, text.getSubscriptionId());
+            return true;
         } catch (RuntimeException e) {
             Log.e(TAG, "Failed to send SMS " + request.getMessageId(), e);
             if (uri != null) {
                 markSmsFailed(uri);
             }
+            return false;
         }
     }
 
     private void dispatchSMS(SmsSendRequest request, Uri uri, int subscriptionId) {
+        boolean deliveryReports = getInputData().getBoolean(DELIVERY_REPORTS, true);
         SmsGateway<PendingIntent> gateway = new AndroidSmsGateway(resolveSmsManager(subscriptionId));
         SmsCallbackFactory<PendingIntent> callbackFactory =
                 new SmsCallbackFactory<PendingIntent>() {
@@ -195,7 +208,7 @@ public class SendService extends Worker {
                                 uri,
                                 request.getMessageId(),
                                 partIndex,
-                                partCount);
+                                partCount, deliveryReports);
                     }
 
                     @Override
@@ -209,7 +222,9 @@ public class SendService extends Worker {
                                 partCount);
                     }
                 };
-        new SmsSendCoordinator<>(gateway, callbackFactory).send(request);
+        new SmsSendCoordinator<>(gateway, uri == null ? null : callbackFactory).send(request,
+                getInputData().getBoolean(SEPARATE_PARTS, false),
+                deliveryReports);
     }
 
     private void markSmsFailed(Uri uri) {
@@ -315,8 +330,9 @@ public class SendService extends Worker {
      */
     @SuppressLint("InlinedApi")
     private static PendingIntent newSmsSentPendingIntent(
-            Context context, Uri uri, String id, int partIndex, int partCount) {
+            Context context, Uri uri, String id, int partIndex, int partCount, boolean deliveryReports) {
         Intent intent = new Intent(context, SmsSentReceiver.class);
+        intent.putExtra(DELIVERY_REPORTS, deliveryReports);
         intent.setAction(ACTION_SMS_SENT);
         addSmsCallbackMetadata(intent, uri, id, partIndex, partCount);
         return PendingIntent.getBroadcast(
@@ -382,11 +398,12 @@ public class SendService extends Worker {
             return;
         }
 
+        boolean deliveryReports = intent.getBooleanExtra(DELIVERY_REPORTS, true);
         final SmsStatusTracker.Status status;
         try {
             status =
                     new SmsStatusTracker(new SharedPreferencesSmsStatusStore(context))
-                            .record(messageId, phase, partIndex, partCount, successful);
+                            .record(messageId, phase, partIndex, partCount, successful, deliveryReports);
         } catch (RuntimeException e) {
             Log.e(TAG, "Invalid SMS callback metadata", e);
             return;
@@ -396,11 +413,11 @@ public class SendService extends Worker {
         }
 
         ContentValues values = new ContentValues();
-        values.put(
-                Mock.Telephony.Sms.Sent.STATUS,
-                status == SmsStatusTracker.Status.COMPLETE
-                        ? Mock.Telephony.Sms.Sent.STATUS_COMPLETE
-                        : Mock.Telephony.Sms.Sent.STATUS_FAILED);
+        int providerStatus = Mock.Telephony.Sms.Sent.STATUS_FAILED;
+        if (status == SmsStatusTracker.Status.COMPLETE) {
+            providerStatus = deliveryReports ? Mock.Telephony.Sms.Sent.STATUS_COMPLETE : Mock.Telephony.Sms.Sent.STATUS_NONE;
+        }
+        values.put(Mock.Telephony.Sms.Sent.STATUS, providerStatus);
         try {
             context.getApplicationContext().getContentResolver().update(uri, values, null, null);
         } catch (RuntimeException e) {

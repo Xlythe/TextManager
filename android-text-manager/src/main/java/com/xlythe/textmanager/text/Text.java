@@ -346,7 +346,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     }
     SendReq getSendRequest(Context context) {
         final PduBody pduBody = new PduBody();
-        PduPart partPdu = new PduPart();
+
         long messageSize = 0;
         byte[] nameBytes = new byte[]{};
         byte[] typeBytes = new byte[]{};
@@ -354,6 +354,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         // Create media parts, we only send one pic/video at a time
         if (mAttachment != null) {
+            PduPart partPdu = new PduPart();
             Attachment.Type type = mAttachment.getType();
             switch (type) {
                 case IMAGE:
@@ -396,6 +397,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         // We can have an image with text, so we do this separate
         if (mBody != null && !mBody.isEmpty()) {
             // add text to the end of the part and send
+            PduPart partPdu = new PduPart();
             partPdu.setName("text".getBytes());
             partPdu.setContentType(ContentType.TEXT_PLAIN.getBytes());
             partPdu.setData(mBody.getBytes());
@@ -424,10 +426,10 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         // Set sender
         String phoneNumber = TextManager.getInstance(context).getPhoneNumber();
-        if (TextUtils.isEmpty(phoneNumber)) {
-            throw new IllegalStateException("A phone number permission is required to send MMS");
+        // SendReq defaults to the carrier's insert-address token on numberless SIMs.
+        if (!TextUtils.isEmpty(phoneNumber)) {
+            sendRequest.setFrom(new EncodedStringValue(phoneNumber));
         }
-        sendRequest.setFrom(new EncodedStringValue(phoneNumber));
 
         // Turn all the parts into a smil document
         ByteArrayOutputStream out = new ByteArrayOutputStream();

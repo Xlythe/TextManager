@@ -143,7 +143,7 @@ def unitTestExecutionData = layout.buildDirectory.file('jacoco/testDebugUnitTest
 
 tasks.register('jacocoTestReport', JacocoReport) {
     dependsOn 'testDebugUnitTest'
-    classDirectories.setFrom(coreSmsClasses)
+    classDirectories.setFrom(fileTree(coreSmsClasses.dir) { include 'com/xlythe/textmanager/**/*.class' })
     sourceDirectories.setFrom(coreSmsSources)
     executionData.setFrom(unitTestExecutionData)
     onlyIf {

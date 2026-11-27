@@ -15,6 +15,10 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35, manifest = Config.NONE)
@@ -47,6 +51,23 @@ public class MmsPduStoreTest {
         assertTrue(MmsPduStore.delete(context, uri));
         assertFalse(MmsPduStore.resolve(context, uri).exists());
         assertFalse(MmsPduStore.delete(context, Uri.parse("content://other/not-ours.pdu")));
+    }
+
+    @Test
+    public void simultaneousDownloadsHaveIndependentFilesAndCleanup() throws Exception {
+        ExecutorService io = Executors.newFixedThreadPool(2);
+        try {
+            Future<Uri> first = io.submit(() -> MmsPduStore.write(context, new byte[]{1}));
+            Future<Uri> second = io.submit(() -> MmsPduStore.write(context, new byte[]{2}));
+            Uri firstUri = first.get(5, TimeUnit.SECONDS);
+            Uri secondUri = second.get(5, TimeUnit.SECONDS);
+            assertFalse(firstUri.equals(secondUri));
+            assertArrayEquals(new byte[]{1}, MmsPduStore.read(context, firstUri));
+            assertTrue(MmsPduStore.delete(context, firstUri));
+            assertArrayEquals(new byte[]{2}, MmsPduStore.read(context, secondUri));
+        } finally {
+            io.shutdownNow();
+        }
     }
 
     @Test

@@ -12,6 +12,7 @@ import java.util.UUID;
 
 /** Stores short-lived raw MMS PDUs for the platform MMS service. */
 public final class MmsPduStore {
+    private static final int MAX_PDU_BYTES = 25 * 1024 * 1024;
     static final String DIRECTORY = "textmanager-mms";
 
     private MmsPduStore() {}
@@ -21,7 +22,7 @@ public final class MmsPduStore {
             throw new IOException("Cannot store an empty MMS PDU");
         }
         File directory = directory(context);
-        if (!directory.exists() && !directory.mkdirs()) {
+        if (!directory.isDirectory() && !directory.mkdirs() && !directory.isDirectory()) {
             throw new IOException("Unable to create MMS cache directory");
         }
         String name = UUID.randomUUID() + ".pdu";
@@ -34,7 +35,7 @@ public final class MmsPduStore {
 
     public static Uri create(Context context) throws IOException {
         File directory = directory(context);
-        if (!directory.exists() && !directory.mkdirs()) {
+        if (!directory.isDirectory() && !directory.mkdirs() && !directory.isDirectory()) {
             throw new IOException("Unable to create MMS cache directory");
         }
         String name = UUID.randomUUID() + ".pdu";
@@ -48,7 +49,7 @@ public final class MmsPduStore {
     public static byte[] read(Context context, Uri uri) throws IOException {
         File file = resolve(context, uri);
         long length = file.length();
-        if (length <= 0 || length > 25L * 1024L * 1024L) {
+        if (length <= 0 || length > MAX_PDU_BYTES) {
             throw new IOException("Invalid MMS PDU size: " + length);
         }
         try (FileInputStream input = new FileInputStream(file);
@@ -56,6 +57,7 @@ public final class MmsPduStore {
             byte[] buffer = new byte[8192];
             int read;
             while ((read = input.read(buffer)) != -1) {
+                if (read > MAX_PDU_BYTES - output.size()) throw new IOException("MMS PDU grew beyond its size limit");
                 output.write(buffer, 0, read);
             }
             return output.toByteArray();

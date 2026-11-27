@@ -1,14 +1,14 @@
 Android Text Manager
 ====================
 
-Our goal is to make sending SMS and MMS easier on the Android OS.
+TextManager sends and receives SMS and MMS on Android API 21 and later. It uses WorkManager for background work and Android’s telephony service for carrier transport.
 
 
 Where to Download
 -----------------
 ```groovy
 dependencies {
-  implementation 'com.xlythe:android-text-manager:1.1'
+  implementation 'com.xlythe:android-text-manager:2.0.0'
 }
 ```
 
@@ -73,7 +73,7 @@ public class MessageReceiver extends TextReceiver {
 ```
 And add the receiver to your manifest
 ```xml
-<receiver android:name=".receiver.MessageReceiver">
+<receiver android:name=".receiver.MessageReceiver" android:exported="false">
     <intent-filter>
         <action android:name="com.xlythe.textmanager.text.ACTION_TEXT_RECEIVED" />
     </intent-filter>
@@ -82,35 +82,22 @@ And add the receiver to your manifest
 
 Permissions
 -----------
-Finally, here are the permissions you'll need to use the library.
+The default SMS app persists incoming messages and requests the SMS role in its own package. TextManager contributes the SMS and MMS delivery receivers, quick-response service, and private PDU provider to that app’s manifest. The app supplies a composer for the SENDTO intent.
+
+Declare and request the permissions for the features you use.
+
 ```xml
-<!-- You may not need all of these, depending on what you are doing -->
-
-<!-- Used to send and receive messages -->
-<uses-permission android:name="android.permission.READ_SMS" />
-<uses-permission android:name="android.permission.WRITE_SMS" />
+<!-- Sending SMS or MMS -->
 <uses-permission android:name="android.permission.SEND_SMS" />
+<!-- Receiving messages and reading the inbox -->
 <uses-permission android:name="android.permission.RECEIVE_SMS" />
-<uses-permission android:name="android.permission.SEND_MMS" />
 <uses-permission android:name="android.permission.RECEIVE_MMS" />
-
-<!-- Used to get contact information to send messages -->
+<uses-permission android:name="android.permission.READ_SMS" />
+<!-- Optional contact names and photos -->
 <uses-permission android:name="android.permission.READ_CONTACTS" />
-<uses-permission android:name="android.permission.WRITE_CONTACTS" />
-
-<!-- Used to get your information to know which messages are yours -->
-<uses-permission android:name="android.permission.READ_PROFILE" />
-<uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
-<!-- Mms uses data network to send -->
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-<uses-permission android:name="android.permission.WRITE_SETTINGS" />
-<uses-permission android:name="android.permission.INTERNET" />
-
-<!-- Keeps the phone awake while downloading messages -->
-<uses-permission android:name="android.permission.WAKE_LOCK" />
 ```
+
+An app with SEND_SMS can also send an SMS while another app holds the role. Android persists that outgoing message. A successful send worker means Android accepted the dispatch. Carrier delivery arrives separately when a report is requested.
 
 License
 -------

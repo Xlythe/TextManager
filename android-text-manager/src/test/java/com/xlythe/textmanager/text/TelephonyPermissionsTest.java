@@ -43,13 +43,13 @@ public class TelephonyPermissionsTest {
     }
 
     @Test
-    public void sendMmsAlsoRequiresPhoneNumberAccess() {
+    public void phoneNumberLookupIsOptionalForSending() {
         application.grantPermissions(Manifest.permission.SEND_SMS);
-        assertFalse(TelephonyPermissions.canSendMms(context));
+        assertFalse(TelephonyPermissions.canReadPhoneNumber(context));
 
         application.grantPermissions(Manifest.permission.READ_PHONE_NUMBERS);
 
-        assertTrue(TelephonyPermissions.canSendMms(context));
+        assertTrue(TelephonyPermissions.canReadPhoneNumber(context));
     }
 
     @Test

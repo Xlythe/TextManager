@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.role.RoleManager;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -100,7 +101,6 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     private TextManager(Context context) {
         mContext = context;
-        context.getContentResolver().registerContentObserver(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, true, new TextObserver(new Handler(Looper.getMainLooper())));
     }
 
     public void downloadAttachment(Text text) {
@@ -109,7 +109,14 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         }
     }
 
-    public void registerObserver(MessageObserver observer) {
+    private boolean observingConversations;
+
+    public synchronized void registerObserver(MessageObserver observer) {
+        if (!observingConversations && TelephonyPermissions.has(mContext, Manifest.permission.READ_SMS)) {
+            mContext.getContentResolver().registerContentObserver(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI,
+                    true, new TextObserver(new Handler(Looper.getMainLooper())));
+            observingConversations = true;
+        }
         mObservers.register(observer);
     }
 
@@ -141,6 +148,8 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
         private final Context mContext;
         @Nullable private final String mMessage;
         @Nullable private final Attachment mAttachment;
+        private boolean mSeparateParts;
+        private boolean mDeliveryReports = true;
         private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
         private Builder(Context context, @NonNull String message) {
@@ -170,7 +179,19 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             }
             builder.subscriptionId(mSubscriptionId);
 
-            SendService.schedule(mContext, builder.build());
+            SendService.schedule(mContext, builder.build(), mSeparateParts, mDeliveryReports);
+        }
+
+        /** Send long SMS as independent messages instead of concatenated multipart SMS. */
+        public Builder separateSmsParts(boolean separate) {
+            mSeparateParts = separate;
+            return this;
+        }
+
+        /** Request delivery reports when the caller owns the SMS provider row. */
+        public Builder requestSmsDeliveryReports(boolean enabled) {
+            mDeliveryReports = enabled;
+            return this;
         }
 
         /** Routes this outgoing SMS through a specific active SIM subscription. */
@@ -624,63 +645,54 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
 
     @Override
     public void delete(Text... messages) {
-        StringBuilder ids = new StringBuilder();
-        for (Text text : messages) {
-            if (ids.length() > 0) {
-                ids.append(",");
-            }
-            ids.append(text.getId());
-        }
-        String clause = String.format("%s in (%s)", Telephony.Sms._ID, ids);
-        int rowsDeleted = mContext.getContentResolver().delete(
-                Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
-        if (DEBUG) {
-            Log.i(TAG, String.format("Deleting %s. %s rows deleted", ids, rowsDeleted));
+        for (Text message : messages) {
+            Uri uri = message.isMms()
+                    ? ContentUris.withAppendedId(Telephony.Mms.CONTENT_URI, message.getMmsId())
+                    : ContentUris.withAppendedId(Telephony.Sms.CONTENT_URI, Long.parseLong(message.getId()));
+            mContext.getContentResolver().delete(uri, null, null);
         }
     }
 
     @Override
     public void delete(Thread... threads) {
-        StringBuilder ids = new StringBuilder();
         for (Thread thread : threads) {
-            if (ids.length() > 0) {
-                ids.append(",");
-            }
-            ids.append(thread.getId());
-        }
-        String clause = String.format("%s in (%s)", Telephony.Sms.THREAD_ID, ids);
-        int rowsDeleted = mContext.getContentResolver().delete(
-                Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, clause, null);
-        if (DEBUG) {
-            Log.i(TAG, String.format("Deleting %s. %s rows deleted", ids, rowsDeleted));
+            Uri uri = ContentUris.withAppendedId(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI, thread.getIdAsLong());
+            mContext.getContentResolver().delete(uri, null, null);
         }
     }
 
     @Override
     public void markAsRead(Text message) {
-        ContentValues values = new ContentValues();
-        values.put(Telephony.Sms.READ, true);
-        String clause = String.format("%s = %s",
-                Telephony.Sms._ID, message.getId());
-        int rowsUpdated = mContext.getContentResolver().update(
-                Telephony.Sms.Inbox.CONTENT_URI, values, clause, null);
-        if (DEBUG) {
-            Log.i(TAG, String.format("Marking %s as read. %s rows updated", message, rowsUpdated));
+        if (message.isMms()) {
+            markMmsAsRead(message.getMmsId());
+        } else {
+            markSmsAsRead(Long.parseLong(message.getId()));
         }
+    }
+
+    public void markSmsAsRead(long messageId) {
+        markRead(Telephony.Sms.Inbox.CONTENT_URI, BaseColumns._ID, messageId);
+    }
+
+    public void markMmsAsRead(long messageId) {
+        markRead(Telephony.Mms.Inbox.CONTENT_URI, BaseColumns._ID, messageId);
     }
 
     @Override
     public void markAsRead(Thread thread) {
+        markThreadAsRead(thread.getIdAsLong());
+    }
+
+    public void markThreadAsRead(long threadId) {
+        markRead(Telephony.Sms.Inbox.CONTENT_URI, Telephony.Sms.THREAD_ID, threadId);
+        markRead(Telephony.Mms.Inbox.CONTENT_URI, Telephony.Mms.THREAD_ID, threadId);
+    }
+
+    private void markRead(Uri inbox, String column, long id) {
         ContentValues values = new ContentValues();
-        values.put(Telephony.Sms.READ, true);
-        String clause = String.format("%s=%s AND %s=%s",
-                Telephony.Sms.THREAD_ID, thread.getId(),
-                Telephony.Sms.READ, 0);
-        int rowsUpdated = mContext.getContentResolver().update(
-                Telephony.Sms.Inbox.CONTENT_URI, values, clause, null);
-        if (DEBUG) {
-            Log.i(TAG, String.format("Marking %s as read. %s rows updated", thread, rowsUpdated));
-        }
+        values.put(Telephony.Sms.READ, 1);
+        mContext.getContentResolver().update(inbox, values, column + " = ? AND read = 0",
+                new String[] {Long.toString(id)});
     }
 
     public Contact.ContactCursor getContactCursor() {
@@ -724,11 +736,15 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     }
 
     public Contact lookupContact(String phoneNumber) {
+        if (TextUtils.isEmpty(phoneNumber)) return Contact.UNKNOWN;
+        if (!TelephonyPermissions.has(mContext, Manifest.permission.READ_CONTACTS)) {
+            return new Contact(phoneNumber);
+        }
         String sanitizedNumber = sanitizeNumber(phoneNumber);
         if (sanitizedNumber == null) {
             return Contact.UNKNOWN;
         }
-        Contact contact = mContactCache.get(sanitizedNumber);
+        Contact contact = mContactCache.get(phoneNumber);
         if (contact == null) {
             Cursor c;
             if (phoneNumber.matches(".*\\d+.*")) {
@@ -760,9 +776,7 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             } finally {
                 if (c != null) c.close();
             }
-            // Save the contact in the cache with the sanitized number, in case they're looking up
-            // the contact both with and without country codes.
-            mContactCache.put(sanitizedNumber, contact);
+            mContactCache.put(phoneNumber, contact);
         }
         return contact;
     }
