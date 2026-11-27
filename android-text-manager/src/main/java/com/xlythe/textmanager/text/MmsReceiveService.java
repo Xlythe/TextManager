@@ -19,6 +19,7 @@ import android.util.Log;
 import com.xlythe.textmanager.text.Mock.Telephony;
 import com.xlythe.textmanager.text.exception.MmsException;
 import com.xlythe.textmanager.text.mms.MmsPduStore;
+import com.xlythe.textmanager.text.mms.LegacyMmsTransport;
 import com.xlythe.textmanager.text.pdu.GenericPdu;
 import com.xlythe.textmanager.text.pdu.NotificationInd;
 import com.xlythe.textmanager.text.pdu.PduParser;
@@ -26,7 +27,7 @@ import com.xlythe.textmanager.text.pdu.PduPersister;
 import com.xlythe.textmanager.text.pdu.RetrieveConf;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -105,10 +106,9 @@ public class MmsReceiveService extends Worker {
     if (notificationPdu != null) {
       NotificationInd notification = parseNotification(notificationPdu);
       if (notification == null || notification.getContentLocation() == null) {
-        markAsFailed(context, notificationPdu, null);
         return Result.failure();
       }
-      location = new String(notification.getContentLocation(), StandardCharsets.ISO_8859_1);
+      location = new String(notification.getContentLocation(), Charset.forName("ISO-8859-1"));
     } else {
       location = getContentLocation(context, messageUri);
     }
@@ -119,6 +119,10 @@ public class MmsReceiveService extends Worker {
 
     Uri rawPduUri = null;
     try {
+      if (Build.VERSION.SDK_INT < 21) {
+        rawPduUri = MmsPduStore.write(context, LegacyMmsTransport.transfer(context, location, null));
+        return persistDownload(Activity.RESULT_OK, rawPduUri, notificationPdu, messageUri, subscriptionId);
+      }
       rawPduUri = MmsPduStore.create(context);
       PendingIntent callback = newDownloadedPendingIntent(
           context, rawPduUri, notificationPdu, messageUri, subscriptionId);
@@ -136,13 +140,17 @@ public class MmsReceiveService extends Worker {
   }
 
   private Result persistDownload(int resultCode) {
-    Context context = getApplicationContext();
     Uri rawPduUri = parseUri(getInputData().getString(INPUT_RAW_PDU_URI));
     byte[] notificationPdu = getInputData().getByteArray(INPUT_NOTIFICATION_PDU);
     Uri messageUri = parseUri(getInputData().getString(INPUT_MESSAGE_URI));
     int subscriptionId = getInputData().getInt(
         INPUT_SUBSCRIPTION_ID, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
 
+    return persistDownload(resultCode, rawPduUri, notificationPdu, messageUri, subscriptionId);
+  }
+
+  private Result persistDownload(int resultCode, Uri rawPduUri, byte[] notificationPdu, Uri messageUri, int subscriptionId) {
+    Context context = getApplicationContext();
     try {
       if (resultCode != Activity.RESULT_OK || rawPduUri == null) {
         Log.e(TAG, "MMS download failed with result " + resultCode);
@@ -163,7 +171,7 @@ public class MmsReceiveService extends Worker {
       ContentValues values = new ContentValues();
       values.put(Telephony.Mms.DATE, System.currentTimeMillis() / 1000L);
       values.put(Telephony.Mms.STATUS, Telephony.Sms.Sent.STATUS_COMPLETE);
-      if (subscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+      if (Build.VERSION.SDK_INT >= 22 && subscriptionId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
         values.put(Telephony.Mms.SUBSCRIPTION_ID, subscriptionId);
       }
       context.getContentResolver().update(persisted, values, null, null);
@@ -263,7 +271,7 @@ public class MmsReceiveService extends Worker {
     try {
       Uri uri = messageUri;
       if (uri == null && notificationPdu != null) {
-        GenericPdu parsed = new PduParser(notificationPdu, true).parse();
+        NotificationInd parsed = parseNotification(notificationPdu);
         if (parsed != null) {
           uri = PduPersister.getPduPersister(context)
               .persist(parsed, Telephony.Mms.Inbox.CONTENT_URI, true, true, null);

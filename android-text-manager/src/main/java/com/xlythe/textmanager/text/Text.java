@@ -451,13 +451,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         return sendRequest;
     }
-    byte[] getByteData(Context context) {
-        // create byte array which will actually be sent
-        if (mBytesToSend != null) {
-            return mBytesToSend;
-        } else {
-            return new PduComposer(context, getSendRequest(context)).make();
-        }
+    byte[] getByteData() {
+        return mBytesToSend;
     }
 
     public byte[] toBytes() {

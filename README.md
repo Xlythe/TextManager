@@ -1,7 +1,7 @@
 Android Text Manager
 ====================
 
-TextManager sends and receives SMS and MMS on Android API 21 and later. It uses WorkManager for background work and Android’s telephony service for carrier transport.
+TextManager sends and receives SMS and MMS on Android API 14 and later. Android handles MMS transport on API 21 and later. On API 14–20, TextManager can exchange MMS directly with the carrier over mobile data. Both paths use the same library artifact and send API.
 
 
 Where to Download
@@ -98,6 +98,30 @@ Declare and request the permissions for the features you use.
 ```
 
 An app with SEND_SMS can also send an SMS while another app holds the role. Android persists that outgoing message. A successful send worker means Android accepted the dispatch. Carrier delivery arrives separately when a report is requested.
+
+Automatic MMS on API 14–20
+--------------------------
+The library depends on WorkManager 2.9.1 to support API 14. Check the resolved minimum SDK if your app also declares a newer WorkManager dependency.
+
+For automatic MMS, declare the legacy network permissions in your messaging app. Include `WRITE_SMS` to save messages on API 14–18. Android grants provider write access to the default SMS app on API 19 and later.
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" android:maxSdkVersion="20" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" android:maxSdkVersion="20" />
+<uses-permission android:name="android.permission.READ_APN_SETTINGS" android:maxSdkVersion="16" />
+<uses-permission android:name="android.permission.WRITE_SMS" android:maxSdkVersion="18" />
+```
+
+If your app needs internet on newer releases, declare its internet permission without the SDK cap. TextManager looks up the SIM operator and active MMS access point in the device’s carrier provider, then tries the device’s APN configuration file if needed. It supports an IPv4 mobile MMS route with an optional carrier proxy. Sending fails if the device cannot provide a matching configuration or route. A send completes only when the carrier acknowledges its transaction.
+
+On API 19–20 the default SMS app automatically receives MMS pushes. On API 14–18 the stock messaging app normally downloads them. If your app takes responsibility for those downloads, override the resource below in `res/values/bools.xml`. Enabling two downloaders can duplicate messages. Incoming SMS callbacks on API 14–18 carry the broadcast content with message ID `-1` until you query the persisted inbox row.
+
+```xml
+<resources>
+    <bool name="textmanager_handle_legacy_mms_push">true</bool>
+</resources>
+```
 
 License
 -------

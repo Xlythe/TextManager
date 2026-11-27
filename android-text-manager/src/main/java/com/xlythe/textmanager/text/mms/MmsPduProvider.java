@@ -33,12 +33,12 @@ public final class MmsPduProvider extends ContentProvider {
         } catch (IOException | IllegalArgumentException | SecurityException e) {
             throw new FileNotFoundException(e.getMessage());
         }
+        if (!file.isFile()) throw new FileNotFoundException("MMS transfer is no longer active");
         int flags;
         if ("r".equals(mode)) {
             flags = ParcelFileDescriptor.MODE_READ_ONLY;
         } else if ("w".equals(mode) || "wt".equals(mode)) {
             flags = ParcelFileDescriptor.MODE_WRITE_ONLY
-                    | ParcelFileDescriptor.MODE_CREATE
                     | ParcelFileDescriptor.MODE_TRUNCATE;
         } else {
             throw new FileNotFoundException("Unsupported mode: " + mode);

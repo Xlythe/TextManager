@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -42,6 +43,22 @@ public class Receive {
     // Name Address Email Pattern.
     private static final Pattern NAME_ADDR_EMAIL_PATTERN = Pattern.compile("\\s*(\"[^\"]*\"|[^<>\"]+)\\s*<([^<>]+)>\\s*");
 
+    static Text fromBroadcast(Context context, SmsMessage[] messages) {
+        SmsMessage first = messages[0];
+        String address = first.getDisplayOriginatingAddress();
+        long thread = address == null ? -1 : getOrCreateThreadId(context, address);
+        return new Text(-1, thread, checkDate(first), -1, Mock.Telephony.Sms.STATUS_NONE,
+                messageBody(messages), true, false, address, Collections.singleton(address), null);
+    }
+
+    private static String messageBody(SmsMessage[] messages) {
+        StringBuilder body = new StringBuilder();
+        for (SmsMessage part : messages) {
+            if (part.getDisplayMessageBody() != null) body.append(part.getDisplayMessageBody());
+        }
+        return replaceFormFeeds(body.toString());
+    }
+
     /**
      * Store message in the content provider.
      * @param context Context
@@ -56,14 +73,7 @@ public class Receive {
         values.put(Mock.Telephony.Sms.ERROR_CODE, error);
 
         // Add the message body
-        StringBuilder body = new StringBuilder();
-        for (SmsMessage msg: msgs) {
-            sms = msg;
-            if(sms.getDisplayMessageBody() != null) {
-                body.append(sms.getDisplayMessageBody());
-            }
-        }
-        values.put(Mock.Telephony.Sms.Inbox.BODY, replaceFormFeeds(body.toString()));
+        values.put(Mock.Telephony.Sms.Inbox.BODY, messageBody(msgs));
 
         // Make sure there is a thread id.
         Long threadId = values.getAsLong(Mock.Telephony.Sms.THREAD_ID);

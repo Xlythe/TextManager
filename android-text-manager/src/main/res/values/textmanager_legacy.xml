@@ -1,0 +1,4 @@
+<resources>
+    <!-- Enable only when this app owns carrier downloads on pre-KitKat devices. -->
+    <bool name="textmanager_handle_legacy_mms_push">false</bool>
+</resources>

@@ -41,6 +41,7 @@ import com.xlythe.textmanager.text.util.PreKitKatUtils;
 import com.xlythe.textmanager.text.Mock.Telephony;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +64,10 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
     private static final int CACHE_SIZE = 50;
     private static final String UNKNOWN = "Unknown";
     private static final String TEXT_EXTRA = "text";
-    private static final String[] PROJECTION = new String[] {
+    private static final String[] PROJECTION = messageProjection();
+
+    private static String[] messageProjection() {
+        List<String> columns = new ArrayList<>(Arrays.asList(
             // Determine if message is SMS or MMS
             Telephony.MmsSms.TYPE_DISCRIMINATOR_COLUMN,
             // Base item ID
@@ -83,7 +87,11 @@ public class TextManager implements MessageManager<Text, Thread, Contact> {
             Telephony.Mms.SUBJECT,
             Telephony.Mms.MESSAGE_BOX,
             Telephony.Mms.STATUS
-    };
+        ));
+        if (Build.VERSION.SDK_INT < 22) columns.remove(Telephony.Sms.SUBSCRIPTION_ID);
+        if (Build.VERSION.SDK_INT < 16) columns.remove(Telephony.Sms.DATE_SENT);
+        return columns.toArray(new String[0]);
+    }
 
     @SuppressLint("StaticFieldLeak")
     private static TextManager sTextManager;

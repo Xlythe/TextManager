@@ -82,6 +82,22 @@ public class MmsReceiveServiceWorkTest {
         assertFalse(MmsPduStore.delete(context, invalid));
     }
 
+    @Test
+    public void successfulDownloadCompletesTheOriginalRowAndReleasesThePdu() throws Exception {
+        byte[] retrieveConfirmation = {(byte) 0x8c, (byte) 0x84, (byte) 0x8d, (byte) 0x92,
+                (byte) 0x85, 1, 17, (byte) 0x84, (byte) 0xa3, 1, 1, 2, (byte) 0x83, 'o', 'k'};
+        Uri pdu = MmsPduStore.write(context, retrieveConfirmation);
+        Uri row = Uri.parse("content://mms/inbox/42");
+        assertEquals(ListenableWorker.Result.success(), complete(pdu, row, Activity.RESULT_OK));
+        ShadowContentResolver provider = Shadow.extract(context.getContentResolver());
+        ShadowContentResolver.UpdateStatement completed = provider.getUpdateStatements()
+                .get(provider.getUpdateStatements().size() - 1);
+        assertEquals(row, completed.getUri());
+        assertEquals(Integer.valueOf(Mock.Telephony.Sms.Sent.STATUS_COMPLETE),
+                completed.getContentValues().getAsInteger(Mock.Telephony.Mms.STATUS));
+        assertFalse(MmsPduStore.delete(context, pdu));
+    }
+
     private ListenableWorker.Result complete(Uri pdu, Uri row, int result) {
         Data input = new Data.Builder().putString("raw_pdu_uri", pdu.toString())
                 .putString("message_uri", row.toString()).putInt("result_code", result).build();

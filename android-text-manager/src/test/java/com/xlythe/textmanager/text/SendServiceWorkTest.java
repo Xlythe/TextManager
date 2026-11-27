@@ -2,6 +2,7 @@ package com.xlythe.textmanager.text;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.content.Context;
@@ -23,6 +24,9 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowSmsManager;
 
+import com.xlythe.textmanager.text.pdu.SendReq;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +43,21 @@ public class SendServiceWorkTest {
                 .setExecutor(new SynchronousExecutor())
                 .build();
         WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration);
+    }
+
+    @Test
+    public void legacySendRequiresSuccessfulConfirmationForItsOwnTransaction() throws Exception {
+        SendReq request = new SendReq();
+        request.setTransactionId(new byte[]{'a'});
+        byte[] confirmation = {(byte) 0x8c, (byte) 0x81, (byte) 0x98, 'a', 0,
+                (byte) 0x8d, (byte) 0x92, (byte) 0x92, (byte) 0x80, (byte) 0x8b, '1', 0};
+        SendService.verifyConfirmation(request, confirmation);
+        confirmation[8] = (byte) 0x81;
+        assertThrows(IOException.class, () -> SendService.verifyConfirmation(request, confirmation));
+        confirmation[8] = (byte) 0x80;
+        confirmation[3] = 'b';
+        assertThrows(IOException.class, () -> SendService.verifyConfirmation(request, confirmation));
+        assertThrows(IOException.class, () -> SendService.verifyConfirmation(request, new byte[0]));
     }
 
     @Test
