@@ -27,6 +27,11 @@ public final class SmsStatusTracker {
             int partIndex,
             int partCount,
             boolean successful) {
+        return record(messageId, phase, partIndex, partCount, successful, true);
+    }
+
+    public Status record(String messageId, Phase phase, int partIndex, int partCount,
+            boolean successful, boolean deliveryReports) {
         validate(messageId, phase, partIndex, partCount);
         synchronized (LOCK) {
             State state = store.read(messageId);
@@ -51,7 +56,7 @@ public final class SmsStatusTracker {
                 return Status.FAILED;
             }
             if (state.sentParts.size() == partCount
-                    && state.deliveredParts.size() == partCount) {
+                    && (!deliveryReports || state.deliveredParts.size() == partCount)) {
                 return Status.COMPLETE;
             }
             return Status.PENDING;

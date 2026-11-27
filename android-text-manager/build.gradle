@@ -20,7 +20,7 @@ android {
     compileSdk 37
 
     defaultConfig {
-        minSdk 21
+        minSdk 14
         targetSdk 37
     }
     buildTypes {
@@ -122,12 +122,14 @@ gradle.taskGraph.whenReady { graph ->
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
     testImplementation 'org.robolectric:robolectric:4.16'
-    testImplementation 'androidx.work:work-testing:2.10.5'
+    testImplementation 'androidx.work:work-testing:2.9.1'
 
-    implementation 'androidx.work:work-runtime:2.10.5'
+    implementation 'androidx.work:work-runtime:2.9.1'
 
     api fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.googlecode.libphonenumber:geocoder:3.35'
     api 'com.googlecode.libphonenumber:libphonenumber:9.0.35'
     api 'androidx.legacy:legacy-support-v4:1.0.0'
 }
@@ -143,7 +145,7 @@ def unitTestExecutionData = layout.buildDirectory.file('jacoco/testDebugUnitTest
 
 tasks.register('jacocoTestReport', JacocoReport) {
     dependsOn 'testDebugUnitTest'
-    classDirectories.setFrom(coreSmsClasses)
+    classDirectories.setFrom(fileTree(coreSmsClasses.dir) { include 'com/xlythe/textmanager/**/*.class' })
     sourceDirectories.setFrom(coreSmsSources)
     executionData.setFrom(unitTestExecutionData)
     onlyIf {
@@ -175,6 +177,21 @@ tasks.register('jacocoTestCoverageVerification', JacocoCoverageVerification) {
     }
 }
 
+tasks.register('libraryCoverageVerification', JacocoCoverageVerification) {
+    dependsOn 'jacocoTestReport'
+    classDirectories.setFrom(tasks.named('jacocoTestReport').get().classDirectories)
+    executionData.setFrom(unitTestExecutionData)
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.50
+            }
+        }
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'jacocoTestCoverageVerification'
+    dependsOn 'jacocoTestCoverageVerification', 'libraryCoverageVerification'
 }

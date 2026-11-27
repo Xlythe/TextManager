@@ -35,6 +35,13 @@ public class SmsStatusTrackerTest {
     }
 
     @Test
+    public void sendWithoutDeliveryReportsFinishesWhenEveryPartIsSent() {
+        SmsStatusTracker tracker = new SmsStatusTracker(new FakeStore());
+        assertEquals(PENDING, tracker.record("4", SENT, 1, 2, true, false));
+        assertEquals(COMPLETE, tracker.record("4", SENT, 0, 2, true, false));
+    }
+
+    @Test
     public void anyFailureRemainsTerminal() {
         FakeStore store = new FakeStore();
         SmsStatusTracker firstTracker = new SmsStatusTracker(store);

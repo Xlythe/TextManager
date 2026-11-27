@@ -92,6 +92,9 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
 
     @Override
     public synchronized boolean put(Uri uri, PduCacheEntry entry) {
+        Uri finalKey = normalizeKey(uri);
+        if (finalKey == null) return false;
+        purgeSingleEntry(finalKey);
         int msgBoxId = entry.getMessageBox();
         HashSet<Uri> msgBox = mMessageBoxes.get(msgBoxId);
         if (msgBox == null) {
@@ -106,7 +109,6 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
             mThreads.put(threadId, thread);
         }
 
-        Uri finalKey = normalizeKey(uri);
         boolean result = super.put(finalKey, entry);
         if (result) {
             msgBox.add(finalKey);
@@ -116,16 +118,21 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
         return result;
     }
 
+    @Override
+    public synchronized PduCacheEntry get(Uri uri) {
+        return super.get(normalizeKey(uri));
+    }
+
     synchronized void setUpdating(Uri uri, boolean updating) {
         if (updating) {
-            mUpdating.add(uri);
+            mUpdating.add(normalizeKey(uri));
         } else {
-            mUpdating.remove(uri);
+            mUpdating.remove(normalizeKey(uri));
         }
     }
 
     synchronized boolean isUpdating(Uri uri) {
-        return mUpdating.contains(uri);
+        return mUpdating.contains(normalizeKey(uri));
     }
 
     @Override
@@ -254,7 +261,7 @@ public final class PduCache extends AbstractCache<Uri, PduCacheEntry> {
     }
 
     private void removeFromMessageBoxes(Uri key, PduCacheEntry entry) {
-        HashSet<Uri> msgBox = mThreads.get(entry.getMessageBox());
+        HashSet<Uri> msgBox = mMessageBoxes.get(entry.getMessageBox());
         if (msgBox != null) {
             msgBox.remove(key);
         }

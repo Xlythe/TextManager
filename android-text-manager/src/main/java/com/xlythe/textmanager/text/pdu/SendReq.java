@@ -19,6 +19,8 @@ package com.xlythe.textmanager.text.pdu;
 
 import android.util.Log;
 
+import java.util.UUID;
+
 import com.xlythe.textmanager.text.util.EncodedStringValue;
 
 public class SendReq extends MultimediaMessagePdu {
@@ -43,7 +45,7 @@ public class SendReq extends MultimediaMessagePdu {
     }
 
     private byte[] generateTransactionId() {
-        String transactionId = "T" + Long.toHexString(System.currentTimeMillis());
+        String transactionId = "T" + UUID.randomUUID().toString();
         return transactionId.getBytes();
     }
 

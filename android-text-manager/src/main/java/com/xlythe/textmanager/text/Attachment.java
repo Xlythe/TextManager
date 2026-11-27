@@ -1,12 +1,11 @@
 package com.xlythe.textmanager.text;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,13 +17,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 
 import static com.xlythe.textmanager.text.TextManager.DEBUG;
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public abstract class Attachment implements com.xlythe.textmanager.Attachment, Parcelable{
     public enum Type {
-        IMAGE, VIDEO, VOICE, HIGH_RES_IMAGE
+        IMAGE, VIDEO, VOICE, HIGH_RES_IMAGE, FILE
     }
 
     private final Type mType;
@@ -99,33 +99,39 @@ public abstract class Attachment implements com.xlythe.textmanager.Attachment, P
             Log.d(TAG, "getInputStream(): " + uri);
         }
 
-        // Special case for MMS
-        if (uri.toString().startsWith("content://mms/part")) {
-            return context.getContentResolver().openInputStream(uri);
-        }
+        if (uri.getScheme() == null) return new FileInputStream(uri.getPath());
+        InputStream stream = context.getContentResolver().openInputStream(uri);
+        if (stream == null) throw new IOException("Attachment provider is unavailable");
+        return stream;
+    }
 
-        // Special case for files from gallery
-        Cursor cursor = null;
-        try {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            cursor = context.getContentResolver().query(uri,  proj, null, null, null);
-            if (cursor != null) {
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                return new FileInputStream(cursor.getString(column_index));
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
+    static Attachment fromPart(String mime, Uri uri) {
+        if (mime == null) return null;
+        int parameter = mime.indexOf(';');
+        mime = (parameter < 0 ? mime : mime.substring(0, parameter)).trim().toLowerCase(Locale.US);
+        if (mime.startsWith("image/")) return new ImageAttachment(uri);
+        if (mime.startsWith("video/")) return new VideoAttachment(uri);
+        if (mime.startsWith("audio/") || "application/ogg".equals(mime)) return new VoiceAttachment(uri);
+        if ("application/smil".equals(mime) || "text/plain".equals(mime) || "text/html".equals(mime)) return null;
+        return new FileAttachment(uri, FileAttachment.isMediaType(mime) ? mime : "application/octet-stream");
+    }
 
-        // The normal case, for most files
-        return new FileInputStream(uri.getPath());
+    public String getMimeType(Context context) {
+        if (mType == Type.IMAGE) return "image/jpeg";
+        if (mType == Type.HIGH_RES_IMAGE) return "image/png";
+        String mime = context.getContentResolver().getType(mUri);
+        if (mime == null) {
+            String extension = MimeTypeMap.getFileExtensionFromUrl(mUri.toString());
+            mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase(Locale.US));
+        }
+        if (mime != null) return mime;
+        return mType == Type.VOICE ? "audio/amr" : "video/mp4";
     }
 
     protected static byte[] toBytes(File file) throws IOException {
-        return toBytes(new FileInputStream(file));
+        try (InputStream stream = new FileInputStream(file)) {
+            return toBytes(stream);
+        }
     }
 
     protected static byte[] toBytes(InputStream is) throws IOException {

@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text.pdu;
 
+import java.nio.charset.Charset;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -8,6 +9,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.telephony.PhoneNumberUtils;
@@ -42,8 +44,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -258,7 +260,7 @@ public class PduPersister {
                 .getSystemService(Context.TELEPHONY_SERVICE);
     }
     /** Get(or create if not exist) an instance of PduPersister */
-    public static PduPersister getPduPersister(Context context) {
+    public static synchronized PduPersister getPduPersister(Context context) {
         if ((sPersister == null)) {
             sPersister = new PduPersister(context);
         } else if (!context.equals(sPersister.mContext)) {
@@ -387,8 +389,15 @@ public class PduPersister {
                     if (ContentType.TEXT_PLAIN.equals(type) || ContentType.APP_SMIL.equals(type)
                             || ContentType.TEXT_HTML.equals(type)) {
                         String text = c.getString(PART_COLUMN_TEXT);
-                        byte [] blob = new EncodedStringValue(text != null ? text : "")
-                                .getTextString();
+                        String charsetName = CharacterSets.MIMENAME_UTF_8;
+                        if (part.getCharset() != CharacterSets.ANY_CHARSET) {
+                            try {
+                                charsetName = CharacterSets.getMimeName(part.getCharset());
+                            } catch (UnsupportedEncodingException unknown) {
+                                charsetName = CharacterSets.MIMENAME_ISO_8859_1;
+                            }
+                        }
+                        byte[] blob = (text == null ? "" : text).getBytes(Charset.forName(charsetName));
                         baos.write(blob, 0, blob.length);
                     } else {
                         try {
@@ -471,26 +480,22 @@ public class PduPersister {
         PduCacheEntry cacheEntry;
         int msgBox = 0;
         long threadId = -1;
-        try {
-            synchronized(PDU_CACHE_INSTANCE) {
-                if (PDU_CACHE_INSTANCE.isUpdating(uri)) {
-                    if (LOCAL_LOGV) {
-                        Log.v(TAG, "load: " + uri + " blocked by isUpdating()");
-                    }
-                    try {
-                        PDU_CACHE_INSTANCE.wait();
-                    } catch (InterruptedException e) {
-                        Log.e(TAG, "load: ", e);
-                    }
-                    cacheEntry = PDU_CACHE_INSTANCE.get(uri);
-                    if (cacheEntry != null) {
-                        return cacheEntry.getPdu();
-                    }
+        synchronized (PDU_CACHE_INSTANCE) {
+            boolean waited = false;
+            while (PDU_CACHE_INSTANCE.isUpdating(uri)) {
+                waited = true;
+                try {
+                    PDU_CACHE_INSTANCE.wait();
+                } catch (InterruptedException e) {
+                    java.lang.Thread.currentThread().interrupt();
+                    throw new MmsException("Interrupted waiting for MMS", e);
                 }
-                // Tell the cache to indicate to other callers that this item
-                // is currently being updated.
-                PDU_CACHE_INSTANCE.setUpdating(uri, true);
             }
+            cacheEntry = PDU_CACHE_INSTANCE.get(uri);
+            if (waited && cacheEntry != null) return cacheEntry.getPdu();
+            PDU_CACHE_INSTANCE.setUpdating(uri, true);
+        }
+        try {
             Cursor c = mContentResolver.query( uri,
                     PDU_PROJECTION, null, null, null);
             PduHeaders headers = new PduHeaders();
@@ -596,7 +601,6 @@ public class PduPersister {
         } finally {
             synchronized(PDU_CACHE_INSTANCE) {
                 if (pdu != null) {
-                    assert(PDU_CACHE_INSTANCE.get(uri) == null);
                     // Update the cache entry with the real info
                     cacheEntry = new PduCacheEntry(pdu, msgBox, threadId);
                     PDU_CACHE_INSTANCE.put(uri, cacheEntry);
@@ -708,7 +712,7 @@ public class PduPersister {
                     || ContentType.APP_SMIL.equals(contentType)
                     || ContentType.TEXT_HTML.equals(contentType)) {
                 ContentValues cv = new ContentValues();
-                cv.put(Mock.Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString());
+                cv.put(Mock.Telephony.Mms.Part.TEXT, new EncodedStringValue(part.getCharset(), data).getString());
                 if (mContentResolver.update(uri, cv, null, null) != 1) {
                     throw new MmsException("unable to update " + uri.toString());
                 }
@@ -963,7 +967,7 @@ public class PduPersister {
         }
         if (!recipients.isEmpty()) {
             long threadId = getOrCreateThreadId(mContext, recipients);
-            values.put(Mms.THREAD_ID, threadId);
+            if (threadId >= 0) values.put(Mms.THREAD_ID, threadId);
         }
         mContentResolver.update(uri, values, null, null);
     }
@@ -1211,6 +1215,8 @@ public class PduPersister {
                     break;
                 case PduHeaders.MESSAGE_TYPE_SEND_REQ:
                     loadRecipients(PduHeaders.TO, recipients, addressMap, false);
+                    loadRecipients(PduHeaders.CC, recipients, addressMap, false);
+                    loadRecipients(PduHeaders.BCC, recipients, addressMap, false);
                     break;
             }
             long threadId = 0;
@@ -1219,60 +1225,71 @@ public class PduPersister {
                 // correct thread.
                 threadId = getOrCreateThreadId(mContext, recipients);
             }
-            values.put(Mms.THREAD_ID, threadId);
+            if (threadId >= 0) values.put(Mms.THREAD_ID, threadId);
         }
         // Save parts first to avoid inconsistent message is loaded
         // while saving the parts.
-        long dummyId = System.currentTimeMillis(); // Dummy ID of the msg.
-        // Figure out if this PDU is a text-only message
-        boolean textOnly = true;
-        // Get body if the PDU is a RetrieveConf or SendReq.
-        if (pdu instanceof MultimediaMessagePdu) {
-            body = ((MultimediaMessagePdu) pdu).getBody();
-            // Start saving parts if necessary.
-            if (body != null) {
-                int partsNum = body.getPartsNum();
-                if (partsNum > 2) {
-                    // For a text-only message there will be two parts: 1-the SMIL, 2-the text.
-                    // Down a few lines below we're checking to make sure we've only got SMIL or
-                    // text. We also have to check then we don't have more than two parts.
-                    // Otherwise, a slideshow with two text slides would be marked as textOnly.
-                    textOnly = false;
-                }
-                for (int i = 0; i < partsNum; i++) {
-                    PduPart part = body.getPart(i);
-                    persistPart(part, dummyId, preOpenedFiles);
-                    // If we've got anything besides text/plain or SMIL part, then we've got
-                    // an mms message with some other type of attachment.
-                    String contentType = getPartContentType(part);
-                    if (contentType != null && !ContentType.APP_SMIL.equals(contentType)
-                            && !ContentType.TEXT_PLAIN.equals(contentType)) {
+        // Stage parts under a random positive URI accepted by the telephony provider.
+        // Separate workers and processes can persist different PDUs in the same millisecond.
+        long dummyId = (UUID.randomUUID().getLeastSignificantBits() & Long.MAX_VALUE) | (1L << 62);
+        Uri stagingUri = Uri.parse("content://mms/" + dummyId + "/part");
+        Uri res;
+        try {
+            // Figure out if this PDU is a text-only message
+            boolean textOnly = true;
+            // Get body if the PDU is a RetrieveConf or SendReq.
+            if (pdu instanceof MultimediaMessagePdu) {
+                body = ((MultimediaMessagePdu) pdu).getBody();
+                // Start saving parts if necessary.
+                if (body != null) {
+                    int partsNum = body.getPartsNum();
+                    if (partsNum > 2) {
+                        // For a text-only message there will be two parts: 1-the SMIL, 2-the text.
+                        // Down a few lines below we're checking to make sure we've only got SMIL or
+                        // text. We also have to check then we don't have more than two parts.
+                        // Otherwise, a slideshow with two text slides would be marked as textOnly.
                         textOnly = false;
+                    }
+                    for (int i = 0; i < partsNum; i++) {
+                        PduPart part = body.getPart(i);
+                        persistPart(part, dummyId, preOpenedFiles);
+                        // If we've got anything besides text/plain or SMIL part, then we've got
+                        // an mms message with some other type of attachment.
+                        String contentType = getPartContentType(part);
+                        if (contentType != null && !ContentType.APP_SMIL.equals(contentType)
+                                && !ContentType.TEXT_PLAIN.equals(contentType)) {
+                            textOnly = false;
+                        }
                     }
                 }
             }
-        }
-        // Record whether this mms message is a simple plain text or not. This is a hint for the
-        // UI.
-        values.put(Mms.TEXT_ONLY, textOnly ? 1 : 0);
-        Uri res;
-        if (existingUri) {
-            res = uri;
-            mContentResolver.update(res, values, null, null);
-        } else {
-            res = mContentResolver.insert(uri, values);
-            if (res == null) {
-                throw new MmsException("persist() failed: return null.");
+            // Record whether this mms message is a simple plain text or not. This is a hint for the
+            // UI.
+            if (Build.VERSION.SDK_INT >= 17) values.put(Mms.TEXT_ONLY, textOnly ? 1 : 0);
+            if (existingUri) {
+                res = uri;
+                mContentResolver.update(res, values, null, null);
+            } else {
+                res = mContentResolver.insert(uri, values);
+                if (res == null) {
+                    throw new MmsException("persist() failed: return null.");
+                }
+                // Get the real ID of the PDU and update all parts which were
+                // saved with the dummy ID.
+                msgId = ContentUris.parseId(res);
             }
-            // Get the real ID of the PDU and update all parts which were
-            // saved with the dummy ID.
-            msgId = ContentUris.parseId(res);
+            values = new ContentValues(1);
+            values.put(Part.MSG_ID, msgId);
+            mContentResolver.update(stagingUri, values, null, null);
+        } catch (MmsException | RuntimeException failed) {
+            // A later persist must never inherit or leak the unclaimed parts of this one.
+            try {
+                mContentResolver.delete(stagingUri, null, null);
+            } catch (RuntimeException cleanupFailure) {
+                Log.w(TAG, "Unable to remove unclaimed MMS parts", cleanupFailure);
+            }
+            throw failed;
         }
-        values = new ContentValues(1);
-        values.put(Part.MSG_ID, msgId);
-        mContentResolver.update(
-                Uri.parse("content://mms/" + dummyId + "/part"),
-                values, null, null);
         // We should return the longest URI of the persisted PDU, for
         // example, if input URI is "content://mms/inbox" and the _ID of
         // persisted PDU is '8', we should return "content://mms/inbox/8"
@@ -1420,8 +1437,7 @@ public class PduPersister {
             }
         }
 
-        Random random = new Random();
-        return random.nextLong();
+        return -1;
     }
 
     /**

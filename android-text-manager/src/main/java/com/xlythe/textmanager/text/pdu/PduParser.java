@@ -17,6 +17,7 @@
 
 package com.xlythe.textmanager.text.pdu;
 
+import java.util.Locale;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.util.Base64;
@@ -74,12 +75,13 @@ public class PduParser {
     /**
      * Store the "type" parameter in "Content-Type" header field.
      */
-    private static byte[] mTypeParam = null;
+    private byte[] mTypeParam = null;
 
     /**
      * Store the "start" parameter in "Content-Type" header field.
      */
-    private static byte[] mStartParam = null;
+    private Integer mCharset;
+    private byte[] mStartParam = null;
 
     /**
      * The log tag.
@@ -128,11 +130,27 @@ public class PduParser {
         }
 
         if ((PduHeaders.MESSAGE_TYPE_SEND_REQ == messageType) || (PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF == messageType)) {
-            /* need to parse the parts */
-            mBody = parseParts(mPduDataStream);
-            if (null == mBody) {
-                // Parse parts failed.
-                return null;
+            byte[] type = mHeaders.getTextString(PduHeaders.CONTENT_TYPE);
+            if (type == null) return null;
+            String media = new String(type).toLowerCase(Locale.US);
+            if (media.startsWith("application/vnd.wap.multipart.") || media.startsWith("multipart/")) {
+                mBody = parseParts(mPduDataStream);
+                if (mBody == null) return null;
+                if (media.endsWith(".alternative") || media.equals("multipart/alternative")) {
+                    if (mBody.getPartsNum() == 0) return null;
+                    PduPart first = mBody.getPart(0);
+                    mBody.removeAll();
+                    mBody.addPart(first);
+                }
+            } else {
+                PduPart part = new PduPart();
+                part.setContentType(type);
+                if (mCharset != null) part.setCharset(mCharset);
+                byte[] data = new byte[mPduDataStream.available()];
+                if (data.length > 0) mPduDataStream.read(data, 0, data.length);
+                part.setData(data);
+                mBody = new PduBody();
+                mBody.addPart(part);
             }
         }
 
@@ -151,28 +169,7 @@ public class PduParser {
                 return new NotifyRespInd(mHeaders);
             case PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_RETRIEVE_CONF");
-                RetrieveConf retrieveConf = new RetrieveConf(mHeaders, mBody);
-
-                byte[] contentType = retrieveConf.getContentType();
-                if (null == contentType) {
-                    return null;
-                }
-                String ctTypeStr = new String(contentType);
-                if (ctTypeStr.equals(ContentType.MULTIPART_MIXED)
-                        || ctTypeStr.equals(ContentType.MULTIPART_RELATED)) {
-                    // The MMS content type must be "application/vnd.wap.multipart.mixed"
-                    // or "application/vnd.wap.multipart.related"
-                    // or "application/vnd.wap.multipart.alternative"
-                    return retrieveConf;
-                } else if (ctTypeStr.equals(ContentType.MULTIPART_ALTERNATIVE)) {
-                    // "application/vnd.wap.multipart.alternative"
-                    // should take only the first part.
-                    PduPart firstPart = mBody.getPart(0);
-                    mBody.removeAll();
-                    mBody.addPart(0, firstPart);
-                    return retrieveConf;
-                }
-                return null;
+                return new RetrieveConf(mHeaders, mBody);
             case PduHeaders.MESSAGE_TYPE_DELIVERY_IND:
                 Log.v(LOG_TAG, "parse: MESSAGE_TYPE_DELIVERY_IND");
                 return new DeliveryInd(mHeaders);
@@ -754,6 +751,7 @@ public class PduParser {
                     }
 
                     /* get start parameter */
+                    mCharset = (Integer) map.get(PduPart.P_CHARSET);
                     mStartParam = (byte[]) map.get(PduPart.P_START);
 
                     /* get charset parameter */
@@ -785,11 +783,13 @@ public class PduParser {
      * @return parts in PduBody structure
      */
     protected PduBody parseParts(ByteArrayInputStream pduDataStream) {
-        if (pduDataStream == null) {
-            return null;
-        }
+        return parseParts(pduDataStream, 0);
+    }
 
+    private PduBody parseParts(ByteArrayInputStream pduDataStream, int depth) {
+        if (pduDataStream == null || depth > 16) return null;
         int count = parseUnsignedInt(pduDataStream); // get the number of parts
+        if (count < 0 || count > pduDataStream.available() / 3) return null;
         PduBody body = new PduBody();
 
         for (int i = 0 ; i < count ; i++) {
@@ -797,7 +797,7 @@ public class PduParser {
             int dataLength = parseUnsignedInt(pduDataStream);
             PduPart part = new PduPart();
             int startPos = pduDataStream.available();
-            if (startPos <= 0) {
+            if (headerLength <= 0 || headerLength > startPos || dataLength < 0 || dataLength > startPos - headerLength) {
                 // Invalid part.
                 return null;
             }
@@ -843,8 +843,7 @@ public class PduParser {
                     && (null == part.getName())
                     && (null == part.getFilename())
                     && (null == part.getContentId())) {
-                part.setContentLocation(Long.toOctalString(
-                        System.currentTimeMillis()).getBytes());
+                part.setContentLocation(("part-" + i).getBytes());
             }
 
             /* get part's data */
@@ -854,7 +853,8 @@ public class PduParser {
                 pduDataStream.read(partData, 0, dataLength);
                 if (partContentType.equalsIgnoreCase(ContentType.MULTIPART_ALTERNATIVE)) {
                     // parse "multipart/vnd.wap.multipart.alternative".
-                    PduBody childBody = parseParts(new ByteArrayInputStream(partData));
+                    PduBody childBody = parseParts(new ByteArrayInputStream(partData), depth + 1);
+                    if (childBody == null || childBody.getPartsNum() == 0) return null;
                     // take the first part of children.
                     part = childBody.getPart(0);
                 } else {
@@ -918,24 +918,13 @@ public class PduParser {
          */
         assert(null != pduDataStream);
         int result = 0;
-        int temp = pduDataStream.read();
-        if (temp == -1) {
-            return temp;
+        for (int octets = 0; octets < 5; octets++) {
+            int next = pduDataStream.read();
+            if (next < 0 || result > (Integer.MAX_VALUE >>> 7)) return -1;
+            result = (result << 7) | (next & 0x7f);
+            if ((next & 0x80) == 0) return result;
         }
-
-        while((temp & 0x80) != 0) {
-            result = result << 7;
-            result |= temp & 0x7F;
-            temp = pduDataStream.read();
-            if (temp == -1) {
-                return temp;
-            }
-        }
-
-        result = result << 7;
-        result |= temp & 0x7F;
-
-        return result;
+        return -1;
     }
 
     /**
@@ -1270,13 +1259,8 @@ public class PduParser {
      */
     protected static int skipWapValue(ByteArrayInputStream pduDataStream, int length) {
         assert(null != pduDataStream);
-        byte[] area = new byte[length];
-        int readLen = pduDataStream.read(area, 0, length);
-        if (readLen < length) { //The actually read length is lower than the length
-            return -1;
-        } else {
-            return readLen;
-        }
+        if (length < 0 || length > pduDataStream.available()) return -1;
+        return (int) pduDataStream.skip(length);
     }
 
     /**
@@ -1571,8 +1555,9 @@ public class PduParser {
         int tempPos;
         int lastLen = length;
         while(0 < lastLen) {
+            pduDataStream.mark(1);
             int header = pduDataStream.read();
-            assert(-1 != header);
+            if (header < 0) return false;
             lastLen--;
 
             if (header > TEXT_MAX) {
@@ -1652,8 +1637,7 @@ public class PduParser {
                                 thisEndPos = pduDataStream.available();
                                 if (thisStartPos - thisEndPos < len) {
                                     int last = len - (thisStartPos - thisEndPos);
-                                    byte[] temp = new byte[last];
-                                    pduDataStream.read(temp, 0, last);
+                                    if (skipWapValue(pduDataStream, last) < 0) return false;
                                 }
                             }
 
@@ -1674,11 +1658,12 @@ public class PduParser {
                 }
             } else if ((header >= TEXT_MIN) && (header <= TEXT_MAX)) {
                 // Not assigned header.
+                pduDataStream.reset();
                 byte[] tempHeader = parseWapString(pduDataStream, TYPE_TEXT_STRING);
                 byte[] tempValue = parseWapString(pduDataStream, TYPE_TEXT_STRING);
 
                 // Check the header whether it is "Content-Transfer-Encoding".
-                if (PduPart.CONTENT_TRANSFER_ENCODING.equalsIgnoreCase(new String(tempHeader))) {
+                if (tempHeader != null && tempValue != null && PduPart.CONTENT_TRANSFER_ENCODING.equalsIgnoreCase(new String(tempHeader))) {
                     part.setContentTransferEncoding(tempValue);
                 }
 
@@ -1712,7 +1697,7 @@ public class PduParser {
      * @return part position, THE_FIRST_PART when it's the
      * first one, THE_LAST_PART when it's the last one.
      */
-    private static int checkPartPosition(PduPart part) {
+    private int checkPartPosition(PduPart part) {
         assert(null != part);
         if ((null == mTypeParam) &&
                 (null == mStartParam)) {

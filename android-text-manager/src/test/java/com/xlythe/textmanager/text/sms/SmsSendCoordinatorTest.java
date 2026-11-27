@@ -82,6 +82,27 @@ public class SmsSendCoordinatorTest {
         assertNull(gateway.body);
     }
 
+    @Test
+    public void sendsSeparateSegmentsWithDistinctSentCallbacksAndOptionalDeliveryReports() {
+        FakeGateway gateway = new FakeGateway(Arrays.asList("one", "two"));
+        new SmsSendCoordinator<>(gateway, new FakeCallbackFactory())
+                .send(new SmsSendRequest("7", "+15557654321", "onetwo"), true, false);
+        assertEquals(Arrays.asList("one", "two"), gateway.singleBodies);
+        assertEquals(Arrays.asList("sent:7:0/2", "sent:7:1/2"), gateway.singleSentCallbacks);
+        assertNull(gateway.deliveredCallback);
+        assertNull(gateway.parts);
+    }
+
+    @Test
+    public void nonDefaultAppCanSendMultipartWithoutProviderCallbacks() {
+        FakeGateway gateway = new FakeGateway(Arrays.asList("one", "two"));
+        new SmsSendCoordinator<>(gateway, null)
+                .send(new SmsSendRequest("7", "+15557654321", "onetwo"));
+        assertEquals(Arrays.asList("one", "two"), gateway.parts);
+        assertEquals(Arrays.asList(null, null), gateway.sentCallbacks);
+        assertEquals(Arrays.asList(null, null), gateway.deliveredCallbacks);
+    }
+
     private static void assertInvalidRequest(
             String messageId, String recipient, String body, String expectedMessage) {
         try {
@@ -109,6 +130,8 @@ public class SmsSendCoordinatorTest {
 
     private static final class FakeGateway implements SmsGateway<String> {
         private final List<String> dividedParts;
+        final List<String> singleBodies = new ArrayList<>();
+        final List<String> singleSentCallbacks = new ArrayList<>();
         private String recipient;
         private String body;
         private String sentCallback;
@@ -133,6 +156,8 @@ public class SmsSendCoordinatorTest {
                 String sentCallback,
                 String deliveredCallback) {
             this.recipient = recipient;
+            singleBodies.add(body);
+            singleSentCallbacks.add(sentCallback);
             this.body = body;
             this.sentCallback = sentCallback;
             this.deliveredCallback = deliveredCallback;

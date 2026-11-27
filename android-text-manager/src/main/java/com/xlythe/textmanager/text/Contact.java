@@ -1,5 +1,6 @@
 package com.xlythe.textmanager.text;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Person;
 import android.content.Context;
@@ -14,7 +15,6 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telephony.PhoneNumberUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,53 +27,43 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 import com.xlythe.textmanager.text.util.Utils;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Represents a phone number.
  */
 public final class Contact implements User, Parcelable {
-    private static final String TAG = Contact.class.getSimpleName();
-    private static final boolean DEBUG = false;
 
     static final Contact UNKNOWN = new Contact(null, "???");
 
     private final long mId;
     private final String mLookupKey;
-    private String mNumber;
+    private final String mNumber;
     private final String mDisplayName;
     private final String mPhotoUri;
     private final String mPhotoThumbUri;
 
     Contact(Cursor c) {
-        if (DEBUG) {
-            Log.d(TAG, "--------Printing Columns-------");
-            for (int i = 0; i < c.getColumnCount(); i++) {
-                Log.d(TAG, "Column: " + c.getColumnName(i));
-            }
-        }
-
-        mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
-        mLookupKey = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.LOOKUP_KEY));
-        // Number may not exist, so check first
-        int column = c.getColumnIndex(ContactsContract.PhoneLookup.NUMBER);
-        if (column != -1) {
-            setNumber(mNumber);
-        }
-        mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
-        mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
-        mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
+        this(null, c);
     }
 
-    Contact(String phoneNumber, Cursor c) {
-        mId = c.getLong(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
-        mLookupKey = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.LOOKUP_KEY));
-        // Number may not exist, so check first
-        setNumber(phoneNumber);
-        mDisplayName = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
-        mPhotoUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_URI));
-        mPhotoThumbUri = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
+    Contact(String address, Cursor c) {
+        int contactId = c.getColumnIndex(Phone.CONTACT_ID);
+        mId = c.getLong(contactId >= 0 ? contactId : c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+        mLookupKey = column(c, ContactsContract.Contacts.LOOKUP_KEY);
+        String rowNumber = column(c, ContactsContract.PhoneLookup.NUMBER);
+        mNumber = address != null ? address : rowNumber != null ? rowNumber : column(c, Phone.NUMBER);
+        mDisplayName = column(c, ContactsContract.Contacts.DISPLAY_NAME);
+        mPhotoUri = column(c, ContactsContract.Contacts.PHOTO_URI);
+        mPhotoThumbUri = column(c, ContactsContract.Contacts.PHOTO_THUMBNAIL_URI);
+    }
+
+    private static String column(Cursor cursor, String name) {
+        int index = cursor.getColumnIndex(name);
+        return index < 0 ? null : cursor.getString(index);
     }
 
     Contact(String number) {
@@ -81,9 +71,13 @@ public final class Contact implements User, Parcelable {
     }
 
     Contact(String number, String displayName) {
+        this(number, displayName, null);
+    }
+
+    Contact(String number, String displayName, Uri simRecord) {
         mId = -1;
-        mLookupKey = "";
-        setNumber(number);
+        mLookupKey = simRecord == null ? "" : simRecord.toString();
+        mNumber = number;
         mDisplayName = displayName;
         mPhotoUri = null;
         mPhotoThumbUri = null;
@@ -112,124 +106,57 @@ public final class Contact implements User, Parcelable {
 
     @SuppressLint("Range")
     public synchronized Future<String> getMobileNumber(final Context context) {
-        if (mNumber != null) {
-            return new Present<>(mNumber);
-        } else {
-            return new FutureImpl<String>() {
-                @Override
-                public String get() {
-                    List<String> numbers = new LinkedList<>();
-
-                    Uri uri = Phone.CONTENT_URI;
-                    String[] projection = new String[] {
-                            Phone.NUMBER,
-                            Phone.IS_PRIMARY,
-                            Phone.TYPE
-                    };
-                    String clause = Phone.CONTACT_ID + " = ? AND " + Phone.TYPE + " = ?";
-                    String[] args = new String[] { getId(), Integer.toString(Phone.TYPE_MOBILE) };
-                    Cursor cursor = context.getContentResolver().query(uri, projection, clause, args, null);
-                    if (cursor != null) {
-                        try {
-                            if (cursor.moveToFirst()) {
-                                do {
-                                    boolean isPrimary = cursor.getInt(cursor.getColumnIndex(Phone.IS_PRIMARY)) != 0;
-                                    String number = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
-
-                                    if (isPrimary) {
-                                        numbers.add(0, number);
-                                    } else {
-                                        numbers.add(number);
-                                    }
-                                } while (cursor.moveToNext());
-                            }
-                        } finally {
-                            cursor.close();
-                        }
-                    }
-                    if (numbers.isEmpty()) {
-                        return null;
-                    } else {
-                        return setNumber(numbers.get(0));
-                    }
-                }
-            };
-        }
+        if (mNumber != null) return new Present<>(mNumber);
+        return new FutureImpl<String>() {
+            @Override public String get() {
+                List<String> mobile = values(context, Phone.CONTENT_URI, Phone.NUMBER, true);
+                if (mobile.isEmpty()) mobile = getNumbers(context);
+                return mobile.isEmpty() ? null : mobile.get(0);
+            }
+        };
     }
 
-    public String getNumber() {
-        return mNumber;
-    }
+    public String getNumber() { return mNumber; }
 
-    private synchronized String setNumber(String number) {
-        mNumber = number;
-        return mNumber;
-    }
-
-    @SuppressLint("Range")
     public List<String> getEmails(Context context) {
-        List<String> emailAddresses = new LinkedList<>();
-
-        Uri uri = Email.CONTENT_URI;
-        String[] projection = new String[] {
-                Email.DATA,
-                Email.IS_PRIMARY
-        };
-        String clause = Email.CONTACT_ID + " = ?";
-        String[] args = new String[] { getId() };
-        Cursor cursor = context.getContentResolver().query(uri, projection, clause, args, null);
-        if (cursor != null) {
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        boolean isPrimary = cursor.getInt(cursor.getColumnIndex(Email.IS_PRIMARY)) != 0;
-                        String address = cursor.getString(cursor.getColumnIndex(Email.DATA));
-
-                        if (isPrimary) {
-                            emailAddresses.add(0, address);
-                        } else {
-                            emailAddresses.add(address);
-                        }
-                    } while (cursor.moveToNext());
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-        return emailAddresses;
+        return values(context, Email.CONTENT_URI, Email.ADDRESS, false);
     }
 
-    @SuppressLint("Range")
     public List<String> getNumbers(Context context) {
-        List<String> phoneNumbers = new LinkedList<>();
+        if (mId < 0 && mNumber != null) return Collections.singletonList(mNumber);
+        return values(context, Phone.CONTENT_URI, Phone.NUMBER, false);
+    }
 
-        Uri uri = Phone.CONTENT_URI;
-        String[] projection = new String[] {
-                Phone.NUMBER,
-                Phone.IS_PRIMARY
-        };
-        String clause = Phone.CONTACT_ID + " = ?";
-        String[] args = new String[] { getId() };
-        Cursor cursor = context.getContentResolver().query(uri, projection, clause, args, null);
-        if (cursor != null) {
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        boolean isPrimary = cursor.getInt(cursor.getColumnIndex(Phone.IS_PRIMARY)) != 0;
-                        String number = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
-
-                        if (isPrimary) {
-                            phoneNumbers.add(0, number);
-                        } else {
-                            phoneNumbers.add(number);
-                        }
-                    } while (cursor.moveToNext());
-                }
-            } finally {
-                cursor.close();
-            }
+    private List<String> values(Context context, Uri uri, String value, boolean mobileOnly) {
+        if (mId < 0 || !TelephonyPermissions.has(context, Manifest.permission.READ_CONTACTS)) {
+            return Collections.emptyList();
         }
-        return phoneNumbers;
+        String selection = Phone.CONTACT_ID + "=?";
+        if (mobileOnly) selection += " AND " + Phone.TYPE + "=" + Phone.TYPE_MOBILE;
+        String order = Phone.IS_SUPER_PRIMARY + " DESC, " + Phone.IS_PRIMARY + " DESC, " + Phone._ID + " ASC";
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        try (Cursor rows = context.getContentResolver().query(uri, new String[]{value}, selection,
+                new String[]{getId()}, order)) {
+            while (rows != null && rows.moveToNext()) {
+                String entry = rows.getString(0);
+                if (entry != null && !entry.trim().isEmpty()) result.add(entry);
+            }
+        } catch (SecurityException revoked) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(result);
+    }
+
+    public Uri getSimRecordUri() {
+        return mId < 0 && mLookupKey != null && mLookupKey.startsWith("content://")
+                ? Uri.parse(mLookupKey) : null;
+    }
+
+    private String personUri() {
+        if (getSimRecordUri() != null) return mLookupKey;
+        Uri uri = mId < 0 ? null : ContactsContract.Contacts.getLookupUri(mId, mLookupKey);
+        if (uri == null && mNumber != null) uri = Uri.fromParts(mNumber.contains("@") ? "mailto" : "tel", mNumber, null);
+        return uri == null ? null : uri.toString();
     }
 
     @Override
@@ -238,12 +165,15 @@ public final class Contact implements User, Parcelable {
             return mDisplayName;
         } else {
             // Guaranteed to have a number if the name is null.
-            return PhoneNumberUtils.formatNumber(getNumber());
+            if (mNumber == null) return UNKNOWN.mDisplayName;
+            if (!PhoneNumberUtils.isGlobalPhoneNumber(mNumber)) return mNumber;
+            String formatted = PhoneNumberUtils.formatNumber(mNumber);
+            return formatted == null || formatted.isEmpty() ? mNumber : formatted;
         }
     }
 
     public boolean hasName() {
-        return mDisplayName != null;
+        return mDisplayName != null && !mDisplayName.isEmpty();
     }
 
     @Override
@@ -258,8 +188,8 @@ public final class Contact implements User, Parcelable {
     @RequiresApi(api = Build.VERSION_CODES.P)
     public Person asPerson() {
         return new Person.Builder()
-                .setKey(getId())
-                .setUri(ContactsContract.Contacts.getLookupUri(getIdAsLong(), getLookupKey()).toString())
+                .setKey(mId < 0 ? personUri() : getId())
+                .setUri(personUri())
                 .setName(getDisplayName())
                 .setIcon(getPhotoUri() != null ? Icon.createWithContentUri(getPhotoUri()) : null)
                 .build();
@@ -267,8 +197,8 @@ public final class Contact implements User, Parcelable {
 
     public androidx.core.app.Person asPersonCompat() {
         return new androidx.core.app.Person.Builder()
-                .setKey(getId())
-                .setUri(ContactsContract.Contacts.getLookupUri(getIdAsLong(), getLookupKey()).toString())
+                .setKey(mId < 0 ? personUri() : getId())
+                .setUri(personUri())
                 .setName(getDisplayName())
                 .setIcon(getPhotoUri() != null ? IconCompat.createWithContentUri(getPhotoUri()) : null)
                 .build();
@@ -278,7 +208,7 @@ public final class Contact implements User, Parcelable {
     public boolean equals(@Nullable Object o) {
         if (o instanceof Contact) {
             Contact a = (Contact) o;
-            return Utils.equals(mNumber, a.mNumber)
+            return mId == a.mId && Utils.equals(mLookupKey, a.mLookupKey) && Utils.equals(mNumber, a.mNumber)
                     && Utils.equals(mPhotoUri, a.mPhotoUri)
                     && Utils.equals(mDisplayName, a.mDisplayName)
                     && Utils.equals(mPhotoThumbUri, a.mPhotoThumbUri);
@@ -288,7 +218,7 @@ public final class Contact implements User, Parcelable {
 
     @Override
     public int hashCode() {
-        return Utils.hashCode(mNumber)
+        return Long.valueOf(mId).hashCode() + Utils.hashCode(mLookupKey) + Utils.hashCode(mNumber)
                 + Utils.hashCode(mPhotoUri)
                 + Utils.hashCode(mDisplayName)
                 + Utils.hashCode(mPhotoThumbUri);
@@ -338,7 +268,7 @@ public final class Contact implements User, Parcelable {
 
     public enum Sort {
         Alphabetical(ContactsContract.Contacts.DISPLAY_NAME + " ASC"),
-        FrequentlyContacted(ContactsContract.Contacts.TIMES_CONTACTED + " ASC");
+        FrequentlyContacted(ContactsContract.Contacts.TIMES_CONTACTED + " DESC");
         private final String key;
 
         Sort(String key) {

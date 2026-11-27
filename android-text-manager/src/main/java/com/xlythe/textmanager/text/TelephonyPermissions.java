@@ -21,10 +21,6 @@ final class TelephonyPermissions {
         return has(context, Manifest.permission.SEND_SMS);
     }
 
-    static boolean canSendMms(Context context) {
-        return canSendSms(context) && canReadPhoneNumber(context);
-    }
-
     static boolean canReceiveMms(Context context) {
         return has(context, Manifest.permission.RECEIVE_MMS);
     }

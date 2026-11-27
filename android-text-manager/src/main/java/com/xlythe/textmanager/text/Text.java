@@ -1,6 +1,5 @@
 package com.xlythe.textmanager.text;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
@@ -17,11 +16,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresPermission;
 import androidx.annotation.VisibleForTesting;
 
 import com.xlythe.textmanager.Message;
 import com.xlythe.textmanager.text.pdu.PduBody;
+import com.xlythe.textmanager.text.mms.MmsPduStore;
+import com.xlythe.textmanager.text.pdu.PduHeaders;
 import com.xlythe.textmanager.text.pdu.PduComposer;
 import com.xlythe.textmanager.text.pdu.PduPart;
 import com.xlythe.textmanager.text.pdu.SendReq;
@@ -33,12 +33,16 @@ import com.xlythe.textmanager.text.util.EncodedStringValue;
 import com.xlythe.textmanager.text.util.Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
@@ -65,7 +69,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     private Contact mSender;
     private Set<String> mMemberAddresses = new HashSet<>();
     private final Set<Contact> mMembers = new HashSet<>();
-    private Attachment mAttachment;
+    private final List<Attachment> mAttachments = new ArrayList<>();
     private byte[] mBytesToSend;
     private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
@@ -91,16 +95,20 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         mIncoming = incoming;
         mIsMms = isMms;
         mSenderAddress = senderAddress;
-        mMemberAddresses = memberAddresses;
-        mAttachment = attachment;
+        mMemberAddresses = new HashSet<>(memberAddresses);
+        if (attachment != null) mAttachments.add(attachment);
     }
 
-    void setAttachment(Attachment attachment){
-        mAttachment = attachment;
-    }
-
-    void setBody(String body){
-        mBody = body;
+    void readPart(Cursor part) {
+        String type = part.getString(part.getColumnIndexOrThrow(Mock.Telephony.Mms.Part.CONTENT_TYPE));
+        if ("text/plain".equalsIgnoreCase(type) || "text/html".equalsIgnoreCase(type)) {
+            String value = part.getString(part.getColumnIndexOrThrow(Mock.Telephony.Mms.Part.TEXT));
+            if (value != null) mBody = mBody == null ? value : mBody + "\n" + value;
+            return;
+        }
+        long id = part.getLong(part.getColumnIndexOrThrow(BaseColumns._ID));
+        Attachment attachment = Attachment.fromPart(type, Uri.parse("content://mms/part/" + id));
+        if (attachment != null) mAttachments.add(attachment);
     }
 
     Text(TextCursor cursor) {
@@ -151,9 +159,16 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             mMembers.add((Contact) in.readParcelable(Contact.class.getClassLoader()));
         }
 
-        mAttachment = in.readParcelable(Attachment.class.getClassLoader());
+        Attachment first = in.readParcelable(Attachment.class.getClassLoader());
+        if (first != null) mAttachments.add(first);
 
         int expectedByteCount = in.readInt();
+        if (expectedByteCount == -1) {
+            int additional = in.readInt();
+            if (additional < 1 || additional > in.dataAvail() / 4) throw new BadParcelableException("Invalid attachment count");
+            for (int i = 0; i < additional; i++) mAttachments.add(in.readParcelable(Attachment.class.getClassLoader()));
+            expectedByteCount = in.readInt();
+        }
         mBytesToSend = in.createByteArray();
         if (mBytesToSend == null || mBytesToSend.length != expectedByteCount) {
             throw new BadParcelableException("Invalid prepared message payload");
@@ -216,29 +231,14 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         if (mmsCursor != null && mmsCursor.moveToFirst()) {
             do {
                 if (mmsCursor.getLong(mmsCursor.getColumnIndex(Mock.Telephony.Mms.Part.MSG_ID)) == mMmsId) {
-                    String contentType = mmsCursor.getString(mmsCursor.getColumnIndex(Mock.Telephony.Mms.Part.CONTENT_TYPE));
-                    if (contentType == null) {
-                        continue;
-                    }
-
-                    if (contentType.matches("image/.*")) {
-                        // Find any part that is an image attachment
-                        long partId = mmsCursor.getLong(mmsCursor.getColumnIndex(BaseColumns._ID));
-                        mAttachment = new ImageAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
-                    } else if (contentType.matches("text/.*")) {
-                        // Find any part that is text data
-                        mBody = mmsCursor.getString(mmsCursor.getColumnIndex(Mock.Telephony.Mms.Part.TEXT));
-                    } else if (contentType.matches("video/.*")) {
-                        long partId = mmsCursor.getLong(mmsCursor.getColumnIndex(BaseColumns._ID));
-                        mAttachment = new VideoAttachment(Uri.withAppendedPath(Mock.Telephony.Mms.CONTENT_URI, "part/" + partId));
-                    }
+                    readPart(mmsCursor);
                 }
             } while (mmsCursor.moveToNext());
         }
     }
 
-    Set<String> getMemberAddresses() {
-        return mMemberAddresses;
+    synchronized Set<String> getMemberAddresses() {
+        return new HashSet<>(mMemberAddresses);
     }
 
     String getSenderAddress() {
@@ -246,8 +246,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     }
 
 
-    Set<Contact> getMembers() {
-        return mMembers;
+    synchronized Set<Contact> getMembers() {
+        return new HashSet<>(mMembers);
     }
 
     Contact getSender() {
@@ -331,7 +331,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
     @Override
     public Attachment getAttachment() {
-        return mAttachment;
+        return mAttachments.isEmpty() ? null : mAttachments.get(mAttachments.size() - 1);
+    }
+
+    /** Every media or file part, in provider or composition order. */
+    public List<Attachment> getAttachments() {
+        return Collections.unmodifiableList(mAttachments);
     }
 
     @Override
@@ -345,89 +350,76 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return Status.NONE;
     }
     SendReq getSendRequest(Context context) {
-        final PduBody pduBody = new PduBody();
-        PduPart partPdu = new PduPart();
-        long messageSize = 0;
-        byte[] nameBytes = new byte[]{};
-        byte[] typeBytes = new byte[]{};
-        byte[] dataBytes = new byte[]{};
+        return getSendRequest(context, null, false, false);
+    }
 
-        // Create media parts, we only send one pic/video at a time
-        if (mAttachment != null) {
-            Attachment.Type type = mAttachment.getType();
-            switch (type) {
-                case IMAGE:
-                    nameBytes = "image".getBytes();
-                    typeBytes = ContentType.IMAGE_JPEG.getBytes();
-                    dataBytes = ((ImageAttachment) mAttachment).getBytes(context);
-                    if (dataBytes == null) {
-                        Log.e(TAG, "Error getting bitmap from attachment");
-                        break;
-                    }
-                    break;
-                case HIGH_RES_IMAGE:
-                    nameBytes = "image".getBytes();
-                    typeBytes = ContentType.IMAGE_PNG.getBytes();
-                    dataBytes = ((ImageAttachment) mAttachment).getBytes(context);
-                    if (dataBytes == null) {
-                        Log.e(TAG, "Error getting bitmap from attachment");
-                        break;
-                    }
-                    break;
-                case VIDEO:
-                    nameBytes = "video".getBytes();
-                    typeBytes = ContentType.VIDEO_MP4.getBytes();
-                    dataBytes = ((VideoAttachment) mAttachment).getBytes(context).get();
-                    if (dataBytes == null) {
-                        Log.e(TAG, "Error getting bytes from attachment");
-                        break;
-                    }
-                case VOICE:
-                    //TODO: Voice support
-                    break;
+    SendReq getSendRequest(Context context, String subject, boolean deliveryReport, boolean readReport) {
+        final PduBody pduBody = new PduBody();
+
+        long messageSize = 0;
+        Charset utf8 = Charset.forName("UTF-8");
+        for (Attachment attachment : mAttachments) {
+            PduPart part = new PduPart();
+            byte[] data;
+            if (attachment instanceof ImageAttachment) {
+                data = ((ImageAttachment) attachment).getBytes(context);
+            } else {
+                try (InputStream input = attachment.asStream(context)) {
+                    data = MmsPduStore.readBounded(input, (int) (MmsPduStore.MAX_PDU_BYTES - messageSize));
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Unable to read MMS attachment", e);
+                }
             }
-            partPdu.setName(nameBytes);
-            partPdu.setContentType(typeBytes);
-            partPdu.setData(dataBytes);
-            pduBody.addPart(partPdu);
-            messageSize += (nameBytes.length + typeBytes.length + (dataBytes != null ? dataBytes.length : 0));
+            if (data == null || data.length == 0) throw new IllegalArgumentException("Empty MMS attachment");
+            byte[] mime = attachment.getMimeType(context).getBytes(utf8);
+            byte[] name = ("part" + pduBody.getPartsNum()).getBytes(utf8);
+            part.setName(name);
+            part.setContentLocation(name);
+            part.setContentType(mime);
+            part.setData(data);
+            pduBody.addPart(part);
+            messageSize += (long) name.length + mime.length + data.length;
+            if (messageSize > MmsPduStore.MAX_PDU_BYTES) throw new IllegalArgumentException("Oversized MMS attachments");
         }
 
-        // We can have an image with text, so we do this separate
-        if (mBody != null && !mBody.isEmpty()) {
-            // add text to the end of the part and send
-            partPdu.setName("text".getBytes());
-            partPdu.setContentType(ContentType.TEXT_PLAIN.getBytes());
-            partPdu.setData(mBody.getBytes());
-            partPdu.setCharset(CharacterSets.UTF_8);
-            pduBody.addPart(partPdu);
-            messageSize += ("text".getBytes().length + ContentType.TEXT_PLAIN.getBytes().length + mBody.getBytes().length);
+        if (!TextUtils.isEmpty(mBody)) {
+            PduPart part = new PduPart();
+            byte[] data = mBody.getBytes(utf8);
+            part.setName("text".getBytes(utf8));
+            part.setContentType(ContentType.TEXT_PLAIN.getBytes(utf8));
+            part.setData(data);
+            part.setCharset(CharacterSets.UTF_8);
+            pduBody.addPart(part);
+            messageSize += part.getName().length + part.getContentType().length + data.length;
         }
 
         // Create the actual send request that can later be turned into byte for sending
         final SendReq sendRequest = new SendReq();
 
         // Add recipients to the send request
-        for (Contact recipient : TextManager.getInstance(context).getMembersExceptMe(this).get()) {
-            final EncodedStringValue[] phoneNumbers = EncodedStringValue.extract(recipient.getNumber());
-            if (phoneNumbers != null && phoneNumbers.length > 0) {
-                sendRequest.addTo(phoneNumbers[0]);
-            }
+        TextManager manager = TextManager.getInstance(context);
+        String region = manager.dialingRegion(mSubscriptionId);
+        Set<String> addresses = new HashSet<>();
+        for (Contact recipient : manager.getMembersExceptMe(this).get()) {
+            String address = recipient.getMobileNumber(context).get();
+            if (TextUtils.isEmpty(address)) throw new IllegalArgumentException("MMS recipient has no address");
+            if (addresses.add(PhoneNumbers.normalize(address, region))) sendRequest.addTo(new EncodedStringValue(address));
         }
+        if (addresses.isEmpty()) throw new IllegalArgumentException("MMS has no recipients");
 
-        // This can't be empty, but we really should give the opportunity to set it
-        String subject = " ";
-        sendRequest.setSubject(new EncodedStringValue(subject));
+        if (!TextUtils.isEmpty(subject)) sendRequest.setSubject(new EncodedStringValue(subject));
+        if (deliveryReport) sendRequest.setDeliveryReport(PduHeaders.VALUE_YES);
+        if (readReport) sendRequest.setReadReport(PduHeaders.VALUE_YES);
 
         // Set date
         sendRequest.setDate(Calendar.getInstance().getTimeInMillis() / 1000L);
 
         // Set sender
-        String phoneNumber = TextManager.getInstance(context).getPhoneNumber();
-        if (TextUtils.isEmpty(phoneNumber)) {
-            throw new IllegalStateException("A phone number permission is required to send MMS");
+        String phoneNumber = manager.getPhoneNumber(mSubscriptionId);
+        // SendReq defaults to the carrier's insert-address token on numberless SIMs.
+        if (!TextUtils.isEmpty(phoneNumber)) {
+            sendRequest.setFrom(new EncodedStringValue(phoneNumber));
         }
-        sendRequest.setFrom(new EncodedStringValue(phoneNumber));
 
         // Turn all the parts into a smil document
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -449,13 +441,8 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
 
         return sendRequest;
     }
-    byte[] getByteData(Context context) {
-        // create byte array which will actually be sent
-        if (mBytesToSend != null) {
-            return mBytesToSend;
-        } else {
-            return new PduComposer(context, getSendRequest(context)).make();
-        }
+    byte[] getByteData() {
+        return mBytesToSend;
     }
 
     public byte[] toBytes() {
@@ -494,7 +481,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                     && Utils.equals(mIsMms, a.mIsMms)
                     && Utils.equals(mSender, a.mSender)
                     && Utils.equals(mMembers, a.mMembers)
-                    && Utils.equals(mAttachment, a.mAttachment);
+                    && mAttachments.equals(a.mAttachments);
         }
         return false;
     }
@@ -512,7 +499,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
                 + Utils.hashCode(mIsMms)
                 + Utils.hashCode(mSender)
                 + Utils.hashCode(mMembers)
-                + Utils.hashCode(mAttachment);
+                + mAttachments.hashCode();
     }
 
     @NonNull
@@ -521,7 +508,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         return String.format("Text{id=%s, thread_id=%s, date=%s, mms_id=%s, address=%s, body=%s, " +
                         "incoming=%s, is_mms=%s, subscription_id=%s, sender=%s, recipient=%s, attachment=%s}",
                 mId, mThreadId, mDate, mMmsId, mSenderAddress, mBody, mIncoming, mIsMms,
-                mSubscriptionId, mSender, mMembers, mAttachment);
+                mSubscriptionId, mSender, mMembers, mAttachments);
     }
 
     @Override
@@ -557,7 +544,12 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             out.writeParcelable(member, flags);
         }
 
-        out.writeParcelable(mAttachment, flags);
+        out.writeParcelable(mAttachments.isEmpty() ? null : mAttachments.get(0), flags);
+        if (mAttachments.size() > 1) {
+            out.writeInt(-1);
+            out.writeInt(mAttachments.size() - 1);
+            for (int i = 1; i < mAttachments.size(); i++) out.writeParcelable(mAttachments.get(i), flags);
+        }
 
         byte[] bytesToSend = mBytesToSend != null ? mBytesToSend : new byte[0];
         out.writeInt(bytesToSend.length);
@@ -650,7 +642,7 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
     public static class Builder {
         private String mMessage;
         private final Set<Contact> mRecipients = new HashSet<>();
-        private Attachment mAttachment;
+        private final List<Attachment> mAttachments = new ArrayList<>();
         private int mSubscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
         public Builder addRecipient(Context context, String address) {
@@ -682,7 +674,14 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
         }
 
         public Builder attach(Attachment attachment) {
-            mAttachment = attachment;
+            mAttachments.clear();
+            if (attachment != null) addAttachment(attachment);
+            return this;
+        }
+
+        public Builder addAttachment(Attachment attachment) {
+            if (attachment == null) throw new IllegalArgumentException("Missing attachment");
+            mAttachments.add(attachment);
             return this;
         }
 
@@ -709,8 +708,11 @@ public final class Text implements Message, Parcelable, Comparable<Text> {
             if (mRecipients.size() > 1) {
                 text.mIsMms = true;
             }
-            text.mAttachment = mAttachment;
-            if (mAttachment != null) {
+            for (Contact recipient : mRecipients) {
+                if (recipient.getNumber() != null && recipient.getNumber().contains("@")) text.mIsMms = true;
+            }
+            text.mAttachments.addAll(mAttachments);
+            if (!mAttachments.isEmpty()) {
                 text.mIsMms = true;
             }
             text.mDate = System.currentTimeMillis();

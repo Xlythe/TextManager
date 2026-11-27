@@ -8,3 +8,7 @@
 *.iml
 *.apk
 app/release/output-metadata.json
+
+/gradlew
+/gradlew.bat
+/gradle/wrapper/

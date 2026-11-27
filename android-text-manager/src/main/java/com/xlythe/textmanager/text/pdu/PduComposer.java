@@ -492,7 +492,7 @@ public class PduComposer {
             case PduHeaders.CC:
                 EncodedStringValue[] addr = mPduHeader.getEncodedStringValues(field);
 
-                if (null == addr) {
+                if (addr == null || addr.length == 0) {
                     return PDU_COMPOSE_FIELD_NOT_SET;
                 }
 
@@ -776,19 +776,10 @@ public class PduComposer {
 
         boolean recipient = false;
 
-        // To
-        if (appendHeader(PduHeaders.TO) != PDU_COMPOSE_CONTENT_ERROR) {
-            recipient = true;
-        }
-
-        // Cc
-        if (appendHeader(PduHeaders.CC) != PDU_COMPOSE_CONTENT_ERROR) {
-            recipient = true;
-        }
-
-        // Bcc
-        if (appendHeader(PduHeaders.BCC) != PDU_COMPOSE_CONTENT_ERROR) {
-            recipient = true;
+        for (int field : new int[]{PduHeaders.TO, PduHeaders.CC, PduHeaders.BCC}) {
+            int result = appendHeader(field);
+            if (result == PDU_COMPOSE_CONTENT_ERROR) return result;
+            if (result == PDU_COMPOSE_SUCCESS) recipient = true;
         }
 
         // Need at least one of "cc", "bcc" and "to".

@@ -8,10 +8,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 /** Stores short-lived raw MMS PDUs for the platform MMS service. */
 public final class MmsPduStore {
+    public static final int MAX_PDU_BYTES = 25 * 1024 * 1024;
     static final String DIRECTORY = "textmanager-mms";
 
     private MmsPduStore() {}
@@ -20,21 +22,20 @@ public final class MmsPduStore {
         if (pdu == null || pdu.length == 0) {
             throw new IOException("Cannot store an empty MMS PDU");
         }
-        File directory = directory(context);
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw new IOException("Unable to create MMS cache directory");
-        }
-        String name = UUID.randomUUID() + ".pdu";
-        File file = new File(directory, name);
-        try (FileOutputStream output = new FileOutputStream(file)) {
+        if (pdu.length > MAX_PDU_BYTES) throw new IOException("Oversized MMS PDU");
+        Uri uri = create(context);
+        try (FileOutputStream output = new FileOutputStream(resolve(context, uri))) {
             output.write(pdu);
+        } catch (IOException e) {
+            delete(context, uri);
+            throw e;
         }
-        return uriFor(context, name);
+        return uri;
     }
 
     public static Uri create(Context context) throws IOException {
         File directory = directory(context);
-        if (!directory.exists() && !directory.mkdirs()) {
+        if (!directory.isDirectory() && !directory.mkdirs() && !directory.isDirectory()) {
             throw new IOException("Unable to create MMS cache directory");
         }
         String name = UUID.randomUUID() + ".pdu";
@@ -48,19 +49,26 @@ public final class MmsPduStore {
     public static byte[] read(Context context, Uri uri) throws IOException {
         File file = resolve(context, uri);
         long length = file.length();
-        if (length <= 0 || length > 25L * 1024L * 1024L) {
+        if (length <= 0 || length > MAX_PDU_BYTES) {
             throw new IOException("Invalid MMS PDU size: " + length);
         }
-        try (FileInputStream input = new FileInputStream(file);
-             ByteArrayOutputStream output = new ByteArrayOutputStream((int) length)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-            return output.toByteArray();
+        try (FileInputStream input = new FileInputStream(file)) {
+            return readBounded(input, MAX_PDU_BYTES);
         }
     }
+
+    public static byte[] readBounded(InputStream input, int limit) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int count;
+        while ((count = input.read(buffer)) != -1) {
+            if (count > limit - output.size()) throw new IOException("Oversized MMS response");
+            output.write(buffer, 0, count);
+        }
+        if (output.size() == 0) throw new IOException("Empty MMS response");
+        return output.toByteArray();
+    }
+
     public static boolean delete(Context context, Uri uri) {
         try {
             return resolve(context, uri).delete();
@@ -70,7 +78,8 @@ public final class MmsPduStore {
     }
 
     static File resolve(Context context, Uri uri) throws IOException {
-        if (uri == null || !authority(context).equals(uri.getAuthority())) {
+        if (uri == null || !"content".equals(uri.getScheme()) || !authority(context).equals(uri.getAuthority())
+                || uri.getPathSegments().size() != 1) {
             throw new IllegalArgumentException("URI is not owned by the MMS PDU provider");
         }
         String name = uri.getLastPathSegment();

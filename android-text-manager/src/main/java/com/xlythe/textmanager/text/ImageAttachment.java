@@ -2,12 +2,13 @@ package com.xlythe.textmanager.text;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import com.xlythe.textmanager.text.concurrency.Future;
@@ -19,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,37 +28,39 @@ import androidx.annotation.Nullable;
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
 public final class ImageAttachment extends Attachment {
-    private static final String SCHEME_FILE = "file";
 
     private transient Bitmap mBitmap;
 
     private static Bitmap toBitmap(Drawable drawable) {
-        Log.d(TAG, "Drawing drawable to bitmap with width=" + drawable.getIntrinsicWidth() + ", height=" + drawable.getIntrinsicHeight());
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawARGB(0, 0, 0, 0);
-        drawable.draw(canvas);
-
+        int width = Math.max(1, drawable.getIntrinsicWidth());
+        int height = Math.max(1, drawable.getIntrinsicHeight());
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Rect bounds = new Rect(drawable.getBounds());
+        try {
+            drawable.setBounds(0, 0, width, height);
+            drawable.draw(new Canvas(bitmap));
+        } finally {
+            drawable.setBounds(bounds);
+        }
         return bitmap;
     }
 
     private static Uri persist(Context context, String name, Bitmap image, Type type) {
-        Log.d(TAG, "Persisting bitmap \"" + name + ".jpg\" to cache");
-        File file = new File(context.getCacheDir(), name + ".jpg");
+        boolean png = type == Type.HIGH_RES_IMAGE;
         try {
-            FileOutputStream out = new FileOutputStream(file);
-            if (type == Type.HIGH_RES_IMAGE) {
-                image.compress(Bitmap.CompressFormat.PNG, 100, out);
-            } else {
-                image.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            File file = File.createTempFile("mms-image-", png ? ".png" : ".jpg", context.getCacheDir());
+            try (FileOutputStream out = new FileOutputStream(file)) {
+                if (!image.compress(png ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 100, out)) {
+                    throw new IOException("Bitmap encoder failed");
+                }
+            } catch (IOException failed) {
+                file.delete();
+                throw failed;
             }
-            out.flush();
-            out.close();
+            return Uri.fromFile(file);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Unable to store MMS image", e);
         }
-        return Uri.fromFile(file);
     }
 
     public ImageAttachment(Uri uri, Type type){
@@ -97,10 +101,10 @@ public final class ImageAttachment extends Attachment {
             return new FutureImpl<Bitmap>() {
                 @Override
                 public Bitmap get() {
-                    try {
-                        setBitmap(MediaStore.Images.Media.getBitmap(context.getContentResolver(), getUri()));
+                    try (InputStream input = asStream(context)) {
+                        setBitmap(BitmapFactory.decodeStream(input));
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Log.w(TAG, "Unable to decode MMS image", e);
                     }
                     return mBitmap;
                 }
@@ -110,24 +114,11 @@ public final class ImageAttachment extends Attachment {
 
     @Nullable
     public byte[] getBytes(final Context context) {
-        if (SCHEME_FILE.equals(getUri().getScheme())) {
-            try {
-                return toBytes(new File(getUri().getPath()));
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to read file", e);
-            }
-        }
-
-        if (getBitmap(context).get() == null) {
-            return null;
-        }
-
+        Bitmap bitmap = getBitmap(context).get();
+        if (bitmap == null) return null;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        if (getType() == Type.HIGH_RES_IMAGE) {
-            getBitmap(context).get().compress(Bitmap.CompressFormat.PNG, 100, stream);
-        } else {
-            getBitmap(context).get().compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        }
+        Bitmap.CompressFormat format = getType() == Type.HIGH_RES_IMAGE ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+        if (!bitmap.compress(format, 100, stream)) return null;
         return stream.toByteArray();
     }
 

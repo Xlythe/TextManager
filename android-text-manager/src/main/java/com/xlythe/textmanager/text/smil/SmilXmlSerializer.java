@@ -5,6 +5,7 @@ import android.util.Log;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -39,19 +40,22 @@ public class SmilXmlSerializer {
             for (int i = 0; i < attributes.getLength(); i++) {
                 Attr attribute = (Attr)attributes.item(i);
                 writer.write(" " + attribute.getName());
-                writer.write("=\"" + attribute.getValue() + "\"");
+                writer.write("=\"" + SmilHelper.escapeXML(attribute.getValue()) + "\"");
             }
         }
 
-        // FIXME: Might throw ClassCastException
-        SMILElement childElement = (SMILElement) element.getFirstChild();
+        Node childElement = element.getFirstChild();
 
         if (childElement != null) {
             writer.write('>');
 
             do {
-                writeElement(writer, childElement);
-                childElement = (SMILElement) childElement.getNextSibling();
+                if (childElement instanceof Element) {
+                    writeElement(writer, (Element) childElement);
+                } else if (childElement.getNodeType() == Node.TEXT_NODE) {
+                    writer.write(SmilHelper.escapeXML(childElement.getNodeValue()));
+                }
+                childElement = childElement.getNextSibling();
             } while (childElement != null);
 
             writer.write("</");

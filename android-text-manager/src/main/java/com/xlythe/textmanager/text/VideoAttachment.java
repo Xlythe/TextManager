@@ -11,6 +11,7 @@ import com.xlythe.textmanager.text.concurrency.FutureImpl;
 import com.xlythe.textmanager.text.concurrency.Present;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import static com.xlythe.textmanager.text.TextManager.TAG;
 
@@ -42,8 +43,8 @@ public final class VideoAttachment extends Attachment {
             return new FutureImpl<byte[]>() {
                 @Override
                 public byte[] get() {
-                    try {
-                        mBytes = toBytes(asStream(context));
+                    try (InputStream stream = asStream(context)) {
+                        mBytes = toBytes(stream);
                     } catch (IOException e) {
                         Log.e(TAG, "Failed to decode " + getUri() + " as bytes");
                     }

@@ -14,28 +14,32 @@ public final class SmsSendCoordinator<C> {
     }
 
     public void send(SmsSendRequest request) {
+        send(request, false, true);
+    }
+
+    /** Sends each segment independently for carriers without concatenated SMS support. */
+    public void send(SmsSendRequest request, boolean separateParts, boolean deliveryReports) {
         List<String> parts = gateway.divideMessage(request.getBody());
         if (parts == null || parts.isEmpty()) {
             throw new IllegalStateException("SMS gateway returned no message parts");
         }
         int partCount = parts.size();
-        callbackFactory.initialize(request, partCount);
-        if (partCount > 1) {
-            List<C> sentCallbacks = new ArrayList<>(partCount);
-            List<C> deliveredCallbacks = new ArrayList<>(partCount);
-            for (int partIndex = 0; partIndex < partCount; partIndex++) {
-                sentCallbacks.add(callbackFactory.createSent(request, partIndex, partCount));
-                deliveredCallbacks.add(
-                        callbackFactory.createDelivered(request, partIndex, partCount));
+        if (callbackFactory != null) callbackFactory.initialize(request, partCount);
+        List<C> sent = new ArrayList<>(partCount);
+        List<C> delivered = new ArrayList<>(partCount);
+        for (int index = 0; index < partCount; index++) {
+            C sentCallback = callbackFactory == null ? null : callbackFactory.createSent(request, index, partCount);
+            C deliveredCallback = callbackFactory == null || !deliveryReports ? null
+                    : callbackFactory.createDelivered(request, index, partCount);
+            if (separateParts || partCount == 1) {
+                gateway.sendText(request.getRecipient(), parts.get(index), sentCallback, deliveredCallback);
+            } else {
+                sent.add(sentCallback);
+                delivered.add(deliveredCallback);
             }
-            gateway.sendMultipartText(
-                    request.getRecipient(), parts, sentCallbacks, deliveredCallbacks);
-        } else {
-            gateway.sendText(
-                    request.getRecipient(),
-                    request.getBody(),
-                    callbackFactory.createSent(request, 0, partCount),
-                    callbackFactory.createDelivered(request, 0, partCount));
+        }
+        if (partCount > 1 && !separateParts) {
+            gateway.sendMultipartText(request.getRecipient(), parts, sent, delivered);
         }
     }
 }
