@@ -26,7 +26,7 @@ import static org.junit.Assert.assertFalse;
  *
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk=23, shadows={ShadowTextManager.class, ShadowContact.class})
+@Config(shadows={ShadowTextManager.class, ShadowContact.class})
 public class ContactEditTextTest {
     private static final String ME = "111-111-1111";
     private static final Contact NAMELESS = ShadowContact.getInstance("444444444");
