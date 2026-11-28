@@ -44,6 +44,7 @@
     <string name="notification_channel_description">Displays incoming text messages.</string>
     <string name="notification_label_picture">Picture</string>
     <string name="notification_label_video">Video</string>
+    <string name="notification_label_file">File</string>
     <string name="notification_label_voice">Voice</string>
     <string name="notification_label_new_messages">%s new messages</string>
 </resources>

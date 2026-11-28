@@ -28,14 +28,12 @@ import com.xlythe.textmanager.text.Text;
 import com.xlythe.textmanager.text.TextManager;
 import com.xlythe.textmanager.text.TextReceiver;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.core.app.TaskStackBuilder;
-import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 
 public class MessageReceiver extends TextReceiver {
@@ -122,20 +120,20 @@ public class MessageReceiver extends TextReceiver {
 
         // Make sure we have a shortcut for this thread.
         if (Build.VERSION.SDK_INT >= 25) {
-            List<ShortcutInfoCompat> shortcutInfo = new ArrayList<>();
-            shortcutInfo.add(ShortcutUtils.createShortcutInfo(context, textManager.getThread(text.getThreadId()).get()));
-            ShortcutManagerCompat.addDynamicShortcuts(context, shortcutInfo);
+            ShortcutManagerCompat.addDynamicShortcuts(context,
+                    Collections.singletonList(ShortcutUtils.createShortcutInfo(context, text)));
         }
     }
 
-    private PendingIntent createOnClickIntent(Context context, String threadId) {
+    static PendingIntent createOnClickIntent(Context context, String threadId) {
         Intent intent = new Intent(context, MessageActivity.class);
         intent.putExtra(MessageActivity.EXTRA_THREAD_ID, threadId);
 
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addParentStack(MessageActivity.class);
         stackBuilder.addNextIntent(intent);
-        return stackBuilder.getPendingIntent(threadId.hashCode(), PendingIntent.FLAG_UPDATE_CURRENT);
+        return stackBuilder.getPendingIntent(threadId.hashCode(),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static PendingIntent createOnDismissIntent(Context context, Text text) {
@@ -166,12 +164,12 @@ public class MessageReceiver extends TextReceiver {
     }
 
     @Nullable
-    private String body(Context context, Text text) {
+    static String body(Context context, Text text) {
         if (text.getBody() != null) {
             return text.getBody();
         }
         if (text.getAttachment() != null) {
-            int typeString = 0;
+            int typeString;
             switch (text.getAttachment().getType()) {
                 case IMAGE:
                     // fall through
@@ -183,6 +181,9 @@ public class MessageReceiver extends TextReceiver {
                     break;
                 case VOICE:
                     typeString = R.string.notification_label_voice;
+                    break;
+                default:
+                    typeString = R.string.notification_label_file;
                     break;
             }
             return italic(context.getString(typeString));
