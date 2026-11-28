@@ -11,10 +11,11 @@ import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
 import com.xlythe.sms.MessageActivity;
+import com.xlythe.sms.R;
 import com.xlythe.sms.drawable.ProfileDrawable;
 import com.xlythe.textmanager.text.Contact;
 import com.xlythe.textmanager.text.TextManager;
-import com.xlythe.textmanager.text.Thread;
+import com.xlythe.textmanager.text.Text;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,10 +27,10 @@ public class ShortcutUtils {
   private ShortcutUtils() {}
 
   @RequiresApi(25)
-  public static ShortcutInfoCompat createShortcutInfo(Context context, Thread thread) {
+  public static ShortcutInfoCompat createShortcutInfo(Context context, Text text) {
     TextManager textManager = TextManager.getInstance(context);
 
-    Set<Contact> contacts = textManager.getMembersExceptMe(thread.getLatestMessage()).get();
+    Set<Contact> contacts = textManager.getMembersExceptMe(text).get();
 
     // A shortcut requires a label.
     StringBuilder label = new StringBuilder();
@@ -40,10 +41,10 @@ public class ShortcutUtils {
       label.append(contact.getDisplayName());
     }
 
-    return new ShortcutInfoCompat.Builder(context, thread.getId())
-            .setShortLabel(thread.getLatestMessage().getBody())
+    return new ShortcutInfoCompat.Builder(context, text.getThreadId())
+            .setShortLabel(label.length() == 0 ? context.getString(R.string.notification_channel_name) : label.toString())
             .setIcon(getIcon(context, contacts))
-            .setIntent(createShortcutIntent(context, thread.getId()))
+            .setIntent(createShortcutIntent(context, text.getThreadId()))
             .setLongLived(true)
             .setPersons(getPeople(contacts))
             .build();

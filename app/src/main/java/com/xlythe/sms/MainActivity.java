@@ -418,7 +418,9 @@ public class MainActivity extends AppCompatActivity implements ThreadAdapter.OnC
 
         List<ShortcutInfoCompat> shortcutInfo = new ArrayList<>();
         for (Thread thread : getRecentThreads()) {
-            shortcutInfo.add(ShortcutUtils.createShortcutInfo(this, thread));
+            if (thread.getLatestMessage() != null) {
+                shortcutInfo.add(ShortcutUtils.createShortcutInfo(this, thread.getLatestMessage()));
+            }
         }
         ShortcutManagerCompat.addDynamicShortcuts(this, shortcutInfo);
     }
